@@ -15,13 +15,12 @@ export const DocumentPreview = forwardRef<HTMLDivElement, DocumentPreviewProps>(
                 <span className="text-[10px] bg-zinc-100 px-2 py-0.5 rounded text-zinc-400">A4 Render</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-zinc-100 p-8 print:p-0 print:bg-white print:overflow-visible">
+            <div className="flex-1 overflow-y-auto bg-zinc-100 p-8 scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent">
                 <div
                     ref={ref}
-                    id="print-area"
-                    className="bg-white shadow-sm mx-auto max-w-[210mm] min-h-[297mm] p-[20mm] print:block"
+                    className="bg-white shadow-sm mx-auto max-w-[210mm] min-h-[297mm] p-[20mm]"
                 >
-                    <article className="prose prose-zinc max-w-none prose-headings:font-bold prose-h1:text-4xl prose-h1:tracking-tight prose-a:text-blue-600">
+                    <article className="prose prose-zinc max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-4xl prose-h1:mb-8 prose-h2:mt-12 prose-a:text-blue-600 prose-img:rounded-xl">
                         <ReactMarkdown>{markdown}</ReactMarkdown>
                     </article>
                 </div>

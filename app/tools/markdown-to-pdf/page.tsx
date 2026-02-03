@@ -5,22 +5,44 @@ import { ToolsLayout } from '@/components/ToolsLayout';
 import { MarkdownInput } from './MarkdownInput';
 import { DocumentPreview } from './DocumentPreview';
 import { Download } from 'lucide-react';
+import { printDocument } from './printService';
 
-const DEFAULT_MARKDOWN = `# Markdown to PDF
+const DEFAULT_MARKDOWN = `# 📄 Project Proposal: InnoSage AI
 
-Simple, private, and free.
+Welcome to the **Markdown to PDF** converter. This tool is designed for high-fidelity document generation directly in your browser.
 
-## How to use
-1. Type on the **left**.
-2. See the preview on the **right**.
-3. Click **Download PDF** to save.
+## 🚀 Key Features
 
-## Features
-- **Privacy First**: Everything stays in your browser.
-- **Clean Output**: Optimized for A4 printing.
-- **Fast**: No server uploads.
+*   **Privacy First**: Everything stays in your browser.
+*   **A4 Optimized**: Pixel-perfect scaling for standard office printing.
+*   **Zero Latency**: Powered by client-side rendering.
+
+---
+
+## 📊 Sample Table
+
+| Milestone | Deliverable | Status |
+| :--- | :--- | :--- |
+| Phase 1 | Core Engine | ✅ Done |
+| Phase 2 | PDF Export | 🛠️ In Progress |
+| Phase 3 | Cloud Sync | 📅 Q3 2026 |
+
+## 💻 Code Example
+
+\`\`\`typescript
+const printDocument = (content: string) => {
+  const win = window.open('', '_blank');
+  win.document.write(\`<html><body>\${content}</body></html>\`);
+  win.print();
+};
+\`\`\`
 
 > "Simplicity is the ultimate sophistication." - Leonardo da Vinci
+
+### ✅ Task List
+- [x] Implement Markdown parser
+- [x] Configure A4 preview scaling
+- [ ] Add dark mode support
 `;
 
 export default function MarkdownToPdfPage() {
@@ -28,18 +50,25 @@ export default function MarkdownToPdfPage() {
     const previewRef = useRef<HTMLDivElement>(null);
 
     const handlePrint = () => {
-        window.print();
+        if (previewRef.current) {
+            const article = previewRef.current.querySelector('article');
+            if (article) {
+                const titleMatch = markdown.match(/^#\s+(.+)$/m);
+                const title = titleMatch ? titleMatch[1] : 'InnoSage Document';
+                printDocument(title, article.innerHTML);
+            }
+        }
     };
 
     return (
         <ToolsLayout>
-            <div className="h-[calc(100vh-14rem)] flex flex-col lg:flex-row border border-zinc-200 rounded-xl overflow-hidden shadow-sm bg-white print:border-none print:shadow-none print:h-auto print:block">
+            <div className="h-[calc(100vh-14rem)] flex flex-col lg:flex-row border border-zinc-200/50 rounded-2xl overflow-hidden shadow-2xl shadow-zinc-200/50 bg-white/70 backdrop-blur-xl">
 
                 {/* Helper Instructions / SEO H1 - Hidden visually in app, visible to bots/screen readers */}
                 <h1 className="sr-only">Free Markdown to PDF Converter</h1>
 
                 {/* Action Bar (Mobile Only) */}
-                <div className="lg:hidden p-4 border-b border-zinc-200 bg-zinc-50 flex justify-between items-center print:hidden">
+                <div className="lg:hidden p-4 border-b border-zinc-200 bg-zinc-50 flex justify-between items-center">
                     <span className="font-bold text-zinc-900">Editor</span>
                     <button
                         onClick={handlePrint}
@@ -50,68 +79,27 @@ export default function MarkdownToPdfPage() {
                 </div>
 
                 {/* Input Pane */}
-                <div className="flex-1 lg:w-1/2 min-h-[50vh] lg:min-h-auto border-b lg:border-b-0 lg:border-r border-zinc-200 print:hidden">
+                <div className="flex-1 lg:w-1/2 min-h-[50vh] lg:min-h-auto border-b lg:border-b-0 lg:border-r border-zinc-200">
                     <MarkdownInput value={markdown} onChange={setMarkdown} />
                 </div>
 
                 {/* Preview Pane */}
-                <div className="flex-1 lg:w-1/2 min-h-[50vh] lg:min-h-auto bg-zinc-100 print:bg-white print:w-full">
+                <div className="flex-1 lg:w-1/2 min-h-[50vh] lg:min-h-auto bg-zinc-100">
                     <DocumentPreview markdown={markdown} ref={previewRef} />
                 </div>
 
             </div>
 
             {/* Desktop Floating Action Button */}
-            <div className="fixed bottom-8 right-8 print:hidden hidden lg:block">
+            <div className="fixed bottom-10 right-10 hidden lg:block group">
                 <button
                     onClick={handlePrint}
-                    className="bg-zinc-900 hover:bg-zinc-800 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium flex items-center gap-3 active:scale-95 transition-all"
+                    className="relative flex items-center gap-3 bg-zinc-900 text-white px-8 py-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 hover:bg-zinc-800 ring-4 ring-zinc-900/10"
                 >
-                    <Download size={20} />
-                    Download PDF
+                    <Download size={22} className="group-hover:translate-y-0.5 transition-transform" />
+                    <span className="font-semibold tracking-tight">Download PDF</span>
                 </button>
             </div>
-
-            <style dangerouslySetInnerHTML={{
-                __html: `
-        @media print {
-            /* Hide ALL UI elements by default using visibility */
-            body *, main *, header, footer {
-                visibility: hidden !important;
-            }
-            
-            /* Explicitly show the print area and its contents */
-            #print-area, #print-area * {
-                visibility: visible !important;
-            }
-
-            /* Pull the print area to the top-left of the page */
-            #print-area {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 20mm !important;
-                box-shadow: none !important;
-                display: block !important;
-            }
-
-            /* Ensure parents don't clip or shift the absolute child */
-            body, html, main, #__next {
-                margin: 0 !important;
-                padding: 0 !important;
-                height: auto !important;
-                overflow: visible !important;
-                background: white !important;
-            }
-
-            @page {
-                size: auto;
-                margin: 0mm; /* Remove browser headers/footers */
-            }
-        }
-      `}} />
         </ToolsLayout>
     );
 }
