@@ -18,7 +18,8 @@ export const DocumentPreview = forwardRef<HTMLDivElement, DocumentPreviewProps>(
             <div className="flex-1 overflow-y-auto bg-zinc-100 p-8 print:p-0 print:bg-white print:overflow-visible">
                 <div
                     ref={ref}
-                    className="bg-white shadow-sm mx-auto max-w-[210mm] min-h-[297mm] p-[20mm] print:shadow-none print:m-0 print:w-full print:max-w-none print:min-h-0 print:p-0"
+                    id="print-area"
+                    className="bg-white shadow-sm mx-auto max-w-[210mm] min-h-[297mm] p-[20mm] print:shadow-none print:m-0 print:w-full print:max-w-none print:min-h-0 print:p-0 print:block"
                 >
                     <article className="prose prose-zinc max-w-none prose-headings:font-bold prose-h1:text-4xl prose-h1:tracking-tight prose-a:text-blue-600">
                         <ReactMarkdown>{markdown}</ReactMarkdown>

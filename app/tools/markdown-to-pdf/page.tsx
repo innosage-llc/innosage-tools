@@ -72,34 +72,34 @@ export default function MarkdownToPdfPage() {
                 </button>
             </div>
 
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{
+                __html: `
         @media print {
-            body * {
+            body > *:not(#print-area), 
+            main > *:not(#print-area), 
+            div:not(#print-area) {
                 visibility: hidden;
             }
-            .tools-layout-header, .tools-layout-footer {
-                display: none;
+            
+            #print-area, #print-area * {
+                visibility: visible !important;
             }
-            /* Only show the preview content */
-            #preview-content, #preview-content * {
-                visibility: visible;
-            }
-            /* Reset positioning for the printed page */
-            #preview-content {
+
+            #print-area {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
-                margin: 0;
-                padding: 0;
+                margin: 0 !important;
+                padding: 0 !important;
             }
-            /* Hide the container wrapper borders */
-            .border, .shadow-sm {
-                border: none !important;
-                box-shadow: none !important;
+
+            @page {
+                size: auto;
+                margin: 10mm;
             }
         }
-      `}</style>
+      `}} />
         </ToolsLayout>
     );
 }
