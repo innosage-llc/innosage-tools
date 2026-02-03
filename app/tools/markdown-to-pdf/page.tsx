@@ -75,28 +75,40 @@ export default function MarkdownToPdfPage() {
             <style dangerouslySetInnerHTML={{
                 __html: `
         @media print {
-            body > *:not(#print-area), 
-            main > *:not(#print-area), 
-            div:not(#print-area) {
-                visibility: hidden;
+            /* Hide ALL UI elements by default using visibility */
+            body *, main *, header, footer {
+                visibility: hidden !important;
             }
             
+            /* Explicitly show the print area and its contents */
             #print-area, #print-area * {
                 visibility: visible !important;
             }
 
+            /* Pull the print area to the top-left of the page */
             #print-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20mm !important;
+                box-shadow: none !important;
+                display: block !important;
+            }
+
+            /* Ensure parents don't clip or shift the absolute child */
+            body, html, main, #__next {
                 margin: 0 !important;
                 padding: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
             }
 
             @page {
                 size: auto;
-                margin: 10mm;
+                margin: 0mm; /* Remove browser headers/footers */
             }
         }
       `}} />
