@@ -4,8 +4,11 @@ const worker = {
 
         // proxy /tools path to Cloudflare Pages
         if (url.pathname.startsWith('/tools')) {
-            // Assuming the Cloudflare Pages deployment is at innosage-tools.pages.dev
-            const pagesUrl = `https://innosage-tools.pages.dev${url.pathname}${url.search}`;
+            // Strip the '/tools' prefix when proxying to Cloudflare Pages 
+            // because the build output sits at the root of the Pages domain.
+            const proxiedPath = url.pathname.replace('/tools', '');
+            const pagesUrl = `https://innosage-tools.pages.dev${proxiedPath}${url.search}`;
+
             return fetch(pagesUrl, {
                 headers: request.headers,
                 method: request.method,
