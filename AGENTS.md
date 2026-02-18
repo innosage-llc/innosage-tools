@@ -130,6 +130,7 @@ Participate, don't dominate.
 - Maintain `ACTIVE_TASKS.md` for any work delegated to sub-agents (sessions_spawn).
 - Before answering "what's the status?", read `ACTIVE_TASKS.md` and check `sessions_list`.
 - Use `sessions_history` to pull results from completed sub-agents.
+- **Repository Isolation**: Agentic Engineering protocols (10-minute wait, autonomous merge) are strictly scoped to the `innosage-tools` repository. Do not apply these to other repositories or human-authored PRs.
 
 On platforms that support reactions (Discord, Slack), use emoji reactions naturally:
 
