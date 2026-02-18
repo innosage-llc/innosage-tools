@@ -1,1 +1,3 @@
-Audit started on Wed Feb 18 17:12:22 CST 2026
+| Task | Status | Notes |
+| :--- | :--- | :--- |
+| Syntax Highlighting Polish | ✅ Done | Zinc-themed custom style applied to DocumentPreview |
