@@ -4,11 +4,90 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import React, { forwardRef, useEffect, useState, useRef } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface DocumentPreviewProps {
     markdown: string;
 }
+
+const zincPrismStyle: { [key: string]: React.CSSProperties } = {
+    'code[class*="language-"]': {
+        color: '#27272a',
+        background: 'none',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        fontSize: '0.875rem',
+        textAlign: 'left',
+        whiteSpace: 'pre',
+        wordSpacing: 'normal',
+        wordBreak: 'normal',
+        wordWrap: 'normal',
+        lineHeight: '1.5',
+        MozTabSize: '4',
+        OTabSize: '4',
+        tabSize: '4',
+        WebkitHyphens: 'none',
+        MozHyphens: 'none',
+        msHyphens: 'none',
+        hyphens: 'none',
+    },
+    'pre[class*="language-"]': {
+        color: '#27272a',
+        background: '#f4f4f5',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        fontSize: '0.875rem',
+        textAlign: 'left',
+        whiteSpace: 'pre',
+        wordSpacing: 'normal',
+        wordBreak: 'normal',
+        wordWrap: 'normal',
+        lineHeight: '1.5',
+        MozTabSize: '4',
+        OTabSize: '4',
+        tabSize: '4',
+        WebkitHyphens: 'none',
+        MozHyphens: 'none',
+        msHyphens: 'none',
+        hyphens: 'none',
+        padding: '1rem',
+        margin: '0.5rem 0',
+        overflow: 'auto',
+        borderRadius: '0.5rem',
+        border: '1px solid #e4e4e7',
+    },
+    comment: { color: '#71717a', fontStyle: 'italic' },
+    prolog: { color: '#71717a' },
+    doctype: { color: '#71717a' },
+    cdata: { color: '#71717a' },
+    punctuation: { color: '#52525b' },
+    namespace: { opacity: '.7' },
+    property: { color: '#0891b2' },
+    tag: { color: '#0891b2' },
+    boolean: { color: '#0891b2' },
+    number: { color: '#0891b2' },
+    constant: { color: '#0891b2' },
+    symbol: { color: '#0891b2' },
+    deleted: { color: '#0891b2' },
+    selector: { color: '#10b981' },
+    'attr-name': { color: '#10b981' },
+    string: { color: '#10b981' },
+    char: { color: '#10b981' },
+    builtin: { color: '#10b981' },
+    inserted: { color: '#10b981' },
+    operator: { color: '#52525b' },
+    entity: { color: '#52525b', cursor: 'help' },
+    url: { color: '#52525b' },
+    '.language-css .token.string': { color: '#52525b' },
+    '.style .token.string': { color: '#52525b' },
+    atrule: { color: '#4f46e5' },
+    'attr-value': { color: '#4f46e5' },
+    keyword: { color: '#4f46e5' },
+    function: { color: '#d946ef' },
+    'class-name': { color: '#d946ef' },
+    regex: { color: '#f59e0b' },
+    important: { color: '#f59e0b', fontWeight: 'bold' },
+    variable: { color: '#f59e0b' },
+    bold: { fontWeight: 'bold' },
+    italic: { fontStyle: 'italic' },
+};
 
 export const DocumentPreview = forwardRef<HTMLDivElement, DocumentPreviewProps>(({ markdown }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +163,7 @@ export const DocumentPreview = forwardRef<HTMLDivElement, DocumentPreviewProps>(
                                     const match = /language-(\w+)/.exec(className || '');
                                     return !inline && match ? (
                                         <SyntaxHighlighter
-                                            style={prism}
+                                            style={zincPrismStyle}
                                             language={match[1]}
                                             PreTag="div"
                                             {...props}
