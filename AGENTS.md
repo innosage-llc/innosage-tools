@@ -12,7 +12,7 @@ These rules are non-negotiable and enforced by Husky hooks.
 5. **Optimistic 10-Minute Merge**: Once a PR is created and CI is green, agents MUST wait at least 10 minutes for human intervention before merging.
 
 ## 🤖 Autonomous Operations Script
-Agents SHOULD use automation scripts to manage the development lifecycle.
+Agents MUST use the `autonomous-ops.sh` script (located in the repository root) to manage the development lifecycle. Direct use of git commands for merging or pushing is prohibited in favor of the script's automated checks.
 
 ## The Non-Negotiable "Gate"
 Every task MUST pass the Gate before it is considered complete. No exceptions.
