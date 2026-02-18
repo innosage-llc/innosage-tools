@@ -29,7 +29,7 @@ I failed to internalize the newly written `AGENTS.md` rules as active constraint
 **Key Fixes:**
 - **File/Component**: `memory/2026-02-18.md` & `AGENTS.md`
   - **Change**: Updated internal memory to explicitly label the 10-minute wait as a "Blocking Action" for any merge.
-- **File/Component**: `innosage-tools/docs/postmortem/2026-02-18-pr-merge-violation.md`
+- **File/Component**: `docs/postmortem/2026-02-18-pr-merge-violation.md`
   - **Change**: Documented the failure to prevent regression.
 
 **Why this blocked us:**
