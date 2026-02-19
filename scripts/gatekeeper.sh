@@ -5,10 +5,22 @@
 # This script enforces the non-negotiable "Gate" for the innosage-tools repo.
 # It must pass before any code is merged into the primary branch.
 
-set -e
+set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
+
+usage() {
+  echo "Usage: $0"
+  echo
+  echo "Runs the mandatory validation suite for the repository."
+  exit 1
+}
+
+# Allow --help but otherwise take no arguments
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+fi
 
 echo "🛡️  Gatekeeper: Starting Validation Phase..."
 

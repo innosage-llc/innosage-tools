@@ -4,7 +4,7 @@
 # -------------------------------------------
 # Enforces the Master Sync Rule and automates the PR workflow.
 
-set -e
+set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GATEKEEPER="$REPO_ROOT/scripts/gatekeeper.sh"
@@ -13,7 +13,11 @@ PRIMARY_BRANCH="master"
 cd "$REPO_ROOT"
 
 usage() {
-  echo "Usage: $0 [start <branch-name> | submit <title> <body>]"
+  echo "Usage: $0 {start <branch-name>|submit <title> <body>}"
+  echo
+  echo "Commands:"
+  echo "  start <branch-name>    Implements Master Sync Rule: pulls master and creates a new branch"
+  echo "  submit <title> <body>  Runs Gatekeeper and creates a PR using gh CLI"
   exit 1
 }
 
@@ -21,25 +25,25 @@ if [ "$#" -lt 1 ]; then
   usage
 fi
 
-COMMAND=$1
+COMMAND="$1"
 
-case $COMMAND in
+case "$COMMAND" in
   "start")
-    if [ -z "$2" ]; then usage; fi
-    BRANCH_NAME=$2
+    if [ -z "${2:-}" ]; then usage; fi
+    BRANCH_NAME="$2"
     
     echo "🔄 Master Sync Rule: Pulling latest $PRIMARY_BRANCH..."
-    git checkout $PRIMARY_BRANCH
-    git pull origin $PRIMARY_BRANCH
+    git checkout "$PRIMARY_BRANCH"
+    git pull origin "$PRIMARY_BRANCH"
     
     echo "🌿 Creating feature branch: $BRANCH_NAME..."
     git checkout -b "$BRANCH_NAME"
     ;;
 
   "submit")
-    if [ -z "$2" ] || [ -z "$3" ]; then usage; fi
-    TITLE=$2
-    BODY=$3
+    if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then usage; fi
+    TITLE="$2"
+    BODY="$3"
     
     echo "🛡️  Running Gatekeeper before submission..."
     "$GATEKEEPER"
