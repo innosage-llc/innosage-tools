@@ -21,13 +21,15 @@ case "$command" in
     git checkout master
     git pull origin master
 
-    BRANCH_NAME="agent/$(date +%Y%m%d)-$TASK_NAME"
+    # Sanitize task name for branch creation
+    SAFE_TASK_NAME=$(echo "$TASK_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+    BRANCH_NAME="agent/$(date +%Y%m%d)-$SAFE_TASK_NAME"
     echo "🌿 Creating feature branch: $BRANCH_NAME"
     git checkout -b "$BRANCH_NAME"
     ;;
 
   "submit-pr")
-    COMMIT_MSG=$1
+    COMMIT_MSG="$@"
     if [ -z "$COMMIT_MSG" ]; then
       echo "Usage: $0 submit-pr \"<commit-message>\""
       exit 1
