@@ -48,6 +48,10 @@ case "$COMMAND" in
     echo "🛡️  Running Gatekeeper before submission..."
     "$GATEKEEPER"
     
+    echo "💾 Committing changes..."
+    git add -A
+    git commit -m "$TITLE" || echo "⚠️ No changes to commit"
+
     echo "🚀 Pushing branch and creating PR..."
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
     git push origin "$CURRENT_BRANCH"
