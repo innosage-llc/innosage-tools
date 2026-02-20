@@ -50,7 +50,11 @@ case "$COMMAND" in
     
     echo "💾 Committing changes..."
     git add -A
-    git commit -m "$TITLE" || echo "⚠️ No changes to commit"
+    if ! git diff --cached --quiet; then
+      git commit -m "$TITLE"
+    else
+      echo "⚠️ No changes to commit"
+    fi
 
     echo "🚀 Pushing branch and creating PR..."
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
