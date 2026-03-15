@@ -34,7 +34,10 @@ export default function RecorderPage() {
   const handleStart = async () => {
     setError(null);
     try {
-      const ext = '.webm';
+      let ext = mode === 'audio' ? '.m4a' : '.webm';
+      if (mode === 'audio' && !MediaRecorder.isTypeSupported('audio/mp4')) {
+        ext = '.webm';
+      }
       const suggestedName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}${ext}`;
 
       const writer = await DiskWriter.create(suggestedName);

@@ -1,72 +1,17 @@
-npm warn exec The following package was not found and will be installed: serve@14.2.6
- INFO  Accepting connections at http://localhost:3000
- HTTP  3/15/2026 12:45:55 AM ::1 HEAD /recorder
- HTTP  3/15/2026 12:45:55 AM ::1 Returned 200 in 260 ms
- HTTP  3/15/2026 12:46:05 AM ::1 GET /recorder
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 200 in 10 ms
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/media/797e433ab948586e-s.p.dbea232f.woff2
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/761773593f0434c9.css
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/media/caa3a2e1cccd8315-s.p.853070df.woff2
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 6 ms
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/4c4688e1ff21ad98.js
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/ad24b3b0881818aa.js
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/7de9141b1af425c3.js
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/8cda9f8d638aaead.js
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/turbopack-79c3e084a5805ee4.js
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/ff1a16fafef87110.js
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/0bd6498bda341889.js
- HTTP  3/15/2026 12:46:05 AM ::1 GET /tools/_next/static/chunks/49a2e408a66a6459.js
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 1 ms
- HTTP  3/15/2026 12:46:05 AM ::1 Returned 404 in 2 ms
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/recorder
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 2 ms
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/761773593f0434c9.css
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/4c4688e1ff21ad98.js
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 2 ms
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 2 ms
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/ad24b3b0881818aa.js
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/7de9141b1af425c3.js
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/8cda9f8d638aaead.js
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/turbopack-79c3e084a5805ee4.js
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/ff1a16fafef87110.js
- HTTP  3/15/2026 12:46:31 AM ::1 GET /tools/_next/static/chunks/0bd6498bda341889.js
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:31 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:59 AM ::1 GET /recorder.html
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 301 in 1 ms
- HTTP  3/15/2026 12:46:59 AM ::1 GET /recorder
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 200 in 1 ms
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/media/797e433ab948586e-s.p.dbea232f.woff2
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/761773593f0434c9.css
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/media/caa3a2e1cccd8315-s.p.853070df.woff2
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 2 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 2 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/4c4688e1ff21ad98.js
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/ad24b3b0881818aa.js
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/7de9141b1af425c3.js
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/8cda9f8d638aaead.js
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/turbopack-79c3e084a5805ee4.js
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/ff1a16fafef87110.js
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 5 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 3 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 3 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 4 ms
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/0bd6498bda341889.js
- HTTP  3/15/2026 12:46:59 AM ::1 GET /tools/_next/static/chunks/49a2e408a66a6459.js
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 2 ms
- HTTP  3/15/2026 12:46:59 AM ::1 Returned 404 in 2 ms
+
+> innosage-tools@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 1129ms
+○ Compiling /recorder ...
+ GET /recorder 200 in 6.0s (compile: 5.6s, render: 393ms)
