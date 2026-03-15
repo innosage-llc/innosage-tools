@@ -95,6 +95,11 @@ export class RecordingEngine extends EventTarget {
     this.config = config;
   }
 
+  private cleanupStreams() {
+    this.micStream?.getTracks().forEach(t => t.stop());
+    this.systemStream?.getTracks().forEach(t => t.stop());
+  }
+
   async start(writer: DiskWriter) {
     this.diskWriter = writer;
 
@@ -111,14 +116,26 @@ export class RecordingEngine extends EventTarget {
       this.systemStream = await navigator.mediaDevices.getDisplayMedia({
         video: this.config.mode === 'video' ? {
           displaySurface: 'monitor',
-        } : true, // even if audio, we need getDisplayMedia for system audio, but we'll drop video track
+        } : false,
         audio: {
           suppressLocalAudioPlayback: true,
         } as MediaTrackConstraints,
       });
     } catch (e) {
       console.warn("Could not get system stream", e);
-      // Fallback or handle error if required
+    }
+
+    const hasMicAudio = this.micStream?.getAudioTracks().length > 0;
+    const hasSysAudio = this.systemStream?.getAudioTracks().length > 0;
+
+    if (!hasMicAudio && !hasSysAudio) {
+      this.cleanupStreams();
+      throw new Error("No audio source available. Please grant microphone or system audio permissions.");
+    }
+
+    if (this.config.mode === 'video' && (!this.systemStream || this.systemStream.getVideoTracks().length === 0)) {
+      this.cleanupStreams();
+      throw new Error("No video source available. Please grant screen sharing permissions for video recording.");
     }
 
     // 2. Prepare audio

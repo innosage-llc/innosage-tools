@@ -12,6 +12,7 @@ export default function RecorderPage() {
   const [state, setState] = useState<'setup' | 'recording' | 'paused' | 'done'>('setup');
   const [mode, setMode] = useState<'audio' | 'video'>('audio');
   const [micId, setMicId] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   const [duration, setDuration] = useState(0);
   const [fileSupported, setFileSupported] = useState(true);
@@ -31,53 +32,58 @@ export default function RecorderPage() {
   }, []);
 
   const handleStart = async () => {
-    const ext = '.webm';
-    const suggestedName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}${ext}`;
+    setError(null);
+    try {
+      const ext = '.webm';
+      const suggestedName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}${ext}`;
 
-    const writer = await DiskWriter.create(suggestedName);
+      const writer = await DiskWriter.create(suggestedName);
 
-    const engine = new RecordingEngine({
-      mode,
-      micDeviceId: micId,
-      audioBitrate: 128000,
-      videoBitrate: 2500000,
-      timeslice: 1000,
-    });
+      const engine = new RecordingEngine({
+        mode,
+        micDeviceId: micId,
+        audioBitrate: 128000,
+        videoBitrate: 2500000,
+        timeslice: 1000,
+      });
 
-    engine.addEventListener('started', () => setState('recording'));
-    engine.addEventListener('paused', () => setState('paused'));
-    engine.addEventListener('resumed', () => setState('recording'));
-    engine.addEventListener('stopped', () => {
-      setState('done');
-      setMicAnalyser(null);
-      setSysAnalyser(null);
-    });
+      engine.addEventListener('started', () => setState('recording'));
+      engine.addEventListener('paused', () => setState('paused'));
+      engine.addEventListener('resumed', () => setState('recording'));
+      engine.addEventListener('stopped', () => {
+        setState('done');
+        setMicAnalyser(null);
+        setSysAnalyser(null);
+      });
 
-    engine.addEventListener('tick', (e: Event) => {
-      setDuration((e as CustomEvent<{ duration: number }>).detail.duration);
-    });
+      engine.addEventListener('tick', (e: Event) => {
+        setDuration((e as CustomEvent<{ duration: number }>).detail.duration);
+      });
 
-    await engine.start(writer);
-    engineRef.current = engine;
+      await engine.start(writer);
+      engineRef.current = engine;
 
-    // Hook up analysers if we want meters (optional extension to RecordingEngine, but we can access it if we expose it)
-    const mixer = engine.getMixer();
-    if (mixer) {
-      const actx = mixer.getAudioContext();
+      // Hook up analysers if we want meters (optional extension to RecordingEngine, but we can access it if we expose it)
+      const mixer = engine.getMixer();
+      if (mixer) {
+        const actx = mixer.getAudioContext();
 
-      const mGain = mixer.getGainNode('mic');
-      if (mGain) {
-        const mAnl = actx.createAnalyser();
-        mGain.connect(mAnl);
-        setMicAnalyser(mAnl);
+        const mGain = mixer.getGainNode('mic');
+        if (mGain) {
+          const mAnl = actx.createAnalyser();
+          mGain.connect(mAnl);
+          setMicAnalyser(mAnl);
+        }
+
+        const sGain = mixer.getGainNode('system');
+        if (sGain) {
+          const sAnl = actx.createAnalyser();
+          sGain.connect(sAnl);
+          setSysAnalyser(sAnl);
+        }
       }
-
-      const sGain = mixer.getGainNode('system');
-      if (sGain) {
-        const sAnl = actx.createAnalyser();
-        sGain.connect(sAnl);
-        setSysAnalyser(sAnl);
-      }
+    } catch (e: any) {
+      setError(e.message);
     }
   };
 
@@ -113,6 +119,13 @@ export default function RecorderPage() {
           {/* Setup State */}
           {state === 'setup' && (
             <div className="space-y-6">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start gap-3 text-sm">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <p>{error}</p>
+                </div>
+              )}
+
               {!fileSupported && (
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl flex items-start gap-3 text-sm">
                   <AlertCircle className="w-5 h-5 shrink-0" />
