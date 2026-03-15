@@ -137,6 +137,10 @@ export class RecordingEngine extends EventTarget {
             echoCancellation: false,
             autoGainControl: false,
             noiseSuppression: false,
+            googEchoCancellation: false,
+            googAutoGainControl: false,
+            googNoiseSuppression: false,
+            googHighpassFilter: false,
             channelCount: 2,
           } as MediaTrackConstraints,
         });
@@ -150,8 +154,15 @@ export class RecordingEngine extends EventTarget {
         echoCancellation: this.config.voiceEnhancement ?? false,
         autoGainControl: this.config.voiceEnhancement ?? false,
         noiseSuppression: this.config.voiceEnhancement ?? false,
+        // Chrome specific non-standard constraints for raw audio
+        ...(!this.config.voiceEnhancement ? {
+          googEchoCancellation: false,
+          googAutoGainControl: false,
+          googNoiseSuppression: false,
+          googHighpassFilter: false,
+        } : {}),
         channelCount: 2,
-      };
+      } as MediaTrackConstraints;
       if (this.config.micDeviceId) {
         audioConstraints.deviceId = this.config.micDeviceId;
       }
@@ -320,22 +331,21 @@ export class AudioMixer {
   private sysDuckingNode: GainNode | null = null;
 
   constructor() {
-    // 1. Initialize context with high-fidelity settings
+    // 1. Initialize context with hardware-native settings to avoid resampling artifacts
     this.context = new AudioContext({
-      latencyHint: 'playback',
-      sampleRate: 48000,
+      latencyHint: 'interactive',
     });
     
-    // 2. Create destination and ensure stereo (2 channels)
+    // 2. Create destination and ensure stereo
     this.destination = this.context.createMediaStreamDestination();
     this.destination.channelCount = 2;
 
-    // 3. Setup Compressor/Limiter to prevent digital clipping
+    // 3. Setup Studio-style Limiter (Soft Knee)
     this.compressor = this.context.createDynamicsCompressor();
-    this.compressor.threshold.setValueAtTime(-1.0, this.context.currentTime); // Just below 0dB
-    this.compressor.knee.setValueAtTime(40, this.context.currentTime);
-    this.compressor.ratio.setValueAtTime(12, this.context.currentTime);
-    this.compressor.attack.setValueAtTime(0, this.context.currentTime);
+    this.compressor.threshold.setValueAtTime(-18, this.context.currentTime); // Start compressing at -18dB
+    this.compressor.knee.setValueAtTime(12, this.context.currentTime); // Soft knee for transparency
+    this.compressor.ratio.setValueAtTime(4, this.context.currentTime); // 4:1 ratio
+    this.compressor.attack.setValueAtTime(0.003, this.context.currentTime); // 3ms attack
     this.compressor.release.setValueAtTime(0.25, this.context.currentTime);
 
     // 4. Connect chain
@@ -386,13 +396,13 @@ export class AudioMixer {
       for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
       const average = sum / dataArray.length;
 
-      // Threshold for ducking: if mic average > 20 (talking)
-      const isTalking = average > 20;
-      const targetGain = isTalking ? 0.15 : 1.0; // Drop to 15% volume when talking
+      // Threshold for ducking: if mic average > 25 (talking)
+      const isTalking = average > 25;
+      const targetGain = isTalking ? 0.15 : 1.0; 
       
-      // Smooth transition (linearRamp)
+      // Exponential transition for natural feel
       const now = this.context.currentTime;
-      this.sysDuckingNode.gain.linearRampToValueAtTime(targetGain, now + 0.1);
+      this.sysDuckingNode.gain.exponentialRampToValueAtTime(targetGain, now + 0.15);
     }, 50);
   }
 
