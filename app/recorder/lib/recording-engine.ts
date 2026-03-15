@@ -131,12 +131,16 @@ export class RecordingEngine extends EventTarget {
     if (this.config.captureSystemAudio) {
       try {
         this.displayStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true, // Required by some browsers to get audio
-          audio: true,
+          video: true,
+          audio: {
+            echoCancellation: false,
+            autoGainControl: false,
+            noiseSuppression: false,
+            channelCount: 2,
+          } as MediaTrackConstraints,
         });
       } catch (e) {
         console.warn("Could not get display media for system audio", e);
-        // We don't throw here, just proceed without system audio if user cancelled or it failed
       }
     }
 
@@ -145,6 +149,7 @@ export class RecordingEngine extends EventTarget {
         echoCancellation: false,
         autoGainControl: false,
         noiseSuppression: false,
+        channelCount: 2,
       };
       if (this.config.micDeviceId) {
         audioConstraints.deviceId = this.config.micDeviceId;
@@ -299,12 +304,31 @@ export class RecordingEngine extends EventTarget {
 export class AudioMixer {
   private context: AudioContext;
   private destination: MediaStreamAudioDestinationNode;
+  private compressor: DynamicsCompressorNode;
   private gainNodes: Map<string, GainNode> = new Map();
   private sources: Map<string, MediaStreamAudioSourceNode> = new Map();
 
   constructor() {
-    this.context = new AudioContext();
+    // 1. Initialize context with high-fidelity settings
+    this.context = new AudioContext({
+      latencyHint: 'playback',
+      sampleRate: 48000,
+    });
+    
+    // 2. Create destination and ensure stereo (2 channels)
     this.destination = this.context.createMediaStreamDestination();
+    this.destination.channelCount = 2;
+
+    // 3. Setup Compressor/Limiter to prevent digital clipping
+    this.compressor = this.context.createDynamicsCompressor();
+    this.compressor.threshold.setValueAtTime(-1.0, this.context.currentTime); // Just below 0dB
+    this.compressor.knee.setValueAtTime(40, this.context.currentTime);
+    this.compressor.ratio.setValueAtTime(12, this.context.currentTime);
+    this.compressor.attack.setValueAtTime(0, this.context.currentTime);
+    this.compressor.release.setValueAtTime(0.25, this.context.currentTime);
+
+    // 4. Connect chain
+    this.compressor.connect(this.destination);
   }
 
   addStream(stream: MediaStream, label: string) {
@@ -313,8 +337,11 @@ export class AudioMixer {
     const source = this.context.createMediaStreamSource(stream);
     const gainNode = this.context.createGain();
 
+    // Default gains to 0.8 for headroom before compression
+    gainNode.gain.setValueAtTime(0.8, this.context.currentTime);
+
     source.connect(gainNode);
-    gainNode.connect(this.destination);
+    gainNode.connect(this.compressor);
 
     this.sources.set(label, source);
     this.gainNodes.set(label, gainNode);
@@ -335,6 +362,7 @@ export class AudioMixer {
   dispose() {
     this.sources.forEach(source => source.disconnect());
     this.gainNodes.forEach(gainNode => gainNode.disconnect());
+    this.compressor.disconnect();
     this.destination.disconnect();
 
     this.sources.clear();

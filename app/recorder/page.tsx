@@ -48,7 +48,7 @@ export default function RecorderPage() {
         micDeviceId: micId,
         camDeviceId: camId,
         captureSystemAudio,
-        audioBitrate: 128000,
+        audioBitrate: 320000,
         videoBitrate: 2500000,
         timeslice: 1000,
       });
