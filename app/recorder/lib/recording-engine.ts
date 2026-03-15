@@ -82,6 +82,7 @@ export type RecordingConfig = {
   mode: 'audio' | 'video';
   micDeviceId?: string;
   camDeviceId?: string;
+  captureSystemAudio?: boolean;
   audioBitrate: number; // default 128000
   videoBitrate: number; // default 2500000
   timeslice: number;    // default 1000 (ms)
@@ -95,6 +96,7 @@ export class RecordingEngine extends EventTarget {
 
   private micStream: MediaStream | null = null;
   private systemStream: MediaStream | null = null;
+  private displayStream: MediaStream | null = null;
 
   private startTime: number = 0;
   private duration: number = 0;
@@ -109,6 +111,7 @@ export class RecordingEngine extends EventTarget {
   private cleanupStreams() {
     this.micStream?.getTracks().forEach(t => t.stop());
     this.systemStream?.getTracks().forEach(t => t.stop());
+    this.displayStream?.getTracks().forEach(t => t.stop());
   }
 
   async start(writer: DiskWriter) {
@@ -123,9 +126,18 @@ export class RecordingEngine extends EventTarget {
       } catch (e) {
         console.warn("Could not get camera stream", e);
       }
-    } else {
-      // For audio mode, we might still want system audio. The UX for this is tricky.
-      // For now, let's stick to mic audio only in audio mode.
+    }
+
+    if (this.config.captureSystemAudio) {
+      try {
+        this.displayStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true, // Required by some browsers to get audio
+          audio: true,
+        });
+      } catch (e) {
+        console.warn("Could not get display media for system audio", e);
+        // We don't throw here, just proceed without system audio if user cancelled or it failed
+      }
     }
 
     try {
@@ -145,10 +157,11 @@ export class RecordingEngine extends EventTarget {
     }
 
     const hasMicAudio = this.micStream ? this.micStream.getAudioTracks().length > 0 : false;
+    const hasSysAudio = this.displayStream ? this.displayStream.getAudioTracks().length > 0 : false;
 
-    if (!hasMicAudio) {
+    if (!hasMicAudio && !hasSysAudio) {
       this.cleanupStreams();
-      throw new Error("No audio source available. Please grant microphone permissions.");
+      throw new Error("No audio source available. Please grant microphone permissions or share system audio.");
     }
 
     if (this.config.mode === 'video' && (!this.systemStream || this.systemStream.getVideoTracks().length === 0)) {
@@ -161,7 +174,9 @@ export class RecordingEngine extends EventTarget {
     if (this.micStream) {
       this.mixer.addStream(this.micStream, 'mic');
     }
-    // Note: We are no longer capturing system audio in this simplified setup.
+    if (this.displayStream && hasSysAudio) {
+      this.mixer.addStream(this.displayStream, 'system');
+    }
 
     // 3. Prepare final stream
     const finalStream = new MediaStream();
@@ -251,6 +266,7 @@ export class RecordingEngine extends EventTarget {
     }
     this.micStream?.getTracks().forEach(t => t.stop());
     this.systemStream?.getTracks().forEach(t => t.stop());
+    this.displayStream?.getTracks().forEach(t => t.stop());
     this.mixer?.dispose();
     this.chunks = [];
     this.dispatchEvent(new Event('stopped'));

@@ -12,6 +12,7 @@ export default function RecorderPage() {
   const [mode, setMode] = useState<'audio' | 'video'>('audio');
   const [micId, setMicId] = useState<string>('');
   const [camId, setCamId] = useState<string>('');
+  const [captureSystemAudio, setCaptureSystemAudio] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const [duration, setDuration] = useState(0);
@@ -46,6 +47,7 @@ export default function RecorderPage() {
         mode,
         micDeviceId: micId,
         camDeviceId: camId,
+        captureSystemAudio,
         audioBitrate: 128000,
         videoBitrate: 2500000,
         timeslice: 1000,
@@ -170,6 +172,25 @@ export default function RecorderPage() {
                 {mode === 'video' && (
                   <DeviceSelector mediaType="video" selectedDeviceId={camId} onChange={setCamId} />
                 )}
+
+                <div className="pt-2">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={captureSystemAudio}
+                        onChange={(e) => setCaptureSystemAudio(e.target.checked)}
+                      />
+                      <div className={`w-10 h-6 rounded-full transition-colors ${captureSystemAudio ? 'bg-orange-600' : 'bg-zinc-300'}`}></div>
+                      <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${captureSystemAudio ? 'translate-x-4' : ''}`}></div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-zinc-700">Include System Audio</span>
+                      <span className="text-xs text-zinc-500">Captures media output (requires screen sharing permissions)</span>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <button
