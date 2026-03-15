@@ -7,17 +7,33 @@ export class DiskWriter {
     return 'showSaveFilePicker' in window;
   }
 
-  static async create(suggestedName: string): Promise<DiskWriter> {
+  static async create(suggestedName: string, mode: 'audio' | 'video' = 'video'): Promise<DiskWriter> {
     const writer = new DiskWriter();
 
     if (this.isSupported()) {
       try {
+        let types = [{
+          description: 'WebM Video',
+          accept: { 'video/webm': ['.webm'] },
+        }];
+
+        if (mode === 'audio') {
+            if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                types = [{
+                    description: 'M4A Audio',
+                    accept: { 'audio/mp4': ['.m4a'] },
+                }];
+            } else {
+                types = [{
+                    description: 'WebM Audio',
+                    accept: { 'audio/webm': ['.webm'] },
+                }];
+            }
+        }
+
         const handle = await window.showSaveFilePicker({
           suggestedName,
-          types: [{
-            description: 'WebM Video',
-            accept: { 'video/webm': ['.webm'] },
-          }],
+          types,
         });
         writer.fileHandle = handle;
         writer.writer = await handle.createWritable();
@@ -49,11 +65,12 @@ export class DiskWriter {
       await this.writer.close();
     } else {
       // Fallback: trigger download
-      const blob = finalBlob || new Blob(this.chunks, { type: 'video/webm' });
+      const type = this.chunks.length > 0 ? this.chunks[0].type : 'video/webm';
+      const blob = finalBlob || new Blob(this.chunks, { type });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = this.fileHandle?.name || 'recording.webm';
+      a.download = this.fileHandle?.name || (type.includes('audio') ? 'recording.m4a' : 'recording.webm');
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -161,8 +178,18 @@ export class RecordingEngine extends EventTarget {
 
     // 4. Setup MediaRecorder
     let mimeType = 'video/webm;codecs=vp8,opus';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-      mimeType = 'video/webm';
+    if (this.config.mode === 'audio') {
+      mimeType = 'audio/mp4';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm;codecs=opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/webm';
+        }
+      }
+    } else {
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm';
+      }
     }
 
     this.mediaRecorder = new MediaRecorder(finalStream, {
@@ -185,10 +212,15 @@ export class RecordingEngine extends EventTarget {
         // Fallback: fix duration for the memory blob
         const buggedBlob = new Blob(this.chunks, { type: mimeType });
 
-        ysFixWebmDuration(buggedBlob, this.duration, async (fixedBlob) => {
-          await this.diskWriter?.close(fixedBlob);
+        if (mimeType.includes('webm')) {
+          ysFixWebmDuration(buggedBlob, this.duration, async (fixedBlob) => {
+            await this.diskWriter?.close(fixedBlob);
+            this.cleanup();
+          });
+        } else {
+          await this.diskWriter?.close(buggedBlob);
           this.cleanup();
-        });
+        }
       } else {
         // Disk writer: just close it (streaming duration might be Infinity, but doesn't crash browser with OOM)
         await this.diskWriter?.close();
