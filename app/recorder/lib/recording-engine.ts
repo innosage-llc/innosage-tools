@@ -88,6 +88,7 @@ export class RecordingEngine extends EventTarget {
   private startTime: number = 0;
   private duration: number = 0;
   private chunks: Blob[] = []; // Only used for fallback
+  private tickIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: RecordingConfig) {
     super();
@@ -113,8 +114,7 @@ export class RecordingEngine extends EventTarget {
         } : true, // even if audio, we need getDisplayMedia for system audio, but we'll drop video track
         audio: {
           suppressLocalAudioPlayback: true,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
+        } as MediaTrackConstraints,
       });
     } catch (e) {
       console.warn("Could not get system stream", e);
@@ -190,7 +190,7 @@ export class RecordingEngine extends EventTarget {
     this.dispatchEvent(new Event('started'));
 
     // Tick interval
-    setInterval(() => {
+    this.tickIntervalId = setInterval(() => {
       if (this.mediaRecorder?.state === 'recording') {
         this.duration = Date.now() - this.startTime;
         this.dispatchEvent(new CustomEvent('tick', { detail: { duration: this.duration } }));
@@ -198,7 +198,15 @@ export class RecordingEngine extends EventTarget {
     }, 1000);
   }
 
+  public getMixer(): AudioMixer | null {
+    return this.mixer;
+  }
+
   private cleanup() {
+    if (this.tickIntervalId) {
+      clearInterval(this.tickIntervalId);
+      this.tickIntervalId = null;
+    }
     this.micStream?.getTracks().forEach(t => t.stop());
     this.systemStream?.getTracks().forEach(t => t.stop());
     this.mixer?.dispose();

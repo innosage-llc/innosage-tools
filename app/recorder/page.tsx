@@ -31,7 +31,7 @@ export default function RecorderPage() {
   }, []);
 
   const handleStart = async () => {
-    const ext = mode === 'audio' ? '.webm' : '.webm';
+    const ext = '.webm';
     const suggestedName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}${ext}`;
 
     const writer = await DiskWriter.create(suggestedName);
@@ -53,18 +53,15 @@ export default function RecorderPage() {
       setSysAnalyser(null);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    engine.addEventListener('tick', (e: any) => {
-      setDuration(e.detail.duration);
+    engine.addEventListener('tick', (e: Event) => {
+      setDuration((e as CustomEvent<{ duration: number }>).detail.duration);
     });
 
     await engine.start(writer);
     engineRef.current = engine;
 
     // Hook up analysers if we want meters (optional extension to RecordingEngine, but we can access it if we expose it)
-    // For simplicity, we could expose `engine.getMixer()` to attach analysers, let's assume we do.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mixer = (engine as any).mixer;
+    const mixer = engine.getMixer();
     if (mixer) {
       const actx = mixer.getAudioContext();
 

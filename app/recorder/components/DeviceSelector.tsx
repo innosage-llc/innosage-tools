@@ -24,9 +24,12 @@ export function DeviceSelector({ selectedDeviceId, onChange }: DeviceSelectorPro
         if (audioDevices.length > 0 && !selectedDeviceId) {
           onChange(audioDevices[0].deviceId);
         }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        console.warn('Could not list media devices:', err);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.warn('Could not list media devices:', err.message);
+        } else {
+          console.warn('Could not list media devices:', err);
+        }
         setError('Microphone permission required.');
       }
     }

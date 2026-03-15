@@ -25,10 +25,7 @@ export function AudioLevelMeter({ analyser, label }: AudioLevelMeterProps) {
       analyser.getByteFrequencyData(dataArray);
 
       // Calculate average volume level
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i];
-      }
+      const sum = dataArray.reduce((acc, value) => acc + value, 0);
       const avg = sum / dataArray.length;
       const pct = (avg / 255) * 100;
 
