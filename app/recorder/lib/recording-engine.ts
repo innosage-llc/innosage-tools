@@ -83,6 +83,7 @@ export type RecordingConfig = {
   micDeviceId?: string;
   camDeviceId?: string;
   captureSystemAudio?: boolean;
+  voiceEnhancement?: boolean;
   audioBitrate: number; // default 128000
   videoBitrate: number; // default 2500000
   timeslice: number;    // default 1000 (ms)
@@ -131,21 +132,37 @@ export class RecordingEngine extends EventTarget {
     if (this.config.captureSystemAudio) {
       try {
         this.displayStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true, // Required by some browsers to get audio
-          audio: true,
+          video: true,
+          audio: {
+            echoCancellation: false,
+            autoGainControl: false,
+            noiseSuppression: false,
+            googEchoCancellation: false,
+            googAutoGainControl: false,
+            googNoiseSuppression: false,
+            googHighpassFilter: false,
+            channelCount: 2,
+          } as MediaTrackConstraints,
         });
       } catch (e) {
         console.warn("Could not get display media for system audio", e);
-        // We don't throw here, just proceed without system audio if user cancelled or it failed
       }
     }
 
     try {
       const audioConstraints: MediaTrackConstraints = {
-        echoCancellation: false,
-        autoGainControl: false,
-        noiseSuppression: false,
-      };
+        echoCancellation: this.config.voiceEnhancement ?? false,
+        autoGainControl: this.config.voiceEnhancement ?? false,
+        noiseSuppression: this.config.voiceEnhancement ?? false,
+        // Chrome specific non-standard constraints for raw audio
+        ...(!this.config.voiceEnhancement ? {
+          googEchoCancellation: false,
+          googAutoGainControl: false,
+          googNoiseSuppression: false,
+          googHighpassFilter: false,
+        } : {}),
+        channelCount: 2,
+      } as MediaTrackConstraints;
       if (this.config.micDeviceId) {
         audioConstraints.deviceId = this.config.micDeviceId;
       }
@@ -176,6 +193,11 @@ export class RecordingEngine extends EventTarget {
     }
     if (this.displayStream && hasSysAudio) {
       this.mixer.addStream(this.displayStream, 'system');
+      
+      // Enable sidechain ducking if both exist
+      if (this.micStream) {
+        this.mixer.enableDucking('mic', 'system');
+      }
     }
 
     // 3. Prepare final stream
@@ -299,12 +321,35 @@ export class RecordingEngine extends EventTarget {
 export class AudioMixer {
   private context: AudioContext;
   private destination: MediaStreamAudioDestinationNode;
+  private compressor: DynamicsCompressorNode;
   private gainNodes: Map<string, GainNode> = new Map();
   private sources: Map<string, MediaStreamAudioSourceNode> = new Map();
 
+  // Ducking state
+  private duckingInterval: ReturnType<typeof setInterval> | null = null;
+  private micAnalyser: AnalyserNode | null = null;
+  private sysDuckingNode: GainNode | null = null;
+
   constructor() {
-    this.context = new AudioContext();
+    // 1. Initialize context with hardware-native settings to avoid resampling artifacts
+    this.context = new AudioContext({
+      latencyHint: 'interactive',
+    });
+    
+    // 2. Create destination and ensure stereo
     this.destination = this.context.createMediaStreamDestination();
+    this.destination.channelCount = 2;
+
+    // 3. Setup Studio-style Limiter (Soft Knee)
+    this.compressor = this.context.createDynamicsCompressor();
+    this.compressor.threshold.setValueAtTime(-18, this.context.currentTime); // Start compressing at -18dB
+    this.compressor.knee.setValueAtTime(12, this.context.currentTime); // Soft knee for transparency
+    this.compressor.ratio.setValueAtTime(4, this.context.currentTime); // 4:1 ratio
+    this.compressor.attack.setValueAtTime(0.003, this.context.currentTime); // 3ms attack
+    this.compressor.release.setValueAtTime(0.25, this.context.currentTime);
+
+    // 4. Connect chain
+    this.compressor.connect(this.destination);
   }
 
   addStream(stream: MediaStream, label: string) {
@@ -313,11 +358,52 @@ export class AudioMixer {
     const source = this.context.createMediaStreamSource(stream);
     const gainNode = this.context.createGain();
 
+    // Default gains to 0.8 for headroom before compression
+    gainNode.gain.setValueAtTime(0.8, this.context.currentTime);
+
     source.connect(gainNode);
-    gainNode.connect(this.destination);
+    
+    // If this is the system stream, we might want to insert a ducking node
+    if (label === 'system') {
+      this.sysDuckingNode = this.context.createGain();
+      gainNode.connect(this.sysDuckingNode);
+      this.sysDuckingNode.connect(this.compressor);
+    } else {
+      gainNode.connect(this.compressor);
+    }
 
     this.sources.set(label, source);
     this.gainNodes.set(label, gainNode);
+  }
+
+  enableDucking(triggerLabel: string, targetLabel: string) {
+    const triggerSource = this.sources.get(triggerLabel);
+    if (!triggerSource || targetLabel !== 'system' || !this.sysDuckingNode) return;
+
+    // 1. Create analyser to monitor mic levels
+    this.micAnalyser = this.context.createAnalyser();
+    this.micAnalyser.fftSize = 256;
+    triggerSource.connect(this.micAnalyser);
+
+    const dataArray = new Uint8Array(this.micAnalyser.frequencyBinCount);
+    
+    // 2. Monitoring loop for "Sidechain Ducking"
+    this.duckingInterval = setInterval(() => {
+      if (!this.micAnalyser || !this.sysDuckingNode) return;
+      
+      this.micAnalyser.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+      const average = sum / dataArray.length;
+
+      // Threshold for ducking: if mic average > 25 (talking)
+      const isTalking = average > 25;
+      const targetGain = isTalking ? 0.15 : 1.0; 
+      
+      // Exponential transition for natural feel
+      const now = this.context.currentTime;
+      this.sysDuckingNode.gain.exponentialRampToValueAtTime(targetGain, now + 0.15);
+    }, 50);
   }
 
   getGainNode(label: string): GainNode | undefined {
@@ -333,8 +419,11 @@ export class AudioMixer {
   }
 
   dispose() {
+    if (this.duckingInterval) clearInterval(this.duckingInterval);
     this.sources.forEach(source => source.disconnect());
     this.gainNodes.forEach(gainNode => gainNode.disconnect());
+    if (this.sysDuckingNode) this.sysDuckingNode.disconnect();
+    this.compressor.disconnect();
     this.destination.disconnect();
 
     this.sources.clear();
