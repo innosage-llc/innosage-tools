@@ -13,6 +13,7 @@ export default function RecorderPage() {
   const [micId, setMicId] = useState<string>('');
   const [camId, setCamId] = useState<string>('');
   const [captureSystemAudio, setCaptureSystemAudio] = useState<boolean>(false);
+  const [voiceEnhancement, setVoiceEnhancement] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const [duration, setDuration] = useState(0);
@@ -48,6 +49,7 @@ export default function RecorderPage() {
         micDeviceId: micId,
         camDeviceId: camId,
         captureSystemAudio,
+        voiceEnhancement,
         audioBitrate: 320000,
         videoBitrate: 2500000,
         timeslice: 1000,
@@ -173,7 +175,7 @@ export default function RecorderPage() {
                   <DeviceSelector mediaType="video" selectedDeviceId={camId} onChange={setCamId} />
                 )}
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-3">
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative">
                       <input
@@ -187,9 +189,33 @@ export default function RecorderPage() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-zinc-700">Include System Audio</span>
-                      <span className="text-xs text-zinc-500">Captures media output (requires screen sharing permissions)</span>
+                      <span className="text-xs text-zinc-500">Captures media output (Ducking enabled)</span>
                     </div>
                   </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={voiceEnhancement}
+                        onChange={(e) => setVoiceEnhancement(e.target.checked)}
+                      />
+                      <div className={`w-10 h-6 rounded-full transition-colors ${voiceEnhancement ? 'bg-orange-600' : 'bg-zinc-300'}`}></div>
+                      <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${voiceEnhancement ? 'translate-x-4' : ''}`}></div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-zinc-700">Voice Enhancement</span>
+                      <span className="text-xs text-zinc-500">Enable Noise Suppression & Echo Cancellation</span>
+                    </div>
+                  </label>
+
+                  {captureSystemAudio && (
+                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center gap-2 text-blue-700 text-xs mt-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Recommended: Use headphones to prevent audio loopback.</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

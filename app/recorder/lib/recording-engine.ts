@@ -83,6 +83,7 @@ export type RecordingConfig = {
   micDeviceId?: string;
   camDeviceId?: string;
   captureSystemAudio?: boolean;
+  voiceEnhancement?: boolean;
   audioBitrate: number; // default 128000
   videoBitrate: number; // default 2500000
   timeslice: number;    // default 1000 (ms)
@@ -146,9 +147,9 @@ export class RecordingEngine extends EventTarget {
 
     try {
       const audioConstraints: MediaTrackConstraints = {
-        echoCancellation: false,
-        autoGainControl: false,
-        noiseSuppression: false,
+        echoCancellation: this.config.voiceEnhancement ?? false,
+        autoGainControl: this.config.voiceEnhancement ?? false,
+        noiseSuppression: this.config.voiceEnhancement ?? false,
         channelCount: 2,
       };
       if (this.config.micDeviceId) {
@@ -181,6 +182,11 @@ export class RecordingEngine extends EventTarget {
     }
     if (this.displayStream && hasSysAudio) {
       this.mixer.addStream(this.displayStream, 'system');
+      
+      // Enable sidechain ducking if both exist
+      if (this.micStream) {
+        this.mixer.enableDucking('mic', 'system');
+      }
     }
 
     // 3. Prepare final stream
@@ -308,6 +314,11 @@ export class AudioMixer {
   private gainNodes: Map<string, GainNode> = new Map();
   private sources: Map<string, MediaStreamAudioSourceNode> = new Map();
 
+  // Ducking state
+  private duckingInterval: ReturnType<typeof setInterval> | null = null;
+  private micAnalyser: AnalyserNode | null = null;
+  private sysDuckingNode: GainNode | null = null;
+
   constructor() {
     // 1. Initialize context with high-fidelity settings
     this.context = new AudioContext({
@@ -341,10 +352,48 @@ export class AudioMixer {
     gainNode.gain.setValueAtTime(0.8, this.context.currentTime);
 
     source.connect(gainNode);
-    gainNode.connect(this.compressor);
+    
+    // If this is the system stream, we might want to insert a ducking node
+    if (label === 'system') {
+      this.sysDuckingNode = this.context.createGain();
+      gainNode.connect(this.sysDuckingNode);
+      this.sysDuckingNode.connect(this.compressor);
+    } else {
+      gainNode.connect(this.compressor);
+    }
 
     this.sources.set(label, source);
     this.gainNodes.set(label, gainNode);
+  }
+
+  enableDucking(triggerLabel: string, targetLabel: string) {
+    const triggerSource = this.sources.get(triggerLabel);
+    if (!triggerSource || targetLabel !== 'system' || !this.sysDuckingNode) return;
+
+    // 1. Create analyser to monitor mic levels
+    this.micAnalyser = this.context.createAnalyser();
+    this.micAnalyser.fftSize = 256;
+    triggerSource.connect(this.micAnalyser);
+
+    const dataArray = new Uint8Array(this.micAnalyser.frequencyBinCount);
+    
+    // 2. Monitoring loop for "Sidechain Ducking"
+    this.duckingInterval = setInterval(() => {
+      if (!this.micAnalyser || !this.sysDuckingNode) return;
+      
+      this.micAnalyser.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+      const average = sum / dataArray.length;
+
+      // Threshold for ducking: if mic average > 20 (talking)
+      const isTalking = average > 20;
+      const targetGain = isTalking ? 0.15 : 1.0; // Drop to 15% volume when talking
+      
+      // Smooth transition (linearRamp)
+      const now = this.context.currentTime;
+      this.sysDuckingNode.gain.linearRampToValueAtTime(targetGain, now + 0.1);
+    }, 50);
   }
 
   getGainNode(label: string): GainNode | undefined {
@@ -360,8 +409,10 @@ export class AudioMixer {
   }
 
   dispose() {
+    if (this.duckingInterval) clearInterval(this.duckingInterval);
     this.sources.forEach(source => source.disconnect());
     this.gainNodes.forEach(gainNode => gainNode.disconnect());
+    if (this.sysDuckingNode) this.sysDuckingNode.disconnect();
     this.compressor.disconnect();
     this.destination.disconnect();
 
