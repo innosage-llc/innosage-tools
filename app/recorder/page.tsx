@@ -34,16 +34,17 @@ export default function RecorderPage() {
   const handleStart = async () => {
     setError(null);
     try {
-      const ext = '.webm';
+      const supportsMp4 = MediaRecorder.isTypeSupported('audio/mp4');
+      const ext = mode === 'audio' ? (supportsMp4 ? '.m4a' : '.webm') : '.webm';
       const suggestedName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}${ext}`;
 
-      const writer = await DiskWriter.create(suggestedName);
+      const writer = await DiskWriter.create(suggestedName, mode, supportsMp4);
 
       const engine = new RecordingEngine({
         mode,
         micDeviceId: micId,
         camDeviceId: camId,
-        audioBitrate: 128000,
+        audioBitrate: 256000,
         videoBitrate: 2500000,
         timeslice: 1000,
       });
