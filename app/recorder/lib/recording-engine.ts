@@ -7,17 +7,23 @@ export class DiskWriter {
     return 'showSaveFilePicker' in window;
   }
 
-  static async create(suggestedName: string): Promise<DiskWriter> {
+  static async create(suggestedName: string, mode: 'audio' | 'video' = 'video', supportsMp4: boolean = false): Promise<DiskWriter> {
     const writer = new DiskWriter();
 
     if (this.isSupported()) {
       try {
         const handle = await window.showSaveFilePicker({
           suggestedName,
-          types: [{
+          types: mode === 'audio' && supportsMp4 ? [{
+            description: 'M4A Audio',
+            accept: { 'audio/mp4': ['.m4a'] },
+          }] : (mode === 'audio' ? [{
+            description: 'WebM Audio',
+            accept: { 'audio/webm': ['.webm'] },
+          }] : [{
             description: 'WebM Video',
             accept: { 'video/webm': ['.webm'] },
-          }],
+          }]),
         });
         writer.fileHandle = handle;
         writer.writer = await handle.createWritable();
@@ -38,7 +44,7 @@ export class DiskWriter {
     }
   }
 
-  async close(finalBlob?: Blob) {
+  async close(finalBlob?: Blob, fallbackMimeType?: string) {
     if (this.writer) {
       // We do not overwrite if streaming continuously.
       if (finalBlob) {
@@ -49,11 +55,13 @@ export class DiskWriter {
       await this.writer.close();
     } else {
       // Fallback: trigger download
-      const blob = finalBlob || new Blob(this.chunks, { type: 'video/webm' });
+      const mimeType = fallbackMimeType || 'video/webm';
+      const defaultExt = mimeType.includes('mp4') ? 'm4a' : 'webm';
+      const blob = finalBlob || new Blob(this.chunks, { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = this.fileHandle?.name || 'recording.webm';
+      a.download = this.fileHandle?.name || `recording.${defaultExt}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -72,7 +80,7 @@ export type RecordingConfig = {
   mode: 'audio' | 'video';
   micDeviceId?: string;
   camDeviceId?: string;
-  audioBitrate: number; // default 128000
+  audioBitrate: number; // default 256000
   videoBitrate: number; // default 2500000
   timeslice: number;    // default 1000 (ms)
 };
@@ -120,7 +128,12 @@ export class RecordingEngine extends EventTarget {
 
     try {
       this.micStream = await navigator.mediaDevices.getUserMedia({
-        audio: this.config.micDeviceId ? { deviceId: this.config.micDeviceId } : true,
+        audio: {
+          ...(this.config.micDeviceId ? { deviceId: this.config.micDeviceId } : {}),
+          echoCancellation: false,
+          autoGainControl: false,
+          noiseSuppression: false,
+        },
       });
     } catch (e) {
       console.warn("Could not get mic stream", e);
@@ -161,7 +174,9 @@ export class RecordingEngine extends EventTarget {
 
     // 4. Setup MediaRecorder
     let mimeType = 'video/webm;codecs=vp8,opus';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
+    if (this.config.mode === 'audio' && MediaRecorder.isTypeSupported('audio/mp4')) {
+      mimeType = 'audio/mp4';
+    } else if (!MediaRecorder.isTypeSupported(mimeType)) {
       mimeType = 'video/webm';
     }
 
@@ -185,13 +200,18 @@ export class RecordingEngine extends EventTarget {
         // Fallback: fix duration for the memory blob
         const buggedBlob = new Blob(this.chunks, { type: mimeType });
 
-        ysFixWebmDuration(buggedBlob, this.duration, async (fixedBlob) => {
-          await this.diskWriter?.close(fixedBlob);
+        if (mimeType.includes('webm')) {
+          ysFixWebmDuration(buggedBlob, this.duration, async (fixedBlob) => {
+            await this.diskWriter?.close(fixedBlob, mimeType);
+            this.cleanup();
+          });
+        } else {
+          await this.diskWriter?.close(buggedBlob, mimeType);
           this.cleanup();
-        });
+        }
       } else {
         // Disk writer: just close it (streaming duration might be Infinity, but doesn't crash browser with OOM)
-        await this.diskWriter?.close();
+        await this.diskWriter?.close(undefined, mimeType);
         this.cleanup();
       }
     };
