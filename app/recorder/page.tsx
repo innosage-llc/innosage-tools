@@ -12,6 +12,7 @@ export default function RecorderPage() {
   const [state, setState] = useState<'setup' | 'recording' | 'paused' | 'done'>('setup');
   const [mode, setMode] = useState<'audio' | 'video'>('audio');
   const [micId, setMicId] = useState<string>('');
+  const [camId, setCamId] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   const [duration, setDuration] = useState(0);
@@ -42,6 +43,7 @@ export default function RecorderPage() {
       const engine = new RecordingEngine({
         mode,
         micDeviceId: micId,
+        camDeviceId: camId,
         audioBitrate: 128000,
         videoBitrate: 2500000,
         timeslice: 1000,
@@ -158,7 +160,10 @@ export default function RecorderPage() {
                 <div className="flex items-center gap-2 text-zinc-700 font-semibold pb-2 border-b border-zinc-200">
                   <Settings2 className="w-4 h-4" /> Configuration
                 </div>
-                <DeviceSelector selectedDeviceId={micId} onChange={setMicId} />
+                <DeviceSelector mediaType="audio" selectedDeviceId={micId} onChange={setMicId} />
+                {mode === 'video' && (
+                  <DeviceSelector mediaType="video" selectedDeviceId={camId} onChange={setCamId} />
+                )}
               </div>
 
               <button
@@ -200,7 +205,7 @@ export default function RecorderPage() {
                   </button>
                 ) : (
                   <button onClick={handleResume} className="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
-                    <Play className="w-6 h-6 fill-current" />
+                    <Play className.tsx="w-6 h-6 fill-current" />
                   </button>
                 )}
 
