@@ -7,14 +7,21 @@ export class DiskWriter {
     return 'showSaveFilePicker' in window;
   }
 
+  private suggestedName: string = '';
+
   static async create(suggestedName: string): Promise<DiskWriter> {
     const writer = new DiskWriter();
+    writer.suggestedName = suggestedName;
+    const isAudio = suggestedName.endsWith('.m4a');
 
     if (this.isSupported()) {
       try {
         const handle = await window.showSaveFilePicker({
           suggestedName,
-          types: [{
+          types: [isAudio ? {
+            description: 'M4A Audio',
+            accept: { 'audio/mp4': ['.m4a'] },
+          } : {
             description: 'WebM Video',
             accept: { 'video/webm': ['.webm'] },
           }],
@@ -49,11 +56,14 @@ export class DiskWriter {
       await this.writer.close();
     } else {
       // Fallback: trigger download
-      const blob = finalBlob || new Blob(this.chunks, { type: 'video/webm' });
+      const isAudio = this.suggestedName.endsWith('.m4a');
+      const type = isAudio ? 'audio/mp4' : 'video/webm';
+      const defaultName = isAudio ? 'recording.m4a' : 'recording.webm';
+      const blob = finalBlob || new Blob(this.chunks, { type });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = this.fileHandle?.name || 'recording.webm';
+      a.download = this.fileHandle?.name || this.suggestedName || defaultName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -72,6 +82,7 @@ export type RecordingConfig = {
   mode: 'audio' | 'video';
   micDeviceId?: string;
   camDeviceId?: string;
+  captureSystemAudio?: boolean;
   audioBitrate: number; // default 128000
   videoBitrate: number; // default 2500000
   timeslice: number;    // default 1000 (ms)
@@ -85,6 +96,7 @@ export class RecordingEngine extends EventTarget {
 
   private micStream: MediaStream | null = null;
   private systemStream: MediaStream | null = null;
+  private displayStream: MediaStream | null = null;
 
   private startTime: number = 0;
   private duration: number = 0;
@@ -99,6 +111,7 @@ export class RecordingEngine extends EventTarget {
   private cleanupStreams() {
     this.micStream?.getTracks().forEach(t => t.stop());
     this.systemStream?.getTracks().forEach(t => t.stop());
+    this.displayStream?.getTracks().forEach(t => t.stop());
   }
 
   async start(writer: DiskWriter) {
@@ -113,24 +126,42 @@ export class RecordingEngine extends EventTarget {
       } catch (e) {
         console.warn("Could not get camera stream", e);
       }
-    } else {
-      // For audio mode, we might still want system audio. The UX for this is tricky.
-      // For now, let's stick to mic audio only in audio mode.
+    }
+
+    if (this.config.captureSystemAudio) {
+      try {
+        this.displayStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true, // Required by some browsers to get audio
+          audio: true,
+        });
+      } catch (e) {
+        console.warn("Could not get display media for system audio", e);
+        // We don't throw here, just proceed without system audio if user cancelled or it failed
+      }
     }
 
     try {
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: false,
+        autoGainControl: false,
+        noiseSuppression: false,
+      };
+      if (this.config.micDeviceId) {
+        audioConstraints.deviceId = this.config.micDeviceId;
+      }
       this.micStream = await navigator.mediaDevices.getUserMedia({
-        audio: this.config.micDeviceId ? { deviceId: this.config.micDeviceId } : true,
+        audio: audioConstraints,
       });
     } catch (e) {
       console.warn("Could not get mic stream", e);
     }
 
     const hasMicAudio = this.micStream ? this.micStream.getAudioTracks().length > 0 : false;
+    const hasSysAudio = this.displayStream ? this.displayStream.getAudioTracks().length > 0 : false;
 
-    if (!hasMicAudio) {
+    if (!hasMicAudio && !hasSysAudio) {
       this.cleanupStreams();
-      throw new Error("No audio source available. Please grant microphone permissions.");
+      throw new Error("No audio source available. Please grant microphone permissions or share system audio.");
     }
 
     if (this.config.mode === 'video' && (!this.systemStream || this.systemStream.getVideoTracks().length === 0)) {
@@ -143,7 +174,9 @@ export class RecordingEngine extends EventTarget {
     if (this.micStream) {
       this.mixer.addStream(this.micStream, 'mic');
     }
-    // Note: We are no longer capturing system audio in this simplified setup.
+    if (this.displayStream && hasSysAudio) {
+      this.mixer.addStream(this.displayStream, 'system');
+    }
 
     // 3. Prepare final stream
     const finalStream = new MediaStream();
@@ -161,8 +194,15 @@ export class RecordingEngine extends EventTarget {
 
     // 4. Setup MediaRecorder
     let mimeType = 'video/webm;codecs=vp8,opus';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-      mimeType = 'video/webm';
+    if (this.config.mode === 'audio') {
+      mimeType = 'audio/mp4';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm';
+      }
+    } else {
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm';
+      }
     }
 
     this.mediaRecorder = new MediaRecorder(finalStream, {
@@ -185,10 +225,15 @@ export class RecordingEngine extends EventTarget {
         // Fallback: fix duration for the memory blob
         const buggedBlob = new Blob(this.chunks, { type: mimeType });
 
-        ysFixWebmDuration(buggedBlob, this.duration, async (fixedBlob) => {
-          await this.diskWriter?.close(fixedBlob);
+        if (mimeType.includes('webm')) {
+          ysFixWebmDuration(buggedBlob, this.duration, async (fixedBlob) => {
+            await this.diskWriter?.close(fixedBlob);
+            this.cleanup();
+          });
+        } else {
+          await this.diskWriter?.close(buggedBlob);
           this.cleanup();
-        });
+        }
       } else {
         // Disk writer: just close it (streaming duration might be Infinity, but doesn't crash browser with OOM)
         await this.diskWriter?.close();
@@ -221,6 +266,7 @@ export class RecordingEngine extends EventTarget {
     }
     this.micStream?.getTracks().forEach(t => t.stop());
     this.systemStream?.getTracks().forEach(t => t.stop());
+    this.displayStream?.getTracks().forEach(t => t.stop());
     this.mixer?.dispose();
     this.chunks = [];
     this.dispatchEvent(new Event('stopped'));
