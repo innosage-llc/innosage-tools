@@ -1,5 +1,4 @@
 "use client";
-
 import { ToolsLayout } from '@/components/ToolsLayout';
 import { useState, useRef, useEffect } from 'react';
 import { RecordingEngine, DiskWriter } from './lib/recording-engine';
@@ -84,8 +83,12 @@ export default function RecorderPage() {
           setSysAnalyser(sAnl);
         }
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError('An unknown error occurred');
+      }
     }
   };
 
@@ -205,7 +208,7 @@ export default function RecorderPage() {
                   </button>
                 ) : (
                   <button onClick={handleResume} className="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
-                    <Play className.tsx="w-6 h-6 fill-current" />
+                    <Play className="w-6 h-6 fill-current" />
                   </button>
                 )}
 

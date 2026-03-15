@@ -126,7 +126,7 @@ export class RecordingEngine extends EventTarget {
       console.warn("Could not get mic stream", e);
     }
 
-    const hasMicAudio = this.micStream?.getAudioTracks().length > 0;
+    const hasMicAudio = this.micStream ? this.micStream.getAudioTracks().length > 0 : false;
 
     if (!hasMicAudio) {
       this.cleanupStreams();
