@@ -85,7 +85,7 @@ export type RecordingConfig = {
   captureSystemAudio?: boolean;
   voiceEnhancement?: boolean;
   audioBitrate: number; // default 128000
-  videoBitrate: number; // default 2500000
+  videoBitrate?: number; // optional fallback
   timeslice: number;    // default 1000 (ms)
 };
 
@@ -142,6 +142,7 @@ export class RecordingEngine extends EventTarget {
             googNoiseSuppression: false,
             googHighpassFilter: false,
             channelCount: 2,
+            sampleRate: 48000,
           } as MediaTrackConstraints,
         });
       } catch (e) {
@@ -161,7 +162,8 @@ export class RecordingEngine extends EventTarget {
           googNoiseSuppression: false,
           googHighpassFilter: false,
         } : {}),
-        channelCount: 2,
+        channelCount: 1, // Voice is mono; forces cleaner capture especially on Bluetooth HFP
+        sampleRate: 48000,
       } as MediaTrackConstraints;
       if (this.config.micDeviceId) {
         audioConstraints.deviceId = this.config.micDeviceId;
@@ -214,12 +216,35 @@ export class RecordingEngine extends EventTarget {
       finalStream.addTrack(track);
     });
 
-    // 4. Setup MediaRecorder
+    // 4. Calculate Dynamic Video Bitrate (matching framecut-editor)
+    let videoBitrate = this.config.videoBitrate || 5_000_000;
+    if (this.config.mode === 'video') {
+      const videoTrack = finalStream.getVideoTracks()[0];
+      if (videoTrack) {
+        const settings = videoTrack.getSettings();
+        const width = settings.width || 0;
+        const height = settings.height || 0;
+        const pixelCount = width * height;
+
+        if (pixelCount > 2_073_600) {
+          videoBitrate = 12_000_000; // > 1080p
+        } else if (pixelCount > 921_600) {
+          videoBitrate = 8_000_000; // > 720p
+        } else {
+          videoBitrate = 5_000_000; // Baseline
+        }
+      }
+    }
+
+    // 5. Setup MediaRecorder
     let mimeType = 'video/webm;codecs=vp8,opus';
     if (this.config.mode === 'audio') {
-      mimeType = 'audio/mp4';
+      mimeType = 'audio/webm;codecs=opus';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/webm';
+        mimeType = 'audio/mp4';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/webm';
+        }
       }
     } else {
       if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -230,7 +255,7 @@ export class RecordingEngine extends EventTarget {
     this.mediaRecorder = new MediaRecorder(finalStream, {
       mimeType,
       audioBitsPerSecond: this.config.audioBitrate,
-      videoBitsPerSecond: this.config.mode === 'video' ? this.config.videoBitrate : undefined,
+      videoBitsPerSecond: this.config.mode === 'video' ? videoBitrate : undefined,
     });
 
     this.mediaRecorder.ondataavailable = async (e) => {
@@ -321,7 +346,6 @@ export class RecordingEngine extends EventTarget {
 export class AudioMixer {
   private context: AudioContext;
   private destination: MediaStreamAudioDestinationNode;
-  private compressor: DynamicsCompressorNode;
   private gainNodes: Map<string, GainNode> = new Map();
   private sources: Map<string, MediaStreamAudioSourceNode> = new Map();
 
@@ -334,22 +358,14 @@ export class AudioMixer {
     // 1. Initialize context with hardware-native settings to avoid resampling artifacts
     this.context = new AudioContext({
       latencyHint: 'interactive',
+      sampleRate: 48000,
     });
     
     // 2. Create destination and ensure stereo
     this.destination = this.context.createMediaStreamDestination();
     this.destination.channelCount = 2;
 
-    // 3. Setup Studio-style Limiter (Soft Knee)
-    this.compressor = this.context.createDynamicsCompressor();
-    this.compressor.threshold.setValueAtTime(-18, this.context.currentTime); // Start compressing at -18dB
-    this.compressor.knee.setValueAtTime(12, this.context.currentTime); // Soft knee for transparency
-    this.compressor.ratio.setValueAtTime(4, this.context.currentTime); // 4:1 ratio
-    this.compressor.attack.setValueAtTime(0.003, this.context.currentTime); // 3ms attack
-    this.compressor.release.setValueAtTime(0.25, this.context.currentTime);
-
-    // 4. Connect chain
-    this.compressor.connect(this.destination);
+    // 4. Connect chain (Bypassing compressor node to ensure raw high-fidelity audio without metallic artifacts)
   }
 
   addStream(stream: MediaStream, label: string) {
@@ -358,8 +374,9 @@ export class AudioMixer {
     const source = this.context.createMediaStreamSource(stream);
     const gainNode = this.context.createGain();
 
-    // Default gains to 0.8 for headroom before compression
-    gainNode.gain.setValueAtTime(0.8, this.context.currentTime);
+    // Headroom: Mic at 0.8, System at 0.4 to prevent clipping and ensure voice clarity
+    const targetGain = label === 'mic' ? 0.8 : 0.4;
+    gainNode.gain.setValueAtTime(targetGain, this.context.currentTime);
 
     source.connect(gainNode);
     
@@ -367,9 +384,9 @@ export class AudioMixer {
     if (label === 'system') {
       this.sysDuckingNode = this.context.createGain();
       gainNode.connect(this.sysDuckingNode);
-      this.sysDuckingNode.connect(this.compressor);
+      this.sysDuckingNode.connect(this.destination);
     } else {
-      gainNode.connect(this.compressor);
+      gainNode.connect(this.destination);
     }
 
     this.sources.set(label, source);
@@ -423,7 +440,6 @@ export class AudioMixer {
     this.sources.forEach(source => source.disconnect());
     this.gainNodes.forEach(gainNode => gainNode.disconnect());
     if (this.sysDuckingNode) this.sysDuckingNode.disconnect();
-    this.compressor.disconnect();
     this.destination.disconnect();
 
     this.sources.clear();

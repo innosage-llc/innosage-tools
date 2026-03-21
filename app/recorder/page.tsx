@@ -13,7 +13,7 @@ export default function RecorderPage() {
   const [micId, setMicId] = useState<string>('');
   const [camId, setCamId] = useState<string>('');
   const [captureSystemAudio, setCaptureSystemAudio] = useState<boolean>(false);
-  const [voiceEnhancement, setVoiceEnhancement] = useState<boolean>(true);
+  const [voiceEnhancement, setVoiceEnhancement] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const [duration, setDuration] = useState(0);
@@ -50,8 +50,8 @@ export default function RecorderPage() {
         camDeviceId: camId,
         captureSystemAudio,
         voiceEnhancement,
-        audioBitrate: 320000,
-        videoBitrate: 2500000,
+        audioBitrate: 128000,
+        videoBitrate: 5000000,
         timeslice: 1000,
       });
 
