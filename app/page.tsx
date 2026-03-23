@@ -2,7 +2,7 @@
 
 import { ToolsLayout } from '@/components/ToolsLayout';
 import Link from 'next/link';
-import { FileText, ArrowRight, Maximize2, Video } from 'lucide-react';
+import { FileText, ArrowRight, Maximize2, Video, Mic } from 'lucide-react';
 
 export default function ToolsIndexPage() {
   return (
@@ -58,6 +58,22 @@ export default function ToolsIndexPage() {
             <h3 className="text-xl font-bold text-zinc-900 mb-2">A/V Recorder</h3>
             <p className="text-zinc-500 mb-6 flex-1">
               Record audio and video directly to your local disk. Mixes microphone and system audio seamlessly in the browser.
+            </p>
+            <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
+              Launch Tool <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </Link>
+
+        {/* Tool Card: Meeting Fixer */}
+        <Link href="/meeting-fixer" className="group">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Mic className="text-orange-600" size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">Meeting Fixer</h3>
+            <p className="text-zinc-500 mb-6 flex-1">
+              Append missing context to your meeting recordings instantly. Combines your upload and new recording into a single file directly in your browser.
             </p>
             <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
               Launch Tool <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
