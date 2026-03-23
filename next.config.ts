@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   output: 'export',
   basePath: '/tools',
   /* config options here */
+  turbopack: {},
 };
 
 
