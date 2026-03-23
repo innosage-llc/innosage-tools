@@ -49,12 +49,11 @@ function MeetingFixerClient() {
     });
 
     try {
-      // Use local vendored assets
-      const baseURL = window.location.origin;
+      // Use CDN assets to bypass Cloudflare Pages 25MB limit
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
       await ffmpeg.load({
-        coreURL: `${baseURL}/vendor/ffmpeg-core.js`,
-        wasmURL: `${baseURL}/vendor/ffmpeg-core.wasm`,
-        workerURL: `${baseURL}/vendor/ffmpeg-core.worker.js`,
+        coreURL: `${baseURL}/ffmpeg-core.js`,
+        wasmURL: `${baseURL}/ffmpeg-core.wasm`,
       });
       setFfmpegInstance(ffmpeg);
       return ffmpeg;
@@ -106,7 +105,7 @@ function MeetingFixerClient() {
         throw new Error('FFmpeg failed to generate the output file.');
       }
 
-      const blob = new Blob([fileData], { type: 'audio/mp3' });
+      const blob = new Blob([fileData as any], { type: 'audio/mp3' });
       const url = URL.createObjectURL(blob);
 
       setDownloadUrl(url);
