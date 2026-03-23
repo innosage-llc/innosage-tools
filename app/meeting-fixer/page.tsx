@@ -21,6 +21,7 @@ function MeetingFixerClient() {
   const [amendmentBlobUrl, setAmendmentBlobUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const clearBlobUrlRef = useRef<(() => void) | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -48,10 +49,12 @@ function MeetingFixerClient() {
     });
 
     try {
-      // Use standard browser loading
+      // Use local vendored assets
+      const baseURL = window.location.origin;
       await ffmpeg.load({
-        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-        wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+        coreURL: `${baseURL}/vendor/ffmpeg-core.js`,
+        wasmURL: `${baseURL}/vendor/ffmpeg-core.wasm`,
+        workerURL: `${baseURL}/vendor/ffmpeg-core.worker.js`,
       });
       setFfmpegInstance(ffmpeg);
       return ffmpeg;
@@ -98,8 +101,12 @@ function MeetingFixerClient() {
       ]);
 
       const fileData = await ffmpeg.readFile(outputName);
-      const data = new Uint8Array(fileData as unknown as ArrayBuffer);
-      const blob = new Blob([data.buffer], { type: 'audio/mp3' });
+      
+      if (typeof fileData === 'string') {
+        throw new Error('FFmpeg failed to generate the output file.');
+      }
+
+      const blob = new Blob([fileData], { type: 'audio/mp3' });
       const url = URL.createObjectURL(blob);
 
       setDownloadUrl(url);
@@ -117,9 +124,11 @@ function MeetingFixerClient() {
     setBaseFile(null);
     setDownloadUrl(null);
     setError(null);
-    if (typeof window !== 'undefined' && (window as { __clearBlobUrl?: () => void }).__clearBlobUrl) {
-      (window as { __clearBlobUrl?: () => void }).__clearBlobUrl!();
+    
+    if (clearBlobUrlRef.current) {
+      clearBlobUrlRef.current();
     }
+    
     setAmendmentBlobUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -190,10 +199,8 @@ function MeetingFixerClient() {
                   setAmendmentBlobUrl(mediaBlobUrl);
                 }
 
-                // Monkey-patch handleClear
-                if (typeof window !== 'undefined') {
-                   (window as { __clearBlobUrl?: () => void }).__clearBlobUrl = clearBlobUrl;
-                }
+                // Capture clearBlobUrl in ref
+                clearBlobUrlRef.current = clearBlobUrl;
 
                 return (
                   <div className="bg-zinc-50 rounded-xl p-6 border border-zinc-200 flex flex-col items-center justify-center space-y-4">

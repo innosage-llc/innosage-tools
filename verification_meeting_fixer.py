@@ -22,7 +22,9 @@ def test_meeting_fixer_page(page: Page):
     # Stop Recording
     stop_btn = page.get_by_role("button", name="Stop Recording")
     stop_btn.click()
-    page.wait_for_timeout(1000)
+    
+    # Wait for the status to change to ready
+    expect(page.get_by_text("Amendment recorded ready.")).to_be_visible()
 
     # Take screenshot
     page.screenshot(path="verification_meeting_fixer_recorded.png")
