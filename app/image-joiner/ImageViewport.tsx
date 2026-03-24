@@ -139,20 +139,20 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
           limitToBounds={true}
           centerOnInit={true}
           minScale={0.1} // Allow shrinking if image is huge
-          maxScale={10}
+          maxScale={20}
           panning={{
             velocityDisabled: false,
           }}
           velocityAnimation={{
-            sensitivity: 1600, // Increased 4x from default 400 for faster panning
+            sensitivity: 8000, // Significantly increased for fast panning
             animationTime: 400,
             animationType: "easeOut",
           }}
           pinch={{
-            step: 20, // Increased 4x from default 5
+            step: 50, // Increased step for faster pinch zoom
           }}
           wheel={{
-            step: 0.8, // Increased 4x from default 0.2
+            step: 10, // Increased step for faster wheel zoom
           }}
         >
           <TransformComponent
