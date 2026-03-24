@@ -1,7 +1,7 @@
 "use client";
 
 import { ToolsLayout } from '@/components/ToolsLayout';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, FileVideo, Loader2, Download, AlertCircle, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -31,6 +31,14 @@ function VideoToGifClient() {
   const [error, setError] = useState<string | null>(null);
   const [ffmpegInstance, setFfmpegInstance] = useState<FFmpeg | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) {
+        URL.revokeObjectURL(downloadUrl);
+      }
+    };
+  }, [downloadUrl]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +65,7 @@ function VideoToGifClient() {
     });
 
     try {
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
       await ffmpeg.load({
         coreURL: `${baseURL}/ffmpeg-core.js`,
         wasmURL: `${baseURL}/ffmpeg-core.wasm`,
@@ -114,8 +122,7 @@ function VideoToGifClient() {
       }
 
       const data = outputData as Uint8Array;
-      const buffer = new Uint8Array(data);
-      const blob = new Blob([buffer.buffer], { type: 'image/gif' });
+      const blob = new Blob([data.slice()], { type: 'image/gif' });
       const url = URL.createObjectURL(blob);
 
       setDownloadUrl(url);

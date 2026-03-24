@@ -1,7 +1,7 @@
 "use client";
 
 import { ToolsLayout } from '@/components/ToolsLayout';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, Mic, Square, Loader2, Download, AlertCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -19,6 +19,14 @@ function MeetingFixerClient() {
   const [error, setError] = useState<string | null>(null);
   const [ffmpegInstance, setFfmpegInstance] = useState<FFmpeg | null>(null);
   const [amendmentBlobUrl, setAmendmentBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) {
+        URL.revokeObjectURL(downloadUrl);
+      }
+    };
+  }, [downloadUrl]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const clearBlobUrlRef = useRef<(() => void) | null>(null);
@@ -50,7 +58,7 @@ function MeetingFixerClient() {
 
     try {
       // Use CDN assets to bypass Cloudflare Pages 25MB limit
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
       await ffmpeg.load({
         coreURL: `${baseURL}/ffmpeg-core.js`,
         wasmURL: `${baseURL}/ffmpeg-core.wasm`,
@@ -108,8 +116,7 @@ function MeetingFixerClient() {
       // The output from FFmpeg is a Uint8Array, which may be backed by a SharedArrayBuffer.
       // We convert it to a standard ArrayBuffer using slice() to safely create a Blob.
       const data = fileData as Uint8Array;
-      const buffer = new Uint8Array(data);
-      const blob = new Blob([buffer.buffer], { type: 'audio/mp3' });
+      const blob = new Blob([data.slice()], { type: 'audio/mp3' });
       const url = URL.createObjectURL(blob);
 
       setDownloadUrl(url);
