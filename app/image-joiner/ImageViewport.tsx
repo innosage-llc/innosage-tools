@@ -63,6 +63,7 @@ export function ImageViewport({ image, onImageChange, onTransformChange, label }
   const reportTransform = useCallback(() => {
     if (transformComponentRef.current && containerRef.current && imageDimensions) {
       const { state } = transformComponentRef.current;
+      if (!state) return;
       const { scale, positionX, positionY } = state;
       const { clientWidth, clientHeight } = containerRef.current;
 
@@ -113,6 +114,7 @@ export function ImageViewport({ image, onImageChange, onTransformChange, label }
           maxScale={10}
           centerOnInit={true}
           limitToBounds={true}
+          onInit={reportTransform}
           onTransformed={reportTransform}
         >
           <TransformComponent wrapperClass="w-full h-full" contentClass="w-full h-full flex items-center justify-center">
