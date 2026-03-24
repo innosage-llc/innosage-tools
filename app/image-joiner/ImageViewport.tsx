@@ -142,17 +142,20 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
           maxScale={20}
           panning={{
             velocityDisabled: false,
+            wheelPanning: true, // Enable panning with two-finger scroll on trackpads
           }}
           velocityAnimation={{
-            sensitivity: 8000, // Significantly increased for fast panning
+            sensitivity: 12000, // Balanced for fast but controlled panning
             animationTime: 400,
             animationType: "easeOut",
           }}
           pinch={{
-            step: 50, // Increased step for faster pinch zoom
+            step: 0.05,
           }}
           wheel={{
-            step: 10, // Increased step for faster wheel zoom
+            step: 0.01, // Fine-grained zoom
+            smoothStep: 0.01,
+            touchPadDisabled: false,
           }}
         >
           <TransformComponent
