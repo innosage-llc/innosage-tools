@@ -81,6 +81,22 @@ export default function ToolsIndexPage() {
           </div>
         </Link>
 
+        {/* Tool Card: Video to GIF */}
+        <Link href="/video-to-gif" className="group">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Video className="text-orange-600" size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">Video to GIF</h3>
+            <p className="text-zinc-500 mb-6 flex-1">
+              Convert videos to optimized GIFs instantly in your browser. Easy presets to hit common file size limits.
+            </p>
+            <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
+              Launch Tool <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </Link>
+
         {/* Placeholder for Future Tools */}
         {/* 
         <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-6 flex flex-col justify-center items-center text-center h-full opacity-60">

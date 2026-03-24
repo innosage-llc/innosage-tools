@@ -105,7 +105,11 @@ function MeetingFixerClient() {
         throw new Error('FFmpeg failed to generate the output file.');
       }
 
-      const blob = new Blob([fileData as any], { type: 'audio/mp3' });
+      // The output from FFmpeg is a Uint8Array, which may be backed by a SharedArrayBuffer.
+      // We convert it to a standard ArrayBuffer using slice() to safely create a Blob.
+      const data = fileData as Uint8Array;
+      const buffer = new Uint8Array(data);
+      const blob = new Blob([buffer.buffer], { type: 'audio/mp3' });
       const url = URL.createObjectURL(blob);
 
       setDownloadUrl(url);

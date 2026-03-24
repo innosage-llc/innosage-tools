@@ -7,6 +7,7 @@
 - Network:       http://192.168.0.2:3000
 
 ✓ Starting...
-✓ Ready in 1116ms
-○ Compiling /meeting-fixer ...
- GET /meeting-fixer 200 in 6.8s (compile: 6.3s, render: 486ms)
+✓ Ready in 1160ms
+○ Compiling / ...
+ GET / 200 in 4.1s (compile: 3.7s, render: 410ms)
+ GET /video-to-gif 200 in 966ms (compile: 921ms, render: 46ms)
