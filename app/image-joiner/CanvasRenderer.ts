@@ -10,13 +10,20 @@ const loadImage = (imageSource: File | string): Promise<HTMLImageElement> => {
     const img = new Image();
     let urlToRevoke: string | null = null;
 
+    const cleanup = () => {
+      if (urlToRevoke) {
+        URL.revokeObjectURL(urlToRevoke);
+        urlToRevoke = null;
+      }
+    };
+
     img.onload = () => {
-      if (urlToRevoke) URL.revokeObjectURL(urlToRevoke);
+      cleanup();
       resolve(img);
     };
 
     img.onerror = (err) => {
-      if (urlToRevoke) URL.revokeObjectURL(urlToRevoke);
+      cleanup();
       reject(new Error('Failed to load image: ' + err));
     };
 
@@ -88,8 +95,8 @@ export async function renderJoinedImage(leftParams: RenderParams, rightParams: R
 
     // By default, the transform component centers the content within the wrapper
     // if the content is smaller than the wrapper.
-    const startX = (viewportWidth - scaledImgWidth) / 2;
-    const startY = (viewportHeight - scaledImgHeight) / 2;
+    const startX = Math.max(0, (viewportWidth - scaledImgWidth) / 2);
+    const startY = Math.max(0, (viewportHeight - scaledImgHeight) / 2);
 
     ctx.drawImage(img, startX, startY, transform.originalWidth, transform.originalHeight);
 

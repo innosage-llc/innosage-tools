@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect, DragEvent } from 'react';
+import { useState, useRef, useEffect, DragEvent, useCallback } from 'react';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { TransformState } from './page';
 
 interface ImageViewportProps {
-  id: string;
   image: File | string | null;
   onImageChange: (file: File) => void;
   onTransformChange: (state: TransformState) => void;
   label?: string;
 }
 
-export function ImageViewport({ id: _id, image, onImageChange, onTransformChange, label }: ImageViewportProps) {
+export function ImageViewport({ image, onImageChange, onTransformChange, label }: ImageViewportProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +23,7 @@ export function ImageViewport({ id: _id, image, onImageChange, onTransformChange
   useEffect(() => {
     if (image instanceof File) {
       const url = URL.createObjectURL(image);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImageUrl(url);
       return () => URL.revokeObjectURL(url);
     } else if (typeof image === 'string') {
@@ -60,7 +60,7 @@ export function ImageViewport({ id: _id, image, onImageChange, onTransformChange
     }
   };
 
-  const reportTransform = () => {
+  const reportTransform = useCallback(() => {
     if (transformComponentRef.current && containerRef.current && imageDimensions) {
       const { state } = transformComponentRef.current;
       const { scale, positionX, positionY } = state;
@@ -76,7 +76,7 @@ export function ImageViewport({ id: _id, image, onImageChange, onTransformChange
         viewportHeight: clientHeight,
       });
     }
-  };
+  }, [imageDimensions, onTransformChange]);
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -88,8 +88,7 @@ export function ImageViewport({ id: _id, image, onImageChange, onTransformChange
     if (imageDimensions) {
        reportTransform();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageDimensions]);
+  }, [imageDimensions, reportTransform]);
 
   return (
     <div
