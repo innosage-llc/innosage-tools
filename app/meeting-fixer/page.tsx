@@ -105,7 +105,7 @@ function MeetingFixerClient() {
         throw new Error('FFmpeg failed to generate the output file.');
       }
 
-      const blob = new Blob([fileData as any], { type: 'audio/mp3' });
+      const blob = new Blob([fileData as BlobPart], { type: 'audio/mp3' });
       const url = URL.createObjectURL(blob);
 
       setDownloadUrl(url);
