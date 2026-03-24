@@ -45,7 +45,7 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
 
   // Report initial state on mount or image load
   useEffect(() => {
-    if (imageElement && transformComponentRef.current) {
+    if (imageElement && transformComponentRef.current?.state) {
       const { scale, positionX, positionY } = transformComponentRef.current.state;
       reportState(scale, positionX, positionY);
     } else {
@@ -91,6 +91,7 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
   };
 
   const handleTransform = (ref: ReactZoomPanPinchRef) => {
+    if (!ref.state) return;
     const { scale, positionX, positionY } = ref.state;
     reportState(scale, positionX, positionY);
   };
@@ -139,6 +140,20 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
           centerOnInit={true}
           minScale={0.1} // Allow shrinking if image is huge
           maxScale={10}
+          panning={{
+            velocityDisabled: false,
+          }}
+          velocityAnimation={{
+            sensitivity: 1600, // Increased 4x from default 400 for faster panning
+            animationTime: 400,
+            animationType: "easeOut",
+          }}
+          pinch={{
+            step: 20, // Increased 4x from default 5
+          }}
+          wheel={{
+            step: 0.8, // Increased 4x from default 0.2
+          }}
         >
           <TransformComponent
              wrapperStyle={{ width: '100%', height: '100%' }}
