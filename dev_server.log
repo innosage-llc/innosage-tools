@@ -1,13 +1,8 @@
-
-> innosage-tools@0.1.0 dev
-> next dev
-
 ▲ Next.js 16.1.6 (Turbopack)
 - Local:         http://localhost:3000
 - Network:       http://192.168.0.2:3000
 
 ✓ Starting...
-✓ Ready in 1160ms
-○ Compiling / ...
- GET / 200 in 4.1s (compile: 3.7s, render: 410ms)
- GET /video-to-gif 200 in 966ms (compile: 921ms, render: 46ms)
+✓ Ready in 1065ms
+○ Compiling /image-joiner ...
+ GET /image-joiner 200 in 4.7s (compile: 4.2s, render: 430ms)
