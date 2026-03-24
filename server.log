@@ -1,0 +1,22 @@
+npm warn exec The following package was not found and will be installed: serve@14.2.6
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/image-joiner
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 270 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/64bfcec8eacda699.css
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/b7eb0fa00e765404.js
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 4 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 3 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/2406c0bf9e615539.js
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/7de9141b1af425c3.js
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 2 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 3 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/0db5bef96db4338d.js
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/turbopack-e889a523659a7c9f.js
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/ff1a16fafef87110.js
+ HTTP  3/24/2026 1:24:11 PM ::1 GET /tools/_next/static/chunks/0bd6498bda341889.js
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 3 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 3 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 4 ms
+ HTTP  3/24/2026 1:24:11 PM ::1 Returned 404 in 5 ms
+
+ INFO  Gracefully shutting down. Please wait...
