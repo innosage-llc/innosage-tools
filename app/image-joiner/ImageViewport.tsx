@@ -139,20 +139,23 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
           limitToBounds={true}
           centerOnInit={true}
           minScale={0.1} // Allow shrinking if image is huge
-          maxScale={10}
+          maxScale={20}
           panning={{
             velocityDisabled: false,
+            wheelPanning: true, // Enable panning with two-finger scroll on trackpads
           }}
           velocityAnimation={{
-            sensitivity: 1600, // Increased 4x from default 400 for faster panning
+            sensitivity: 12000, // Balanced for fast but controlled panning
             animationTime: 400,
             animationType: "easeOut",
           }}
           pinch={{
-            step: 20, // Increased 4x from default 5
+            step: 0.05,
           }}
           wheel={{
-            step: 0.8, // Increased 4x from default 0.2
+            step: 0.01, // Fine-grained zoom
+            smoothStep: 0.01,
+            touchPadDisabled: false,
           }}
         >
           <TransformComponent
