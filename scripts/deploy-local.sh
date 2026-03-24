@@ -16,11 +16,13 @@ npm run build
 
 # 3. Deploy to Cloudflare Pages via Infisical injection
 BRANCH=$(git branch --show-current)
-if [ "$BRANCH" == "master" ]; then
-  echo "🚀 Deploying to Cloudflare Pages (Production) using Infisical..."
+INFISICAL_ENV="staging"
+if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
+  INFISICAL_ENV="prod"
+  echo "🚀 Deploying to Cloudflare Pages (Production) using Infisical ($INFISICAL_ENV)..."
 else
-  echo "🚀 Deploying to Cloudflare Pages (Preview - branch: $BRANCH) using Infisical..."
+  echo "🚀 Deploying to Cloudflare Pages (Preview - branch: $BRANCH) using Infisical ($INFISICAL_ENV)..."
 fi
-infisical run --env=prod -- npx wrangler pages deploy out --project-name ${CLOUDFLARE_PAGES_PROJECT:-innosage-tools}
+infisical run --env=$INFISICAL_ENV -- npx wrangler pages deploy out --project-name ${CLOUDFLARE_PAGES_PROJECT:-innosage-tools}
 
 echo "✅ Local deployment successful!"
