@@ -77,22 +77,34 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       const src = e.target?.result as string;
+      console.log("ImageViewport: FileReader loaded src", src.substring(0, 50));
       setImageSrc(src);
-
-      const img = new Image();
-      img.onload = () => {
-        setImageElement(img);
-        // We'll let the TransformWrapper center it automatically,
-        // and its state change callback will trigger reportState.
-      };
-      img.src = src;
     };
     reader.readAsDataURL(file);
   };
 
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    console.log("ImageViewport: Image element loaded (onLoad)", img.naturalWidth, img.naturalHeight);
+    setImageElement(img);
+  };
+
+  // Backup for onLoad if it's flaky in some environments
+  useEffect(() => {
+    if (imageSrc && !imageElement) {
+        const img = new Image();
+        img.onload = () => {
+            console.log("ImageViewport: Image loaded (useEffect backup)", img.naturalWidth, img.naturalHeight);
+            setImageElement(img);
+        };
+        img.src = imageSrc;
+    }
+  }, [imageSrc, imageElement]);
+
   const handleTransform = (ref: ReactZoomPanPinchRef) => {
     if (!ref.state) return;
     const { scale, positionX, positionY } = ref.state;
+    console.log("ImageViewport: Transform handled", { scale, positionX, positionY });
     reportState(scale, positionX, positionY);
   };
 
@@ -170,6 +182,7 @@ export const ImageViewport: React.FC<ImageViewportProps> = ({
             <img
               src={imageSrc}
               alt="Viewport Content"
+              onLoad={handleImageLoad}
               // Remove pointer-events-none so it doesn't block dragging
               // but standard drag might interfere. react-zoom-pan-pinch handles its own drag.
               draggable={false}
