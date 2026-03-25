@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint && eslint",
+    "test:spec": "mkdir -p test-results && pytest tests/e2e/test_image_joiner_ssot.py --json-report --json-report-file=test-results/report.json -s && python3 scripts/extract_spec.py",
     "prepare": "husky"
   },
   "dependencies": {
