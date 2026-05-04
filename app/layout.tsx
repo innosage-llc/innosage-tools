@@ -15,6 +15,27 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Markdown to PDF Converter | InnoSage DevTools",
   description: "Convert Markdown to professional PDF documents instantly in your browser. Free, private, and fast.",
+  icons: {
+    icon: [
+      {
+        url: "/tools/favicon-16.png",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        url: "/tools/favicon-32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "/tools/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
