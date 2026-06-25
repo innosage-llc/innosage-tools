@@ -33,6 +33,22 @@ export default function ToolsIndexPage() {
           </div>
         </Link>
 
+        {/* Tool Card: Audio Splitter */}
+        <Link href="/audio-splitter" className="group">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Scissors className="text-orange-600" size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">Audio Splitter</h3>
+            <p className="text-zinc-500 mb-6 flex-1">
+              Split large audio files into smaller chunks based on target size. Perfect for meeting recordings and transcription prep.
+            </p>
+            <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
+              Launch Tool <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </Link>
+
         {/* Tool Card: Image Joiner */}
         <Link href="/image-joiner" className="group">
           <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
