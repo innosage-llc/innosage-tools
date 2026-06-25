@@ -148,8 +148,9 @@ function AudioSplitterClient() {
       for (const fileInfo of chunkFiles) {
         const data = await ffmpeg.readFile(fileInfo.name);
         if (data instanceof Uint8Array) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const blob = new Blob([data as any], { type: audioFile.type || 'audio/mpeg' });
+          // The output from FFmpeg is a Uint8Array, which may be backed by a SharedArrayBuffer.
+          // We convert it to a standard ArrayBuffer using slice() to safely create a Blob.
+          const blob = new Blob([data.slice()], { type: audioFile.type || 'audio/mpeg' });
           const url = URL.createObjectURL(blob);
           newChunks.push({
             name: `${audioFile.name.replace(/\.[^/.]+$/, "")}-part${fileInfo.name.match(/\d+/)?.[0] || 'x'}.${ext}`,
