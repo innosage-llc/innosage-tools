@@ -39,7 +39,6 @@ function AudioSplitterClient() {
   };
 
   const handleClear = () => {
-    chunks.forEach(chunk => URL.revokeObjectURL(chunk.url));
     setAudioFile(null);
     setChunks([]);
     setError(null);
@@ -103,9 +102,17 @@ function AudioSplitterClient() {
 
     try {
       const duration = await getAudioDuration(audioFile);
+      if (!Number.isFinite(duration) || duration <= 0) {
+        throw new Error("Invalid audio duration detected. Cannot split this file.");
+      }
+
       const targetSizeBytes = chunkSize * 1024 * 1024;
       const bytesPerSecond = audioFile.size / duration;
       const segmentSeconds = targetSizeBytes / bytesPerSecond;
+
+      if (!Number.isFinite(segmentSeconds) || segmentSeconds <= 0) {
+        throw new Error("Invalid split calculation. Please check the target chunk size.");
+      }
 
       const ffmpeg = await initFfmpeg();
       if (!ffmpeg) throw new Error('FFmpeg failed to initialize.');
@@ -132,11 +139,15 @@ function AudioSplitterClient() {
         .filter(f => f.name.startsWith('chunk-') && !f.isDir)
         .sort((a, b) => a.name.localeCompare(b.name));
 
+      if (chunkFiles.length === 0) {
+        throw new Error("No chunks were generated. The file might be too small or incompatible.");
+      }
+
       const newChunks: ChunkInfo[] = [];
 
       for (const fileInfo of chunkFiles) {
         const data = await ffmpeg.readFile(fileInfo.name);
-        if (typeof data !== 'string') {
+        if (data instanceof Uint8Array) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const blob = new Blob([data as any], { type: audioFile.type || 'audio/mpeg' });
           const url = URL.createObjectURL(blob);
