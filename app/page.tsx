@@ -2,7 +2,7 @@
 
 import { ToolsLayout } from '@/components/ToolsLayout';
 import Link from 'next/link';
-import { FileText, ArrowRight, Maximize2, Video, Scissors } from 'lucide-react';
+import { FileText, ArrowRight, Maximize2, Video, Scissors, QrCode } from 'lucide-react';
 
 export default function ToolsIndexPage() {
   return (
@@ -17,6 +17,22 @@ export default function ToolsIndexPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {/* Tool Card: URL to QR Code */}
+        <Link href="/url-to-qrcode" className="group">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <QrCode className="text-orange-600" size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">URL to QR Code</h3>
+            <p className="text-zinc-500 mb-6 flex-1">
+              Turn any link into a phone-ready QR code instantly. Generated locally in your browser with no tracking.
+            </p>
+            <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
+              Launch Tool <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </Link>
+
         {/* Tool Card: Markdown to PDF */}
         <Link href="/markdown-to-pdf" className="group">
           <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
