@@ -9,10 +9,10 @@ These rules are non-negotiable and enforced by Husky hooks.
 2. **NEVER git push to remote 'main' directly.** (Note: This repo currently uses `master` as its primary branch).
 3. **NEVER git commit on local primary branch directly.**
 4. **Master Sync Rule**: Always pull the latest primary branch before starting a new feature branch.
-5. **Optimistic 10-Minute Merge**: Once a PR is created and CI is green, agents MUST wait at least 10 minutes for human intervention before merging.
+5. **Auto Merge**: Once a PR is created and CI is green, agents may run the repository auto-merge gate when there are no pending review changes.
 
 ## 🤖 Autonomous Operations Script
-Agents MUST use the `autonomous-ops.sh` script (located in the repository root) to manage the development lifecycle. Direct use of git commands for merging or pushing is prohibited in favor of the script's automated checks.
+Agents MUST use `scripts/autonomous-ops.sh` to start and submit work. After a PR is created, use `scripts/auto-merge-ci.sh` for the standardized local-gate and squash-merge flow. Do not merge or push directly with ad hoc git commands.
 
 ## The Non-Negotiable "Gate"
 Every task MUST pass the Gate before it is considered complete. No exceptions.
@@ -28,8 +28,7 @@ The Gate command for this repository is:
 1. **Identify**: Read the task/issue.
 2. **Execute**: Modify the code.
 3. **Verify (The Gate)**: Run the Gate. If it fails, fix and repeat until it passes.
-4. **Wait**: Observe the 10-minute optimistic window.
-5. **Merge**: Execute squash-merge.
+4. **Merge**: Execute the standardized auto-merge gate.
 
 ## First Run
 
@@ -130,7 +129,7 @@ Participate, don't dominate.
 - Maintain `ACTIVE_TASKS.md` for any work delegated to sub-agents (sessions_spawn).
 - Before answering "what's the status?", read `ACTIVE_TASKS.md` and check `sessions_list`.
 - Use `sessions_history` to pull results from completed sub-agents.
-- **Repository Isolation**: Agentic Engineering protocols (10-minute wait, autonomous merge) are strictly scoped to the `innosage-tools` repository. Do not apply these to other repositories or human-authored PRs.
+- **Repository Isolation**: Agentic Engineering protocols are strictly scoped to the `innosage-tools` repository. Do not apply them to other repositories or human-authored PRs.
 
 On platforms that support reactions (Discord, Slack), use emoji reactions naturally:
 
@@ -279,9 +278,9 @@ This is a starting point. Add your own conventions, style, and rules as you figu
 
 ### 📦 Dependency Management
 
-- **Package Manager:** **`pnpm`** (Strictly Enforced).
-- **Forbidden:** Do `npm install` or `yarn install`.
-- **Command:** Always use `pnpm install` to setup the environment.
+- **Package Manager:** **`npm`** for CI gates and GitHub Actions, using `package-lock.json`.
+- **Command:** Use `npm ci` for a clean CI-gate install and `npm install` only when intentionally updating dependencies.
+- **Legacy note:** `pnpm-lock.yaml` remains until a separate lockfile-consolidation change; it is not the CI-gate authority.
 
 ### ✅ Validation & Hooks
 

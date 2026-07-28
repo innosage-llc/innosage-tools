@@ -62,7 +62,7 @@ case "$COMMAND" in
     
     gh pr create --title "$TITLE" --body "$BODY"
     
-    echo "✅ PR Created: Once CI is green, observe the 10-minute wait before merging."
+    echo "✅ PR Created: run scripts/auto-merge-ci.sh after the local CI gate passes."
     ;;
 
   *)
