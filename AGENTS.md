@@ -11,8 +11,8 @@ These rules are non-negotiable and enforced by Husky hooks.
 4. **Master Sync Rule**: Always pull the latest primary branch before starting a new feature branch.
 5. **Auto Merge**: Once a PR is created and CI is green, agents may run the repository auto-merge gate when there are no pending review changes.
 
-## 🤖 Autonomous Operations Script
-Agents MUST use `scripts/autonomous-ops.sh` to start and submit work. After a PR is created, use `scripts/auto-merge-ci.sh` for the standardized local-gate and squash-merge flow. Do not merge or push directly with ad hoc git commands.
+## 🤖 CI Gate Workflow
+After a PR is created, use `scripts/run-local-ci.sh` for the standardized local gate and `scripts/auto-merge-ci.sh` for the squash-merge flow.
 
 ## The Non-Negotiable "Gate"
 Every task MUST pass the Gate before it is considered complete. No exceptions.
