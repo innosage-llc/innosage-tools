@@ -1,13 +1,1 @@
-#!/bin/sh
-
-# Get the current branch name
-branch="$(git rev-parse --abbrev-ref HEAD)"
-
-# List of protected branches
-if [ "$branch" = "master" ] || [ "$branch" = "main" ]; then
-  echo "❌ Error: Direct push to protected branch \"$branch\" is forbidden."
-  echo "Please use a feature branch and submit a Pull Request."
-  exit 1
-fi
-
-exit 0
+sh ../../scripts/hooks/pre-push.sh
