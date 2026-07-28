@@ -32,7 +32,8 @@ if ! git merge-base --is-ancestor "origin/$BASE_BRANCH" HEAD; then
   git push origin "HEAD:$REMOTE_BRANCH"
 fi
 
-[[ -d node_modules ]] || npm ci
+printf '\n==> Install locked dependencies\n'
+npm ci
 printf '\n==> InnoSage Tools authoritative gate\n'
 bash scripts/gatekeeper.sh
 gh pr comment "$PR_NUMBER" --body "### ✅ Local CI passed\n\nCommit: \`$(git rev-parse --short HEAD)\`\n\n_Run via \`./scripts/run-local-ci.sh\`._" >/dev/null || true
