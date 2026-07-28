@@ -26,14 +26,14 @@ echo "🛡️  Gatekeeper: Starting Validation Phase..."
 
 # 1. Syntax & Correctness Check (Oxlint + ESLint)
 echo "🔍 Checking for linting errors (oxlint && eslint)..."
-pnpm run lint
+npm run lint
 
 # 2. Type Check (TypeScript)
 echo "🟦 Checking for TypeScript type errors..."
-pnpm exec tsc --noEmit
+npx tsc --noEmit
 
 # 3. Production Build
 echo "🏗️  Starting production build (next build)..."
-pnpm run build
+npm run build
 
 echo "✅ Gatekeeper: All checks passed. The 'Gate' is open."
