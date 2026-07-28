@@ -33,7 +33,9 @@ if ! git merge-base --is-ancestor "origin/$BASE_BRANCH" HEAD; then
 fi
 
 printf '\n==> Install locked dependencies\n'
-npm ci
+if [[ ! -x node_modules/.bin/oxlint ]]; then
+  npm ci
+fi
 printf '\n==> InnoSage Tools authoritative gate\n'
 bash scripts/gatekeeper.sh
 gh pr comment "$PR_NUMBER" --body "### ✅ Local CI passed\n\nCommit: \`$(git rev-parse --short HEAD)\`\n\n_Run via \`./scripts/run-local-ci.sh\`._" >/dev/null || true
