@@ -12,13 +12,13 @@ export const ToolsLayout = ({ children }: { children: React.ReactNode }) => {
                             <span className="text-sm font-medium">Back to InnoSage</span>
                         </Link>
                         <div className="h-4 w-px bg-zinc-300 mx-2" />
-                        <Link href="/tools" className="flex items-center gap-2 font-bold text-lg text-zinc-900">
+                        <Link href="/" className="flex items-center gap-2 font-bold text-lg text-zinc-900">
                             <Hammer size={20} className="text-orange-500" />
                             <span>DevTools</span>
                         </Link>
                     </div>
                     <nav className="flex items-center gap-4">
-                        <a href="https://github.com/innosage-llc" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-zinc-500 hover:text-zinc-900">
+                        <a href="https://github.com/innosage-llc/innosage-tools" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-zinc-500 hover:text-zinc-900">
                             GitHub
                         </a>
                     </nav>

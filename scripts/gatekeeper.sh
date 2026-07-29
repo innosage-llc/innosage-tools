@@ -36,4 +36,8 @@ npx tsc --noEmit
 echo "🏗️  Starting production build (next build)..."
 npm run build
 
+# 4. SEO Contract
+echo "🔎 Verifying the exported /tools SEO contract..."
+npm run test:seo
+
 echo "✅ Gatekeeper: All checks passed. The 'Gate' is open."
