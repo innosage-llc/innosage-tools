@@ -7,10 +7,10 @@ export const ToolsLayout = ({ children }: { children: React.ReactNode }) => {
             <header className="border-b border-zinc-200 sticky top-0 bg-white/80 backdrop-blur z-50 print:hidden">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link href="https://innosage.co" className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 transition-colors">
+                        <a href="https://innosage.co" className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 transition-colors">
                             <ArrowLeft size={16} />
                             <span className="text-sm font-medium">Back to InnoSage</span>
-                        </Link>
+                        </a>
                         <div className="h-4 w-px bg-zinc-300 mx-2" />
                         <Link href="/" className="flex items-center gap-2 font-bold text-lg text-zinc-900">
                             <Hammer size={20} className="text-orange-500" />
@@ -35,8 +35,8 @@ export const ToolsLayout = ({ children }: { children: React.ReactNode }) => {
                         © {new Date().getFullYear()} InnoSage LLC. Open Source Tools for Developers.
                     </div>
                     <div className="flex gap-6 text-sm font-medium">
-                        <Link href="https://innosage.co" className="text-zinc-600 hover:text-orange-500">Home</Link>
-                        <Link href="https://innosage.co/privacy" className="text-zinc-600 hover:text-orange-500">Privacy</Link>
+                        <a href="https://innosage.co" className="text-zinc-600 hover:text-orange-500">Home</a>
+                        <a href="https://innosage.co/privacy" className="text-zinc-600 hover:text-orange-500">Privacy</a>
                     </div>
                 </div>
             </footer>
