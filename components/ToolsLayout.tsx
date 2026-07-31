@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Hammer, ArrowLeft } from 'lucide-react';
+import { Hammer, ArrowLeft, Github } from 'lucide-react';
 
 export const ToolsLayout = ({ children }: { children: React.ReactNode }) => {
     return (
@@ -18,8 +18,15 @@ export const ToolsLayout = ({ children }: { children: React.ReactNode }) => {
                         </Link>
                     </div>
                     <nav className="flex items-center gap-4">
-                        <a href="https://github.com/innosage-llc/innosage-tools" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-zinc-500 hover:text-zinc-900">
-                            GitHub
+                        <a
+                            href="https://github.com/innosage-llc/innosage-tools"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="View InnoSage Tools on GitHub"
+                            title="View on GitHub"
+                            className="inline-flex items-center justify-center rounded-md p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+                        >
+                            <Github size={20} aria-hidden="true" />
                         </a>
                     </nav>
                 </div>
