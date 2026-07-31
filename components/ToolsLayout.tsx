@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Hammer, ArrowLeft, Github } from 'lucide-react';
+import { Hammer, ArrowLeft } from 'lucide-react';
 
 export const ToolsLayout = ({ children }: { children: React.ReactNode }) => {
     return (
