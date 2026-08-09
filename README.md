@@ -1,45 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InnoSage DevTools
 
-## Getting Started
+InnoSage DevTools is a free, open-source collection of browser utilities for QR codes, documents, audio, images, recordings, and video. The canonical collection is available at [innosage.co/tools](https://innosage.co/tools).
 
-First, run the development server:
+## Which tools are included?
+
+| Tool | What it does |
+| --- | --- |
+| URL to QR Code | Turns a link into a phone-ready QR code in the browser. |
+| Markdown to PDF | Converts Markdown into a clean, print-ready PDF. |
+| Audio Splitter | Splits large audio files into smaller chunks by target size. |
+| Image Joiner | Crops and joins two images into one downloadable image. |
+| SVG to Image | Converts SVG files into high-resolution PNG or JPEG images. |
+| A/V Recorder | Records audio and video directly to local disk. |
+| Meeting Fixer | Adds an amendment to an incomplete meeting recording and combines the files. |
+| Video to GIF | Converts videos into optimized GIFs with practical size presets. |
+
+## Are InnoSage DevTools private?
+
+The tools are designed to process files locally in the browser. InnoSage does not add ads or tracking to the collection. Review the source in this repository before using a tool with sensitive material.
+
+## How do I run the collection locally?
+
+Install the dependencies and start the Next.js development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in a supported browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How do I validate a change?
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deployment
-
-This project is deployed to [Cloudflare Pages](https://dash.cloudflare.com/a1da71aee732612b2c0162b2163df86a/pages/view/innosage-tools) using Infisical for secret management.
-
-You can trigger a local deployment (simulating CI) using:
+Run the repository's required quality gates before opening a pull request:
 
 ```bash
-./scripts/deploy-local.sh
+npm run lint
+npm run build
+npm run test:seo
 ```
 
-- **Feature Branches:** Deploys a **Preview URL**.
-- **master Branch:** Deploys to **Production**.
+## Can I contribute?
 
-Make sure you have [Infisical CLI](https://infisical.com/docs/cli/usage) installed and are logged in via `infisical login`.
+Yes. This public repository contains the source code for InnoSage DevTools. Issues and pull requests are welcome; keep changes focused, test them locally, and preserve browser-first file processing where practical.
+
+## Who maintains InnoSage DevTools?
+
+InnoSage DevTools is maintained by [InnoSage LLC](https://innosage.co), a two-person, privacy-first software studio building tools for writing, focus, video creation, and browser-based workflows.
+
+- [Canonical tools collection](https://innosage.co/tools)
+- [InnoSage engineering blog](https://innosage.co/blog)
+- [InnoSage product portfolio](https://innosage.co/#products)
+
+## License
+
+InnoSage DevTools is available under the [MIT License](LICENSE).
