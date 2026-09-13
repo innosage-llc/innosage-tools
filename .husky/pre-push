@@ -1,8 +1,11 @@
 #!/usr/bin/env sh
 
+# This is a pre-push guard: local commits on main remain allowed.
+remote_name=${1-}
+
 while read -r local_ref local_sha remote_ref remote_sha; do
-  if [ "$remote_ref" = "refs/heads/main" ]; then
-    echo "Direct pushes to main are forbidden. Create a custom branch and open a PR."
+  if [ "$remote_name" = "origin" ] && [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "Direct pushes to origin/main are forbidden. Create a custom branch and open a PR."
     exit 1
   fi
 done
