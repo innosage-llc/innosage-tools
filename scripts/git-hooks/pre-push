@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+readonly null_sha='0000000000000000000000000000000000000000'
+should_lint=false
+
+while read -r _local_ref local_sha remote_ref _remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    echo "🚫 Pushing directly to 'main' is FORBIDDEN. Push a feature branch and open a Pull Request."
+    exit 1
+  fi
+  [[ "$local_sha" != "$null_sha" ]] && should_lint=true
+done
+
+if ! $should_lint; then
+  exit 0
+fi
+
+echo "🔍 Running lint before push..."
+npm run lint
