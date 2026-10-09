@@ -19,12 +19,11 @@ function MeetingFixerClient() {
   const [processingStage, setProcessingStage] = useState<ProcessingStage>('preparing');
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [ffmpegInstance, setFfmpegInstance] = useState<FFmpeg | null>(null);
   const [amendmentBlobUrl, setAmendmentBlobUrl] = useState<string | null>(null);
   const activeRunRef = useRef(0);
   const processingRef = useRef(false);
   const totalDurationRef = useRef<number | null>(null);
-  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const activeFfmpegRef = useRef<FFmpeg | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const clearBlobUrlRef = useRef<(() => void) | null>(null);
 
@@ -47,10 +46,9 @@ function MeetingFixerClient() {
     activeRunRef.current += 1;
     processingRef.current = false;
     totalDurationRef.current = null;
-    if (ffmpegRef.current) {
-      ffmpegRef.current.terminate();
-      ffmpegRef.current = null;
-      setFfmpegInstance(null);
+    if (activeFfmpegRef.current) {
+      activeFfmpegRef.current.terminate();
+      activeFfmpegRef.current = null;
     }
     setIsProcessing(false);
     setProgress(0);
@@ -79,9 +77,7 @@ function MeetingFixerClient() {
       media.src = sourceUrl;
     });
 
-  const initFfmpeg = async () => {
-    if (ffmpegRef.current) return ffmpegRef.current;
-    if (ffmpegInstance) return ffmpegInstance;
+  const initFfmpeg = async (runId: number) => {
     if (typeof window === 'undefined') return null;
     const { FFmpeg } = await import('@ffmpeg/ffmpeg');
     const ffmpeg = new FFmpeg();
@@ -89,8 +85,11 @@ function MeetingFixerClient() {
     try {
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
       await ffmpeg.load({ coreURL: `${baseURL}/ffmpeg-core.js`, wasmURL: `${baseURL}/ffmpeg-core.wasm` });
-      ffmpegRef.current = ffmpeg;
-      setFfmpegInstance(ffmpeg);
+      if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) {
+        ffmpeg.terminate();
+        return null;
+      }
+      activeFfmpegRef.current = ffmpeg;
       return ffmpeg;
     } catch (err) {
       console.error('Failed to load FFmpeg', err);
@@ -118,9 +117,10 @@ function MeetingFixerClient() {
 
     try {
       const [baseDuration, amendmentDuration] = await Promise.all([getMediaDuration(baseFile), getMediaDuration(amendmentBlobUrl)]);
+      if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       totalDurationRef.current = baseDuration && amendmentDuration ? baseDuration + amendmentDuration : null;
-      runFfmpeg = await initFfmpeg();
-      if (!runFfmpeg) throw new Error('FFmpeg failed to initialize.');
+      runFfmpeg = await initFfmpeg(runId);
+      if (!runFfmpeg || !isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       progressHandler = (event: { progress: number; time: number }) => {
         if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
         const display = displayProgress('processing', combinedAudioProgress(event, totalDurationRef.current));
@@ -130,7 +130,9 @@ function MeetingFixerClient() {
       runFfmpeg.on('progress', progressHandler);
       const { fetchFile } = await import('@ffmpeg/util');
       await runFfmpeg.writeFile(baseName, await fetchFile(baseFile));
+      if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       await runFfmpeg.writeFile(amendName, await fetchFile(amendmentBlobUrl));
+      if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       setProcessingStage('processing');
       setProgress(null);
       const exitCode = await runFfmpeg.exec(['-i', baseName, '-i', amendName, '-filter_complex', '[0:a][1:a]concat=n=2:v=0:a=1[out]', '-map', '[out]', outputName]);
@@ -158,6 +160,7 @@ function MeetingFixerClient() {
       if (runFfmpeg) {
         if (progressHandler) runFfmpeg.off('progress', progressHandler);
         await Promise.allSettled([runFfmpeg.deleteFile(baseName), runFfmpeg.deleteFile(amendName), runFfmpeg.deleteFile(outputName)]);
+        if (activeFfmpegRef.current === runFfmpeg) activeFfmpegRef.current = null;
       }
       if (activeRunRef.current === runId) {
         processingRef.current = false;
