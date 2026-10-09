@@ -40,6 +40,22 @@ npm run build
 npm run test:seo
 ```
 
+## How do I deploy?
+
+Use the same operator interface as Draft while retaining Cloudflare Pages:
+
+```bash
+npm run deploy:staging
+npm run deploy:verify:staging
+# Only after accepting that exact staging candidate and approving production:
+npm run deploy:production
+```
+
+The staging command prints its immutable Pages URL. Open its `/tools/recorder`
+path; no custom staging domain is needed. Merge-to-main does not publish
+production. See [the deployment runbook](docs/runbooks/tools-deployment.md) for
+version tags, retained artifacts, CI invocation, promotion and rollback.
+
 ## Can I contribute?
 
 Yes. This public repository contains the source code for InnoSage DevTools. Issues and pull requests are welcome; keep changes focused, test them locally, and preserve browser-first file processing where practical.

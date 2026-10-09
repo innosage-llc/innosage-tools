@@ -24,6 +24,9 @@ fi
 
 echo "🛡️  Gatekeeper: Starting Validation Phase..."
 
+echo "🧪 Checking the deployment and release contract..."
+npm run test:deploy
+
 # 1. Syntax & Correctness Check (Oxlint + ESLint)
 echo "🔍 Checking for linting errors (oxlint && eslint)..."
 npm run lint
