@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { combinedAudioProgress, displayProgress, isActiveRun, type ProcessingStage } from './progress';
 import { RunLifecycle, terminateAndRethrow } from './lifecycle';
-import { DEFAULT_MEETING_OUTPUT_FORMAT, estimateWavBytes, outputCommand, outputDefinition, outputFilename, type MeetingOutputFormat } from './formats';
+import { DEFAULT_MEETING_OUTPUT_FORMAT, estimateWavBytes, MAX_WAV_OUTPUT_BYTES, outputCommand, outputDefinition, outputFilename, wavOutputLimitMessage, type MeetingOutputFormat } from './formats';
 
 const ReactMediaRecorder = dynamic(
   () => import('react-media-recorder').then((mod) => mod.ReactMediaRecorder),
@@ -117,6 +117,8 @@ function MeetingFixerClient() {
       const [baseDuration, amendmentDuration] = await Promise.all([getMediaDuration(baseFile), getMediaDuration(amendmentBlobUrl)]);
       if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       totalDurationRef.current = baseDuration && amendmentDuration ? baseDuration + amendmentDuration : null;
+      const estimatedWavBytes = selectedFormat === 'wav' ? estimateWavBytes(totalDurationRef.current) : null;
+      if (estimatedWavBytes && estimatedWavBytes > MAX_WAV_OUTPUT_BYTES) throw new Error(wavOutputLimitMessage(estimatedWavBytes));
       runFfmpeg = await initFfmpeg(runId);
       if (!runFfmpeg || !isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       progressHandler = (event: { progress: number; time: number }) => {

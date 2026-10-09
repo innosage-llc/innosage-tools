@@ -22,6 +22,7 @@ export const MEETING_OUTPUT_FORMATS: Record<MeetingOutputFormat, MeetingOutputDe
 };
 
 export const DEFAULT_MEETING_OUTPUT_FORMAT: MeetingOutputFormat = 'mp3';
+export const MAX_WAV_OUTPUT_BYTES = 512 * 1024 * 1024;
 
 export function outputDefinition(format: MeetingOutputFormat): MeetingOutputDefinition {
   return MEETING_OUTPUT_FORMATS[format];
@@ -38,4 +39,8 @@ export function outputCommand(format: MeetingOutputFormat, outputName: string): 
 export function estimateWavBytes(durationSeconds: number | null): number | null {
   if (!durationSeconds || !Number.isFinite(durationSeconds) || durationSeconds <= 0) return null;
   return Math.ceil(durationSeconds * 48000 * 2 * 2) + 44;
+}
+
+export function wavOutputLimitMessage(bytes: number): string {
+  return `WAV output is estimated at ${(bytes / (1024 * 1024)).toFixed(1)} MB, above the 512 MB browser safety limit. Choose MP3 or M4A, or use a shorter recording.`;
 }
