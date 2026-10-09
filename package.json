@@ -11,6 +11,7 @@
     "test:seo": "node scripts/verify-seo.mjs",
     "test:deploy": "node --test scripts/deploy-*.test.mjs",
     "test:recorder": "node --experimental-strip-types --test scripts/recorder.test.ts",
+    "test:meeting-fixer": "node --experimental-strip-types --test scripts/meeting-fixer-progress.test.ts",
     "deploy:staging": "bash scripts/deploy-local.sh staging",
     "deploy:production": "bash scripts/deploy-local.sh production",
     "deploy:execute:staging": "node scripts/deploy-pages.mjs staging",
