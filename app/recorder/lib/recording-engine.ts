@@ -1,82 +1,5 @@
-export class DiskWriter {
-  private writer: FileSystemWritableFileStream | null = null;
-  private fileHandle: FileSystemFileHandle | null = null;
-  private chunks: Blob[] = []; // Fallback buffer
-
-  static isSupported(): boolean {
-    return 'showSaveFilePicker' in window;
-  }
-
-  private suggestedName: string = '';
-
-  static async create(suggestedName: string): Promise<DiskWriter> {
-    const writer = new DiskWriter();
-    writer.suggestedName = suggestedName;
-    const isAudio = suggestedName.endsWith('.m4a');
-
-    if (this.isSupported()) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName,
-          types: [isAudio ? {
-            description: 'M4A Audio',
-            accept: { 'audio/mp4': ['.m4a'] },
-          } : {
-            description: 'WebM Video',
-            accept: { 'video/webm': ['.webm'] },
-          }],
-        });
-        writer.fileHandle = handle;
-        writer.writer = await handle.createWritable();
-      } catch (err) {
-        // User might have cancelled the picker.
-        console.warn("File picker cancelled or failed, falling back to Blob buffer.", err);
-      }
-    }
-
-    return writer;
-  }
-
-  async write(chunk: Blob) {
-    if (this.writer) {
-      await this.writer.write(chunk);
-    } else {
-      this.chunks.push(chunk);
-    }
-  }
-
-  async close(finalBlob?: Blob) {
-    if (this.writer) {
-      // We do not overwrite if streaming continuously.
-      if (finalBlob) {
-          // In fallback or forced mode, write it
-          await this.writer.truncate(0);
-          await this.writer.write(finalBlob);
-      }
-      await this.writer.close();
-    } else {
-      // Fallback: trigger download
-      const isAudio = this.suggestedName.endsWith('.m4a');
-      const type = isAudio ? 'audio/mp4' : 'video/webm';
-      const defaultName = isAudio ? 'recording.m4a' : 'recording.webm';
-      const blob = finalBlob || new Blob(this.chunks, { type });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = this.fileHandle?.name || this.suggestedName || defaultName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  }
-
-  isDiskWriter(): boolean {
-    return this.writer !== null;
-  }
-}
-
-import ysFixWebmDuration from 'fix-webm-duration';
+import { DiskWriter } from './disk-writer.ts';
+export { DiskWriter } from './disk-writer.ts';
 
 export type RecordingConfig = {
   mode: 'audio' | 'video';
@@ -101,7 +24,11 @@ export class RecordingEngine extends EventTarget {
 
   private startTime: number = 0;
   private duration: number = 0;
-  private chunks: Blob[] = []; // Only used for fallback
+  private elapsed: number = 0;
+  private stopPromise: Promise<void> | null = null;
+  private settle: (() => void) | null = null;
+  private rejectStop: ((error: Error) => void) | null = null;
+  private failure: Error | null = null;
   private tickIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: RecordingConfig) {
@@ -117,6 +44,7 @@ export class RecordingEngine extends EventTarget {
 
   async start(writer: DiskWriter) {
     this.diskWriter = writer;
+    try {
 
     // 1. Get streams
     if (this.config.mode === 'video') {
@@ -237,69 +165,56 @@ export class RecordingEngine extends EventTarget {
     }
 
     // 5. Setup MediaRecorder
-    let mimeType = 'video/webm;codecs=vp8,opus';
-    if (this.config.mode === 'audio') {
-      mimeType = 'audio/webm;codecs=opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/mp4';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'audio/webm';
-        }
-      }
-    } else {
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm';
-      }
-    }
-
     this.mediaRecorder = new MediaRecorder(finalStream, {
-      mimeType,
+      mimeType: writer.format.mimeType,
       audioBitsPerSecond: this.config.audioBitrate,
       videoBitsPerSecond: this.config.mode === 'video' ? videoBitrate : undefined,
     });
 
-    this.mediaRecorder.ondataavailable = async (e) => {
+    this.stopPromise = new Promise<void>((resolve, reject) => { this.settle = resolve; this.rejectStop = reject; });
+    // Async capture failures are surfaced through recordingerror even if the UI
+    // hasn't called Stop yet. The same rejection remains observable by Stop.
+    void this.stopPromise.catch(() => {});
+    this.mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) {
-        if (!this.diskWriter?.isDiskWriter()) {
-          this.chunks.push(e.data); // Only keep in memory if we are falling back
-        }
-        await this.diskWriter?.write(e.data);
+        void writer.write(e.data).catch(error => this.fail(error));
       }
     };
-
+    this.mediaRecorder.onerror = () => this.fail(new Error('The browser could not continue recording.'));
     this.mediaRecorder.onstop = async () => {
-      if (!this.diskWriter?.isDiskWriter() && this.chunks.length > 0) {
-        // Fallback: fix duration for the memory blob
-        const buggedBlob = new Blob(this.chunks, { type: mimeType });
-
-        if (mimeType.includes('webm')) {
-          ysFixWebmDuration(buggedBlob, this.duration, async (fixedBlob) => {
-            await this.diskWriter?.close(fixedBlob);
-            this.cleanup();
-          });
-        } else {
-          await this.diskWriter?.close(buggedBlob);
-          this.cleanup();
-        }
-      } else {
-        // Disk writer: just close it (streaming duration might be Infinity, but doesn't crash browser with OOM)
-        await this.diskWriter?.close();
+      this.captureDuration();
+      this.cleanupStreams();
+      try {
+        if (this.failure) throw this.failure;
+        await writer.close(this.duration);
         this.cleanup();
+        this.dispatchEvent(new CustomEvent('stopped', { detail: { duration: this.duration } }));
+        this.settle?.();
+      } catch (error) {
+        await writer.abort();
+        this.fail(error);
+        this.cleanup();
+        this.rejectStop?.(this.failure!);
       }
     };
 
     // 5. Start
     this.mediaRecorder.start(this.config.timeslice);
-    this.startTime = Date.now();
+    this.startTime = performance.now();
     this.dispatchEvent(new Event('started'));
 
     // Tick interval
     this.tickIntervalId = setInterval(() => {
       if (this.mediaRecorder?.state === 'recording') {
-        this.duration = Date.now() - this.startTime;
+        this.duration = this.elapsed + performance.now() - this.startTime;
         this.dispatchEvent(new CustomEvent('tick', { detail: { duration: this.duration } }));
       }
     }, 1000);
+    } catch (error) {
+      this.cleanup();
+      await writer.abort();
+      throw error;
+    }
   }
 
   public getMixer(): AudioMixer | null {
@@ -315,18 +230,35 @@ export class RecordingEngine extends EventTarget {
     this.systemStream?.getTracks().forEach(t => t.stop());
     this.displayStream?.getTracks().forEach(t => t.stop());
     this.mixer?.dispose();
-    this.chunks = [];
-    this.dispatchEvent(new Event('stopped'));
   }
 
-  stop() {
-    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-      this.mediaRecorder.stop();
+  private captureDuration() {
+    if (this.startTime !== 0) {
+      this.elapsed += performance.now() - this.startTime;
+      this.startTime = 0;
     }
+    this.duration = this.elapsed;
+  }
+
+  private fail(error: unknown) {
+    if (this.failure) return;
+    this.failure = error instanceof Error ? error : new Error('Recording could not be saved.');
+    this.dispatchEvent(new CustomEvent('recordingerror', { detail: { error: this.failure } }));
+    if (this.mediaRecorder?.state !== 'inactive') void this.stop().catch(() => {});
+  }
+
+  stop(): Promise<void> {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.captureDuration();
+      this.mediaRecorder.stop();
+      this.cleanupStreams();
+    }
+    return this.stopPromise || Promise.resolve();
   }
 
   pause() {
     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.captureDuration();
       this.mediaRecorder.pause();
       this.dispatchEvent(new Event('paused'));
     }
@@ -334,10 +266,8 @@ export class RecordingEngine extends EventTarget {
 
   resume() {
     if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
-      // adjust startTime so duration doesn't jump
-      // Actually simple logic for duration is to not use Date.now() like this,
-      // but for simplicity we keep it as is, or we accumulate duration.
       this.mediaRecorder.resume();
+      this.startTime = performance.now();
       this.dispatchEvent(new Event('resumed'));
     }
   }

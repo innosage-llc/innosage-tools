@@ -16,14 +16,21 @@ export function DeviceSelector({ mediaType, selectedDeviceId, onChange }: Device
   const label = mediaType === 'audio' ? 'Microphone' : 'Camera';
 
   useEffect(() => {
+    let active = true;
+
     async function fetchDevices() {
+      let probeStream: MediaStream | null = null;
       try {
         // Request permission to ensure we get real labels
-        await navigator.mediaDevices.getUserMedia({ [mediaType]: true });
+        probeStream = await navigator.mediaDevices.getUserMedia({ [mediaType]: true });
+        if (!active) return;
 
         const allDevices = await navigator.mediaDevices.enumerateDevices();
+        if (!active) return;
+
         const filteredDevices = allDevices.filter(d => d.kind === kind);
         setDevices(filteredDevices);
+        setError(null);
 
         if (filteredDevices.length > 0 && !selectedDeviceId) {
           onChange(filteredDevices[0].deviceId);
@@ -34,11 +41,17 @@ export function DeviceSelector({ mediaType, selectedDeviceId, onChange }: Device
         } else {
           console.warn(`Could not list ${mediaType} devices:`, err);
         }
-        setError(`${label} permission required.`);
+        if (active) setError(`${label} permission required.`);
+      } finally {
+        probeStream?.getTracks().forEach(track => track.stop());
       }
     }
 
-    fetchDevices();
+    void fetchDevices();
+
+    return () => {
+      active = false;
+    };
   }, [selectedDeviceId, onChange, mediaType, kind, label]);
 
   if (error) {
