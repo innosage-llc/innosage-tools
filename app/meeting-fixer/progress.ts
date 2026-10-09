@@ -17,6 +17,10 @@ export function finitePositive(value: number | null | undefined): number | null 
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
 }
 
+export function isActiveRun(runId: number, currentRunId: number, processing: boolean): boolean {
+  return processing && runId === currentRunId;
+}
+
 /**
  * Convert the FFmpeg event timestamp into progress for the combined output.
  * The library's `progress` ratio is intentionally not used here: its own API

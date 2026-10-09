@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Upload, Mic, Square, Loader2, Download, AlertCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
-import { combinedAudioProgress, displayProgress, type ProcessingStage } from './progress';
+import { combinedAudioProgress, displayProgress, isActiveRun, type ProcessingStage } from './progress';
 
 const ReactMediaRecorder = dynamic(
   () => import('react-media-recorder').then((mod) => mod.ReactMediaRecorder),
@@ -24,6 +24,7 @@ function MeetingFixerClient() {
   const activeRunRef = useRef(0);
   const processingRef = useRef(false);
   const totalDurationRef = useRef<number | null>(null);
+  const ffmpegRef = useRef<FFmpeg | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const clearBlobUrlRef = useRef<(() => void) | null>(null);
 
@@ -34,9 +35,24 @@ function MeetingFixerClient() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    invalidateActiveRun();
     setBaseFile(file);
     setDownloadUrl(null);
     setError(null);
+    setProgress(0);
+    setProcessingStage('preparing');
+  };
+
+  const invalidateActiveRun = () => {
+    activeRunRef.current += 1;
+    processingRef.current = false;
+    totalDurationRef.current = null;
+    if (ffmpegRef.current) {
+      ffmpegRef.current.terminate();
+      ffmpegRef.current = null;
+      setFfmpegInstance(null);
+    }
+    setIsProcessing(false);
     setProgress(0);
     setProcessingStage('preparing');
   };
@@ -64,20 +80,16 @@ function MeetingFixerClient() {
     });
 
   const initFfmpeg = async () => {
+    if (ffmpegRef.current) return ffmpegRef.current;
     if (ffmpegInstance) return ffmpegInstance;
     if (typeof window === 'undefined') return null;
     const { FFmpeg } = await import('@ffmpeg/ffmpeg');
     const ffmpeg = new FFmpeg();
-    ffmpeg.on('progress', (event) => {
-      if (!processingRef.current) return;
-      const display = displayProgress('processing', combinedAudioProgress(event, totalDurationRef.current));
-      setProcessingStage(display.stage);
-      setProgress(display.percent);
-    });
     ffmpeg.on('log', ({ message }) => console.log('FFmpeg log:', message));
     try {
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
       await ffmpeg.load({ coreURL: `${baseURL}/ffmpeg-core.js`, wasmURL: `${baseURL}/ffmpeg-core.wasm` });
+      ffmpegRef.current = ffmpeg;
       setFfmpegInstance(ffmpeg);
       return ffmpeg;
     } catch (err) {
@@ -102,12 +114,20 @@ function MeetingFixerClient() {
     const amendName = `amendment-${runId}.webm`;
     const outputName = `output-${runId}.mp3`;
     let runFfmpeg: FFmpeg | null = null;
+    let progressHandler: ((event: { progress: number; time: number }) => void) | null = null;
 
     try {
       const [baseDuration, amendmentDuration] = await Promise.all([getMediaDuration(baseFile), getMediaDuration(amendmentBlobUrl)]);
       totalDurationRef.current = baseDuration && amendmentDuration ? baseDuration + amendmentDuration : null;
       runFfmpeg = await initFfmpeg();
       if (!runFfmpeg) throw new Error('FFmpeg failed to initialize.');
+      progressHandler = (event: { progress: number; time: number }) => {
+        if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
+        const display = displayProgress('processing', combinedAudioProgress(event, totalDurationRef.current));
+        setProcessingStage(display.stage);
+        setProgress(display.percent);
+      };
+      runFfmpeg.on('progress', progressHandler);
       const { fetchFile } = await import('@ffmpeg/util');
       await runFfmpeg.writeFile(baseName, await fetchFile(baseFile));
       await runFfmpeg.writeFile(amendName, await fetchFile(amendmentBlobUrl));
@@ -135,22 +155,22 @@ function MeetingFixerClient() {
       setProgress(null);
       setError(err instanceof Error ? err.message : 'An error occurred during processing.');
     } finally {
-      processingRef.current = false;
-      if (activeRunRef.current === runId) setIsProcessing(false);
-      if (runFfmpeg) await Promise.allSettled([runFfmpeg.deleteFile(baseName), runFfmpeg.deleteFile(amendName), runFfmpeg.deleteFile(outputName)]);
+      if (runFfmpeg) {
+        if (progressHandler) runFfmpeg.off('progress', progressHandler);
+        await Promise.allSettled([runFfmpeg.deleteFile(baseName), runFfmpeg.deleteFile(amendName), runFfmpeg.deleteFile(outputName)]);
+      }
+      if (activeRunRef.current === runId) {
+        processingRef.current = false;
+        setIsProcessing(false);
+      }
     }
   };
 
   const handleClear = () => {
-    activeRunRef.current += 1;
-    processingRef.current = false;
-    setIsProcessing(false);
+    invalidateActiveRun();
     setBaseFile(null);
     setDownloadUrl(null);
     setError(null);
-    setProgress(0);
-    setProcessingStage('preparing');
-    totalDurationRef.current = null;
     clearBlobUrlRef.current?.();
     setAmendmentBlobUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -176,7 +196,7 @@ function MeetingFixerClient() {
             <ReactMediaRecorder audio video={false} render={({ status, startRecording, stopRecording, mediaBlobUrl, clearBlobUrl }) => {
               if (mediaBlobUrl && mediaBlobUrl !== amendmentBlobUrl) setAmendmentBlobUrl(mediaBlobUrl);
               clearBlobUrlRef.current = clearBlobUrl;
-              return <div className="bg-zinc-50 rounded-xl p-6 border border-zinc-200 flex flex-col items-center justify-center space-y-4">{status === 'recording' ? <div className="flex items-center space-x-2 text-red-500 animate-pulse font-medium"><div className="w-3 h-3 bg-red-500 rounded-full" /><span>Recording...</span></div> : <div className="text-zinc-500 font-medium">{mediaBlobUrl ? 'Amendment recorded ready.' : 'Ready to record.'}</div>}<div className="flex space-x-4">{status !== 'recording' ? <button onClick={startRecording} className="flex items-center px-4 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors"><Mic size={18} className="mr-2" />{mediaBlobUrl ? 'Re-record' : 'Start Recording'}</button> : <button onClick={stopRecording} className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"><Square size={18} className="mr-2" />Stop Recording</button>}</div>{mediaBlobUrl && <div className="w-full max-w-md mt-4"><audio src={mediaBlobUrl} controls className="w-full" /></div>}</div>;
+              return <div className="bg-zinc-50 rounded-xl p-6 border border-zinc-200 flex flex-col items-center justify-center space-y-4">{status === 'recording' ? <div className="flex items-center space-x-2 text-red-500 animate-pulse font-medium"><div className="w-3 h-3 bg-red-500 rounded-full" /><span>Recording...</span></div> : <div className="text-zinc-500 font-medium">{mediaBlobUrl ? 'Amendment recorded ready.' : 'Ready to record.'}</div>}<div className="flex space-x-4">{status !== 'recording' ? <button onClick={() => { if (mediaBlobUrl) invalidateActiveRun(); startRecording(); }} className="flex items-center px-4 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors"><Mic size={18} className="mr-2" />{mediaBlobUrl ? 'Re-record' : 'Start Recording'}</button> : <button onClick={stopRecording} className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"><Square size={18} className="mr-2" />Stop Recording</button>}</div>{mediaBlobUrl && <div className="w-full max-w-md mt-4"><audio src={mediaBlobUrl} controls className="w-full" /></div>}</div>;
             }} />
           </div>
           <div className="space-y-4 pt-4 border-t border-zinc-200">

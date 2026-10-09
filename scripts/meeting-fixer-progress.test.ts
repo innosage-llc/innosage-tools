@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { combinedAudioProgress, displayProgress, finitePositive } from '../app/meeting-fixer/progress.ts';
+import { combinedAudioProgress, displayProgress, finitePositive, isActiveRun } from '../app/meeting-fixer/progress.ts';
 
 test('normalizes only finite positive durations', () => {
   assert.equal(finitePositive(0), null);
@@ -25,4 +25,10 @@ test('maps processing into a bounded range and reserves finalization', () => {
   assert.deepEqual(displayProgress('processing', null), { stage: 'processing', percent: null });
   assert.deepEqual(displayProgress('finalizing', 1), { stage: 'finalizing', percent: 99 });
   assert.deepEqual(displayProgress('ready', 1), { stage: 'ready', percent: 100 });
+});
+
+test('rejects stale or no-longer-processing run events', () => {
+  assert.equal(isActiveRun(4, 4, true), true);
+  assert.equal(isActiveRun(4, 5, true), false);
+  assert.equal(isActiveRun(4, 4, false), false);
 });
