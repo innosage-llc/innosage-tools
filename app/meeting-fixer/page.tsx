@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { combinedAudioProgress, displayProgress, isActiveRun, type ProcessingStage } from './progress';
 import { RunLifecycle, terminateAndRethrow } from './lifecycle';
+import { DEFAULT_MEETING_OUTPUT_FORMAT, estimateWavBytes, outputCommand, outputDefinition, outputFilename, type MeetingOutputFormat } from './formats';
 
 const ReactMediaRecorder = dynamic(
   () => import('react-media-recorder').then((mod) => mod.ReactMediaRecorder),
@@ -21,6 +22,7 @@ function MeetingFixerClient() {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [amendmentBlobUrl, setAmendmentBlobUrl] = useState<string | null>(null);
+  const [outputFormat, setOutputFormat] = useState<MeetingOutputFormat>(DEFAULT_MEETING_OUTPUT_FORMAT);
   const activeRunRef = useRef(0);
   const processingRef = useRef(false);
   const totalDurationRef = useRef<number | null>(null);
@@ -103,10 +105,11 @@ function MeetingFixerClient() {
     setError(null);
     setDownloadUrl(null);
     totalDurationRef.current = null;
+    const selectedFormat = outputFormat;
     const baseExt = baseFile.name.split('.').pop() || 'mp3';
     const baseName = `base-${runId}.${baseExt}`;
     const amendName = `amendment-${runId}.webm`;
-    const outputName = `output-${runId}.mp3`;
+    const outputName = `output-${runId}${outputDefinition(selectedFormat).extension}`;
     let runFfmpeg: FFmpeg | null = null;
     let progressHandler: ((event: { progress: number; time: number }) => void) | null = null;
 
@@ -130,14 +133,14 @@ function MeetingFixerClient() {
       if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       setProcessingStage('processing');
       setProgress(null);
-      const exitCode = await runFfmpeg.exec(['-i', baseName, '-i', amendName, '-filter_complex', '[0:a][1:a]concat=n=2:v=0:a=1[out]', '-map', '[out]', outputName]);
+      const exitCode = await runFfmpeg.exec(['-i', baseName, '-i', amendName, ...outputCommand(selectedFormat, outputName)]);
       if (exitCode !== 0) throw new Error(`FFmpeg could not stitch the recordings (exit code ${exitCode}).`);
       if (activeRunRef.current !== runId) return;
       setProcessingStage('finalizing');
       setProgress(99);
       const fileData = await runFfmpeg.readFile(outputName);
       if (typeof fileData === 'string' || fileData.byteLength === 0) throw new Error('FFmpeg produced an empty or unreadable output file.');
-      const url = URL.createObjectURL(new Blob([(fileData as Uint8Array).slice()], { type: 'audio/mp3' }));
+      const url = URL.createObjectURL(new Blob([(fileData as Uint8Array).slice()], { type: outputDefinition(selectedFormat).mimeType }));
       if (activeRunRef.current !== runId) {
         URL.revokeObjectURL(url);
         return;
@@ -199,7 +202,16 @@ function MeetingFixerClient() {
           </div>
           <div className="space-y-4 pt-4 border-t border-zinc-200">
             {error && <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-start"><AlertCircle size={20} className="mr-2 flex-shrink-0 mt-0.5" /><p className="text-sm">{error}</p></div>}
-            {!downloadUrl ? <button onClick={handleStitch} disabled={!baseFile || !amendmentBlobUrl || isProcessing} className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center transition-colors ${!baseFile || !amendmentBlobUrl ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed' : isProcessing ? 'bg-orange-100 text-orange-600 cursor-wait' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>{isProcessing ? <><Loader2 className="animate-spin mr-2" size={24} />{progressLabel}</> : 'Stitch Recordings'}</button> : <div className="space-y-4"><div className="p-4 bg-green-50 text-green-700 rounded-lg text-center font-medium">Successfully stitched recordings!</div><div className="flex space-x-4"><a href={downloadUrl} download="fixed_meeting.mp3" className="flex-1 py-3 bg-zinc-900 text-white rounded-xl font-bold flex items-center justify-center hover:bg-zinc-800 transition-colors"><Download size={20} className="mr-2" />Download Result</a><button onClick={handleClear} className="py-3 px-6 bg-zinc-100 text-zinc-700 rounded-xl font-bold hover:bg-zinc-200 transition-colors">Start Over</button></div></div>}
+            {!downloadUrl ? <>
+              <div className="space-y-2">
+                <label htmlFor="meeting-output-format" className="text-sm font-medium text-zinc-700">Output format</label>
+                <select id="meeting-output-format" value={outputFormat} disabled={isProcessing} onChange={event => setOutputFormat(event.target.value as MeetingOutputFormat)} className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900">
+                  {(['mp3', 'm4a', 'wav'] as MeetingOutputFormat[]).map(format => { const definition = outputDefinition(format); return <option key={format} value={format}>{definition.label} — {definition.description}</option>; })}
+                </select>
+                {outputFormat === 'wav' && <p className="text-xs text-zinc-500">WAV is uncompressed and substantially larger: approximately {estimateWavBytes(totalDurationRef.current) ? `${(estimateWavBytes(totalDurationRef.current)! / (1024 * 1024)).toFixed(1)} MB` : '3.3 MB per minute'} for stereo 48 kHz PCM.</p>}
+              </div>
+              <button onClick={handleStitch} disabled={!baseFile || !amendmentBlobUrl || isProcessing} className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center transition-colors ${!baseFile || !amendmentBlobUrl ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed' : isProcessing ? 'bg-orange-100 text-orange-600 cursor-wait' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>{isProcessing ? <><Loader2 className="animate-spin mr-2" size={24} />{progressLabel}</> : 'Stitch Recordings'}</button>
+            </> : <div className="space-y-4"><div className="p-4 bg-green-50 text-green-700 rounded-lg text-center font-medium">Successfully stitched recordings!</div><div className="flex space-x-4"><a href={downloadUrl} download={outputFilename(outputFormat)} className="flex-1 py-3 bg-zinc-900 text-white rounded-xl font-bold flex items-center justify-center hover:bg-zinc-800 transition-colors"><Download size={20} className="mr-2" />Download {outputDefinition(outputFormat).label}</a><button onClick={handleClear} className="py-3 px-6 bg-zinc-100 text-zinc-700 rounded-xl font-bold hover:bg-zinc-200 transition-colors">Start Over</button></div></div>}
           </div>
         </div>
       </div>
