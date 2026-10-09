@@ -2,6 +2,11 @@ export interface Terminable {
   terminate(): void;
 }
 
+export function terminateAndRethrow<T extends Terminable>(resource: T, error: unknown): never {
+  resource.terminate();
+  throw error;
+}
+
 export class RunLifecycle<T extends Terminable> {
   private currentRunId = 0;
   private activeResource: T | null = null;

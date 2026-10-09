@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { combinedAudioProgress, displayProgress, finitePositive, isActiveRun } from '../app/meeting-fixer/progress.ts';
-import { RunLifecycle } from '../app/meeting-fixer/lifecycle.ts';
+import { RunLifecycle, terminateAndRethrow } from '../app/meeting-fixer/lifecycle.ts';
 
 test('normalizes only finite positive durations', () => {
   assert.equal(finitePositive(0), null);
@@ -46,4 +46,13 @@ test('terminates stale resources and only finishes the owning run', () => {
   assert.equal(stale.terminated, 1);
   assert.equal(lifecycle.finish(secondRun, stale), true);
   assert.equal(stale.terminated, 2);
+});
+
+test('terminates an unclaimed worker when loading fails', () => {
+  const worker = { terminated: 0, terminate() { this.terminated += 1; } };
+  assert.throws(
+    () => terminateAndRethrow(worker, new Error('load failed')),
+    /load failed/,
+  );
+  assert.equal(worker.terminated, 1);
 });

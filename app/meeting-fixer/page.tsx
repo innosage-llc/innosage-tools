@@ -6,7 +6,7 @@ import { Upload, Mic, Square, Loader2, Download, AlertCircle } from 'lucide-reac
 import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { combinedAudioProgress, displayProgress, isActiveRun, type ProcessingStage } from './progress';
-import { RunLifecycle } from './lifecycle';
+import { RunLifecycle, terminateAndRethrow } from './lifecycle';
 
 const ReactMediaRecorder = dynamic(
   () => import('react-media-recorder').then((mod) => mod.ReactMediaRecorder),
@@ -88,7 +88,7 @@ function MeetingFixerClient() {
       return ffmpeg;
     } catch (err) {
       console.error('Failed to load FFmpeg', err);
-      throw new Error('Could not load FFmpeg. Please ensure you are on a modern browser.');
+      return terminateAndRethrow(ffmpeg, new Error('Could not load FFmpeg. Please ensure you are on a modern browser.'));
     }
   };
 
