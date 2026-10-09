@@ -32,6 +32,11 @@ export function outputFilename(format: MeetingOutputFormat): string {
   return `fixed_meeting${outputDefinition(format).extension}`;
 }
 
+export function outputJob(format: MeetingOutputFormat, runId: number) {
+  const definition = outputDefinition(format);
+  return { format, runId, outputName: `output-${runId}${definition.extension}`, filename: outputFilename(format), mimeType: definition.mimeType };
+}
+
 export function outputCommand(format: MeetingOutputFormat, outputName: string): string[] {
   return ['-filter_complex', COMMON_AUDIO_FILTER, '-map', '[out]', ...outputDefinition(format).ffmpegArgs, outputName];
 }

@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { combinedAudioProgress, displayProgress, isActiveRun, type ProcessingStage } from './progress';
 import { RunLifecycle, terminateAndRethrow } from './lifecycle';
-import { DEFAULT_MEETING_OUTPUT_FORMAT, estimateWavBytes, MAX_WAV_OUTPUT_BYTES, outputCommand, outputDefinition, outputFilename, wavOutputLimitMessage, type MeetingOutputFormat } from './formats';
+import { DEFAULT_MEETING_OUTPUT_FORMAT, estimateWavBytes, MAX_WAV_OUTPUT_BYTES, outputCommand, outputDefinition, outputJob, wavOutputLimitMessage, type MeetingOutputFormat } from './formats';
 
 const ReactMediaRecorder = dynamic(
   () => import('react-media-recorder').then((mod) => mod.ReactMediaRecorder),
@@ -106,10 +106,11 @@ function MeetingFixerClient() {
     setDownloadUrl(null);
     totalDurationRef.current = null;
     const selectedFormat = outputFormat;
+    const job = outputJob(selectedFormat, runId);
     const baseExt = baseFile.name.split('.').pop() || 'mp3';
     const baseName = `base-${runId}.${baseExt}`;
     const amendName = `amendment-${runId}.webm`;
-    const outputName = `output-${runId}${outputDefinition(selectedFormat).extension}`;
+    const outputName = job.outputName;
     let runFfmpeg: FFmpeg | null = null;
     let progressHandler: ((event: { progress: number; time: number }) => void) | null = null;
 
@@ -118,6 +119,7 @@ function MeetingFixerClient() {
       if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
       totalDurationRef.current = baseDuration && amendmentDuration ? baseDuration + amendmentDuration : null;
       const estimatedWavBytes = selectedFormat === 'wav' ? estimateWavBytes(totalDurationRef.current) : null;
+      if (selectedFormat === 'wav' && !estimatedWavBytes) throw new Error('WAV output requires readable input durations so its browser memory cost can be bounded. Choose MP3 or M4A, or use files with readable duration metadata.');
       if (estimatedWavBytes && estimatedWavBytes > MAX_WAV_OUTPUT_BYTES) throw new Error(wavOutputLimitMessage(estimatedWavBytes));
       runFfmpeg = await initFfmpeg(runId);
       if (!runFfmpeg || !isActiveRun(runId, activeRunRef.current, processingRef.current)) return;
@@ -142,7 +144,7 @@ function MeetingFixerClient() {
       setProgress(99);
       const fileData = await runFfmpeg.readFile(outputName);
       if (typeof fileData === 'string' || fileData.byteLength === 0) throw new Error('FFmpeg produced an empty or unreadable output file.');
-      const url = URL.createObjectURL(new Blob([(fileData as Uint8Array).slice()], { type: outputDefinition(selectedFormat).mimeType }));
+      const url = URL.createObjectURL(new Blob([(fileData as Uint8Array).slice()], { type: job.mimeType }));
       if (activeRunRef.current !== runId) {
         URL.revokeObjectURL(url);
         return;
@@ -213,7 +215,7 @@ function MeetingFixerClient() {
                 {outputFormat === 'wav' && <p className="text-xs text-zinc-500">WAV is uncompressed and substantially larger: approximately {estimateWavBytes(totalDurationRef.current) ? `${(estimateWavBytes(totalDurationRef.current)! / (1024 * 1024)).toFixed(1)} MB` : '3.3 MB per minute'} for stereo 48 kHz PCM.</p>}
               </div>
               <button onClick={handleStitch} disabled={!baseFile || !amendmentBlobUrl || isProcessing} className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center transition-colors ${!baseFile || !amendmentBlobUrl ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed' : isProcessing ? 'bg-orange-100 text-orange-600 cursor-wait' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>{isProcessing ? <><Loader2 className="animate-spin mr-2" size={24} />{progressLabel}</> : 'Stitch Recordings'}</button>
-            </> : <div className="space-y-4"><div className="p-4 bg-green-50 text-green-700 rounded-lg text-center font-medium">Successfully stitched recordings!</div><div className="flex space-x-4"><a href={downloadUrl} download={outputFilename(outputFormat)} className="flex-1 py-3 bg-zinc-900 text-white rounded-xl font-bold flex items-center justify-center hover:bg-zinc-800 transition-colors"><Download size={20} className="mr-2" />Download {outputDefinition(outputFormat).label}</a><button onClick={handleClear} className="py-3 px-6 bg-zinc-100 text-zinc-700 rounded-xl font-bold hover:bg-zinc-200 transition-colors">Start Over</button></div></div>}
+            </> : <div className="space-y-4"><div className="p-4 bg-green-50 text-green-700 rounded-lg text-center font-medium">Successfully stitched recordings!</div><div className="flex space-x-4"><a href={downloadUrl} download={outputJob(outputFormat, activeRunRef.current).filename} className="flex-1 py-3 bg-zinc-900 text-white rounded-xl font-bold flex items-center justify-center hover:bg-zinc-800 transition-colors"><Download size={20} className="mr-2" />Download {outputDefinition(outputFormat).label}</a><button onClick={handleClear} className="py-3 px-6 bg-zinc-100 text-zinc-700 rounded-xl font-bold hover:bg-zinc-200 transition-colors">Start Over</button></div></div>}
           </div>
         </div>
       </div>

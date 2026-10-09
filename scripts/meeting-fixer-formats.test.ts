@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { MEETING_OUTPUT_FORMATS, MAX_WAV_OUTPUT_BYTES, estimateWavBytes, outputCommand, outputFilename, wavOutputLimitMessage } from '../app/meeting-fixer/formats.ts';
+import { MEETING_OUTPUT_FORMATS, MAX_WAV_OUTPUT_BYTES, estimateWavBytes, outputCommand, outputFilename, outputJob, wavOutputLimitMessage } from '../app/meeting-fixer/formats.ts';
+import { RunLifecycle } from '../app/meeting-fixer/lifecycle.ts';
 
 test('defines one truthful contract for every Meeting Fixer output', () => {
   assert.deepEqual(Object.keys(MEETING_OUTPUT_FORMATS).sort(), ['m4a', 'mp3', 'wav']);
@@ -34,10 +35,23 @@ test('exposes a bounded recoverable WAV guardrail', () => {
   assert.match(wavOutputLimitMessage(MAX_WAV_OUTPUT_BYTES + 1), /512 MB browser safety limit/);
 });
 
-test('captures format per run so a stale run cannot publish a later format', () => {
-  const first = { runId: 1, format: 'mp3' as const, filename: outputFilename('mp3') };
-  const second = { runId: 2, format: 'm4a' as const, filename: outputFilename('m4a') };
-  assert.notEqual(first.filename, second.filename);
+test('captures output format per run across reset and retry', () => {
+  const lifecycle = new RunLifecycle<{ terminate: () => void }>();
+  const firstRun = lifecycle.begin();
+  const first = outputJob('mp3', firstRun);
+  lifecycle.invalidate();
+  const secondRun = lifecycle.begin();
+  const second = outputJob('m4a', secondRun);
+  assert.equal(lifecycle.isCurrent(firstRun), false);
+  assert.equal(lifecycle.isCurrent(secondRun), true);
   assert.equal(first.filename, 'fixed_meeting.mp3');
+  assert.equal(first.mimeType, 'audio/mpeg');
   assert.equal(second.filename, 'fixed_meeting.m4a');
+  assert.equal(second.mimeType, 'audio/mp4');
+  assert.notEqual(first.outputName, second.outputName);
+});
+
+test('requires known duration before attempting bounded WAV output', () => {
+  assert.equal(estimateWavBytes(null), null);
+  assert.ok(estimateWavBytes(60)! < MAX_WAV_OUTPUT_BYTES);
 });
