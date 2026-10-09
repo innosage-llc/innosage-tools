@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { combinedAudioProgress, displayProgress, finitePositive, isActiveRun } from '../app/meeting-fixer/progress.ts';
+import { RunLifecycle } from '../app/meeting-fixer/lifecycle.ts';
 
 test('normalizes only finite positive durations', () => {
   assert.equal(finitePositive(0), null);
@@ -31,4 +32,18 @@ test('rejects stale or no-longer-processing run events', () => {
   assert.equal(isActiveRun(4, 4, true), true);
   assert.equal(isActiveRun(4, 5, true), false);
   assert.equal(isActiveRun(4, 4, false), false);
+});
+
+test('terminates stale resources and only finishes the owning run', () => {
+  const lifecycle = new RunLifecycle<{ terminate: () => void }>();
+  const first = { terminated: 0, terminate() { this.terminated += 1; } };
+  const stale = { terminated: 0, terminate() { this.terminated += 1; } };
+  const firstRun = lifecycle.begin();
+  assert.equal(lifecycle.claim(firstRun, first), true);
+  const secondRun = lifecycle.invalidate();
+  assert.equal(first.terminated, 1);
+  assert.equal(lifecycle.claim(firstRun, stale), false);
+  assert.equal(stale.terminated, 1);
+  assert.equal(lifecycle.finish(secondRun, stale), true);
+  assert.equal(stale.terminated, 2);
 });

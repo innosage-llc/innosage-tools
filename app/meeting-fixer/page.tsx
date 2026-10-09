@@ -6,6 +6,7 @@ import { Upload, Mic, Square, Loader2, Download, AlertCircle } from 'lucide-reac
 import dynamic from 'next/dynamic';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { combinedAudioProgress, displayProgress, isActiveRun, type ProcessingStage } from './progress';
+import { RunLifecycle } from './lifecycle';
 
 const ReactMediaRecorder = dynamic(
   () => import('react-media-recorder').then((mod) => mod.ReactMediaRecorder),
@@ -23,7 +24,7 @@ function MeetingFixerClient() {
   const activeRunRef = useRef(0);
   const processingRef = useRef(false);
   const totalDurationRef = useRef<number | null>(null);
-  const activeFfmpegRef = useRef<FFmpeg | null>(null);
+  const lifecycleRef = useRef(new RunLifecycle<FFmpeg>());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const clearBlobUrlRef = useRef<(() => void) | null>(null);
 
@@ -43,13 +44,9 @@ function MeetingFixerClient() {
   };
 
   const invalidateActiveRun = () => {
-    activeRunRef.current += 1;
+    activeRunRef.current = lifecycleRef.current.invalidate();
     processingRef.current = false;
     totalDurationRef.current = null;
-    if (activeFfmpegRef.current) {
-      activeFfmpegRef.current.terminate();
-      activeFfmpegRef.current = null;
-    }
     setIsProcessing(false);
     setProgress(0);
     setProcessingStage('preparing');
@@ -85,11 +82,9 @@ function MeetingFixerClient() {
     try {
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
       await ffmpeg.load({ coreURL: `${baseURL}/ffmpeg-core.js`, wasmURL: `${baseURL}/ffmpeg-core.wasm` });
-      if (!isActiveRun(runId, activeRunRef.current, processingRef.current)) {
-        ffmpeg.terminate();
+      if (!lifecycleRef.current.claim(runId, ffmpeg)) {
         return null;
       }
-      activeFfmpegRef.current = ffmpeg;
       return ffmpeg;
     } catch (err) {
       console.error('Failed to load FFmpeg', err);
@@ -99,7 +94,7 @@ function MeetingFixerClient() {
 
   const handleStitch = async () => {
     if (!baseFile || !amendmentBlobUrl || isProcessing) return;
-    const runId = activeRunRef.current + 1;
+    const runId = lifecycleRef.current.begin();
     activeRunRef.current = runId;
     processingRef.current = true;
     setIsProcessing(true);
@@ -160,7 +155,7 @@ function MeetingFixerClient() {
       if (runFfmpeg) {
         if (progressHandler) runFfmpeg.off('progress', progressHandler);
         await Promise.allSettled([runFfmpeg.deleteFile(baseName), runFfmpeg.deleteFile(amendName), runFfmpeg.deleteFile(outputName)]);
-        if (activeFfmpegRef.current === runFfmpeg) activeFfmpegRef.current = null;
+        lifecycleRef.current.finish(runId, runFfmpeg);
       }
       if (activeRunRef.current === runId) {
         processingRef.current = false;
