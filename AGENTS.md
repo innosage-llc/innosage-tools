@@ -6,7 +6,7 @@ This folder is home. Treat it that way.
 These rules are non-negotiable and enforced by Husky hooks.
 
 1. **Every commit must be tracked by an individual PR.**
-2. **NEVER git push to remote 'main' directly.** (Note: This repo currently uses `master` as its primary branch).
+2. **NEVER git push to remote 'main' directly.** This repo uses `main` as its primary branch.
 3. **NEVER git commit on local primary branch directly.**
 4. **Master Sync Rule**: Always pull the latest primary branch before starting a new feature branch.
 5. **Auto Merge**: Once a PR is created and CI is green, agents may run the repository auto-merge gate when there are no pending review changes.
@@ -18,6 +18,18 @@ Agents MUST use `scripts/autonomous-ops.sh` to start and submit work. After a PR
 Every task MUST pass the Gate before it is considered complete. No exceptions.
 The Gate command for this repository is:
 `npm run lint` followed by `npm run build`
+
+The native `scripts/gatekeeper.sh` additionally runs deployment-contract tests,
+TypeScript and SEO checks. Use it for ordinary pre-merge verification.
+
+## Tools release contract
+
+Read `docs/runbooks/tools-deployment.md` before deploying. Use the explicit
+`npm run deploy:staging` and `npm run deploy:production` entrypoints; do not infer
+environment/approval from branch names. Production needs Founder acceptance of
+the exact staging candidate and separate production authorization. Main merges
+run checks, not automatic production deployment. Keep receipts/artifacts in the
+ignored `.deploy/` directory; never put credentials or recordings there.
 
 ## Atomic Agentic Committing
 - One logical change per commit.

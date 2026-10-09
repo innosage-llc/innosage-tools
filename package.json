@@ -1,6 +1,6 @@
 {
   "name": "innosage-tools",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "private": true,
   "scripts": {
@@ -9,6 +9,12 @@
     "start": "next start",
     "lint": "oxlint && eslint",
     "test:seo": "node scripts/verify-seo.mjs",
+    "test:deploy": "node --test scripts/deploy-*.test.mjs",
+    "deploy:staging": "bash scripts/deploy-local.sh staging",
+    "deploy:production": "bash scripts/deploy-local.sh production",
+    "deploy:execute:staging": "node scripts/deploy-pages.mjs staging",
+    "deploy:execute:production": "node scripts/deploy-pages.mjs production",
+    "deploy:verify:staging": "node scripts/deploy-pages.mjs verify-staging",
     "test:spec": "mkdir -p test-results && pytest tests/e2e/test_image_joiner_ssot.py --json-report --json-report-file=test-results/report.json -s && python3 scripts/extract_spec.py",
     "prepare": "bash scripts/install-git-hooks.sh"
   },
@@ -44,6 +50,7 @@
     "husky": "^9.1.7",
     "oxlint": "^1.48.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "4.149.0"
   }
 }

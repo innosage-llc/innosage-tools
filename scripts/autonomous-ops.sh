@@ -8,7 +8,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GATEKEEPER="$REPO_ROOT/scripts/gatekeeper.sh"
-PRIMARY_BRANCH="master"
+PRIMARY_BRANCH="main"
 
 cd "$REPO_ROOT"
 
@@ -16,7 +16,7 @@ usage() {
   echo "Usage: $0 {start <branch-name>|submit <title> <body>}"
   echo
   echo "Commands:"
-  echo "  start <branch-name>    Implements Master Sync Rule: pulls master and creates a new branch"
+  echo "  start <branch-name>    Implements Master Sync Rule: pulls main and creates a new branch"
   echo "  submit <title> <body>  Runs Gatekeeper and creates a PR using gh CLI"
   exit 1
 }

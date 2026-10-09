@@ -16,6 +16,8 @@
 # next.js
 /.next/
 /out/
+/.deploy/
+/.wrangler/
 
 # production
 /build

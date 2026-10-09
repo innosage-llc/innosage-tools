@@ -1,0 +1,3 @@
+# Preserve Next.js /tools links on direct Pages preview URLs.
+/tools /index.html 200
+/tools/* /:splat 200
