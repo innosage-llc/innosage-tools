@@ -2,10 +2,19 @@
 import { ToolsLayout } from '@/components/ToolsLayout';
 import { useState, useRef, useEffect } from 'react';
 import { RecordingEngine, DiskWriter } from './lib/recording-engine';
+import { selectRecordingFormat } from './lib/recording-format';
 import { DeviceSelector } from './components/DeviceSelector';
 import { AudioLevelMeter } from './components/AudioLevelMeter';
 import { PipTimer } from './components/PipTimer';
 import { Play, Square, Pause, Mic, Video, Settings2, Download, AlertCircle } from 'lucide-react';
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'An unknown error occurred';
+}
+
+function isAbortError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
+}
 
 export default function RecorderPage() {
   const [state, setState] = useState<'setup' | 'recording' | 'paused' | 'done'>('setup');
@@ -18,33 +27,106 @@ export default function RecorderPage() {
 
   const [duration, setDuration] = useState(0);
   const [fileSupported, setFileSupported] = useState(true);
+  const [busy, setBusy] = useState<'idle' | 'starting' | 'saving'>('idle');
+  const [completedWithDiskWriter, setCompletedWithDiskWriter] = useState(false);
 
-  // Engine instance
   const engineRef = useRef<RecordingEngine | null>(null);
+  const writerRef = useRef<DiskWriter | null>(null);
+  const mountedRef = useRef(false);
+  const busyRef = useRef<'idle' | 'starting' | 'saving'>('idle');
+  const recordingFailureRef = useRef<Error | null>(null);
 
-  // We need to export analysers from the mixer to meter them
   const [micAnalyser, setMicAnalyser] = useState<AnalyserNode | null>(null);
   const [sysAnalyser, setSysAnalyser] = useState<AnalyserNode | null>(null);
 
   useEffect(() => {
+    mountedRef.current = true;
     const timer = setTimeout(() => {
       setFileSupported(DiskWriter.isSupported());
     }, 0);
-    return () => clearTimeout(timer);
+
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(timer);
+
+      const engine = engineRef.current;
+      engineRef.current = null;
+      if (engine) void engine.stop().catch(() => undefined);
+    };
   }, []);
 
-  const handleStart = async () => {
-    setError(null);
+  const releaseEngine = (engine: RecordingEngine) => {
+    if (engineRef.current !== engine) return;
+
+    engineRef.current = null;
+    writerRef.current = null;
+    recordingFailureRef.current = null;
+
+    if (mountedRef.current) {
+      setMicAnalyser(null);
+      setSysAnalyser(null);
+    }
+  };
+
+  const stopRecording = async (engine: RecordingEngine) => {
+    if (busyRef.current === 'saving') return;
+    busyRef.current = 'saving';
+    if (mountedRef.current) setBusy('saving');
     try {
-      let ext = mode === 'audio' ? '.m4a' : '.webm';
-      if (mode === 'audio' && !MediaRecorder.isTypeSupported('audio/mp4')) {
-        ext = '.webm';
+      await engine.stop();
+      if (recordingFailureRef.current) throw recordingFailureRef.current;
+
+      const writer = writerRef.current;
+      if (!writer) throw new Error('Could not confirm the recording destination.');
+
+      if (mountedRef.current) {
+        setCompletedWithDiskWriter(writer.isDiskWriter());
+        setState('done');
       }
-      const suggestedName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}${ext}`;
+    } catch (stopError: unknown) {
+      if (mountedRef.current) {
+        setError(errorMessage(stopError));
+        setState('setup');
+      }
+    } finally {
+      busyRef.current = 'idle';
+      if (mountedRef.current) setBusy('idle');
+      releaseEngine(engine);
+    }
+  };
 
-      const writer = await DiskWriter.create(suggestedName);
+  const handleStart = async () => {
+    if (busyRef.current !== 'idle') return;
 
-      const engine = new RecordingEngine({
+    busyRef.current = 'starting';
+    setBusy('starting');
+    setError(null);
+    setDuration(0);
+    setCompletedWithDiskWriter(false);
+    recordingFailureRef.current = null;
+
+    let engine: RecordingEngine | null = null;
+    let started = false;
+
+    try {
+      const format = selectRecordingFormat(mode);
+      const suggestedName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}${format.extension}`;
+      let writer: DiskWriter;
+
+      try {
+        writer = await DiskWriter.create(suggestedName, format);
+      } catch (pickerError: unknown) {
+        if (isAbortError(pickerError)) return;
+        throw pickerError;
+      }
+
+      if (!mountedRef.current) {
+        await writer.abort().catch(() => undefined);
+        return;
+      }
+      writerRef.current = writer;
+
+      const activeEngine = new RecordingEngine({
         mode,
         micDeviceId: micId,
         camDeviceId: camId,
@@ -54,25 +136,55 @@ export default function RecorderPage() {
         videoBitrate: 5000000,
         timeslice: 1000,
       });
+      engine = activeEngine;
+      engineRef.current = activeEngine;
 
-      engine.addEventListener('started', () => setState('recording'));
-      engine.addEventListener('paused', () => setState('paused'));
-      engine.addEventListener('resumed', () => setState('recording'));
-      engine.addEventListener('stopped', () => {
-        setState('done');
-        setMicAnalyser(null);
-        setSysAnalyser(null);
-      });
+      const onPaused = () => {
+        if (engineRef.current === activeEngine) setState('paused');
+      };
+      const onResumed = () => {
+        if (engineRef.current === activeEngine) setState('recording');
+      };
+      const updateDuration = (event: Event) => {
+        if (engineRef.current === activeEngine) setDuration((event as CustomEvent<{ duration: number }>).detail.duration);
+      };
+      const onRecordingError = (event: Event) => {
+        if (engineRef.current !== activeEngine) return;
+        const detail = (event as CustomEvent<{ error: Error }>).detail;
+        recordingFailureRef.current ??= detail?.error instanceof Error ? detail.error : new Error('Recording failed.');
+        setError(recordingFailureRef.current.message);
+        if (busyRef.current === 'idle') void stopRecording(activeEngine);
+      };
 
-      engine.addEventListener('tick', (e: Event) => {
-        setDuration((e as CustomEvent<{ duration: number }>).detail.duration);
-      });
+      activeEngine.addEventListener('paused', onPaused);
+      activeEngine.addEventListener('resumed', onResumed);
+      activeEngine.addEventListener('stopped', updateDuration);
+      activeEngine.addEventListener('tick', updateDuration);
+      activeEngine.addEventListener('recordingerror', onRecordingError);
 
-      await engine.start(writer);
-      engineRef.current = engine;
+      await activeEngine.start(writer);
+      started = true;
 
-      // Hook up analysers if we want meters (optional extension to RecordingEngine, but we can access it if we expose it)
-      const mixer = engine.getMixer();
+      if (!mountedRef.current) {
+        try {
+          await activeEngine.stop();
+        } catch {
+          // The page is gone; stopping the source is still the priority.
+        }
+        releaseEngine(activeEngine);
+        return;
+      }
+
+      if (recordingFailureRef.current) {
+        await stopRecording(activeEngine);
+        return;
+      }
+
+      busyRef.current = 'idle';
+      setBusy('idle');
+      setState('recording');
+
+      const mixer = activeEngine.getMixer();
       if (mixer) {
         const actx = mixer.getAudioContext();
 
@@ -90,17 +202,29 @@ export default function RecorderPage() {
           setSysAnalyser(sAnl);
         }
       }
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        setError(e.message);
-      } else {
-        setError('An unknown error occurred');
+    } catch (startError: unknown) {
+      if (engine && started) {
+        try {
+          await engine.stop();
+        } catch {
+          // The original startup error is the useful message to show.
+        }
       }
+
+      if (engine) releaseEngine(engine);
+      if (mountedRef.current) {
+        setError(errorMessage(startError));
+        setState('setup');
+      }
+    } finally {
+      busyRef.current = 'idle';
+      if (mountedRef.current) setBusy('idle');
     }
   };
 
-  const handleStop = () => {
-    engineRef.current?.stop();
+  const handleStop = async () => {
+    const engine = engineRef.current;
+    if (engine) await stopRecording(engine);
   };
 
   const handlePause = () => {
@@ -127,6 +251,12 @@ export default function RecorderPage() {
         </div>
 
         <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 shadow-sm max-w-2xl mx-auto">
+          {error && state !== 'setup' && (
+            <div role="alert" className="mb-6 bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start gap-3 text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <p>{error}</p>
+            </div>
+          )}
 
           {/* Setup State */}
           {state === 'setup' && (
@@ -141,7 +271,9 @@ export default function RecorderPage() {
               {!fileSupported && (
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl flex items-start gap-3 text-sm">
                   <AlertCircle className="w-5 h-5 shrink-0" />
-                  <p>Your browser doesn&apos;t support direct disk writing. The recording will be kept in memory and downloaded when you stop.</p>
+                  <p>
+                    Your browser doesn&apos;t support direct disk writing. Recordings are buffered in memory with a 256 MiB maximum. On successful stop, a browser download is initiated.
+                  </p>
                 </div>
               )}
 
@@ -221,17 +353,19 @@ export default function RecorderPage() {
 
               <button
                 onClick={handleStart}
-                className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
+                disabled={busy !== 'idle'}
+                aria-busy={busy !== 'idle'}
+                className="w-full py-4 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 disabled:cursor-wait text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
               >
                 <Play className="w-5 h-5 fill-current" />
-                Start Recording
+                {busy === 'starting' ? 'Starting…' : busy === 'saving' ? 'Saving…' : 'Start Recording'}
               </button>
             </div>
           )}
 
           {/* Recording / Paused State */}
           {(state === 'recording' || state === 'paused') && (
-            <div className="space-y-8 flex flex-col items-center">
+            <div className="space-y-8 flex flex-col items-center" aria-busy={busy === 'saving'}>
 
               <div className="text-center">
                 <div className={`text-5xl font-mono font-bold tracking-tight ${state === 'paused' ? 'text-zinc-400' : 'text-zinc-900'} transition-colors`}>
@@ -253,19 +387,21 @@ export default function RecorderPage() {
 
               <div className="flex items-center gap-4">
                 {state === 'recording' ? (
-                  <button onClick={handlePause} className="w-14 h-14 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center hover:bg-yellow-200 transition-colors">
+                  <button onClick={handlePause} disabled={busy === 'saving'} aria-label="Pause recording" className="w-14 h-14 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center hover:bg-yellow-200 disabled:opacity-50 transition-colors">
                     <Pause className="w-6 h-6 fill-current" />
                   </button>
                 ) : (
-                  <button onClick={handleResume} className="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
+                  <button onClick={handleResume} disabled={busy === 'saving'} aria-label="Resume recording" className="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 disabled:opacity-50 transition-colors">
                     <Play className="w-6 h-6 fill-current" />
                   </button>
                 )}
 
-                <button onClick={handleStop} className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors group">
+                <button onClick={handleStop} disabled={busy === 'saving'} aria-label="Stop recording" className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 disabled:opacity-50 transition-colors group">
                   <Square className="w-6 h-6 fill-current group-hover:scale-90 transition-transform" />
                 </button>
               </div>
+
+              {busy === 'saving' && <p role="status" className="text-sm font-medium text-zinc-600">Saving recording…</p>}
 
               <div className="pt-4 border-t border-zinc-100 w-full flex justify-center">
                 <PipTimer duration={duration} isActive={state === 'recording'} />
@@ -279,10 +415,11 @@ export default function RecorderPage() {
               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Download className="w-10 h-10" />
               </div>
-              <h2 className="text-2xl font-bold text-zinc-900">Recording Saved!</h2>
+              <h2 className="text-2xl font-bold text-zinc-900">Recording Finalized</h2>
               <p className="text-zinc-600">
-                Your recording has been finalized.
-                {fileSupported ? ' It was saved directly to the location you chose.' : ' Your browser has downloaded the file.'}
+                {completedWithDiskWriter
+                  ? 'Your recording was finalized at the location you chose.'
+                  : 'Your recording was finalized and a browser download was initiated.'}
               </p>
 
               <div className="pt-6">
@@ -290,6 +427,8 @@ export default function RecorderPage() {
                   onClick={() => {
                     setState('setup');
                     setDuration(0);
+                    setError(null);
+                    setCompletedWithDiskWriter(false);
                   }}
                   className="px-6 py-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-medium transition-colors"
                 >
