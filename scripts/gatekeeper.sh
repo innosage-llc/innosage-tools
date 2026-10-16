@@ -29,6 +29,11 @@ npm run test:deploy
 npm run test:recorder
 npm run test:meeting-fixer
 npm run test:video-scissors
+npm run test:video-scissors-remote
+# Isolated Worker dependency graph; preserve the root native gate as authority.
+npm ci --prefix workers/video-scissors-mcp --ignore-scripts --no-audit --no-fund
+npm --prefix workers/video-scissors-mcp run check
+npm run test:video-scissors-mcp
 
 # 1. Syntax & Correctness Check (Oxlint + ESLint)
 echo "🔍 Checking for linting errors (oxlint && eslint)..."
@@ -45,5 +50,6 @@ npm run build
 # 4. SEO Contract
 echo "🔎 Verifying the exported /tools SEO contract..."
 npm run test:seo
+npm --prefix workers/video-scissors-mcp run test:assets
 
 echo "✅ Gatekeeper: All checks passed. The 'Gate' is open."

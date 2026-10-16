@@ -4,29 +4,42 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import VideoScissorsView from './VideoScissorsView';
 import { videoScissorsRenderer } from '../../lib/video-scissors-browser';
 import { VideoScissorsController } from '../../lib/video-scissors';
+import { VideoScissorsRemoteBrowser } from '../../lib/video-scissors-remote-browser';
+import RemoteConnectionView from './RemoteConnectionView';
 
 export default function VideoScissorsApp() {
   const [controller] = useState(() => new VideoScissorsController({ renderer: videoScissorsRenderer }));
+  const [remote] = useState(() => new VideoScissorsRemoteBrowser(controller));
+  const [remoteModel, setRemoteModel] = useState(() => remote.snapshot());
+  const [remoteAvailable, setRemoteAvailable] = useState(false);
   const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const commandSequence = useRef(0);
   const mounted = useRef(false);
 
   useEffect(() => {
     mounted.current = true;
+    const unsubscribe = remote.subscribe(() => setRemoteModel(remote.snapshot()));
+    const unload = () => remote.unload();
+    window.addEventListener('pagehide', unload);
+    const abort = new AbortController();
+    void fetch('/remote/capabilities', { signal: abort.signal }).then(async r => {
+      if (r.ok && r.headers.get('content-type')?.includes('application/json') && (await r.json()).enabled === true) setRemoteAvailable(true);
+    }).catch(() => {});
     return () => {
+      abort.abort(); unsubscribe(); window.removeEventListener('pagehide', unload);
       mounted.current = false;
       queueMicrotask(() => {
-        if (!mounted.current) controller.dispose();
+        if (!mounted.current) { void remote.dispose(); controller.dispose(); }
       });
     };
-  }, [controller]);
+  }, [controller, remote]);
 
   const nextCommand = () => `ui-${snapshot.sourceGeneration}-${++commandSequence.current}`;
   const onCut = () => {
-    void controller.cut({ operationId: nextCommand(), sourceGeneration: snapshot.sourceGeneration, version: snapshot.version });
+    void remote.adapter.localCut(nextCommand(), snapshot.segments);
   };
   const onUndo = () => {
-    controller.undo({ operationId: nextCommand(), sourceGeneration: snapshot.sourceGeneration, version: snapshot.version });
+    void remote.adapter.localUndo(nextCommand());
   };
   const onDownload = () => {
     const download = controller.createDownload();
@@ -40,6 +53,7 @@ export default function VideoScissorsApp() {
   };
 
   return (
+    <>
     <VideoScissorsView
       fileName={snapshot.fileName}
       duration={snapshot.duration}
@@ -59,5 +73,7 @@ export default function VideoScissorsApp() {
       onUndo={onUndo}
       onDownload={onDownload}
     />
+    {remoteAvailable && <RemoteConnectionView model={remoteModel} onConnect={() => { void remote.connect(); }} onRevoke={() => { void remote.disconnect(); }} />}
+    </>
   );
 }
