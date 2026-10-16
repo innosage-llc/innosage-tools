@@ -6,7 +6,7 @@ import { Mailbox, type ProjectAuth } from './mailbox';
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,96}$/);
 const version = { generation: z.number().int().nonnegative(), version: z.number().int().nonnegative() };
 const security = (_scope: string) => ({ securitySchemes: [{ type: 'oauth2', scopes: ['video:read','video:edit'] }] });
-export function mcpHandler(db: D1Database, props: Record<string, unknown>, origin: string) {
+export function mcpHandler(db: D1Database, props: Record<string, unknown>, origin: string, wake?: (auth: ProjectAuth) => Promise<void>) {
   // A new server per request, never isolate-local routing/session state.
   return createMcpHandler(() => {
     const server = new McpServer({ name: 'local-video-scissors', version: '0.1.0' });
@@ -31,17 +31,23 @@ export function mcpHandler(db: D1Database, props: Record<string, unknown>, origi
       inputSchema: z.object({ operationId: id, ...version, clips: z.array(z.object({ start: z.number(), end: z.number() }).strict()).min(1).max(20) }).strict(), _meta: security('video:edit') },
       async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
         const row = await mailbox.admit(auth, { ...input, kind: 'cut' });
+        if (row?.state === 'queued') await wake?.(auth).catch(() => {});
         return row ? { operationId: row.id, state: row.state } : { error: 'STALE_OR_REJECTED' };
       }));
     server.registerTool('undo', { description: 'Queue Undo of the latest operation only, with current source generation/version.',
       inputSchema: z.object({ operationId: id, ...version, targetOperationId: id }).strict(), _meta: security('video:edit') },
       async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
         const row = await mailbox.admit(auth, { ...input, kind: 'undo' });
+        if (row?.state === 'queued') await wake?.(auth).catch(() => {});
         return row ? { operationId: row.id, state: row.state } : { error: 'STALE_OR_REJECTED' };
       }));
     server.registerTool('cancel', { description: 'Request cancellation of this exact operation; cannot undo already-dispatched/completed work.',
       inputSchema: z.object({ operationId: id }).strict(), _meta: security('video:edit') },
-      async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => ({ requested: await mailbox.cancel(auth, input.operationId) })));
+      async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
+        const requested = await mailbox.cancel(auth, input.operationId);
+        if (requested) await wake?.(auth).catch(() => {});
+        return { requested };
+      }));
     return server;
   }, { route: '/mcp', authContext: { props }, responseMode: 'json' });
 }

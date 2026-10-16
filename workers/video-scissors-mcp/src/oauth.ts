@@ -3,10 +3,16 @@ import { renderConsentView } from './ConsentView';
 import { Mailbox } from './mailbox';
 import { mcpHandler } from './mcp';
 import { browserRoute } from './browser-routes';
+import type { BridgeNamespace } from './browser-routes';
 import { boundedBody, exactObject, sameOrigin, reply } from './http';
 
 const scopes = ['video:read', 'video:edit'];
-export function providerFor(env: Env, origin: string) {
+export function providerFor(env: Env, origin: string, bridge?: BridgeNamespace) {
+  const wake = async (project: string, epoch: number) => {
+    if (!bridge) return;
+    const stub = bridge.get(bridge.idFromName(project)) as {notify(project: string, epoch: number): Promise<void>};
+    await stub.notify(project, epoch);
+  };
   return new OAuthProvider<Env>({
     apiRoute: '/mcp', apiHandler: { async fetch(request, currentEnv, ctx) {
       // Provider 1.2.3 supplies ctx.auth, not the newer Agents verified-symbol
@@ -14,7 +20,7 @@ export function providerFor(env: Env, origin: string) {
       const verified = ctx as ExecutionContext & OAuthResourceContext<Record<string, unknown>>;
       if (!verified.auth?.clientId || !verified.props || typeof verified.props !== 'object') return reply({ error: 'AUTH_CONTEXT' }, 401);
       if (!scopes.every(scope => verified.auth.scope.includes(scope))) return insufficientScope(verified.auth, scopes);
-      const handler = mcpHandler(currentEnv.DB, verified.props, origin);
+      const handler = mcpHandler(currentEnv.DB, verified.props, origin, auth => wake(auth.project, auth.epoch));
       const rpc = request.method === 'POST' ? await request.clone().json<{method?: string}>() : null;
       const response = await handler.fetch(request, { authInfo: { token: verified.auth.token,
         clientId: verified.auth.clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt,
@@ -55,7 +61,7 @@ export function providerFor(env: Env, origin: string) {
     defaultHandler: { async fetch(request, currentEnv) {
       const path = new URL(request.url).pathname;
       const mailbox = new Mailbox(currentEnv.DB);
-      if (path.startsWith('/remote/')) return browserRoute(request, mailbox);
+      if (path.startsWith('/remote/')) return browserRoute(request, mailbox, bridge);
       if (path !== '/authorize') return currentEnv.ASSETS.fetch(request);
       const oauth = (currentEnv as Env & { OAUTH_PROVIDER: OAuthHelpers }).OAUTH_PROVIDER;
       if (request.method === 'GET') {
@@ -86,6 +92,7 @@ export function providerFor(env: Env, origin: string) {
       if (!auth) return reply({ error: 'PROOF_REJECTED' }, 403);
       const { redirectTo } = await oauth.completeAuthorization({ request: approved.request, userId: auth.project,
         metadata: {}, scope: approved.request.scope, props: { ...auth, scopes: approved.request.scope } });
+      await wake(auth.project, auth.epoch).catch(() => {});
       approved.headers.set('Location', redirectTo);
       return new Response(null, { status: 302, headers: approved.headers });
     } },

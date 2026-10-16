@@ -36,8 +36,9 @@ for (const afterCommit of [false,true]) test(`real Workers/D1 + adapter: lost AC
     await assert.rejects(adapter.pollOnce(),/ACK_LOST/);
     assert.equal(computes,1);assert.equal(claims,1);
     assert.equal(await db.prepare("SELECT state FROM commands WHERE id='first'").first('state'),afterCommit?'completed':'claimed');
-    await adapter.pollOnce(); // saved terminal report first, then empty claim
+    await adapter.flushReport(); // B arm retries the saved terminal ACK before awaiting another wake.
     assert.equal(computes,1);assert.equal(reports,2);
+    assert.equal(claims,1,'no next command is claimed until the uncertain ACK is recovered');
     assert.equal(await db.prepare("SELECT state FROM commands WHERE id='first'").first('state'),'completed');
     await call('admit',{auth,command:command('next')});await adapter.pollOnce();
     assert.equal(computes,2);assert.equal(reports,3);

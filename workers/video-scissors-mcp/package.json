@@ -9,6 +9,7 @@
     "test": "node --experimental-strip-types --test test/mailbox.test.ts test/oauth.test.ts test/ack.test.ts",
     "test:assets": "node --experimental-strip-types --test test/assets.test.ts",
     "test:background": "node --experimental-strip-types --test test/background.test.ts",
+    "test:bridge": "node --experimental-strip-types --test test/bridge.test.ts",
     "test:integration": "node --experimental-strip-types --test test/integration.test.ts"
   },
   "dependencies": {

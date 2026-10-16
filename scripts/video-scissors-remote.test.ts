@@ -187,19 +187,21 @@ test('late project creation after Disconnect is revoked with its original bindin
   let finish!: (response: Response) => void;
   const calls: {path: string; body: unknown}[] = [];
   const remote = new VideoScissorsRemoteBrowser(f.controller, async (input, init) => {
-    const path=String(input); calls.push({path,body:JSON.parse(String(init?.body))});
+    const path=String(input); calls.push({path,body:init?.body ? JSON.parse(String(init.body)) : null});
+    if(path==='/remote/capabilities') return Response.json({enabled:true,wakeup:'poll'});
     if(path==='/remote/projects') return new Promise(resolve=>{finish=resolve;});
     assert.equal(path,'/remote/revoke');return Response.json({ok:true});
   });
   try {
     const pending=remote.connect();
+    await new Promise(resolve=>setImmediate(resolve)); // Let capability negotiation reach the deferred project request.
     await remote.disconnect();
     finish(Response.json({project:'old-project',epoch:1,credential:'synthetic-credential',proof:'synthetic-proof',proofExpiresAt:Date.now()+300000,expiresAt:Date.now()+1800000}));
     await pending;
     assert.equal(remote.snapshot().state,'disconnected');
     assert.equal(remote.snapshot().pairingProof,null);
-    assert.deepEqual(calls.map(c=>c.path),['/remote/projects','/remote/revoke']);
-    assert.deepEqual(calls[1].body,{auth:{project:'old-project',epoch:1,credential:'synthetic-credential'}});
+    assert.deepEqual(calls.map(c=>c.path),['/remote/capabilities','/remote/projects','/remote/revoke']);
+    assert.deepEqual(calls[2].body,{auth:{project:'old-project',epoch:1,credential:'synthetic-credential'}});
   } finally { await remote.dispose();await f.adapter.dispose();f.controller.dispose(); }
 });
 
@@ -209,6 +211,7 @@ test('offline component teardown aborts poll and subscriptions without a retry/t
   f.controller.subscribe=listener=>{subscriptions++;const stop=subscribe(listener);return()=>{subscriptions--;stop();};};
   const remote=new VideoScissorsRemoteBrowser(f.controller,async(input,init)=>{
     requests++;
+    if(input==='/remote/capabilities')return Response.json({enabled:true,wakeup:'poll'});
     if(input==='/remote/projects')return Response.json({project:'local-fixture',epoch:1,credential:'synthetic',proof:'synthetic',proofExpiresAt:Date.now()+300000,expiresAt:Date.now()+1800000});
     if(input==='/remote/sync')return Response.json({ok:true});
     if(input==='/remote/revoke'){revokeAttempts++;throw Error('OFFLINE');}
