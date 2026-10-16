@@ -279,12 +279,7 @@ export class VideoScissorsController {
     if (existing) return existing;
     if (this.acceptedIds.has(command.operationId)) return Promise.resolve();
     if (!this.isCurrent(command) || !this.source || !this.metadata || this.snapshot.busy) return Promise.resolve();
-    try {
-      validateVideoClips(this.snapshot.segments, this.snapshot.duration);
-    } catch (error) {
-      this.setError(error instanceof Error ? error.message : 'The clip plan is invalid.');
-      return Promise.resolve();
-    }
+    if (!this.validateCutPlan(this.snapshot.segments)) return Promise.resolve();
     const source = this.source;
     this.acceptedIds.add(command.operationId);
     const generation = this.snapshot.sourceGeneration;
@@ -298,6 +293,11 @@ export class VideoScissorsController {
     const task = this.renderCut(command.operationId, generation, source, clips, before, abort);
     this.rememberCommand(command.operationId, task);
     return task;
+  }
+
+  validateCutPlan(clips: VideoClip[]): boolean {
+    try { validateVideoClips(clips, this.snapshot.duration); return true; }
+    catch (error) { this.setError(error instanceof Error ? error.message : 'The clip plan is invalid.'); return false; }
   }
 
   cancel(): void {

@@ -8,6 +8,19 @@ API, account, storage service, analytics endpoint, or third-party CDN. The only
 runtime fetches are same-origin requests for the local FFmpeg JavaScript and
 compressed WebAssembly assets.
 
+## Experimental #346 control boundary (local candidate only)
+
+The separate Worker candidate can serve this same export and capability-enable
+Gemini-authored connection/consent UI. Ordinary Pages has no such capability and
+keeps local Cut/Undo usable. Only this opt-in candidate sends bounded same-origin
+control/auth metadata; never filenames, media, blob URLs or output bytes. This is
+not a zero-HTTP-body or zero-platform-telemetry claim. See
+[the Worker contract](../../workers/video-scissors-mcp/README.md) for exact scopes,
+30-minute project/token lifetimes, one-use proof, D1/KV revocation distinctions,
+non-replay and known-result ACK recovery, background delivery and offline teardown.
+Default config remains disabled. Local fixture PASS is not real ChatGPT, cloud
+CPU/capacity qualification, production permission or Founder B acceptance.
+
 ## Limits and validation
 
 The source must be at most 100,000,000 bytes, no longer than 300 seconds, and

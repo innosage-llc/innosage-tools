@@ -14,6 +14,8 @@
     "test:recorder": "node --experimental-strip-types --test scripts/recorder.test.ts",
     "test:meeting-fixer": "node --experimental-strip-types --test scripts/meeting-fixer-progress.test.ts",
     "test:video-scissors": "node --experimental-strip-types --test scripts/video-scissors.test.ts",
+    "test:video-scissors-remote": "node --experimental-strip-types --test scripts/video-scissors-remote.test.ts",
+    "test:video-scissors-mcp": "npm --prefix workers/video-scissors-mcp test",
     "prepare:video-scissors": "node scripts/prepare-video-scissors.mjs",
     "deploy:staging": "bash scripts/deploy-local.sh staging",
     "deploy:production": "bash scripts/deploy-local.sh production",

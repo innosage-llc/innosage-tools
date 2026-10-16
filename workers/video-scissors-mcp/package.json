@@ -1,0 +1,27 @@
+{
+  "name": "video-scissors-mcp-experiment",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "types": "wrangler types worker-configuration.d.ts --include-runtime false",
+    "check": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/mailbox.test.ts test/oauth.test.ts test/ack.test.ts",
+    "test:assets": "node --experimental-strip-types --test test/assets.test.ts",
+    "test:background": "node --experimental-strip-types --test test/background.test.ts",
+    "test:integration": "node --experimental-strip-types --test test/integration.test.ts"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "1.2.3",
+    "@modelcontextprotocol/server": "2.3.1",
+    "agents": "0.28.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261016.1",
+    "esbuild": "0.28.2",
+    "miniflare": "5.20261006.1-alpha",
+    "typescript": "5.9.3",
+    "wrangler": "4.149.0"
+  }
+}
