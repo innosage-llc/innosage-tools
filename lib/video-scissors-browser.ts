@@ -59,7 +59,7 @@ export const videoScissorsRenderer: VideoScissorsRenderer = {
   inspect(file, signal) {
     return withFfmpeg(signal, async (ffmpeg, logs) => {
       await writeSource(ffmpeg, file, signal);
-      const code = await ffmpeg.exec(['-hide_banner', '-i', PROBE_INPUT, '-t', '0', '-f', 'null', '-'], -1, { signal });
+      const code = await ffmpeg.exec(['-hide_banner', '-i', PROBE_INPUT, '-map', '0:V:0', '-map', '0:a:0', '-t', '0', '-f', 'null', '-'], -1, { signal });
       const parsed = parseFfmpegMetadata(logs.join('\n'));
       // ffmpeg may return a non-zero status for a zero-frame null output; input metadata is still parsed and validated.
       if (code !== 0 && parsed.duration <= 0) throw new Error('The selected file is not a supported MP4 video or is corrupt.');

@@ -19,9 +19,9 @@ export function videoScissorsFilter(clips: VideoClip[]): string {
     const start = clip.start.toFixed(6);
     const end = clip.end.toFixed(6);
     // Subtract the requested boundary, not the first video frame's PTS.
-    parts.push(`[0:v]trim=start=${start}:end=${end},setpts=PTS-${start}/TB[v${index}]`);
+    parts.push(`[0:V:0]trim=start=${start}:end=${end},setpts=PTS-${start}/TB[v${index}]`);
     // Materialize the input audio origin and trailing silence before slicing.
-    parts.push(`[0:a]aresample=async=1:first_pts=0,apad,atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[a${index}]`);
+    parts.push(`[0:a:0]aresample=async=1:first_pts=0,apad,atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[a${index}]`);
   });
   parts.push(`${clips.map((_, index) => `[v${index}][a${index}]`).join('')}concat=n=${clips.length}:v=1:a=1[outv][outa]`);
   return parts.join(';');
@@ -51,8 +51,12 @@ export function parseFfmpegMetadata(log: string): VideoMetadata {
     throw new Error('The selected file is not a supported MP4 video or is corrupt.');
   }
   const durationMatch = /Duration:\s*(\d+:\d{2}:\d{2}(?:\.\d+)?)/.exec(log);
-  const videoLines = log.split('\n').filter((line) => /\bVideo:/.test(line));
-  const audioLines = log.split('\n').filter((line) => /\bAudio:/.test(line));
+  // Match actual input stream headers, not metadata tags containing codec words.
+  const streamLines = log.split('\n').filter((line) => /^\s*Stream #0:\d+(?:\[[^\]]*\])?(?:\([^)]*\))?:\s+(?:Video|Audio):/.test(line));
+  // Cover art is a video entry too. Keep the existing guards for every real
+  // video/audio stream, then use the first real video and first audio as V:0/a:0.
+  const videoLines = streamLines.filter((line) => /\bVideo:/.test(line) && !/\(attached pic\)/i.test(line));
+  const audioLines = streamLines.filter((line) => /\bAudio:/.test(line));
   const videoLine = videoLines[0];
   const audioLine = audioLines[0];
   if (!videoLine || videoLines.some((line) => !/Video:\s*h264\b/i.test(line)) || !audioLine || audioLines.some((line) => !/Audio:\s*aac\b/i.test(line))) {
