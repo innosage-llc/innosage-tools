@@ -28,6 +28,7 @@ echo "🧪 Checking the deployment and release contract..."
 npm run test:deploy
 npm run test:recorder
 npm run test:meeting-fixer
+npm run test:video-scissors
 
 # 1. Syntax & Correctness Check (Oxlint + ESLint)
 echo "🔍 Checking for linting errors (oxlint && eslint)..."

@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "infisical run -- next dev",
+    "prebuild": "node scripts/prepare-video-scissors.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint && eslint",
@@ -12,6 +13,8 @@
     "test:deploy": "node --test scripts/deploy-*.test.mjs",
     "test:recorder": "node --experimental-strip-types --test scripts/recorder.test.ts",
     "test:meeting-fixer": "node --experimental-strip-types --test scripts/meeting-fixer-progress.test.ts",
+    "test:video-scissors": "node --experimental-strip-types --test scripts/video-scissors.test.ts",
+    "prepare:video-scissors": "node scripts/prepare-video-scissors.mjs",
     "deploy:staging": "bash scripts/deploy-local.sh staging",
     "deploy:production": "bash scripts/deploy-local.sh production",
     "deploy:execute:staging": "node scripts/deploy-pages.mjs staging",
