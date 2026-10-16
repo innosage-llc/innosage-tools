@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     ".deploy/**",
     ".wrangler/**",
     "build/**",
+    "public/video-scissors/ffmpeg/**",
     "next-env.d.ts",
   ]),
 ]);
