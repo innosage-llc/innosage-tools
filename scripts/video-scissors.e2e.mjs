@@ -23,7 +23,8 @@ page.on('pageerror', error => errors.push(error.message));
 page.on('request', request => {
   const url = new URL(request.url());
   traffic.push({ method: request.method(), local: ['blob:', 'data:'].includes(url.protocol),
-    sameOrigin: url.origin === new URL(origin).origin, type: request.resourceType() });
+    sameOrigin: url.origin === new URL(origin).origin, hasBody: request.postData() !== null,
+    type: request.resourceType() });
 });
 page.on('websocket', socket => {
   const url = new URL(socket.url());
@@ -192,11 +193,18 @@ try {
   checkSilence(delayedFile, 1); checkTone(delayedFile, 3, 440);
   results.originalAudioTimingPreserved = 'PASS';
   assert.equal(hash(), originalHash); results.sourceUnchanged = 'PASS';
-  assert.equal(traffic.filter(r => !r.local && r.method !== 'GET').length, 0);
-  assert.equal(traffic.filter(r => !r.local && !r.sameOrigin).length, 0);
-  assert.equal(sockets.filter(socket => !socket.developmentReload).length, 0);
-  results.privacy = { noMediaUploads: 'PASS', sameOriginOnly: 'PASS', totalRequests: traffic.length,
-    applicationWebSockets: sockets.filter(socket => !socket.developmentReload).length };
+  const networkTraffic = traffic.filter(request => !request.local);
+  const methodCounts = networkTraffic.reduce((counts, request) => {
+    counts[request.method] = (counts[request.method] || 0) + 1;
+    return counts;
+  }, {});
+  const applicationWebSockets = sockets.filter(socket => !socket.developmentReload).length;
+  assert.equal(networkTraffic.filter(request => !['GET', 'HEAD'].includes(request.method)).length, 0);
+  assert.equal(traffic.filter(request => request.hasBody).length, 0);
+  assert.equal(networkTraffic.filter(request => !request.sameOrigin).length, 0);
+  assert.equal(applicationWebSockets, 0);
+  results.privacy = { noMediaUploads: 'PASS', allowedMethodsOnly: 'PASS', methodCounts,
+    requestBodies: 0, sameOriginOnly: 'PASS', totalRequests: traffic.length, applicationWebSockets };
   assert.deepEqual(errors, []);
   results.status = 'PASS';
 } catch (error) {
