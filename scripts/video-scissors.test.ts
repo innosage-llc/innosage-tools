@@ -86,6 +86,27 @@ test('container and codec metadata come from FFmpeg input logs, not file names',
   assert.throws(() => parseFfmpegMetadata(`${log}\n    Stream #0:2: Video: hevc, 1280x720, 24 fps`), /supported MP4/);
 });
 
+test('attached pictures before or after the primary stream do not become the video; real codec guards stay strict', () => {
+  const header = "Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'source.mp4':\n  Duration: 00:05:00.00, start: 0.000000";
+  const video = '    Stream #0:1[0x2](und): Video: h264 (High), yuv420p, 1920x1080, 30 fps';
+  const audio = '    Stream #0:2[0x3](und): Audio: aac (LC), 48000 Hz, stereo';
+  const picture = '    Stream #0:0[0x1]: Video: mjpeg (Baseline), yuvj420p, 64x64, 90000 tbr (attached pic)';
+  const log = (lines: string[]) => [header, ...lines].join('\n');
+  for (const lines of [[video, audio], [picture, video, audio], [video, audio, picture]]) {
+    assert.deepEqual(parseFfmpegMetadata(log(lines)), metadata);
+  }
+  assert.deepEqual(parseFfmpegMetadata(log([video, audio, '    title: Video: mjpeg, 64x64, 90000 fps'])), metadata);
+  // Neither a supported secondary stream nor a supported thumbnail can rescue
+  // an unsupported real primary. Unsupported real secondaries remain rejected.
+  const hevc = video.replace('h264', 'hevc');
+  const supportedPicture = picture.replace('mjpeg', 'h264');
+  for (const lines of [[hevc, video, audio], [supportedPicture, hevc, audio], [video, hevc, audio],
+    [video, picture.replace(' (attached pic)', ''), audio], [picture, audio], [picture, video],
+    [video, audio.replace('aac', 'mp3'), audio], [video, audio, audio.replace('aac', 'mp3')]]) {
+    assert.throws(() => parseFfmpegMetadata(log(lines)), /supported MP4/);
+  }
+});
+
 test('clip validation keeps original-relative order and enforces every range and output bound', () => {
   const clips = [{ start: 20, end: 25 }, { start: 2, end: 8 }];
   validateVideoClips(clips, 300);

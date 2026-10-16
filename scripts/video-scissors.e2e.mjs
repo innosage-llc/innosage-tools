@@ -120,6 +120,31 @@ try {
   await cut.waitFor({ state: 'visible' });
   await waitForSource();
   results.runtimeLoadFailureRecovery = 'PASS';
+  // Cover art is synthetic blue; the actual first video segment is red/440 Hz.
+  // A correct cut must use moving video, never the MJPEG picture entry.
+  const picture = join(output, 'synthetic-cover.jpg');
+  const withPicture = join(output, 'synthetic-attached-picture.mp4');
+  command('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=blue:s=640x360', '-frames:v', '1', picture]);
+  command('ffmpeg', ['-v', 'error', '-y', '-i', source, '-i', picture,
+    '-map', '0:V:0', '-map', '0:a:0', '-map', '1:v:0', '-c', 'copy', '-disposition:v:1', 'attached_pic', withPicture]);
+  const pictureInfo = JSON.parse(command('ffprobe', ['-v', 'error', '-show_entries',
+    'stream=codec_name:stream_disposition=attached_pic', '-of', 'json', withPicture]));
+  assert.equal(pictureInfo.streams.filter(stream => stream.codec_name === 'mjpeg' && stream.disposition.attached_pic === 1).length, 1);
+  await page.locator('input[type=file]').setInputFiles(withPicture); await waitForSource();
+  await page.getByRole('button', { name: 'Add clip segment', exact: true }).click();
+  await start(1).fill('1'); await end(1).fill('3'); await cut.click();
+  await page.waitForFunction(() => !document.querySelector('button[aria-label="Download cut MP4 video"]').disabled &&
+    Math.abs(document.querySelector('video').duration - 2) < 0.15, null, { timeout: 180_000 });
+  const pictureDownload = page.waitForEvent('download'); await download.click();
+  const pictureCut = join(output, 'synthetic-picture-cut.mp4'); await (await pictureDownload).saveAs(pictureCut);
+  const pictureMedia = checkMedia(pictureCut, 2);
+  checkColor(pictureCut, 1, 0); checkTone(pictureCut, 1, 440);
+  results.attachedPicture = { ...pictureMedia, primaryVideoContent: 'PASS', primaryAudioTone: 'PASS' };
+  await undo.click();
+  await page.waitForFunction(() => Math.abs(document.querySelector('video').duration - 60) < 0.15);
+  assert.equal(await download.isDisabled(), true);
+  results.attachedPictureUndo = 'PASS';
+  await page.locator('input[type=file]').setInputFiles(source); await waitForSource();
   await page.getByRole('button', { name: 'Add clip segment', exact: true }).click();
   assert.ok(Math.abs(await duration() - 60) < 0.15);
   await start(1).fill('10'); await end(1).fill('25');

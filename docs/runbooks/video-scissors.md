@@ -17,6 +17,15 @@ finite, positive, and within the original duration, and the combined output is
 at most 300 seconds. Metadata is read from FFmpeg's input log; the file suffix
 and browser MIME type are not treated as proof of its container or codecs.
 
+Explicit `(attached pic)` input stream entries are cover art and are excluded
+from video codec/size/fps validation. Every remaining real video stream must
+still be H.264 and every audio stream AAC; unsupported primary or secondary real
+codecs are rejected. Metadata uses the first real video and first audio. Both
+inspection and rendering select those streams explicitly with `0:V:0` and
+`0:a:0`; [FFmpeg's uppercase V selector](https://ffmpeg.org/ffmpeg.html#Stream-specifiers-1)
+excludes attached pictures, thumbnails and cover art. A supported secondary
+stream or picture cannot rescue an unsupported real primary.
+
 The page retains the selected source and at most the current and immediately
 previous generated outputs in memory. Undo has exactly one level: it applies
 only to the latest completed cut and restores its previous plan and preview.
@@ -70,6 +79,10 @@ maximum-size performance qualification is not part of this milestone.
 The browser fixture also checks reversed clip order, delayed audio onset, Undo,
 cancel then explicit retry, processor-load failure then reselection, source hash
 preservation and same-origin requests without media uploads or application sockets.
+It generates a paired MP4 with synthetic blue MJPEG attached cover art and
+verifies that a two-second browser/WASM cut contains the primary red video and
+440 Hz audio, then verifies Undo. Parser regressions cover picture-before-main
+ordering and retain unsupported primary/secondary codec and missing-audio guards.
 Run it against an already running dev/static server or the exact staging origin:
 
 ```sh
