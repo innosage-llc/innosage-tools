@@ -1,6 +1,5 @@
 // Small control messages only. Never accept files, blobs, paths or arbitrary logs.
-export async function boundedBody(request: Request): Promise<string> {
-  const max = 16_384;
+export async function boundedBody(request: Request, max = 16_384): Promise<string> {
   if (Number(request.headers.get('content-length')) > max) throw new Error('BODY_LIMIT');
   const reader = request.body?.getReader();
   if (!reader) return '';

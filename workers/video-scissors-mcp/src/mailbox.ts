@@ -52,6 +52,20 @@ export class Mailbox {
       .bind(auth.project, auth.epoch, Date.now()).first<{metadata: string; expires: number}>();
     return row ? { metadata: parseRemoteMetadata(JSON.parse(row.metadata)), expiresAt: row.expires } : null;
   }
+  // Bridge proofs are minted only for the browser owner credential and current
+  // lease. Consent may still be pending so the socket can receive its approval
+  // wakeup; all command authority remains behind the consent-aware `live` fence.
+  async bridgeOwner(auth: BrowserAuth): Promise<{expiresAt: number} | null> {
+    const row = await this.db.prepare(`SELECT expires FROM projects WHERE id=? AND epoch=?
+      AND revoked=0 AND expires>? AND credential_hash=?`)
+      .bind(auth.project, auth.epoch, Date.now(), await digest(auth.credential)).first<{expires: number}>();
+    return row ? { expiresAt: row.expires } : null;
+  }
+  async bridgeLease(auth: ProjectAuth): Promise<{expiresAt: number} | null> {
+    const row = await this.db.prepare(`SELECT expires FROM projects WHERE id=? AND epoch=? AND revoked=0 AND expires>?`)
+      .bind(auth.project, auth.epoch, Date.now()).first<{expires: number}>();
+    return row ? { expiresAt: row.expires } : null;
+  }
   async status(auth: ProjectAuth, id: string) {
     const row = await this.db.prepare(`SELECT c.id,c.state,c.cancel_requested,c.result_metadata FROM commands c JOIN projects p ON p.id=c.project
       WHERE ${live} AND c.epoch=p.epoch AND c.id=?`)

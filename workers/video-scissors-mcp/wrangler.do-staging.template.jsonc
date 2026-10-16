@@ -1,0 +1,24 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "video-scissors-mcp-do-staging",
+  "main": "src/index-do.ts",
+  "compatibility_date": "2026-10-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": { "EXPERIMENT_ENABLED": "false" },
+  "assets": { "directory": "../../out", "binding": "ASSETS", "run_worker_first": true },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "video-scissors-mcp-do-staging",
+    "database_id": "REPLACE_WITH_NEW_DEDICATED_D1_ID_AFTER_REVIEW",
+    "migrations_dir": "migrations"
+  }],
+  "kv_namespaces": [{
+    "binding": "OAUTH_KV",
+    "id": "REPLACE_WITH_NEW_DEDICATED_OAUTH_KV_ID_AFTER_REVIEW"
+  }],
+  "durable_objects": { "bindings": [{ "name": "VIDEO_BRIDGE", "class_name": "VideoScissorsBridgeDO" }] },
+  "migrations": [{ "tag": "do-bridge-v1", "new_sqlite_classes": ["VideoScissorsBridgeDO"] }],
+  "observability": { "enabled": false }
+}
