@@ -23,6 +23,61 @@ async function fixture(render?: VideoScissorsRenderer['render']) {
   return { adapter, controller, transport, cmd, count: () => count, reports: () => reports,
     enqueue: (c: RemoteCommand) => { incoming = c; }, cancel: () => { cancel = true; } };
 }
+
+class TestWebSocket extends EventTarget {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 3;
+  static readonly instances: TestWebSocket[] = [];
+  readyState = TestWebSocket.CONNECTING;
+  onmessage: ((event: MessageEvent) => unknown) | null = null;
+  onclose: ((event: CloseEvent) => unknown) | null = null;
+
+  constructor(_url: string | URL, _protocols?: string | string[]) {
+    super();
+    TestWebSocket.instances.push(this);
+    queueMicrotask(() => {
+      if (this.readyState !== TestWebSocket.CONNECTING) return;
+      this.readyState = TestWebSocket.OPEN;
+      this.dispatchEvent(new Event('open'));
+    });
+  }
+
+  wake(): void { this.onmessage?.(new MessageEvent('message', { data: 'wake' })); }
+  close(): void {
+    if (this.readyState === TestWebSocket.CLOSED) return;
+    this.readyState = TestWebSocket.CLOSED;
+    const event = new Event('close') as CloseEvent;
+    this.dispatchEvent(event);
+    this.onclose?.(event);
+  }
+}
+
+function installFakeBrowserGlobals(): () => void {
+  const webSocketDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'WebSocket');
+  const locationDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  TestWebSocket.instances.length = 0;
+  Object.defineProperty(globalThis, 'WebSocket', { configurable: true, writable: true, value: TestWebSocket });
+  Object.defineProperty(globalThis, 'location', { configurable: true, value: { href: 'https://cut.example/tools/video-scissors' } });
+  return () => {
+    if (webSocketDescriptor) Object.defineProperty(globalThis, 'WebSocket', webSocketDescriptor);
+    else Reflect.deleteProperty(globalThis, 'WebSocket');
+    if (locationDescriptor) Object.defineProperty(globalThis, 'location', locationDescriptor);
+    else Reflect.deleteProperty(globalThis, 'location');
+    TestWebSocket.instances.length = 0;
+  };
+}
+
+async function waitFor(predicate: () => boolean, description: string, timeoutMs = 8_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    if (Date.now() >= deadline) throw new Error('Timed out waiting for ' + description);
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+}
+
+const pause = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
+
 test('adapter validates entire plan before mutation and strips all private metadata', async () => {
   const f = await fixture();
   try {
@@ -228,4 +283,105 @@ test('offline component teardown aborts poll and subscriptions without a retry/t
   assert.equal(remote.snapshot().state,'disconnected','local teardown only, not evidence of a remote fence');
   await remote.connect();assert.equal(requests,stoppedCount,'disposed owner cannot restart');
   await f.adapter.dispose();f.controller.dispose();
+});
+
+test('DO wake keeps one bounded catch-up after transient sync/claim failures', { timeout: 45_000 }, async () => {
+  const restoreBrowserGlobals = installFakeBrowserGlobals();
+  try {
+    for (const scenario of ['sync-once', 'claim-once', 'claim-always'] as const) {
+      TestWebSocket.instances.length = 0;
+      const f = await fixture();
+      const leaseExpiresAt = Date.now() + 30 * 60_000;
+      let syncCalls = 0, claimCalls = 0;
+      const remote = new VideoScissorsRemoteBrowser(f.controller, async input => {
+        const path = String(input);
+        if (path === '/remote/capabilities') return Response.json({ enabled: true, wakeup: 'websocket' });
+        if (path === '/remote/projects') return Response.json({ project: 'synthetic-project', epoch: 1, credential: 'synthetic',
+          proof: 'synthetic-proof', proofExpiresAt: Date.now() + 60_000, expiresAt: leaseExpiresAt });
+        if (path === '/remote/bridge/join') return Response.json({ proof: 'a'.repeat(64), expiresAt: Math.min(Date.now() + 60_000, leaseExpiresAt) });
+        if (path === '/remote/sync') {
+          syncCalls++;
+          if (scenario === 'sync-once' && syncCalls === 1) return new Response('{}', { status: 503 });
+          return Response.json({ ok: true });
+        }
+        if (path === '/remote/claim') {
+          claimCalls++;
+          if (scenario === 'claim-always' || (scenario === 'claim-once' && claimCalls === 1)) return new Response('{}', { status: 503 });
+          return Response.json({ command: null });
+        }
+        if (path === '/remote/revoke') return Response.json({ ok: true });
+        throw new Error('Unexpected request: ' + path);
+      });
+      try {
+        await remote.connect();
+        await waitFor(() => TestWebSocket.instances.length === 1 && TestWebSocket.instances[0].readyState === TestWebSocket.OPEN, 'bridge socket open');
+        const socket = TestWebSocket.instances[0];
+        socket.wake();
+        const expectedClaims = scenario === 'sync-once' ? 1 : scenario === 'claim-once' ? 2 : 2;
+        await waitFor(() => claimCalls >= expectedClaims, 'bounded catch-up claim');
+        if (scenario === 'claim-always') await pause(3_100);
+        else await pause(50);
+        assert.equal(claimCalls, expectedClaims, scenario + ' claim count');
+        assert.equal(syncCalls, scenario === 'sync-once' ? 2 : 1, scenario + ' sync count');
+        assert.equal(f.count(), 0, 'failed catch-up never starts or replays compute');
+      } finally {
+        await remote.disconnect();
+        await remote.dispose();
+        await f.adapter.dispose();
+        f.controller.dispose();
+      }
+    }
+  } finally { restoreBrowserGlobals(); }
+});
+
+test('DO wake committed between claim and response is checked when remote execution starts', { timeout: 15_000 }, async () => {
+  const restoreBrowserGlobals = installFakeBrowserGlobals();
+  let finishRender!: (value: Blob) => void;
+  const pendingRender = new Promise<Blob>(resolve => { finishRender = resolve; });
+  let renderCalls = 0;
+  const f = await fixture(async () => { renderCalls++; return pendingRender; });
+  let socket: TestWebSocket | undefined;
+  let cancellationCommitted = false, cancellationCalls = 0, reportCalls = 0;
+  const leaseExpiresAt = Date.now() + 30 * 60_000;
+  const remote = new VideoScissorsRemoteBrowser(f.controller, async input => {
+    const path = String(input);
+    if (path === '/remote/capabilities') return Response.json({ enabled: true, wakeup: 'websocket' });
+    if (path === '/remote/projects') return Response.json({ project: 'synthetic-project', epoch: 1, credential: 'synthetic',
+      proof: 'synthetic-proof', proofExpiresAt: Date.now() + 60_000, expiresAt: leaseExpiresAt });
+    if (path === '/remote/bridge/join') return Response.json({ proof: 'b'.repeat(64), expiresAt: Math.min(Date.now() + 60_000, leaseExpiresAt) });
+    if (path === '/remote/sync') return Response.json({ ok: true });
+    if (path === '/remote/claim') {
+      cancellationCommitted = true;
+      socket?.wake();
+      await Promise.resolve();
+      assert.equal(cancellationCalls, 0, 'the pre-response wake arrives before an operation is active');
+      return Response.json({ command: f.cmd('cancel-before-claim-response') });
+    }
+    if (path === '/remote/cancellation') {
+      cancellationCalls++;
+      return Response.json({ stop: cancellationCommitted });
+    }
+    if (path === '/remote/report') { reportCalls++; return Response.json({ ok: true }); }
+    if (path === '/remote/revoke') return Response.json({ ok: true });
+    throw new Error('Unexpected request: ' + path);
+  });
+  try {
+    await remote.connect();
+    await waitFor(() => TestWebSocket.instances.length === 1 && TestWebSocket.instances[0].readyState === TestWebSocket.OPEN, 'bridge socket open');
+    socket = TestWebSocket.instances[0];
+    socket.wake();
+    await waitFor(() => cancellationCalls === 1 && f.controller.getOperationStatus('cancel-before-claim-response') === 'cancelled', 'initial cancellation check');
+    assert.equal(renderCalls, 1);
+    assert.equal(f.controller.getSnapshot().hasOutput, false);
+    finishRender(new Blob(['late synthetic render']));
+    await waitFor(() => reportCalls === 1, 'cancelled result acknowledgement');
+    assert.equal(renderCalls, 1, 'the claimed command is computed once');
+    assert.equal(f.controller.getOperationStatus('cancel-before-claim-response'), 'cancelled');
+  } finally {
+    await remote.disconnect();
+    await remote.dispose();
+    await f.adapter.dispose();
+    f.controller.dispose();
+    restoreBrowserGlobals();
+  }
 });

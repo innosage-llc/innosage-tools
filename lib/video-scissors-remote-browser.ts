@@ -3,7 +3,8 @@ import { VideoScissorsRemoteAdapter, parseRemoteCommand, type RemoteTransport } 
 import type { RemoteConnectionViewModel } from '../workers/video-scissors-mcp/src/ui-contract';
 
 type Session = { project: string; epoch: number; credential: string; proof: string; proofExpiresAt: number; expiresAt: number;
-  wakeup: 'poll' | 'websocket'; abort: AbortController; socket?: WebSocket; wakePending?: boolean; wakeResolver?: () => void; revokedConfirmed?: boolean };
+  wakeup: 'poll' | 'websocket'; abort: AbortController; socket?: WebSocket; wakePending?: boolean; wakeResolver?: () => void;
+  catchupRetryUsed: boolean; revokedConfirmed?: boolean };
 const BRIDGE_PROTOCOL = 'video-scissors-wakeup.v1';
 export function remoteWakeupFromCapabilities(value: unknown): 'poll' | 'websocket' {
   if (!value || typeof value !== 'object' || Array.isArray(value) || (value as Record<string, unknown>).enabled !== true) throw new Error('CAPABILITIES');
@@ -63,7 +64,10 @@ export class VideoScissorsRemoteBrowser {
         return this.session === s && r.stop === true;
       },
       onRemoteExecution: id => {
-        if (this.reportOwners.get(id)?.wakeup !== 'websocket') void this.cancellationLoop(id);
+        const s = this.reportOwners.get(id);
+        if (!s) return;
+        if (s.wakeup === 'websocket') this.checkCancellation(s);
+        else void this.cancellationLoop(id);
       },
       revoke: async () => { await this.disconnect(); },
     };
@@ -85,6 +89,11 @@ export class VideoScissorsRemoteBrowser {
       s.abort.signal.addEventListener('abort', finish, { once: true });
     });
   }
+  private checkCancellation(s: Session): void {
+    void this.adapter.pollCancellation().catch(() => {
+      if (this.session === s && !s.abort.signal.aborted) { this.state = 'uncertain'; this.emit(); }
+    });
+  }
   private async call(s: Session, action: string, data: object = {}, signal?: AbortSignal): Promise<Record<string, unknown>> {
     const response = await this.send('/remote/' + action, { method: 'POST', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.any([s.abort.signal, signal ?? AbortSignal.timeout(25_000)]),
@@ -97,8 +106,9 @@ export class VideoScissorsRemoteBrowser {
     if (s.abort.signal.aborted || Date.now() >= s.expiresAt) return false;
     try {
       const ticket = await this.call(s, 'bridge/join');
+      const proofExpiresAt = ticket.expiresAt;
       if (typeof ticket.proof !== 'string' || !/^[a-f0-9]{64}$/.test(ticket.proof) ||
-        typeof ticket.expiresAt !== 'number' || ticket.expiresAt <= Date.now() || ticket.expiresAt > s.expiresAt) return false;
+        typeof proofExpiresAt !== 'number' || proofExpiresAt <= Date.now() || proofExpiresAt > s.expiresAt) return false;
       const url = new URL(`/remote/bridge/${s.project}/${s.epoch}`, globalThis.location.href);
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
       const socket = new WebSocket(url, [BRIDGE_PROTOCOL, `join.${ticket.proof}`]);
@@ -107,11 +117,10 @@ export class VideoScissorsRemoteBrowser {
         if (this.session !== s || s.abort.signal.aborted) return;
         if (event.data !== 'wake') { socket.close(1008, 'unexpected-message'); return; }
         s.wakePending = true;
+        s.catchupRetryUsed = false;
         s.wakeResolver?.();
         // DO notifications also wake the single active operation's cancellation check.
-        void this.adapter.pollCancellation().catch(() => {
-          if (this.session === s && !s.abort.signal.aborted) { this.state = 'uncertain'; this.emit(); }
-        });
+        this.checkCancellation(s);
       };
       socket.onclose = () => { if (s.socket === socket) s.socket = undefined; s.wakeResolver?.(); };
       socket.onerror = () => { try { socket.close(); } catch { /* already closed */ } };
@@ -123,7 +132,7 @@ export class VideoScissorsRemoteBrowser {
           socket.removeEventListener('close', closed); resolve(open);
         };
         const opened = () => finish(true), closed = () => finish(false);
-        const timer = setTimeout(() => { socket.close(); finish(false); }, Math.min(10_000, ticket.expiresAt - Date.now()));
+        const timer = setTimeout(() => { socket.close(); finish(false); }, Math.min(10_000, proofExpiresAt - Date.now()));
         socket.addEventListener('open', opened, { once: true });
         socket.addEventListener('close', closed, { once: true });
       });
@@ -165,7 +174,7 @@ export class VideoScissorsRemoteBrowser {
       const v = await r.json();
       if (typeof v.project !== 'string' || !Number.isSafeInteger(v.epoch) || typeof v.credential !== 'string' || typeof v.proof !== 'string' ||
         !Number.isFinite(v.expiresAt) || !Number.isFinite(v.proofExpiresAt)) throw new Error('PROJECT_RESPONSE');
-      const s: Session = { ...v, wakeup, abort: new AbortController() };
+      const s: Session = { ...v, wakeup, abort: new AbortController(), catchupRetryUsed: false };
       if (this.disposed || binding !== this.bindingGeneration) {
         // Late creation belongs to its old attempt, never a replacement session.
         await this.call(s, 'revoke').catch(() => {}); s.abort.abort(); return;
@@ -206,11 +215,18 @@ export class VideoScissorsRemoteBrowser {
           continue;
         }
       }
-      try { await this.adapter.pollOnce(); }
+      try { await this.adapter.pollOnce(); s.catchupRetryUsed = false; }
       catch {
         if (this.disposed || this.session !== s || s.abort.signal.aborted) return;
         if (this.state !== 'awaiting_approval') { this.state = 'uncertain'; this.emit(); }
         if (s.wakeup === 'poll') await this.backoff(s);
+        else if (!s.catchupRetryUsed) {
+          // A consumed wake gets one bounded catch-up after a transient sync or
+          // pre-claim failure. A second failure waits for a fresh DO wake.
+          s.catchupRetryUsed = true;
+          s.wakePending = true;
+          await this.backoff(s);
+        }
       }
     }
     s.socket?.close(1000, 'lease-ended'); s.socket = undefined;
