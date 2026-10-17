@@ -30,6 +30,7 @@ npm run test:recorder
 npm run test:meeting-fixer
 npm run test:video-scissors
 npm run test:video-scissors-remote
+npm run test:video-scissors-mcp-e2e:offline
 # Isolated Worker dependency graph; preserve the root native gate as authority.
 npm ci --prefix workers/video-scissors-mcp --ignore-scripts --no-audit --no-fund
 npm --prefix workers/video-scissors-mcp run check

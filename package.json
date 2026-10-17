@@ -16,6 +16,8 @@
     "test:video-scissors": "node --experimental-strip-types --test scripts/video-scissors.test.ts",
     "test:video-scissors-remote": "node --experimental-strip-types --test scripts/video-scissors-remote.test.ts",
     "test:video-scissors-mcp": "npm --prefix workers/video-scissors-mcp test",
+    "test:video-scissors-mcp-e2e": "node scripts/video-scissors-mcp-e2e.mjs",
+    "test:video-scissors-mcp-e2e:offline": "node --test scripts/video-scissors-mcp-e2e.test.mjs",
     "prepare:video-scissors": "node scripts/prepare-video-scissors.mjs",
     "deploy:staging": "bash scripts/deploy-local.sh staging",
     "deploy:production": "bash scripts/deploy-local.sh production",
@@ -56,6 +58,7 @@
     "eslint-config-next": "16.1.6",
     "husky": "^9.1.7",
     "oxlint": "^1.48.0",
+    "playwright": "1.62.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "4.149.0"
