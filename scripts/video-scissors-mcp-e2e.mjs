@@ -82,13 +82,13 @@ export function isLocalSchemeUrl(value) {
   catch { return false; }
 }
 
-export function isAllowedSocketClose(socket, explicitRevokeStarted) {
+export function isAllowedSocketClose(socket, explicitRevokeStarted, arm = 'do') {
   if (!socket || !socket.closedAtUtc || socket.errors !== 0) return false;
   if (explicitRevokeStarted !== true || socket.wasClean !== true || socket.closePhase !== 'disconnect-cleanup') {
     return false;
   }
   return (socket.closeCode === 1000 && socket.closeReason === 'disconnected') ||
-    (socket.closeCode === 1008 && socket.closeReason === 'project-revoked');
+    (socket.closeCode === 1008 && socket.closeReason === (arm === 'd' ? 'project-ended' : 'project-revoked'));
 }
 
 export function summarizeRequestPhases(rows, phaseNames) {
@@ -539,7 +539,7 @@ async function runLive(arm) {
             record.closedAtUtc = new Date().toISOString();
             record.closePhase = window.__videoScissorsMcpPhase ?? 'unknown';
             record.closeCode = event.code;
-            record.closeReason = event.reason === 'disconnected' || event.reason === 'project-revoked'
+            record.closeReason = ['disconnected', 'project-revoked', 'project-ended'].includes(event.reason)
               ? event.reason : 'other';
             record.wasClean = event.wasClean;
           });
@@ -1082,7 +1082,7 @@ async function runLive(arm) {
     };
     if (arm === 'do' || arm === 'd') {
       ensure(socketRecords.length > 0 && socketAudit.attempts === socketAudit.accepted &&
-        socketAudit.rejected === 0 && socketRecords.every(socket => isAllowedSocketClose(socket, explicitRevokeStarted)),
+        socketAudit.rejected === 0 && socketRecords.every(socket => isAllowedSocketClose(socket, explicitRevokeStarted, arm)),
       'WAKE_SOCKET_CLOSE_OR_SCOPE_INVALID');
     } else {
       ensure(appSocketCount === 0 && socketAudit.attempts === 0, 'UNEXPECTED_D1_APPLICATION_WEBSOCKET');
@@ -1151,7 +1151,7 @@ async function runLive(arm) {
         })),
       };
       if (report.status === 'PASS' && (socketAudit.rejected !== 0 || report.websocket.errors !== 0 ||
-        ((arm === 'do' || arm === 'd') && !records.every(socket => isAllowedSocketClose(socket, explicitRevokeStarted))))) {
+        ((arm === 'do' || arm === 'd') && !records.every(socket => isAllowedSocketClose(socket, explicitRevokeStarted, arm))))) {
         failure = { phase: 'disconnect-cleanup', code: 'WEBSOCKET_ERROR_OR_ABNORMAL_CLOSE' };
         report.status = 'FAIL';
       }
