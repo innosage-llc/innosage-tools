@@ -1,7 +1,8 @@
 # Stateless MCP + per-project DO candidate (D)
 
 D is an isolated, local-only candidate for the VideoCut MCP experiment. It does
-not change the existing A/B entrypoint, routes, config, tests, or behavior. The
+not change the existing A/B runtime, entrypoint, configuration, or worker
+integration tests. The shared staging E2E harness is matched across A/B/D. The
 candidate config is disabled by default and describes workers.dev only.
 
 ## Authority and routing
@@ -74,83 +75,138 @@ and cold-instance recovery have **NOT** been verified in this local candidate.
 The attempted Miniflare eviction test was unstable and is not evidence that
 these behaviors pass.
 
-## Future staging approval boundary
+## Current inventory and approval boundaries
 
-No Cloudflare resources, secrets, deployments, DNS, or production configuration
-were created or changed for this local implementation. A separate staging
-approval would need to authorize exactly:
+This is source preparation only. No Cloudflare resources, secrets, deployments,
+DNS, or production configuration were created or changed here. The read-only
+inventory reported that D is absent. A and B remain enabled and unchanged since
+2026-10-16 at versions `6def66e9-a61f-4275-8c0f-959c9017190e` and
+`fce5281b-e45e-498d-ac4e-3ccde3816f43`, respectively; their names/configs are
+not in this candidate's write scope.
 
-1. One dedicated workers.dev Worker, `video-scissors-mcp-d-staging`, built from
-   this candidate and kept disabled until explicitly enabled.
-2. One dedicated OAuth-provider KV namespace (`OAUTH_KV`) for provider state.
-3. One SQLite-backed `ProjectStateDO` namespace/class binding plus its D
-   migration. D does not need or bind D1.
-4. One D-only Worker secret, `D_ROUTING_HMAC_KEY`, containing a random 32-byte
-   key (64 hex characters). It signs short-lived routing tickets and grants no
-   access by itself.
+Inventory also surfaced a pre-existing KV namespace title ending in
+`video-scissors-mcp-d-staging-oauth-kv`; its ownership/provenance is unverified.
+Do not bind it, read its keys, change it, or infer task ownership. If the first
+approval proceeds, create the exact dedicated namespace
+`video-scissors-mcp-d-staging-oauth` and use only the ID returned for that new
+namespace. Keep the ID parameterized until then; the existing `-oauth-kv`
+namespace remains untouched.
+
+Two approvals remain distinct:
+
+1. The first exact approval covers only creating the D Worker disabled, creating
+   the exact OAuth KV namespace, applying the D SQLite `ProjectStateDO` class
+   migration, privately entering the already-authorized `D_ROUTING_HMAC_KEY`,
+   and verifying the disabled deployment. It does not approve enabling D.
+2. After disabled readback, a separate exact approval is required for one
+   bounded enabled test window and its rollback. Current authorization does not
+   include a live synthetic request, enablement, quota probe, or production
+   action.
 
 No D1, custom domain, DNS, production Worker, shared A/B binding, or other
-Cloudflare resource is part of that proposed minimal set. The existing A/B
-staging Workers are not the D candidate: the read-only account settings check
-on 2026-10-17 found `video-scissors-mcp-do-staging` still bound to D1, KV and
-`VIDEO_BRIDGE`, and `video-scissors-mcp-staging` bound to D1 and KV. A separate
-`video-scissors-mcp-d-staging` Worker was not present.
+Cloudflare resource belongs to this candidate. The local template's `$schema`
+resolves to `../../node_modules/wrangler/config-schema.json`; the repository
+pins Wrangler `4.149.0`. Its all-zero KV ID and `EXPERIMENT_ENABLED=false` must
+remain unchanged until approval. The unknown `-oauth-kv` ID is intentionally
+not recorded here.
 
-### Proposed staging guardrails (implemented locally; not approved or deployed)
+### Accepted bounded-experiment risk and limits
 
-- Keep the D Worker disabled until the exact deployment is approved. The source
-  now enforces the candidate hard caps for one controlled test day: at most
-  **200 D Worker HTTP requests** and **2 project-creation attempts per UTC day**.
-  The local fixture's 99-request run is below this cap, but does not prove that
-  real ChatGPT polling will fit. The Worker request counter is global across D
-  projects and counts every HTTP request entering the D Worker while enabled,
-  including static assets and a WebSocket upgrade once; later WebSocket frames
-  are not HTTP requests. While D is disabled, static assets remain available
-  without consuming the experiment budget. The request counter runs before
-  OAuth KV, static asset, or project-state work; both counters fail closed with
-  bounded `503` responses if unavailable and return bounded `429` responses at
-  their caps. Project-creation attempts reserve their slot before generating a
-  credential or creating per-project state; a downstream failure still consumes
-  that slot, conservatively preventing retries from exceeding the cap. Deploys
-  never reset the counters. Treat these as reviewable staging ceilings, not a
-  measured forecast or approved production allowance.
-- Both counters use one fixed-name SQLite object in the existing
-  `ProjectStateDO` class/namespace. A single bounded singleton row stores the
-  UTC day and counters; `transactionSync()` serializes daily rollover and the
-  limit check/increment. This adds no D1 or second DO class binding. The shared
-  object intentionally serializes only the low-volume experiment admission
-  path.
-- Cloudflare's current published Free ceilings are 100,000 Worker requests/day;
-  100,000 KV reads and 1,000 writes/day; and SQLite DO 5 million rows read,
-  100,000 written/day, with 5 GB total storage. See [Workers limits](https://developers.cloudflare.com/workers/platform/limits/),
-  [KV limits](https://developers.cloudflare.com/kv/platform/limits/), and
-  [SQLite DO pricing and limits](https://developers.cloudflare.com/durable-objects/platform/pricing/#sqlite-storage-backend).
-  Limits are account-shared and daily reset at 00:00 UTC. These are ceilings,
-  not remaining headroom. Read-only Workers and KV usage surfaces were
-  inspected and showed headroom at capture; account-specific usage figures are
-  deliberately omitted from this repository. The Durable Objects UI exposed
-  billing-period aggregates rather than a current-day SQL-row-read series, so
-  current daily SQL-row-read headroom cannot be certified from that view.
-  Workers Observability event counts are not substituted for actual usage.
-  Refresh all three usage surfaces immediately before any staging approval and
-  record daily headroom for every limit that the workload can consume. Require
-  remaining headroom to exceed the measured one-run budget plus a documented
-  reserve. If the daily DO SQL-row-read headroom or Free plan cannot be
-  confirmed, do not enable D and do not upgrade.
-- `wrangler.d-staging.template.jsonc` is the exact isolated staging config
-  proposal: dedicated workers.dev name, dedicated OAuth KV binding, existing
-  SQLite `ProjectStateDO` class/migration, D disabled by default, and no D1 or
-  custom domain. Its all-zero KV namespace ID is an explicit placeholder; the
-  config is not deployable until the separate approval and namespace creation.
-  `D_ROUTING_HMAC_KEY` is supplied only as a Worker Secret after approval and
-  its value is never written to the template.
-- Capture the exact disabled D version/deployment before enabling. Stop by
-  setting only D's `EXPERIMENT_ENABLED=false` or restoring that captured
-  disabled version; verify `/remote/projects` and `/mcp` fail closed while
-  `/tools/video-scissors` remains available. Do not reset budget counters,
-  delete resources, or touch A/B/production. Stop immediately on an unexpected
-  budget/quota error, counter read/write failure, privacy assertion failure,
-  or any request that leaves the reviewed D Worker origin.
+- The latest #358 lock's [accepted headroom waiver](https://github.com/innosage-llc/innosage-hub/issues/358#issuecomment-6233242829)
+  accepts daily Durable Objects headroom as **UNKNOWN** and non-blocking for
+  this named bounded experiment. Do not repeat generic usage,
+  quota, or billing probes. A billing-subscription read returned `auth10000`
+  and was not retried. This accepted unknown is not evidence of available
+  account headroom, and does not authorize a plan upgrade.
+- D enforces at most **200 admitted D Worker HTTP requests** and **2 project
+  creation attempts per UTC day**. Operationally, run at most **one complete
+  D journey per UTC day**; A/B each run once in the same matched window. The 200 limit is an application admission bound, not a
+  Cloudflare spend cap: the request still invokes the Worker and budget DO
+  before it can be rejected at the application limit. The local fixture's
+  99-request count is a local harness count, not Cloudflare usage or a forecast
+  of real ChatGPT polling. Deploys do not reset the D counters.
+- The counters share one fixed-name SQLite object in the existing
+  `ProjectStateDO` class/namespace. A bounded singleton row stores the UTC day
+  and counters; `transactionSync()` serializes rollover and limit checks. There
+  is no D1 or second DO class binding. Project-creation attempts reserve a slot
+  before credential generation or per-project state creation; downstream
+  failure still consumes the slot.
+- `wrangler.d-staging.template.jsonc` is the isolated workers.dev proposal:
+  D-specific entrypoint, disabled by default, OAuth KV binding, existing SQLite
+  `ProjectStateDO` class/migration, no D1, and no custom domain. The approved
+  namespace ID belongs only in a temporary, uncommitted sibling copy of the
+  template after creation. Do not edit the template during this prep.
+- The secret is never generated, printed, or stored by this task. After the
+  first exact approval, the authorized operator privately enters the approved
+  32-byte/64-hex `D_ROUTING_HMAC_KEY` at Wrangler's interactive prompt; never
+  pass it as a command argument or put it in a file. Treat `wrangler secret put`
+  as a deployment/version side effect (the [Wrangler command documentation](https://developers.cloudflare.com/workers/wrangler/commands/#secret)
+  says it creates and deploys a new Worker version) and repeat disabled-state
+  readback after it.
+- Capture the final disabled version ID after secret provisioning and before
+  any enablement. Do not reset counters, delete resources, or touch A/B or
+  production. Stop on a budget/counter error, privacy assertion, or request
+  outside the reviewed D origin.
 
-This is a proposal for CTO/Founder review only. No Cloudflare resources, secrets,
-deployments, DNS, or production configuration have been changed.
+### Approval-gated disabled provisioning packet
+
+These are the exact local CLI forms for use only after the first approval; no
+command below has been run against Cloudflare in this source-preparation task.
+Run from `workers/video-scissors-mcp`. Keep the template unchanged and create a
+sibling working copy; replace only its all-zero KV ID with the ID returned by
+the approved namespace creation. Confirm the copied config still has
+`EXPERIMENT_ENABLED=false`, the exact D name, no D1/domain/route, and the pinned
+schema path before using it.
+
+```sh
+WRANGLER=../../node_modules/.bin/wrangler
+APPROVED_CONFIG=.env.d-staging.approved.jsonc
+
+"$WRANGLER" kv namespace create video-scissors-mcp-d-staging-oauth
+printf 'Paste the new namespace ID returned above: '
+IFS= read -r OAUTH_KV_ID
+[[ "$OAUTH_KV_ID" =~ ^[a-f0-9]{32}$ ]] || exit 1
+cp wrangler.d-staging.template.jsonc "$APPROVED_CONFIG"
+sed -i '' "s/00000000000000000000000000000000/$OAUTH_KV_ID/" "$APPROVED_CONFIG"
+"$WRANGLER" deploy --config "$APPROVED_CONFIG" --dry-run
+"$WRANGLER" deploy --config "$APPROVED_CONFIG"
+"$WRANGLER" secret put D_ROUTING_HMAC_KEY --config "$APPROVED_CONFIG"
+
+"$WRANGLER" deployments status --name video-scissors-mcp-d-staging --json
+"$WRANGLER" versions list --name video-scissors-mcp-d-staging --json
+curl -sS -o /dev/null -w '/remote/projects %{http_code}\n' --max-time 10 \
+  -X POST https://video-scissors-mcp-d-staging.innosage-draft.workers.dev/remote/projects \
+  -H 'content-type: application/json' --data '{}'
+curl -sS -o /dev/null -w '/mcp %{http_code}\n' --max-time 10 \
+  -X POST https://video-scissors-mcp-d-staging.innosage-draft.workers.dev/mcp \
+  -H 'content-type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+curl -sS -o /dev/null -w '/tools/video-scissors %{http_code}\n' --max-time 10 \
+  https://video-scissors-mcp-d-staging.innosage-draft.workers.dev/tools/video-scissors
+
+# After the separately approved test window, restore the exact captured disabled version.
+DISABLED_VERSION_ID='<captured-disabled-version-id>'
+"$WRANGLER" rollback "$DISABLED_VERSION_ID" --name video-scissors-mcp-d-staging
+```
+
+Expected disabled HTTP readback is 503 for `/remote/projects` and `/mcp`, and
+200 for `/tools/video-scissors`; record only status, deployment/version IDs,
+and bounded readback outcomes. The rollback command is parameterized by the
+captured disabled version and is not run without approval. Do not include the
+secret, OAuth values, KV key contents, unknown namespace ID, or media in logs
+or evidence.
+
+### Local verification limits and unrelated history
+
+Actual Durable Object hibernation, WebSocket socket-attachment restoration,
+and cold-instance recovery have **NOT** been verified in this local candidate.
+The attempted Miniflare eviction test was unstable and is not evidence that
+these behaviors pass. The existing A/B `integration.test.ts` visibility
+failure remains documented and unchanged; it is outside this bounded D source
+preparation.
+
+The local D browser fixture above is historical local-only evidence. Its second
+project/reconnect sequence and 99 local harness requests are not the locked
+first matched round and are not Cloudflare usage. Historical staging reports
+and four-command journeys retain their original meaning; do not relabel them as
+the current Cut1/Cut2/Undo2 scenario.

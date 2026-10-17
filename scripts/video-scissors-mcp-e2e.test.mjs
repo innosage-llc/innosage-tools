@@ -5,9 +5,16 @@ import { fileURLToPath } from 'node:url';
 import {
   collectSensitiveStrings,
   hasSensitiveValue,
+  isDRevokeResponse,
+  isCompletedOperationReport,
+  isRevokedProjectDenied,
   isAllowedSocketClose,
   isLocalSchemeUrl,
   isOriginalPreviewReady,
+  isPreviewReady,
+  matchedMutatingCommandSequence,
+  pairingProofPattern,
+  wakePathPattern,
   parseRunArgs,
   summarizeRequestPhases,
 } from './video-scissors-mcp-e2e.mjs';
@@ -26,9 +33,10 @@ test('the offline CLI and fixture guards stay fail-closed', async t => {
     assert.deepEqual(parseRunArgs(['--help']), { action: 'help' });
   });
 
-  await t.test('only the two existing staging arms are accepted', () => {
+  await t.test('only the three fixed staging arms are accepted', () => {
     assert.deepEqual(parseRunArgs(['--arm', 'd1']), { action: 'run', arm: 'd1' });
     assert.deepEqual(parseRunArgs(['--arm', 'do']), { action: 'run', arm: 'do' });
+    assert.deepEqual(parseRunArgs(['--arm', 'd']), { action: 'run', arm: 'd' });
     for (const args of [
       ['--arm', 'production'],
       ['--arm', 'https://example.com'],
@@ -44,6 +52,30 @@ test('the offline CLI and fixture guards stay fail-closed', async t => {
     assert.equal(production.status, 2);
     assert.match(production.stderr, /ARM_NOT_ALLOWLISTED/);
     assert.doesNotMatch(production.stdout + production.stderr, /https?:\/\//);
+  });
+
+  await t.test('the matched round is bounded to Cut 1, Cut 2, and Undo 2 mutations', () => {
+    assert.deepEqual(matchedMutatingCommandSequence, ['cut', 'cut', 'undo']);
+  });
+
+  await t.test('pairing uses the existing arm-specific proof format', () => {
+    assert.match('a'.repeat(64), pairingProofPattern('d1'));
+    assert.match('a'.repeat(64), pairingProofPattern('do'));
+    assert.match('Az_9-'.repeat(20), pairingProofPattern('d'));
+    assert.doesNotMatch('a'.repeat(64), pairingProofPattern('d'));
+    assert.doesNotMatch('Az_9-'.repeat(20), pairingProofPattern('d1'));
+  });
+
+  await t.test('wake paths and completion reports match the selected arm and operation', () => {
+    const uuidPath = '/remote/bridge/12345678-1234-1234-1234-123456789abc/1';
+    const dPath = '/remote/bridge/' + 'a'.repeat(64) + '/1';
+    assert.match(uuidPath, wakePathPattern('do'));
+    assert.match(dPath, wakePathPattern('d'));
+    assert.doesNotMatch(uuidPath, wakePathPattern('d'));
+    assert.doesNotMatch(dPath, wakePathPattern('do'));
+    assert.equal(isCompletedOperationReport({ operationId: 'current', state: 'completed' }, 'current'), true);
+    assert.equal(isCompletedOperationReport({ operationId: 'previous', state: 'completed' }, 'current'), false);
+    assert.equal(isCompletedOperationReport({ operationId: 'current', state: 'running' }, 'current'), false);
   });
 
   await t.test('the restored original preview accepts metadata readiness', () => {
@@ -77,6 +109,32 @@ test('the offline CLI and fixture guards stay fail-closed', async t => {
       readyState: 1,
       sourceScheme: 'https:',
     }, 60), false);
+  });
+
+  await t.test('the restored Cut 1 preview and D revoke response are checked without retaining response data', () => {
+    assert.equal(isPreviewReady({
+      label: 'Edited video preview',
+      durationSeconds: 2,
+      readyState: 2,
+      sourceScheme: 'blob:',
+    }, 'Edited video preview', 2), true);
+    assert.equal(isPreviewReady({
+      label: 'Original video preview',
+      durationSeconds: 2,
+      readyState: 2,
+      sourceScheme: 'blob:',
+    }, 'Edited video preview', 2), false);
+    assert.equal(isDRevokeResponse(200, { ok: true, closedSockets: 1 }), true);
+    assert.equal(isDRevokeResponse(200, { ok: true, closedSockets: 0 }), true);
+    assert.equal(isDRevokeResponse(503, { ok: true, closedSockets: 1 }), false);
+    assert.equal(isDRevokeResponse(200, { ok: false, closedSockets: 1 }), false);
+    assert.equal(isDRevokeResponse(200, { ok: true, closedSockets: -1 }), false);
+    assert.equal(isDRevokeResponse(200, { ok: true, closedSockets: '1' }), false);
+    const denied = { result: { isError: true, content: [{ type: 'text', text: 'PROJECT_EXPIRED_OR_REVOKED' }] } };
+    assert.equal(isRevokedProjectDenied(200, denied), true);
+    assert.equal(isRevokedProjectDenied(200, { result: { isError: false } }), false);
+    assert.equal(isRevokedProjectDenied(200, { result: { isError: true, content: [{ type: 'text', text: 'COMMAND_REJECTED' }] } }), false);
+    assert.equal(isRevokedProjectDenied(503, denied), false);
   });
 
   await t.test('browser-local media schemes are excluded from the network request audit', () => {

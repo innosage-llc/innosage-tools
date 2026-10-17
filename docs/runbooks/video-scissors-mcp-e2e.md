@@ -1,63 +1,110 @@
-# Video Scissors MCP staging check
+# Video Scissors MCP matched staging check
 
-This is a manual check for the existing synthetic single-cut → Undo-to-original
-flow. It tests one staging arm per run and is not wired into default CI.
+This is a manual, one-arm-per-run check for the locked first matched round
+across A/B/D. It is not part of default CI. No run is authorized by this
+runbook alone; follow the separate disabled-provision and enabled-test approvals
+in `workers/video-scissors-mcp/docs/stateless-do-candidate.md` before any live
+request.
 
 Install project dependencies without downloading a browser with
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci`. The runner uses the installed
 Google Chrome application on macOS; set `VIDEO_SCISSORS_CHROME` only when Chrome
 is elsewhere. It uses `ffprobe` from PATH or `VIDEO_SCISSORS_FFPROBE`.
 
-Run only the already authorized staging target, selecting its fixed arm:
+After the exact approval for the selected arm, run only its fixed target:
 
-`npm run test:video-scissors-mcp-e2e -- --arm d1`
+```sh
+npm run test:video-scissors-mcp-e2e -- --arm d1
+npm run test:video-scissors-mcp-e2e -- --arm do
+npm run test:video-scissors-mcp-e2e -- --arm d
+```
 
-Use `do` instead of `d1` for the other existing staging arm. The runner rejects
-production, arbitrary origins, missing arms, and extra arguments. Help and no
-arguments only print usage. Each live invocation creates one synthetic OAuth
-client and project, intercepts the mock client's PKCE callback locally, waits
-120 seconds with the app tab hidden, performs one 2-second cut, downloads and
-checks the H.264/AAC output with ffprobe, then Undoes to the original preview and
-explicitly disconnects. It uses a fresh headed Chrome profile over CDP and
-removes that profile during cleanup.
-An unconfirmed browser-stop or profile-removal result fails the run.
+Run the three arms sequentially in the approved same-day comparison window,
+with a five-minute quiet baseline before each. The one-journey-per-UTC-day
+limit applies to D; do not repeat D or reset its counters that day.
 
-The ignored `.deploy/video-scissors-mcp-e2e-<arm>-<UTC>.json` report contains
-UTC phase windows and monotonic elapsed time. Request starts are assigned to the
-phase where the client starts them; responses are assigned separately to the
-phase where the client receives them. Cross-phase completions are counted
-separately, and these client counts are not server or billing totals.
+The runner allowlists only these three origins; arbitrary targets, production,
+missing arms, and extra arguments fail closed. D uses the isolated
+`https://video-scissors-mcp-d-staging.innosage-draft.workers.dev` origin and
+the same existing “Connect experimental ChatGPT control” button as A/B. A run
+uses one synthetic OAuth project and the scripted PKCE/JSON-RPC MCP client;
+the OAuth callback is intercepted locally. Real ChatGPT Web and Gemini Web are
+not exercised.
+
+## Locked first matched round
+
+All three arms use the same 60-second synthetic H.264/AAC source and this exact
+sequence:
+
+1. Hide the Video Scissors tab for 120 seconds before any cuts.
+2. Cut1 keeps source seconds 2–4 (2 seconds); verify the clip plan and output.
+3. Cut2 keeps source seconds 6–10 (4 seconds); verify the clip plan and output.
+4. Undo2 targets Cut2; verify the restored clip plan and MP4 bytes match Cut1.
+5. Disconnect/revoke, verify clean wake-socket closure where used, and require
+   the old OAuth token's project read to return `PROJECT_EXPIRED_OR_REVOKED`.
+
+There are exactly three mutating MCP commands: `cut`, `cut`, `undo`. There is
+no final Undo-to-original, reconnect, or second project in this matched round.
+The 120-second hidden-idle window remains before the cuts for every arm and is
+recorded in the report; Cut1 completion is also required while the app tab is
+still hidden. Per-operation elapsed time is measured from the
+scripted mutation request through browser-reported completion and completed
+MCP status. Delivery time and local browser compute time are not separated and
+remain unknown. The report also preserves individual MCP-call and phase
+timestamps. Each operation registers an ID-matched completed browser-report
+wait before enqueue (90 seconds), then verifies server status; it does not
+assume video processing completes within a short polling interval.
+
+The ignored `.deploy/video-scissors-mcp-e2e-<arm>-<UTC>.json` report uses schema
+version 2 for this scenario. It distinctly labels headed-browser execution,
+the scripted OAuth/MCP client, and real ChatGPT/Gemini Web (`NOT_RUN`). It
+records cut output duration/codec/size/hash, Cut1 and Undo2 plans, plan/hash
+equality, the D-only revoke HTTP status/`ok`/`closedSockets` result, hidden-idle
+duration, operation timings, and request-phase accounting. It does not record
+operation IDs, OAuth values, proof, callback contents, raw revoke bodies, or
+media bytes.
 
 The report labels local runner Git revision and script hash separately from
 deployment identity. Target deployment version and source revision remain
-`UNKNOWN` unless an existing operator readback is available; this runner does
-not query a new endpoint. It records the fixture hash and correctness/status
-only. OAuth values, IDs, proof, callback contents, media, private paths,
-screenshots, traces and HAR files are not retained. Browser requests are
-restricted to the selected origin and the locally intercepted callback;
-request bodies are inspected in memory for media or local-path leakage.
+`UNKNOWN` unless an existing operator readback is supplied; the runner does
+not query a new endpoint. Browser requests are restricted to the selected
+origin and the locally intercepted callback. Same-origin and blocked request
+bodies are inspected in memory for media/local-path markers, media content
+types, and oversized control bodies; content and headers are not retained.
+Browser-local `blob:`, `data:`, and `about:` URLs are excluded from the
+network-request audit. No screenshots, traces, or HAR files are saved.
 
-The original preview assertion requires the exact “Original video preview”
-label, a 60-second `blob:` source and `readyState >= 1`. Browser-local `blob:`,
-`data:` and `about:` URLs are excluded from the network-request audit; HTTP(S)
-requests remain subject to the body and URL checks. In the DO arm, close 1000
-`disconnected` and 1008 `project-revoked` are accepted only when clean and
-observed after explicit revoke during disconnect cleanup. Every WebSocket
-error and every other close remains a failure.
+In DO arms, close 1000 `disconnected` and 1008 `project-revoked` are accepted
+only when clean and observed after explicit revoke during disconnect cleanup.
+Every WebSocket error and every other close remains a failure. D additionally
+requires HTTP 200 with `{ ok: true, closedSockets: N }` where `N` is a
+non-negative integer; only those bounded fields are retained.
 
-One bounded DO smoke was attempted on 2026-10-17. It reported `FAIL` with
-`PRIVACY_AUDIT_FOUND_MEDIA_OR_LOCAL_PATH`; cut, download/ffprobe, Undo-to-original,
-explicit revoke and temporary-profile cleanup completed. The first audit counted
-local `blob:` preview URLs as network markers; that classification is corrected
-above, but the smoke was not repeated. Its redacted report is
-`.deploy/video-scissors-mcp-e2e-do-20261017T014534137Z.json` (63 request starts,
-59 completed responses). Existing operator readback identified the target as DO
-staging B version `fce5281b-e45e-498d-ac4e-3ccde3816f43`; the runner revision
-`502e4066b78454b7c6f0cdc7a0f2ac46f5d44a9c` and source hash
-`ba22cc9de573c651ade88af7df3c21d63cde557b0f1a406f80b4157ecf49d995` identify
-the local runner only, not the deployed Worker.
+Keep the origin/media privacy audit and browser traffic bounded. The existing D
+application limits are at most 200 admitted D Worker HTTP requests and 2
+project-creation attempts per UTC day; conduct at most one complete D journey per
+UTC day. The 200-request limit is an application admission limit, not a Cloudflare
+spend cap or account-quota measurement. Daily Durable Objects headroom remains
+UNKNOWN under the [accepted #358 waiver](https://github.com/innosage-llc/innosage-hub/issues/358#issuecomment-6233242829)
+and is not a blocker for this named bounded experiment. Do not perform further
+generic quota probing. Stop on a
+budget/quota error, counter failure, privacy failure, or request outside the
+reviewed origin.
 
-The offline regression is `npm run test:video-scissors-mcp-e2e:offline`; it is
-included in Gatekeeper. It exercises argument rejection, preview readiness,
-report redaction, local-scheme exclusion, close classification and request
-start/response accounting without loading Playwright or making network requests.
+The offline regression is `npm run test:video-scissors-mcp-e2e:offline`; it
+tests fixed-arm allowlisting, preview readiness, D revoke-response shape,
+report redaction, local-scheme exclusion, socket-close classification, and
+request start/response accounting without loading Playwright or making network
+requests. The known unrelated A/B `integration.test.ts` visibility failure is
+unchanged and is not presented as D evidence.
+
+Historical reports remain historical. Existing schema-v1 reports, including
+older one-cut/Undo-to-original or four-command journeys, retain their original
+meaning and must not be relabeled or compared as this matched scenario. The
+2026-10-17 DO smoke remains a historical `FAIL` on the then-overbroad local
+`blob:` privacy classification; the classification was corrected afterward,
+but that smoke was not repeated. Its redacted report remains
+`.deploy/video-scissors-mcp-e2e-do-20261017T014534137Z.json` (63 request
+starts, 59 completed responses). The captured B version and runner/script
+identity in that report identify only that historical observation, not the
+current deployment or this runner.
