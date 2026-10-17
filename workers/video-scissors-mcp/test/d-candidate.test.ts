@@ -186,6 +186,53 @@ test('same operation key recovers an uncertain ACK but conflicting payload and r
   } finally { await f.mf.dispose(); }
 });
 
+test('wakeup failure preserves a committed command receipt and status-based recovery', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const { auth, p, tokens } = await f.link(), state = await stateFor(f, p.project);
+    await state.failNextNotifyForTest();
+    const response = await f.rpc(tokens.access_token, 'tools/call', { name: 'cut', arguments: {
+      operationId: 'wake-failed-cut', generation: 1, version: 1, clips: [{ start: 2, end: 7 }],
+    } });
+    assert.equal(response.status, 200);
+    const receipt = JSON.parse((await rpcData(response) as { result: { content: Array<{ text: string }> } }).result.content[0].text);
+    assert.deepEqual(receipt, { operationId: 'wake-failed-cut', state: 'queued' },
+      'notification failure cannot turn a committed admission into a rejected MCP call');
+
+    const status = await f.rpc(tokens.access_token, 'tools/call', { name: 'status', arguments: { operationId: 'wake-failed-cut' } });
+    assert.equal(status.status, 200);
+    assert.equal(JSON.parse((await rpcData(status) as { result: { content: Array<{ text: string }> } }).result.content[0].text).state, 'queued');
+    const claim = await f.json('/remote/claim', { auth, metadata });
+    assert.equal((await claim.json() as { command: { operationId: string } }).command.operationId, 'wake-failed-cut');
+    assert.deepEqual(await (await f.json('/remote/claim', { auth, metadata })).json(), { command: null, refresh: false },
+      'recovery claims the committed operation at most once');
+  } finally { await f.mf.dispose(); }
+});
+
+test('explicit revoke lost-ACK retry confirms only the same owner during the tombstone lease', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const { auth, p } = await f.link(), state = await stateFor(f, p.project);
+    const dropped = await f.json('/remote/revoke', { auth });
+    assert.equal(dropped.status, 200);
+    await dropped.body?.cancel(); // Simulate the committed response being lost by the caller.
+
+    const retry = await f.json('/remote/revoke', { auth });
+    assert.deepEqual(await retry.json(), { ok: true, closedSockets: 0 },
+      'identical owner retry confirms revoke without recreating the project');
+    assert.equal(await state.project({ project: auth.project, epoch: auth.epoch }), null,
+      'the receipt grants no read or write authority');
+    assert.equal(await state.revoke({ ...auth, credential: 'f'.repeat(64) }), false,
+      'different credentials cannot use the receipt');
+    assert.equal(await state.revoke({ ...auth, epoch: auth.epoch + 1 }), false,
+      'the receipt cannot be replayed under another epoch');
+    const snapshot = await state.inspectForTest();
+    assert.equal(snapshot.project.revoked, 1);
+    assert.equal(snapshot.project.owner_hash, '');
+    assert.equal(snapshot.project.metadata, '{}');
+  } finally { await f.mf.dispose(); }
+});
+
 test('Undo admission and atomic claim require the latest target and current generation/version', { timeout: 30_000 }, async () => {
   const f = await world();
   try {

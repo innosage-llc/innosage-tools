@@ -28,6 +28,10 @@ candidate config is disabled by default and describes workers.dev only.
   that inserts or claims. Undo is claimable only while its target remains the
   latest undoable operation. This is the linearization fence against a revoke
   or superseding operation that wins before the transaction.
+- A committed command receipt remains authoritative if a best-effort WebSocket
+  wakeup fails; status/reconnect recovers it and claim remains one-shot. Explicit
+  revoke retains only a hashed owner receipt and original epoch in the bounded
+  tombstone so the same owner can confirm a lost ACK; it restores no authority.
 - Revoke/lease expiry clears credentials, tickets, consent handles, command
   payloads and metadata immediately, closes sockets, and leaves only a minimal
   tombstone. The alarm purges that tombstone after 31 minutes (30-minute

@@ -8,6 +8,11 @@ const id = z.string().regex(/^[a-zA-Z0-9_-]{1,96}$/);
 const version = { generation: z.number().int().nonnegative(), version: z.number().int().nonnegative() };
 const security = { securitySchemes: [{ type: 'oauth2', scopes: ['video:read','video:edit'] }] };
 
+async function notifyBestEffort(state: { notify(project: string, epoch: number): Promise<void> }, project: string, epoch: number) {
+  try { await state.notify(project, epoch); }
+  catch { /* Durable admission is authoritative; status/reconnect recovers a missed wakeup. */ }
+}
+
 export function dMcpHandler(env: DEnv, props: Record<string, unknown>, origin: string) {
   return createMcpHandler(() => {
     const server = new McpServer({ name: 'video-scissors-stateless-do-candidate', version: '0.1.0' });
@@ -36,21 +41,21 @@ export function dMcpHandler(env: DEnv, props: Record<string, unknown>, origin: s
       inputSchema: z.object({ operationId: id, ...version, clips: z.array(z.object({ start: z.number(), end: z.number() }).strict()).min(1).max(20) }).strict(), _meta: security },
     async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
       const state = stateFor(auth), result = await state.admit(auth, { ...input, kind: 'cut' });
-      if (result?.state === 'queued') await state.notify(auth.project, auth.epoch);
+      if (result?.state === 'queued') await notifyBestEffort(state, auth.project, auth.epoch);
       return result ?? { error: 'STALE_OR_REJECTED' };
     }));
     server.registerTool('undo', { description: 'Queue Undo of the current latest operation; no media is uploaded.',
       inputSchema: z.object({ operationId: id, ...version, targetOperationId: id }).strict(), _meta: security },
     async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
       const state = stateFor(auth), result = await state.admit(auth, { ...input, kind: 'undo' });
-      if (result?.state === 'queued') await state.notify(auth.project, auth.epoch);
+      if (result?.state === 'queued') await notifyBestEffort(state, auth.project, auth.epoch);
       return result ?? { error: 'STALE_OR_REJECTED' };
     }));
     server.registerTool('cancel', { description: 'Cancel this exact queued/claimed operation; never replays dispatched work.',
       inputSchema: z.object({ operationId: id }).strict(), _meta: security },
     async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
       const state = stateFor(auth), requested = await state.cancel(auth, input.operationId);
-      if (requested) await state.notify(auth.project, auth.epoch);
+      if (requested) await notifyBestEffort(state, auth.project, auth.epoch);
       return { requested };
     }));
     return server;

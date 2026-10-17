@@ -4,6 +4,16 @@ import { ProjectStateDO } from '../src/d/ProjectStateDO.ts';
 // Local fixture-only subclass: accelerates the real alarm path without
 // adding a production route or shortening the production tombstone lifetime.
 export class TestProjectStateDO extends ProjectStateDO {
+  async failNextNotifyForTest() {
+    this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS test_flags (name TEXT PRIMARY KEY)');
+    this.ctx.storage.sql.exec("INSERT OR REPLACE INTO test_flags(name) VALUES('fail_next_notify')");
+  }
+  override async notify(project: string, epoch: number) {
+    const failure = this.ctx.storage.sql.exec<{ name: string }>(
+      "DELETE FROM test_flags WHERE name='fail_next_notify' RETURNING name").toArray()[0];
+    if (failure) throw new Error('injected wakeup failure');
+    return super.notify(project, epoch);
+  }
   async inspectForTest() {
     const rows = this.ctx.storage.sql.exec<{ project_id: string; epoch: number; owner_hash: string;
       expires_at: number; consented: number; revoked: number; metadata: string }>(

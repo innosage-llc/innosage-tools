@@ -29,7 +29,8 @@ export class ProjectStateDO extends DurableObject<DEnv> {
       ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS project (
         singleton INTEGER PRIMARY KEY CHECK(singleton=1), project_id TEXT NOT NULL, epoch INTEGER NOT NULL,
         owner_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, consented INTEGER NOT NULL DEFAULT 0,
-        consent_handle_hash TEXT, revoked INTEGER NOT NULL DEFAULT 0, metadata TEXT NOT NULL
+        consent_handle_hash TEXT, revoked INTEGER NOT NULL DEFAULT 0, metadata TEXT NOT NULL,
+        revocation_owner_hash TEXT, revoked_epoch INTEGER
       )`);
       ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS route_tickets (
         ticket_hash TEXT PRIMARY KEY, purpose TEXT NOT NULL, project_id TEXT NOT NULL,
@@ -67,14 +68,15 @@ export class ProjectStateDO extends DurableObject<DEnv> {
     const row = this.row<{ expires_at: number; revoked: number }>('SELECT expires_at,revoked FROM project WHERE singleton=1');
     if (row && !row.revoked && row.expires_at <= Date.now()) await this.cleanupToTombstone();
   }
-  private async cleanupToTombstone(): Promise<void> {
+  private async cleanupToTombstone(receipt?: { ownerHash: string; epoch: number }): Promise<void> {
     const purgeAt = Date.now() + TOMBSTONE_MS;
     this.transaction(() => {
       this.ctx.storage.sql.exec('DELETE FROM route_tickets');
       this.ctx.storage.sql.exec('DELETE FROM consent_handles');
       this.ctx.storage.sql.exec('DELETE FROM commands');
       this.ctx.storage.sql.exec(`UPDATE project SET revoked=1,consented=0,owner_hash='',consent_handle_hash=NULL,
-        metadata='{}',epoch=epoch+1,expires_at=? WHERE singleton=1 AND revoked=0`, purgeAt);
+        metadata='{}',epoch=epoch+1,expires_at=?,revocation_owner_hash=?,revoked_epoch=?
+        WHERE singleton=1 AND revoked=0`, purgeAt, receipt?.ownerHash ?? null, receipt?.epoch ?? null);
     });
     // Replacing the lease alarm with the tombstone-purge alarm is essential:
     // terminal state is bounded, but never left behind indefinitely.
@@ -247,8 +249,18 @@ export class ProjectStateDO extends DurableObject<DEnv> {
   }
   async revoke(auth: BrowserAuth): Promise<boolean> {
     const ownerHash = await sha256Hex(auth.credential), project = await this.current(auth.project, auth.epoch, false);
-    if (!project || project.owner_hash !== ownerHash) return false;
-    await this.cleanupToTombstone();
+    if (!project) {
+      // A lost revoke ACK can be confirmed only by the same owner, exact
+      // original epoch, and while the non-reusable tombstone is retained.
+      await this.ready;
+      const receipt = this.row<{ project_id: string; revoked: number; expires_at: number;
+        revocation_owner_hash: string | null; revoked_epoch: number | null }>(`SELECT project_id,revoked,expires_at,
+        revocation_owner_hash,revoked_epoch FROM project WHERE singleton=1 AND project_id=?`, auth.project);
+      return !!receipt && receipt.revoked === 1 && receipt.expires_at > Date.now() &&
+        receipt.revoked_epoch === auth.epoch && receipt.revocation_owner_hash === ownerHash;
+    }
+    if (project.owner_hash !== ownerHash) return false;
+    await this.cleanupToTombstone({ ownerHash, epoch: auth.epoch });
     return true;
   }
   async registerWakeTicket(auth: BrowserAuth, ticket: string, expiresAt: number): Promise<boolean> {
