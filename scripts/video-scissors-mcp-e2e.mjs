@@ -18,11 +18,22 @@ const mockCallbackPath = '/callback/video-scissors-staging';
 const allowedOrigins = Object.freeze({
   d1: 'https://video-scissors-mcp-staging.innosage-draft.workers.dev',
   do: 'https://video-scissors-mcp-do-staging.innosage-draft.workers.dev',
+  d: 'https://video-scissors-mcp-d-staging.innosage-draft.workers.dev',
 });
 const maxControlBodyBytes = 65_536;
+export const matchedMutatingCommandSequence = Object.freeze(['cut', 'cut', 'undo']);
+export function pairingProofPattern(arm) {
+  return arm === 'd' ? /^[A-Za-z0-9_-]{90,160}$/ : /^[a-f0-9]{64}$/;
+}
+export function wakePathPattern(arm) {
+  return arm === 'd' ? /^\/remote\/bridge\/[a-f0-9]{64}\/[0-9]+$/ : /^\/remote\/bridge\/[a-f0-9-]{36}\/[0-9]+$/i;
+}
+export function isCompletedOperationReport(body, operationId) {
+  return body?.operationId === operationId && body?.state === 'completed';
+}
 const usage = [
   'Usage:',
-  '  npm run test:video-scissors-mcp-e2e -- --arm d1|do',
+  '  npm run test:video-scissors-mcp-e2e -- --arm d1|do|d',
   '  npm run test:video-scissors-mcp-e2e -- --help',
   '',
   'The staging run is manual. No arm is selected by default.',
@@ -44,13 +55,26 @@ export function parseRunArgs(args) {
   return { action: 'run', arm: args[1] };
 }
 
-export function isOriginalPreviewReady(preview, expectedDurationSeconds) {
-  return preview?.label === 'Original video preview' &&
+export function isPreviewReady(preview, expectedLabel, expectedDurationSeconds) {
+  return preview?.label === expectedLabel &&
     preview.sourceScheme === 'blob:' &&
     Number.isFinite(preview.readyState) &&
     preview.readyState >= 1 &&
     Number.isFinite(preview.durationSeconds) &&
     Math.abs(preview.durationSeconds - expectedDurationSeconds) < 0.25;
+}
+
+export function isOriginalPreviewReady(preview, expectedDurationSeconds) {
+  return isPreviewReady(preview, 'Original video preview', expectedDurationSeconds);
+}
+
+export function isDRevokeResponse(status, body) {
+  return status === 200 && body?.ok === true && Number.isInteger(body.closedSockets) && body.closedSockets >= 0;
+}
+
+export function isRevokedProjectDenied(status, body) {
+  return status === 200 && body?.result?.isError === true &&
+    body.result.content?.some(item => item.type === 'text' && item.text === 'PROJECT_EXPIRED_OR_REVOKED') === true;
 }
 
 export function isLocalSchemeUrl(value) {
@@ -273,22 +297,35 @@ async function runLive(arm) {
   let appSocketCount = 0;
   let failure = null;
   let idleWindow = null;
+  const mutatingMcpCommandSequence = [];
   let sourceBytes;
   let sourceHash;
   let sourceUnchanged = null;
-  let outputInfo = null;
   let previewObservation = null;
   let dcrStatus = null;
   let tokenStatus = null;
   let authorizationStatus = 'NOT_RUN';
   let ffprobePath = 'ffprobe';
-  let downloadedBytes = null;
   let chromeSpawnFailed = false;
+  const operationTimings = [];
 
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     status: 'RUNNING',
     arm,
+    executionEvidence: {
+      browser: 'HEADED_ISOLATED_CHROME',
+      scriptedOAuthAndMcpClient: 'USED',
+      realChatGPTWeb: 'NOT_RUN',
+      realGeminiWeb: 'NOT_RUN',
+    },
+    scenario: {
+      id: 'matched-v1-cut1-2s-cut2-4s-undo2-to-cut1',
+      sequence: ['hidden-idle-120s', 'cut1-2s', 'cut2-4s', 'undo2-to-cut1', 'disconnect-revoke'],
+      hiddenIdleBeforeCuts: true,
+      mutatingMcpCommands: matchedMutatingCommandSequence.length,
+      finalUndoToOriginal: 'NOT_RUN',
+    },
     targetDeployment: {
       version: 'UNKNOWN',
       sourceRevision: 'UNKNOWN',
@@ -303,14 +340,18 @@ async function runLive(arm) {
     idleWindow: null,
     oauth: { dcrStatus: null, authorizationAndPkce: 'NOT_RUN', tokenExchangeStatus: null, callbackInterceptedLocally: false },
     mcpCalls,
+    operationTimings,
     correctness: {
       originalFixtureReady: false,
-      cut: 'NOT_RUN',
-      output: null,
-      undoToOriginal: 'NOT_RUN',
-      originalPreview: null,
+      cut1: 'NOT_RUN',
+      cut2: 'NOT_RUN',
+      undo2ToCut1: 'NOT_RUN',
+      outputs: { cut1: null, cut2: null, undo2: null },
+      clipPlans: { cut1: null, cut2: null, undo2: null, equal: null },
+      restoredPreview: null,
       sourceUnchanged: null,
     },
+    revoke: { dResponseCheck: arm === 'd' ? 'NOT_RUN' : 'NOT_APPLICABLE', httpStatus: null, ok: null, closedSockets: null, staleTokenDenied: 'NOT_RUN' },
     clientRequests: null,
     websocket: { applicationSocketCount: 0, attempts: 0, accepted: 0, rejected: 0, errors: 0, closeResults: [] },
     privacy: {
@@ -392,9 +433,11 @@ async function runLive(arm) {
     const leaked = hasSensitiveValue(serialized, sensitiveValues);
     if (leaked) {
       const fallback = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         status: 'FAIL',
         arm,
+        executionEvidence: report.executionEvidence,
+        scenario: report.scenario,
         targetDeployment: { version: 'UNKNOWN', sourceRevision: 'UNKNOWN' },
         runner: report.runner,
         fixture: report.fixture,
@@ -403,6 +446,7 @@ async function runLive(arm) {
         elapsedMonotonicMilliseconds: report.elapsedMonotonicMilliseconds,
         phases: report.phases,
         idleWindow: report.idleWindow,
+        operationTimings: report.operationTimings,
         cleanup: report.cleanup,
         privacy: { rawAuthValuesOrIDsPersisted: false, mediaContentPersisted: false, screenshotsTracesOrHarSaved: false },
         failure: { phase: 'report', code: 'REDACTION_GUARD_FAILED' },
@@ -431,7 +475,6 @@ async function runLive(arm) {
     ensure(Math.abs(originalInfo.durationSeconds - 60) < 0.25 &&
       originalInfo.videoCodec === 'h264' && originalInfo.audioCodec === 'aac', 'FIXTURE_MEDIA_MISMATCH');
     report.correctness.originalFixtureReady = true;
-    outputInfo = originalInfo;
 
     const { chromium } = await import('playwright');
     const profileRoot = await mkdtemp(join(tmpdir(), 'video-scissors-mcp-e2e-'));
@@ -460,7 +503,7 @@ async function runLive(arm) {
     ensure(Boolean(context), 'ISOLATED_BROWSER_CONTEXT_MISSING');
     context.setDefaultTimeout(15_000);
     context.setDefaultNavigationTimeout(20_000);
-    await context.addInitScript(({ workerOrigin, allowWakeSocket }) => {
+    await context.addInitScript(({ workerOrigin, allowWakeSocket, wakePathSource }) => {
       const workerUrl = new URL(workerOrigin);
       const socketOrigin = 'wss://' + workerUrl.host;
       const audit = { attempts: 0, accepted: 0, rejected: 0, sockets: [] };
@@ -474,7 +517,7 @@ async function runLive(arm) {
           try {
             const url = new URL(String(args[0]), location.href);
             const protocols = Array.isArray(args[1]) ? args[1].map(String) : (args[1] == null ? [] : [String(args[1])]);
-            const pathAllowed = /^\/remote\/bridge\/[a-f0-9-]{36}\/[0-9]+$/i.test(url.pathname);
+            const pathAllowed = new RegExp(wakePathSource, 'i').test(url.pathname);
             const protocolsAllowed = protocols.length === 2 &&
               protocols[0] === 'video-scissors-wakeup.v1' &&
               /^join\.[a-f0-9]{64}$/i.test(protocols[1]);
@@ -503,7 +546,7 @@ async function runLive(arm) {
           return socket;
         },
       });
-    }, { workerOrigin: origin, allowWakeSocket: arm === 'do' });
+    }, { workerOrigin: origin, allowWakeSocket: arm === 'do' || arm === 'd', wakePathSource: wakePathPattern(arm).source });
 
     cdp = await browser.newBrowserCDPSession();
     await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads, eventsEnabled: true });
@@ -579,8 +622,9 @@ async function runLive(arm) {
 
     pairingStarted = true;
     await appPage.getByRole('button', { name: 'Connect experimental ChatGPT control', exact: true }).click();
-    const proof = await appPage.locator('code').filter({ hasText: /^[a-f0-9]{64}$/ }).textContent();
-    ensure(Boolean(proof && /^[a-f0-9]{64}$/.test(proof)), 'PAIRING_PROOF_NOT_PRESENT');
+    const proofPattern = pairingProofPattern(arm);
+    const proof = (await appPage.locator('code').filter({ hasText: proofPattern }).textContent())?.trim();
+    ensure(Boolean(proof && proofPattern.test(proof)), 'PAIRING_PROOF_NOT_PRESENT');
     sensitiveValues.add(proof);
 
     const callbackUri = mockClientOrigin + mockCallbackPath;
@@ -702,7 +746,7 @@ async function runLive(arm) {
     };
 
     await appPage.getByText('Connected', { exact: true }).waitFor({ timeout: 20_000 });
-    if (arm === 'do') {
+    if (arm === 'do' || arm === 'd') {
       await appPage.waitForFunction(() => window.__videoScissorsMcpSocketAudit?.sockets.some(socket => socket.opened),
         null, { timeout: 15_000 });
     }
@@ -713,16 +757,24 @@ async function runLive(arm) {
     const idleStartedMonotonic = performance.now();
     await delay(120_000);
     const idleMonotonicMilliseconds = Math.round((performance.now() - idleStartedMonotonic) * 1000) / 1000;
+    const appTabHiddenAtEnd = await appPage.evaluate(() => document.visibilityState === 'hidden');
+    ensure(appTabHiddenAtEnd, 'IDLE_TAB_NOT_HIDDEN');
     idleWindow = {
       startedAtUtc: idleStartedAtUtc,
       endedAtUtc: new Date().toISOString(),
       targetMilliseconds: 120_000,
       elapsedMonotonicMilliseconds: idleMonotonicMilliseconds,
+      appTabHiddenAtEnd,
     };
     report.idleWindow = idleWindow;
 
     let jsonRpcId = 1;
     const callMcp = async (tool, args = {}) => {
+      if (tool === 'cut' || tool === 'undo') {
+        const expected = matchedMutatingCommandSequence[mutatingMcpCommandSequence.length];
+        ensure(tool === expected, 'MATCHED_COMMAND_SEQUENCE_INVALID');
+        mutatingMcpCommandSequence.push(tool);
+      }
       const phaseAtStart = currentPhase;
       const callStarted = performance.now();
       let httpStatus = null;
@@ -760,23 +812,36 @@ async function runLive(arm) {
       }
     };
 
-    await enterPhase('one-cut');
-    const beforeCut = await callMcp('getproject');
-    ensure(beforeCut?.metadata && beforeCut.metadata.hasOutput === false && beforeCut.metadata.canUndo === false,
-      'PROJECT_NOT_AT_ORIGINAL_BASELINE');
-    const cutOperationId = randomUUID();
-    sensitiveValues.add(cutOperationId);
-    const cutArgs = {
-      operationId: cutOperationId,
-      generation: beforeCut.metadata.generation,
-      version: beforeCut.metadata.version,
-      clips: [{ start: 2, end: 4 }],
+    const timeOperation = async (operation, action) => {
+      const startedAtUtc = new Date().toISOString();
+      const startedMonotonic = performance.now();
+      let outcome = 'FAIL';
+      try {
+        const result = await action();
+        outcome = 'PASS';
+        return result;
+      } finally {
+        operationTimings.push({
+          operation,
+          startedAtUtc,
+          completedAtUtc: new Date().toISOString(),
+          totalElapsedMonotonicMilliseconds: Math.round((performance.now() - startedMonotonic) * 1000) / 1000,
+          outcome,
+          boundary: 'scripted MCP mutation request start through completed status after browser report; delivery and local compute are not separated',
+        });
+      }
     };
-    const queuedCut = await callMcp('cut', cutArgs);
-    ensure(queuedCut.operationId === cutOperationId && queuedCut.state === 'queued', 'CUT_NOT_QUEUED');
-    ensure(await appPage.evaluate(() => document.visibilityState) === 'hidden', 'CUT_PAGE_NOT_HIDDEN');
-    await appPage.getByText('Cut complete. Your original video is unchanged.', { exact: true }).waitFor({ timeout: 90_000 });
-    const waitForCompleted = async operationId => {
+
+    const waitForCompletedReport = operationId => appPage.waitForResponse(response => {
+      try {
+        const url = new URL(response.url());
+        return url.origin === origin && url.pathname === '/remote/report' &&
+          response.request().method() === 'POST' && response.status() === 200 &&
+          isCompletedOperationReport(response.request().postDataJSON(), operationId);
+      } catch { return false; }
+    }, { timeout: 90_000 }).then(() => true, () => false);
+    const waitForCompleted = async (operationId, completedReport) => {
+      ensure(await completedReport, 'COMPLETED_REPORT_NOT_OBSERVED');
       let status = await callMcp('status', { operationId });
       for (let attempt = 0; status?.state !== 'completed' && attempt < 12; attempt++) {
         await delay(500);
@@ -785,81 +850,150 @@ async function runLive(arm) {
       ensure(status?.state === 'completed', 'OPERATION_DID_NOT_REACH_COMPLETED');
       return status;
     };
-    const completedCut = await waitForCompleted(cutOperationId);
-    ensure(completedCut.metadata?.hasOutput === true && completedCut.metadata?.canUndo === true, 'CUT_METADATA_MISMATCH');
+    const readClipPlan = () => appPage.locator('input[aria-label^="Clip "]').evaluateAll(inputs => inputs.map(input => ({
+      label: input.getAttribute('aria-label'),
+      seconds: input.valueAsNumber,
+    })));
+    const downloadCurrentOutput = async expectedDurationSeconds => {
+      await appPage.bringToFront();
+      await appPage.waitForFunction(expectedDuration => {
+        const video = document.querySelector('video[aria-label="Edited video preview"]');
+        if (!video || video.readyState < 1 || !Number.isFinite(video.duration) ||
+          Math.abs(video.duration - expectedDuration) >= 0.25) return false;
+        try { return new URL(video.currentSrc || video.src, location.href).protocol === 'blob:'; }
+        catch { return false; }
+      }, expectedDurationSeconds, { timeout: 20_000 });
+      const downloadPromise = new Promise((resolvePromise, rejectPromise) => {
+        let filename = '';
+        const cleanup = () => {
+          clearTimeout(timer);
+          cdp.off('Browser.downloadWillBegin', onBegin);
+          cdp.off('Browser.downloadProgress', onProgress);
+        };
+        const finish = (callback, value) => { cleanup(); callback(value); };
+        const onBegin = event => { filename = event.suggestedFilename; };
+        const onProgress = event => {
+          if (event.state === 'completed') finish(resolvePromise, filename);
+          if (event.state === 'canceled') finish(rejectPromise, Object.assign(new Error('DOWNLOAD_CANCELED'), { safeCode: 'DOWNLOAD_CANCELED' }));
+        };
+        const timer = setTimeout(() => finish(rejectPromise,
+          Object.assign(new Error('DOWNLOAD_TIMEOUT'), { safeCode: 'DOWNLOAD_TIMEOUT' })), 30_000);
+        cdp.on('Browser.downloadWillBegin', onBegin);
+        cdp.on('Browser.downloadProgress', onProgress);
+      });
+      await appPage.getByRole('button', { name: 'Download cut MP4 video', exact: true }).click();
+      const downloadedFilename = await downloadPromise;
+      ensure(typeof downloadedFilename === 'string' && downloadedFilename.length > 0 &&
+        !downloadedFilename.includes('/') && !downloadedFilename.includes('\\'), 'DOWNLOAD_FILENAME_INVALID');
+      const downloadedPath = join(downloads, downloadedFilename);
+      const downloadedStat = await stat(downloadedPath);
+      ensure(downloadedStat.isFile() && downloadedStat.size > 0, 'DOWNLOAD_FILE_EMPTY');
+      const downloadedBytes = await readFile(downloadedPath);
+      const info = mediaInfo(ffprobePath, downloadedPath);
+      ensure(Math.abs(info.durationSeconds - expectedDurationSeconds) < 0.2 &&
+        info.videoCodec === 'h264' && info.audioCodec === 'aac', 'CUT_OUTPUT_FORMAT_OR_DURATION_MISMATCH');
+      await consentPage.bringToFront();
+      return {
+        durationSeconds: info.durationSeconds,
+        videoCodec: info.videoCodec,
+        audioCodec: info.audioCodec,
+        downloadedBytes: downloadedStat.size,
+        sha256: hash(downloadedBytes),
+      };
+    };
+    const expectedPlan = (start, end) => [
+      { label: 'Clip 1 start time in seconds', seconds: start },
+      { label: 'Clip 1 end time in seconds', seconds: end },
+    ];
 
-    await enterPhase('download-and-verify');
-    await appPage.bringToFront();
-    const downloadPromise = new Promise((resolvePromise, rejectPromise) => {
-      let filename = '';
-      const cleanup = () => {
-        clearTimeout(timer);
-        cdp.off('Browser.downloadWillBegin', onBegin);
-        cdp.off('Browser.downloadProgress', onProgress);
-      };
-      const finish = (callback, value) => { cleanup(); callback(value); };
-      const onBegin = event => { filename = event.suggestedFilename; };
-      const onProgress = event => {
-        if (event.state === 'completed') finish(resolvePromise, filename);
-        if (event.state === 'canceled') finish(rejectPromise, Object.assign(new Error('DOWNLOAD_CANCELED'), { safeCode: 'DOWNLOAD_CANCELED' }));
-      };
-      const timer = setTimeout(() => finish(rejectPromise,
-        Object.assign(new Error('DOWNLOAD_TIMEOUT'), { safeCode: 'DOWNLOAD_TIMEOUT' })), 30_000);
-      cdp.on('Browser.downloadWillBegin', onBegin);
-      cdp.on('Browser.downloadProgress', onProgress);
+    await enterPhase('cut1');
+    const beforeCut1 = await callMcp('getproject');
+    ensure(beforeCut1?.metadata && beforeCut1.metadata.hasOutput === false && beforeCut1.metadata.canUndo === false,
+      'PROJECT_NOT_AT_ORIGINAL_BASELINE');
+    const cut1OperationId = randomUUID();
+    sensitiveValues.add(cut1OperationId);
+    await timeOperation('cut1', async () => {
+      const completedReport = waitForCompletedReport(cut1OperationId);
+      const queuedCut1 = await callMcp('cut', {
+        operationId: cut1OperationId,
+        generation: beforeCut1.metadata.generation,
+        version: beforeCut1.metadata.version,
+        clips: [{ start: 2, end: 4 }],
+      });
+      ensure(queuedCut1.operationId === cut1OperationId && queuedCut1.state === 'queued', 'CUT1_NOT_QUEUED');
+      ensure(await appPage.evaluate(() => document.visibilityState) === 'hidden', 'CUT1_PAGE_NOT_HIDDEN');
+      const completed = await waitForCompleted(cut1OperationId, completedReport);
+      ensure(completed.metadata?.hasOutput === true && completed.metadata?.canUndo === true, 'CUT1_METADATA_MISMATCH');
+      const cut1CompletedWhileHidden = await appPage.evaluate(() => document.visibilityState === 'hidden');
+      ensure(cut1CompletedWhileHidden, 'CUT1_PAGE_NOT_HIDDEN');
+      report.idleWindow.cut1CompletedWhileHidden = cut1CompletedWhileHidden;
     });
-    await appPage.getByRole('button', { name: 'Download cut MP4 video', exact: true }).click();
-    const downloadedFilename = await downloadPromise;
-    ensure(typeof downloadedFilename === 'string' && downloadedFilename.length > 0 &&
-      !downloadedFilename.includes('/') && !downloadedFilename.includes('\\'), 'DOWNLOAD_FILENAME_INVALID');
-    const downloadedPath = join(downloads, downloadedFilename);
-    const downloadedStat = await stat(downloadedPath);
-    ensure(downloadedStat.isFile() && downloadedStat.size > 0, 'DOWNLOAD_FILE_EMPTY');
-    await consentPage.bringToFront();
-    downloadedBytes = downloadedStat.size;
-    outputInfo = mediaInfo(ffprobePath, downloadedPath);
-    ensure(Math.abs(outputInfo.durationSeconds - 2) < 0.2 &&
-      outputInfo.videoCodec === 'h264' && outputInfo.audioCodec === 'aac', 'CUT_OUTPUT_FORMAT_OR_DURATION_MISMATCH');
-    report.correctness.cut = 'PASS';
-    report.correctness.output = {
-      durationSeconds: outputInfo.durationSeconds,
-      videoCodec: outputInfo.videoCodec,
-      audioCodec: outputInfo.audioCodec,
-      downloadedBytes,
-    };
+    await enterPhase('cut1-download-and-verify');
+    const cut1Plan = await readClipPlan();
+    ensure(JSON.stringify(cut1Plan) === JSON.stringify(expectedPlan(2, 4)), 'CUT1_PLAN_MISMATCH');
+    const cut1Output = await downloadCurrentOutput(2);
+    report.correctness.cut1 = 'PASS';
+    report.correctness.outputs.cut1 = cut1Output;
+    report.correctness.clipPlans.cut1 = cut1Plan;
 
-    await enterPhase('undo');
-    const beforeUndo = await callMcp('getproject');
-    ensure(beforeUndo.metadata?.latestOperationId === cutOperationId, 'CUT_NOT_LATEST_UNDO_TARGET');
-    const undoOperationId = randomUUID();
-    sensitiveValues.add(undoOperationId);
-    const undoArgs = {
-      operationId: undoOperationId,
-      generation: beforeUndo.metadata.generation,
-      version: beforeUndo.metadata.version,
-      targetOperationId: cutOperationId,
-    };
-    const queuedUndo = await callMcp('undo', undoArgs);
-    ensure(queuedUndo.operationId === undoOperationId && queuedUndo.state === 'queued', 'UNDO_NOT_QUEUED');
-    await appPage.waitForFunction(() => document.visibilityState === 'hidden', null, { timeout: 10_000 });
-    await appPage.getByRole('button', { name: 'Undo cut and restore previous plan', exact: true }).waitFor({ timeout: 90_000 });
-    const completedUndo = await waitForCompleted(undoOperationId);
-    ensure(completedUndo.metadata?.hasOutput === false && completedUndo.metadata?.canUndo === false,
-      'UNDO_DID_NOT_RESTORE_ORIGINAL_PLAN');
-    const afterUndo = await callMcp('getproject');
-    ensure(afterUndo.metadata?.hasOutput === false && afterUndo.metadata?.canUndo === false, 'ORIGINAL_PLAN_READBACK_MISMATCH');
+    await enterPhase('cut2');
+    const beforeCut2 = await callMcp('getproject');
+    ensure(beforeCut2.metadata?.latestOperationId === cut1OperationId &&
+      beforeCut2.metadata?.hasOutput === true && beforeCut2.metadata?.canUndo === true,
+    'CUT1_NOT_LATEST_UNDO_TARGET');
+    const cut2OperationId = randomUUID();
+    sensitiveValues.add(cut2OperationId);
+    await timeOperation('cut2', async () => {
+      const completedReport = waitForCompletedReport(cut2OperationId);
+      const queuedCut2 = await callMcp('cut', {
+        operationId: cut2OperationId,
+        generation: beforeCut2.metadata.generation,
+        version: beforeCut2.metadata.version,
+        clips: [{ start: 6, end: 10 }],
+      });
+      ensure(queuedCut2.operationId === cut2OperationId && queuedCut2.state === 'queued', 'CUT2_NOT_QUEUED');
+      ensure(await appPage.evaluate(() => document.visibilityState) === 'hidden', 'CUT2_PAGE_NOT_HIDDEN');
+      const completed = await waitForCompleted(cut2OperationId, completedReport);
+      ensure(completed.metadata?.hasOutput === true && completed.metadata?.canUndo === true, 'CUT2_METADATA_MISMATCH');
+    });
+    await enterPhase('cut2-download-and-verify');
+    const cut2Plan = await readClipPlan();
+    ensure(JSON.stringify(cut2Plan) === JSON.stringify(expectedPlan(6, 10)), 'CUT2_PLAN_MISMATCH');
+    const cut2Output = await downloadCurrentOutput(4);
+    ensure(cut2Output.sha256 !== cut1Output.sha256, 'CUT2_OUTPUT_NOT_DISTINCT');
+    report.correctness.cut2 = 'PASS';
+    report.correctness.outputs.cut2 = cut2Output;
+    report.correctness.clipPlans.cut2 = cut2Plan;
 
-    const originalPreview = appPage.locator('video[aria-label="Original video preview"]');
+    await enterPhase('undo2');
+    const beforeUndo2 = await callMcp('getproject');
+    ensure(beforeUndo2.metadata?.latestOperationId === cut2OperationId, 'CUT2_NOT_LATEST_UNDO_TARGET');
+    const undo2OperationId = randomUUID();
+    sensitiveValues.add(undo2OperationId);
+    await timeOperation('undo2', async () => {
+      const completedReport = waitForCompletedReport(undo2OperationId);
+      const queuedUndo2 = await callMcp('undo', {
+        operationId: undo2OperationId,
+        generation: beforeUndo2.metadata.generation,
+        version: beforeUndo2.metadata.version,
+        targetOperationId: cut2OperationId,
+      });
+      ensure(queuedUndo2.operationId === undo2OperationId && queuedUndo2.state === 'queued', 'UNDO2_NOT_QUEUED');
+      ensure(await appPage.evaluate(() => document.visibilityState) === 'hidden', 'UNDO2_PAGE_NOT_HIDDEN');
+      const completed = await waitForCompleted(undo2OperationId, completedReport);
+      ensure(completed.metadata?.hasOutput === true, 'UNDO2_DID_NOT_RESTORE_CUT1_OUTPUT');
+    });
+    await enterPhase('undo2-download-and-verify');
+    const afterUndo2 = await callMcp('getproject');
+    ensure(afterUndo2.metadata?.hasOutput === true, 'UNDO2_PROJECT_READBACK_MISMATCH');
+    const undo2Plan = await readClipPlan();
+    ensure(JSON.stringify(undo2Plan) === JSON.stringify(cut1Plan), 'UNDO2_PLAN_NOT_RESTORED');
+    const undo2Output = await downloadCurrentOutput(2);
+    ensure(undo2Output.sha256 === cut1Output.sha256, 'UNDO2_BYTES_NOT_RESTORED');
     await appPage.bringToFront();
-    await originalPreview.waitFor({ state: 'visible', timeout: 15_000 });
-    await appPage.waitForFunction(expectedDuration => {
-      const video = document.querySelector('video[aria-label="Original video preview"]');
-      if (!video || video.readyState < 1 || !Number.isFinite(video.duration) ||
-        Math.abs(video.duration - expectedDuration) >= 0.25) return false;
-      try { return new URL(video.currentSrc || video.src, location.href).protocol === 'blob:'; }
-      catch { return false; }
-    }, originalInfo.durationSeconds, { timeout: 20_000 });
-    previewObservation = await originalPreview.evaluate(video => {
+    const editedPreview = appPage.locator('video[aria-label="Edited video preview"]');
+    await editedPreview.waitFor({ state: 'visible', timeout: 15_000 });
+    previewObservation = await editedPreview.evaluate(video => {
       let sourceScheme = 'invalid';
       try { sourceScheme = new URL(video.currentSrc || video.src, location.href).protocol; } catch {}
       return {
@@ -869,29 +1003,66 @@ async function runLive(arm) {
         sourceScheme,
       };
     });
-    ensure(isOriginalPreviewReady(previewObservation, originalInfo.durationSeconds), 'UNDO_ORIGINAL_PREVIEW_NOT_RESTORED');
-    report.correctness.undoToOriginal = 'PASS';
-    report.correctness.originalPreview = {
+    ensure(isPreviewReady(previewObservation, 'Edited video preview', 2), 'UNDO2_PREVIEW_NOT_RESTORED');
+    report.correctness.undo2ToCut1 = 'PASS';
+    report.correctness.outputs.undo2 = undo2Output;
+    report.correctness.clipPlans.undo2 = undo2Plan;
+    report.correctness.clipPlans.equal = JSON.stringify(undo2Plan) === JSON.stringify(cut1Plan);
+    report.correctness.restoredPreview = {
       label: previewObservation.label,
       durationSeconds: previewObservation.durationSeconds,
       readyState: previewObservation.readyState,
       sourceScheme: previewObservation.sourceScheme,
     };
+    const expectedMutationSequence = matchedMutatingCommandSequence.join(',');
+    ensure(mutatingMcpCommandSequence.join(',') === expectedMutationSequence &&
+      mcpCalls.filter(call => call.tool === 'cut' || call.tool === 'undo').map(call => call.tool).join(',') ===
+      expectedMutationSequence && operationTimings.length === matchedMutatingCommandSequence.length,
+    'MATCHED_COMMAND_COUNT_MISMATCH');
     await enterPhase('disconnect-cleanup');
     await appPage.bringToFront();
     explicitRevokeStarted = true;
+    const dRevokeResponsePromise = arm === 'd'
+      ? appPage.waitForResponse(response => {
+        try {
+          const url = new URL(response.url());
+          return url.origin === origin && url.pathname === '/remote/revoke' && response.request().method() === 'POST';
+        } catch { return false; }
+      }, { timeout: 20_000 })
+      : null;
     await appPage.getByRole('button', { name: 'Disconnect', exact: true }).click();
+    if (dRevokeResponsePromise) {
+      const revokeResponse = await dRevokeResponsePromise;
+      let revokeBody;
+      try { revokeBody = await revokeResponse.json(); }
+      catch { revokeBody = null; }
+      const closedSockets = revokeBody?.closedSockets;
+      ensure(isDRevokeResponse(revokeResponse.status(), revokeBody), 'D_REVOKE_RESPONSE_INVALID');
+      report.revoke = {
+        dResponseCheck: 'PASS',
+        httpStatus: revokeResponse.status(),
+        ok: true,
+        closedSockets,
+        staleTokenDenied: 'NOT_RUN',
+      };
+    }
     await appPage.getByText('Disconnected', { exact: true }).waitFor({ timeout: 20_000 });
     uiDisconnected = true;
     cleanupDisconnect = 'PASS';
-    if (arm === 'do') {
+    const denied = await apiPost('/mcp', {
+      jsonrpc: '2.0', id: jsonRpcId++, method: 'tools/call',
+      params: { name: 'getproject', arguments: {} },
+    });
+    ensure(isRevokedProjectDenied(denied.response.status(), denied.parsed), 'REVOKED_TOKEN_STILL_ACCEPTED');
+    report.revoke.staleTokenDenied = 'PASS';
+    if (arm === 'do' || arm === 'd') {
       try {
         for (const page of [appPage, consentPage]) {
           if (!page || page.isClosed()) continue;
           await page.waitForFunction(() => window.__videoScissorsMcpSocketAudit &&
             window.__videoScissorsMcpSocketAudit.sockets.every(socket => socket.closedAtUtc), null, { timeout: 10_000 });
         }
-      } catch { throw Object.assign(new Error('DO_WAKE_CLOSE_NOT_OBSERVED'), { safeCode: 'DO_WAKE_CLOSE_NOT_OBSERVED' }); }
+      } catch { throw Object.assign(new Error('WAKE_CLOSE_NOT_OBSERVED'), { safeCode: 'WAKE_CLOSE_NOT_OBSERVED' }); }
     }
     socketAudit = await collectSocketAudit();
     const socketRecords = socketAudit?.sockets ?? [];
@@ -909,10 +1080,10 @@ async function runLive(arm) {
         closePhase: socket.closePhase,
       })),
     };
-    if (arm === 'do') {
+    if (arm === 'do' || arm === 'd') {
       ensure(socketRecords.length > 0 && socketAudit.attempts === socketAudit.accepted &&
         socketAudit.rejected === 0 && socketRecords.every(socket => isAllowedSocketClose(socket, explicitRevokeStarted)),
-      'DO_WAKE_SOCKET_CLOSE_OR_SCOPE_INVALID');
+      'WAKE_SOCKET_CLOSE_OR_SCOPE_INVALID');
     } else {
       ensure(appSocketCount === 0 && socketAudit.attempts === 0, 'UNEXPECTED_D1_APPLICATION_WEBSOCKET');
     }
@@ -953,7 +1124,7 @@ async function runLive(arm) {
     } else if (uiDisconnected) cleanupDisconnect = cleanupDisconnect === 'PASS' ? 'PASS' : 'PASS_AFTER_FAILURE';
     report.cleanup.uiDisconnect = cleanupDisconnect;
 
-    if (arm === 'do' && pairingStarted) {
+    if ((arm === 'do' || arm === 'd') && pairingStarted) {
       for (const page of [appPage, consentPage]) {
         if (!page || page.isClosed()) continue;
         try {
@@ -980,7 +1151,7 @@ async function runLive(arm) {
         })),
       };
       if (report.status === 'PASS' && (socketAudit.rejected !== 0 || report.websocket.errors !== 0 ||
-        (arm === 'do' && !records.every(socket => isAllowedSocketClose(socket, explicitRevokeStarted))))) {
+        ((arm === 'do' || arm === 'd') && !records.every(socket => isAllowedSocketClose(socket, explicitRevokeStarted))))) {
         failure = { phase: 'disconnect-cleanup', code: 'WEBSOCKET_ERROR_OR_ABNORMAL_CLOSE' };
         report.status = 'FAIL';
       }

@@ -1,5 +1,22 @@
 # Active task
 
+Hub #358 — V1 source preparation for the isolated D staging candidate. Lead
+authorized only the existing matched E2E runner, its focused offline regression,
+and the existing runbook/candidate docs; no runtime/A-B changes, Cloudflare
+writes, live requests, issue updates, commit, push, or PR. First matched round is
+one 60-second synthetic journey: hidden idle 120s, Cut1 2s, Cut2 4s, Undo2 to
+Cut1 bytes/plan, then disconnect/revoke (three mutations; no final Undo to
+original). Preserve older reports as history. D is absent; A/B remain enabled
+at read-only observed versions. D daily DO headroom UNKNOWN is accepted/non-
+blocking under the current #358 waiver; no further generic quota probing. The
+application's 200-request ceiling is not a Cloudflare spend cap; at most two
+project attempts/day and one journey/day. The pre-existing `-oauth-kv` namespace
+has unverified provenance and stays untouched; keep the new namespace ID
+parameterized and the template's zero placeholder unchanged until approval.
+Disabled provisioning approval and enabled-test approval are separate; never
+generate, print, or persist the live HMAC secret. Product branch
+`codex/d-matched-bakeoff-prep`; lead diff review then one independent review.
+
 Hub #346 (parent #344) — coherent LOCAL OAuth/MCP/browser increment.
 Requested executor gpt-6-luna MAX owns isolated Worker/D1 schema, headless adapter,
 official auth/transport, tests/config and evidence. Lead owns architecture and exact review; HIGH
