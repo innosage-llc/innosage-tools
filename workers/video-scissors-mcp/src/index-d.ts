@@ -2,6 +2,7 @@ import { boundedBody, reply } from './http';
 import { ProjectStateDO } from './d/ProjectStateDO';
 import { dProviderFor } from './d/oauth';
 import { isRoutingKey } from './d/routing';
+import { D_EXPERIMENT_BUDGET_OBJECT } from './d/budget';
 import type { DEnv } from './d/types';
 
 // Wrangler resolves the SQLite binding class from this D-specific entrypoint.
@@ -16,12 +17,30 @@ const protocolPath = (path: string) => path === '/mcp' || path.startsWith('/mcp/
 export default {
   async fetch(request: Request, env: DEnv, ctx: ExecutionContext): Promise<Response> {
     const path = new URL(request.url).pathname;
+    const isProtocol = protocolPath(path);
     if (!protocolPath(path)) {
-      // Keep the binding conversion isolated to this standard Fetch boundary;
-      // Wrangler and the OAuth/MCP dependencies ship duplicate Workers types.
+      if (env.EXPERIMENT_ENABLED !== 'true') {
+        // Keep the binding conversion isolated to this standard Fetch boundary;
+        // Wrangler and the OAuth/MCP dependencies ship duplicate Workers types.
+        return env.ASSETS.fetch(request as never) as unknown as Response;
+      }
+    }
+    if (isProtocol && env.EXPERIMENT_ENABLED !== 'true') return reply({ error: 'NOT_ENABLED' }, 503);
+    if (env.EXPERIMENT_ENABLED === 'true') {
+      try {
+        if (!await env.PROJECT_STATE.getByName(D_EXPERIMENT_BUDGET_OBJECT).consumeWorkerRequest()) {
+          return reply({ error: 'DAILY_REQUEST_LIMIT' }, 429);
+        }
+      } catch {
+        return reply({ error: 'BUDGET_UNAVAILABLE' }, 503);
+      }
+    }
+    if (!isProtocol) {
+      // When D is enabled, static and protocol HTTP requests share the same
+      // account-wide daily Worker request ceiling. When disabled, static assets
+      // remain available without waking the budget object.
       return env.ASSETS.fetch(request as never) as unknown as Response;
     }
-    if (env.EXPERIMENT_ENABLED !== 'true') return reply({ error: 'NOT_ENABLED' }, 503);
     if (!isRoutingKey(env.D_ROUTING_HMAC_KEY)) return reply({ error: 'ROUTING_UNAVAILABLE' }, 503);
     try {
       // Bound every protocol body before OAuth/MCP parses it. These endpoints

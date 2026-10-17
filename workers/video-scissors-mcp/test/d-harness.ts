@@ -4,6 +4,31 @@ import { ProjectStateDO } from '../src/d/ProjectStateDO.ts';
 // Local fixture-only subclass: accelerates the real alarm path without
 // adding a production route or shortening the production tombstone lifetime.
 export class TestProjectStateDO extends ProjectStateDO {
+  private async failNextBudgetOperationForTest(name: string) {
+    this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS test_flags (name TEXT PRIMARY KEY)');
+    this.ctx.storage.sql.exec('INSERT OR REPLACE INTO test_flags(name) VALUES(?)', name);
+  }
+  private consumeBudgetFailureForTest(name: string) {
+    this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS test_flags (name TEXT PRIMARY KEY)');
+    return this.ctx.storage.sql.exec<{ name: string }>('DELETE FROM test_flags WHERE name=? RETURNING name', name).toArray().length > 0;
+  }
+  async failNextWorkerBudgetForTest() { await this.failNextBudgetOperationForTest('fail_next_worker_budget'); }
+  async failNextProjectBudgetForTest() { await this.failNextBudgetOperationForTest('fail_next_project_budget'); }
+  override async consumeWorkerRequest() {
+    if (this.consumeBudgetFailureForTest('fail_next_worker_budget')) throw new Error('injected request-budget failure');
+    return super.consumeWorkerRequest();
+  }
+  override async reserveProjectCreation() {
+    if (this.consumeBudgetFailureForTest('fail_next_project_budget')) throw new Error('injected project-budget failure');
+    return super.reserveProjectCreation();
+  }
+  async budgetSnapshotForTest() {
+    return this.ctx.storage.sql.exec<{ utc_day: string; worker_requests: number; project_creations: number }>(
+      'SELECT utc_day,worker_requests,project_creations FROM d_experiment_budget WHERE singleton=1').toArray()[0] ?? null;
+  }
+  async rewindBudgetForTest() {
+    this.ctx.storage.sql.exec(`UPDATE d_experiment_budget SET utc_day='2000-01-01',worker_requests=200,project_creations=2 WHERE singleton=1`);
+  }
   async failNextNotifyForTest() {
     this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS test_flags (name TEXT PRIMARY KEY)');
     this.ctx.storage.sql.exec("INSERT OR REPLACE INTO test_flags(name) VALUES('fail_next_notify')");
