@@ -6,10 +6,11 @@
   "scripts": {
     "types": "wrangler types worker-configuration.d.ts --include-runtime false",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test test/mailbox.test.ts test/oauth.test.ts test/ack.test.ts",
+    "test": "node --experimental-strip-types --test test/mailbox.test.ts test/oauth.test.ts test/ack.test.ts test/d-candidate.test.ts",
     "test:assets": "node --experimental-strip-types --test test/assets.test.ts",
     "test:background": "node --experimental-strip-types --test test/background.test.ts",
     "test:bridge": "node --experimental-strip-types --test test/bridge.test.ts",
+    "test:d": "node --experimental-strip-types --test test/d-candidate.test.ts",
     "test:integration": "node --experimental-strip-types --test test/integration.test.ts"
   },
   "dependencies": {
