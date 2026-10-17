@@ -14,7 +14,7 @@ export interface RemoteTransport {
   report(id: string, result: RemoteResult): Promise<void>;
   cancellation(id: string, signal: AbortSignal): Promise<boolean>;
   revoke(): Promise<void>;
-  publish(metadata: RemoteMetadata): Promise<void>;
+  publish(metadata: RemoteMetadata): Promise<void | boolean>;
   onRemoteExecution?(operationId: string): void;
 }
 export function parseRemoteCommand(value: unknown): RemoteCommand {
@@ -76,7 +76,10 @@ export class VideoScissorsRemoteAdapter {
       const m = this.metadata(), serialized = JSON.stringify(m);
       if (serialized === this.lastPublished) return;
       this.lastPublished = serialized;
-      this.publication = this.transport.publish(m).then(() => { this.publicationFailed = false; }, () => {
+      this.publication = this.transport.publish(m).then(published => {
+        this.publicationFailed = false;
+        if (published === false) this.lastPublished = null;
+      }, () => {
         this.publicationFailed = true; this.lastPublished = null;
       });
     });

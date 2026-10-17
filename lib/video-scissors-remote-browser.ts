@@ -21,6 +21,7 @@ export class VideoScissorsRemoteBrowser {
   private state: RemoteConnectionViewModel['state'] = 'disconnected';
   private readonly listeners = new Set<() => void>();
   private readonly reportOwners = new Map<string, Session>();
+  private consentPending = false;
   private connecting = false;
   private bindingGeneration = 0;
   private disposed = false;
@@ -34,15 +35,19 @@ export class VideoScissorsRemoteBrowser {
         const s = this.session;
         if (!s) return;
         const r = await this.call(s, 'sync', { metadata });
+        if (this.session !== s || s.abort.signal.aborted) return false;
         if (!r.ok) throw new Error('NOT_BOUND_OR_REVOKED');
+        if (r.consented === false) { this.consentPending = true; return false; }
+        this.consentPending = false;
         if (this.session === s) { if (this.state !== 'uncertain') this.state = 'connected'; s.proof = ''; this.emit(); }
+        return true;
       },
       claim: async (metadata, signal) => {
         const s = this.session;
         if (!s) return null;
         const r = await this.call(s, s.wakeup === 'websocket' ? 'claim' : 'poll', { metadata }, signal);
         if (this.session !== s || s.abort.signal.aborted) return null;
-        this.state = 'connected'; this.emit();
+        if (!this.consentPending) { this.state = 'connected'; this.emit(); }
         if (!r.command) return null;
         const c = parseRemoteCommand(r.command);
         this.reportOwners.set(c.operationId, s);
@@ -162,6 +167,7 @@ export class VideoScissorsRemoteBrowser {
     if (this.session && Date.now() >= this.session.expiresAt) await this.disconnect();
     if (this.connecting || this.session) return;
     this.connecting = true;
+    this.consentPending = false;
     const binding = ++this.bindingGeneration;
     try {
       let wakeup: Session['wakeup'] = 'poll';
@@ -246,7 +252,7 @@ export class VideoScissorsRemoteBrowser {
   async disconnect(): Promise<void> {
     this.bindingGeneration++;
     const s = this.session;
-    if (!s) { this.state = 'disconnected'; this.emit(); return; }
+    if (!s) { this.consentPending = false; this.state = 'disconnected'; this.emit(); return; }
     try {
       // Confirm the D1 fence before dropping an uncertain ACK or its owner.
       const r = await this.call(s, 'revoke');
@@ -255,7 +261,7 @@ export class VideoScissorsRemoteBrowser {
       s.abort.abort();
       s.socket?.close(1000, 'disconnected'); s.socket = undefined;
       if (this.session === s) {
-        this.session = null; this.adapter.detachRevokedRemote();
+        this.session = null; this.consentPending = false; this.adapter.detachRevokedRemote();
         for (const id of this.reportOwners.keys()) if (id !== this.adapter.activeOperationId()) this.reportOwners.delete(id);
         this.state = 'disconnected'; this.emit();
       }
@@ -274,7 +280,8 @@ export class VideoScissorsRemoteBrowser {
     // Teardown is not explicit confirmed Disconnect: stop locally even offline.
     // Best-effort unload revoke is NOT a server-fence PASS; lease expiry remains.
     this.unload();
-    this.session?.abort.abort(); this.session?.socket?.close(1000, 'disposed'); this.session = null; this.reportOwners.clear();
+    this.session?.abort.abort(); this.session?.socket?.close(1000, 'disposed'); this.session = null;
+    this.consentPending = false; this.reportOwners.clear();
     this.state = 'disconnected';
     await this.adapter.dispose();
   }

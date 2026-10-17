@@ -11,6 +11,7 @@
     "test:background": "node --experimental-strip-types --test test/background.test.ts",
     "test:bridge": "node --experimental-strip-types --test test/bridge.test.ts",
     "test:d": "node --experimental-strip-types --test test/d-candidate.test.ts",
+    "test:d:browser": "node --experimental-strip-types --test test/d-browser.e2e.test.ts",
     "test:integration": "node --experimental-strip-types --test test/integration.test.ts"
   },
   "dependencies": {
