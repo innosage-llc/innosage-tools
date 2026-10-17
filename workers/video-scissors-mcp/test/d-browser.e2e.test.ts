@@ -175,11 +175,26 @@ test('local D browser: Cut 1, Cut 2, Undo 2, reconnect with fresh consent, revok
     const proof1 = (await page.locator('code').first().textContent())?.trim();
     assert.ok(proof1);
     assert.match(proof1, /^[A-Za-z0-9_-]{90,160}$/, 'the signed pairing ticket remains visible until consent');
-    const preConsentSyncPromise = page.waitForResponse(response =>
-      new URL(response.url()).pathname === '/remote/sync' && response.request().method() === 'POST');
+    const fixtureDuration = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1', fixture], { encoding: 'utf8' }));
+    const preConsentSyncPromise = page.waitForResponse(response => {
+      if (new URL(response.url()).pathname !== '/remote/sync' || response.request().method() !== 'POST') return false;
+      const request = JSON.parse(response.request().postData() ?? '{}') as { metadata?: { duration?: unknown; generation?: unknown } };
+      return typeof request.metadata?.duration === 'number' &&
+        Math.abs(request.metadata.duration - fixtureDuration) < 0.15 &&
+        typeof request.metadata.generation === 'number' && request.metadata.generation > 0;
+    });
     await page.locator('input[type=file]').setInputFiles({ name: 'SYNTHETIC_MEDIA_CANARY.mp4', mimeType: 'video/mp4', buffer: await readFile(fixture) });
     await page.getByText('Video ready. Clip times use the original video.', { exact: true }).waitFor();
     const preConsentSync = await preConsentSyncPromise;
+    const preConsentRequest = JSON.parse(preConsentSync.request().postData() ?? '{}') as {
+      metadata?: { duration?: number; generation?: number; hasOutput?: boolean; latestOperationId?: string | null };
+    };
+    assert.ok(Math.abs((preConsentRequest.metadata?.duration ?? 0) - fixtureDuration) < 0.15,
+      'pre-consent sync contains the selected synthetic video duration, not an earlier empty-project snapshot');
+    assert.ok((preConsentRequest.metadata?.generation ?? 0) > 0, 'selected source has advanced the project generation');
+    assert.equal(preConsentRequest.metadata?.hasOutput, false);
+    assert.equal(preConsentRequest.metadata?.latestOperationId, null);
     assert.deepEqual(await preConsentSync.json(), { ok: true, consented: false },
       'metadata sync before OAuth consent succeeds without granting connection authority');
     await page.getByText('Awaiting Authorization', { exact: true }).waitFor();
