@@ -96,37 +96,54 @@ on 2026-10-17 found `video-scissors-mcp-do-staging` still bound to D1, KV and
 `VIDEO_BRIDGE`, and `video-scissors-mcp-staging` bound to D1 and KV. A separate
 `video-scissors-mcp-d-staging` Worker was not present.
 
-### Proposed staging guardrails (not implemented or approved)
+### Proposed staging guardrails (implemented locally; not approved or deployed)
 
-- Keep the D Worker disabled until the exact deployment is approved and a
-  server-enforced budget is in the reviewed bundle. Candidate hard caps for one
-  controlled test day: at most **200 total D Worker HTTP requests** and **2
-  project creations per UTC day**. The local fixture's 95-request run is below
-  this candidate cap, but does not prove that real ChatGPT polling will fit.
-  The request count must be global across D projects, atomically enforced
-  before OAuth KV/ProjectStateDO work, fail closed if the counter is unavailable,
-  and return a bounded `429` after the cap. Count each inbound request that
-  invokes the D Worker, including a WebSocket upgrade once; do not count later
-  WebSocket frames as HTTP requests. Deploys must never reset the counter. Treat
-  200 as a reviewable protective ceiling, not a measured forecast or approved
-  production allowance.
-- Implement the global counter as one fixed-name SQLite object using the
-  existing `ProjectStateDO` class/namespace; this adds no D1 or second DO class
-  binding. Review this small shared gate carefully because it intentionally
-  serializes only the low-volume experiment admission path. It is a staging
-  prerequisite, not current source behavior.
+- Keep the D Worker disabled until the exact deployment is approved. The source
+  now enforces the candidate hard caps for one controlled test day: at most
+  **200 D Worker HTTP requests** and **2 project-creation attempts per UTC day**.
+  The local fixture's 99-request run is below this cap, but does not prove that
+  real ChatGPT polling will fit. The Worker request counter is global across D
+  projects and counts every HTTP request entering the D Worker while enabled,
+  including static assets and a WebSocket upgrade once; later WebSocket frames
+  are not HTTP requests. While D is disabled, static assets remain available
+  without consuming the experiment budget. The request counter runs before
+  OAuth KV, static asset, or project-state work; both counters fail closed with
+  bounded `503` responses if unavailable and return bounded `429` responses at
+  their caps. Project-creation attempts reserve their slot before generating a
+  credential or creating per-project state; a downstream failure still consumes
+  that slot, conservatively preventing retries from exceeding the cap. Deploys
+  never reset the counters. Treat these as reviewable staging ceilings, not a
+  measured forecast or approved production allowance.
+- Both counters use one fixed-name SQLite object in the existing
+  `ProjectStateDO` class/namespace. A single bounded singleton row stores the
+  UTC day and counters; `transactionSync()` serializes daily rollover and the
+  limit check/increment. This adds no D1 or second DO class binding. The shared
+  object intentionally serializes only the low-volume experiment admission
+  path.
 - Cloudflare's current published Free ceilings are 100,000 Worker requests/day;
   100,000 KV reads and 1,000 writes/day; and SQLite DO 5 million rows read,
   100,000 written/day, with 5 GB total storage. See [Workers limits](https://developers.cloudflare.com/workers/platform/limits/),
   [KV limits](https://developers.cloudflare.com/kv/platform/limits/), and
   [SQLite DO pricing and limits](https://developers.cloudflare.com/durable-objects/platform/pricing/#sqlite-storage-backend).
   Limits are account-shared and daily reset at 00:00 UTC. These are ceilings,
-  not remaining headroom. Immediately before approval, record the account's
-  actual current Workers, KV and DO usage from Cloudflare's usage surfaces;
-  require daily remaining headroom to exceed the one-run budget with a
-  documented reserve. Do not infer headroom from Workers Observability event
-  counts. If actual remaining usage or the Free plan cannot be confirmed, do not
-  enable D and do not upgrade.
+  not remaining headroom. Read-only Workers and KV usage surfaces were
+  inspected and showed headroom at capture; account-specific usage figures are
+  deliberately omitted from this repository. The Durable Objects UI exposed
+  billing-period aggregates rather than a current-day SQL-row-read series, so
+  current daily SQL-row-read headroom cannot be certified from that view.
+  Workers Observability event counts are not substituted for actual usage.
+  Refresh all three usage surfaces immediately before any staging approval and
+  record daily headroom for every limit that the workload can consume. Require
+  remaining headroom to exceed the measured one-run budget plus a documented
+  reserve. If the daily DO SQL-row-read headroom or Free plan cannot be
+  confirmed, do not enable D and do not upgrade.
+- `wrangler.d-staging.template.jsonc` is the exact isolated staging config
+  proposal: dedicated workers.dev name, dedicated OAuth KV binding, existing
+  SQLite `ProjectStateDO` class/migration, D disabled by default, and no D1 or
+  custom domain. Its all-zero KV namespace ID is an explicit placeholder; the
+  config is not deployable until the separate approval and namespace creation.
+  `D_ROUTING_HMAC_KEY` is supplied only as a Worker Secret after approval and
+  its value is never written to the template.
 - Capture the exact disabled D version/deployment before enabling. Stop by
   setting only D's `EXPERIMENT_ENABLED=false` or restoring that captured
   disabled version; verify `/remote/projects` and `/mcp` fail closed while

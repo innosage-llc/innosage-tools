@@ -6,6 +6,7 @@ import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import type { DurableObjectNamespace } from '@cloudflare/workers-types';
 import type { TestProjectStateDO } from './d-harness.ts';
 import { signWakeTicket } from '../src/d/routing.ts';
+import { D_EXPERIMENT_BUDGET_OBJECT } from '../src/d/budget.ts';
 
 const origin = 'https://localhost';
 const key = 'ab'.repeat(32);
@@ -17,6 +18,7 @@ const bundle = await build({ entryPoints: ['test/d-harness.ts'], bundle: true, f
 async function world(experiment = 'true') {
   const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text,
     compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], kvNamespaces: ['OAUTH_KV'],
+    serviceBindings: { ASSETS: async request => new Response(`asset:${new URL(request.url).pathname}`) },
     durableObjects: { PROJECT_STATE: { className: 'TestProjectStateDO', useSQLite: true } },
     bindings: { EXPERIMENT_ENABLED: experiment, D_ROUTING_HMAC_KEY: key } }));
   const request = (path: string, init: RequestInit = {}) => mf.dispatchFetch(origin + path, { ...init, redirect: 'manual' });
@@ -71,6 +73,10 @@ async function stateFor(f: Awaited<ReturnType<typeof world>>, project: string) {
   const namespace = await f.mf.getDurableObjectNamespace('PROJECT_STATE') as DurableObjectNamespace<TestProjectStateDO>;
   return namespace.getByName(project);
 }
+async function budgetFor(f: Awaited<ReturnType<typeof world>>) {
+  const namespace = await f.mf.getDurableObjectNamespace('PROJECT_STATE') as DurableObjectNamespace<TestProjectStateDO>;
+  return namespace.getByName(D_EXPERIMENT_BUDGET_OBJECT);
+}
 async function rpcData(response: Response): Promise<unknown> {
   const text = await response.text();
   const dataLine = text.split('\n').find(line => line.startsWith('data: '));
@@ -79,16 +85,95 @@ async function rpcData(response: Response): Promise<unknown> {
 
 test('D is disabled by default and its config template has no D1 or live identifiers', async () => {
   const config = readFileSync('wrangler.d-local.template.jsonc', 'utf8');
+  const stagingConfig = readFileSync('wrangler.d-staging.template.jsonc', 'utf8');
   assert.match(config, /"EXPERIMENT_ENABLED":\s*"false"/);
   assert.match(config, /"PROJECT_STATE"/);
   assert.match(config, /"OAUTH_KV"/);
   assert.match(config, /D_ROUTING_HMAC_KEY/);
   assert.doesNotMatch(config, /"(?:d1_databases|database_id|routes|custom_domain)"\s*:/i);
   assert.match(config, /00000000000000000000000000000000/);
+  assert.match(stagingConfig, /"name":\s*"video-scissors-mcp-d-staging"/);
+  assert.match(stagingConfig, /"EXPERIMENT_ENABLED":\s*"false"/);
+  assert.match(stagingConfig, /"PROJECT_STATE"/);
+  assert.match(stagingConfig, /"OAUTH_KV"/);
+  assert.doesNotMatch(stagingConfig, /"(?:d1_databases|database_id|routes|custom_domain)"\s*:/i);
+  assert.match(stagingConfig, /D_ROUTING_HMAC_KEY/);
+  assert.match(stagingConfig, /00000000000000000000000000000000/);
   const f = await world('false');
   try {
+    const asset = await f.request('/tools/video-scissors');
+    assert.equal(asset.status, 200);
+    assert.equal(await asset.text(), 'asset:/tools/video-scissors');
     assert.equal((await f.request('/remote/capabilities')).status, 503);
     assert.equal((await f.request('/mcp')).status, 503);
+    assert.equal(await (await budgetFor(f)).budgetSnapshotForTest(), null, 'disabled traffic does not consume the experiment budget');
+  } finally { await f.mf.dispose(); }
+});
+
+test('D worker request cap is atomic, global and covers protocol plus static HTTP requests', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const responses = await Promise.all(Array.from({ length: 205 }, () => f.request('/remote/capabilities')));
+    assert.equal(responses.filter(response => response.status === 200).length, 200);
+    const limited = responses.filter(response => response.status === 429);
+    assert.equal(limited.length, 5);
+    for (const response of limited) assert.deepEqual(await response.json(), { error: 'DAILY_REQUEST_LIMIT' });
+    assert.equal((await f.request('/tools/video-scissors')).status, 429, 'static requests use the same enabled-run ceiling');
+    const budget = await (await budgetFor(f)).budgetSnapshotForTest();
+    assert.equal(budget?.worker_requests, 200);
+    assert.equal(budget?.project_creations, 0);
+  } finally { await f.mf.dispose(); }
+});
+
+test('D daily project-creation cap is shared and atomic', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const responses = await Promise.all(Array.from({ length: 5 }, () => f.json('/remote/projects', {})));
+    assert.equal(responses.filter(response => response.status === 200).length, 2);
+    const limited = responses.filter(response => response.status === 429);
+    assert.equal(limited.length, 3);
+    for (const response of limited) assert.deepEqual(await response.json(), { error: 'DAILY_PROJECT_LIMIT' });
+    const budget = await (await budgetFor(f)).budgetSnapshotForTest();
+    assert.equal(budget?.worker_requests, 5);
+    assert.equal(budget?.project_creations, 2);
+  } finally { await f.mf.dispose(); }
+});
+
+test('D WebSocket upgrade spends exactly one Worker HTTP request slot', async () => {
+  const f = await world();
+  try {
+    const response = await f.request(`/remote/bridge/${'a'.repeat(64)}/1`, { method: 'GET', headers: {
+      Origin: origin, Upgrade: 'websocket', 'Sec-WebSocket-Protocol': 'video-scissors-wakeup.v1, join.invalid',
+    } });
+    assert.equal(response.status, 401, 'invalid join proof is rejected after the upgrade request is admitted');
+    const budget = await (await budgetFor(f)).budgetSnapshotForTest();
+    assert.equal(budget?.worker_requests, 1);
+  } finally { await f.mf.dispose(); }
+});
+
+test('D shared budget fails closed and rolls over at the UTC date boundary', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const budget = await budgetFor(f);
+    await budget.failNextWorkerBudgetForTest();
+    const unavailable = await f.request('/remote/capabilities');
+    assert.equal(unavailable.status, 503);
+    assert.deepEqual(await unavailable.json(), { error: 'BUDGET_UNAVAILABLE' });
+    assert.deepEqual(await (await f.request('/remote/capabilities')).json(), { enabled: true, wakeup: 'websocket' });
+    const beforeRollover = await budget.budgetSnapshotForTest();
+    assert.equal(beforeRollover?.worker_requests, 1, 'failed admission does not increment the request counter');
+    await budget.rewindBudgetForTest();
+    assert.equal(await budget.consumeWorkerRequest(), true);
+    assert.equal(await budget.reserveProjectCreation(), true);
+    const afterRollover = await budget.budgetSnapshotForTest();
+    assert.equal(afterRollover?.worker_requests, 1);
+    assert.equal(afterRollover?.project_creations, 1);
+    assert.equal(afterRollover?.utc_day, new Date().toISOString().slice(0, 10));
+
+    await budget.failNextProjectBudgetForTest();
+    const blockedCreate = await f.json('/remote/projects', {});
+    assert.equal(blockedCreate.status, 503);
+    assert.deepEqual(await blockedCreate.json(), { error: 'BUDGET_UNAVAILABLE' });
   } finally { await f.mf.dispose(); }
 });
 
