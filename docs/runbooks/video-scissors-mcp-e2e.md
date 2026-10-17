@@ -74,8 +74,11 @@ types, and oversized control bodies; content and headers are not retained.
 Browser-local `blob:`, `data:`, and `about:` URLs are excluded from the
 network-request audit. No screenshots, traces, or HAR files are saved.
 
-In DO arms, close 1000 `disconnected` and 1008 `project-revoked` are accepted
-only when clean and observed after explicit revoke during disconnect cleanup.
+In DO arms, close 1000 `disconnected` or the arm-specific 1008 reason (B:
+`project-revoked`; D: `project-ended`) is accepted only when clean and observed
+after explicit revoke during disconnect cleanup. Cross-arm or unknown reasons
+remain failures. D's expected reason comes from `ProjectStateDO.closeSockets`;
+offline tests reject the wrong arm, early closure and unclean closure.
 Every WebSocket error and every other close remains a failure. D additionally
 requires HTTP 200 with `{ ok: true, closedSockets: N }` where `N` is a
 non-negative integer; only those bounded fields are retained.
@@ -108,3 +111,11 @@ but that smoke was not repeated. Its redacted report remains
 starts, 59 completed responses). The captured B version and runner/script
 identity in that report identify only that historical observation, not the
 current deployment or this runner.
+
+The first matched live D round on 2026-10-18 completed both cuts, byte/plan
+restoration, revoke and old-token denial but retained overall `FAIL` at socket
+close auditing. The old audit accepted only B's reason and redacted D's reason
+to `other`. This arm-specific correction is for future runs; that original
+live report is not relabeled PASS, and no second live journey is authorized by
+this fix. Exact raw reason attribution for that old report is unavailable.
+A local peer-close observation attempt timed out; it is not runtime proof.

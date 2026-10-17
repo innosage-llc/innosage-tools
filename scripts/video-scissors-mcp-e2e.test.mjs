@@ -155,6 +155,13 @@ test('the offline CLI and fixture guards stay fail-closed', async t => {
       closePhase: 'disconnect-cleanup',
     };
     assert.equal(isAllowedSocketClose(base, true), true);
+    const dClose = { ...base, closeReason: 'project-ended' };
+    assert.equal(isAllowedSocketClose(dClose, true, 'd'), true);
+    assert.equal(isAllowedSocketClose(dClose, true, 'do'), false);
+    assert.equal(isAllowedSocketClose(base, true, 'd'), false);
+    assert.equal(isAllowedSocketClose(dClose, false, 'd'), false);
+    assert.equal(isAllowedSocketClose({ ...dClose, closePhase: 'idle' }, true, 'd'), false);
+    assert.equal(isAllowedSocketClose({ ...dClose, wasClean: false }, true, 'd'), false);
     assert.equal(isAllowedSocketClose(base, false), false);
     assert.equal(isAllowedSocketClose({ ...base, closePhase: 'idle' }, true), false);
     assert.equal(isAllowedSocketClose({ ...base, wasClean: false }, true), false);

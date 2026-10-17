@@ -1,5 +1,15 @@
 # Active task
 
+Hub #358 — one approved matched A/B/D live round completed; D restored to its
+captured disabled version. A/B complete PASS; D functional/security checks
+PASS but original whole-run FAIL at socket-close audit. Repair only the test
+contract: D uses clean1008/project-ended, B clean1008/project-revoked, both
+only after explicit disconnect. Preserve original failure; use the source-defined
+D close contract and offline negative cross-arm guards, not a new live run.
+A local peer-close observation attempt timed out and is not runtime proof.
+No app/runtime/deploy/
+secret/config change, no second D live journey/counter reset, no production.
+
 Hub #358 — V1 source preparation for the isolated D staging candidate. Lead
 authorized only the existing matched E2E runner, its focused offline regression,
 and the existing runbook/candidate docs; no runtime/A-B changes, Cloudflare
