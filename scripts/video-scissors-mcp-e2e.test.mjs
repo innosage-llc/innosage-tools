@@ -2,7 +2,15 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { isAllowedSocketClose, isOriginalPreviewReady, parseRunArgs, summarizeRequestPhases } from './video-scissors-mcp-e2e.mjs';
+import {
+  collectSensitiveStrings,
+  hasSensitiveValue,
+  isAllowedSocketClose,
+  isLocalSchemeUrl,
+  isOriginalPreviewReady,
+  parseRunArgs,
+  summarizeRequestPhases,
+} from './video-scissors-mcp-e2e.mjs';
 
 const runnerPath = fileURLToPath(new URL('./video-scissors-mcp-e2e.mjs', import.meta.url));
 
@@ -71,6 +79,14 @@ test('the offline CLI and fixture guards stay fail-closed', async t => {
     }, 60), false);
   });
 
+  await t.test('browser-local media schemes are excluded from the network request audit', () => {
+    assert.equal(isLocalSchemeUrl('blob:https://staging.example/opaque'), true);
+    assert.equal(isLocalSchemeUrl('data:video/mp4;base64,local'), true);
+    assert.equal(isLocalSchemeUrl('about:blank'), true);
+    assert.equal(isLocalSchemeUrl('https://staging.example/tools?source=blob%3A'), false);
+    assert.equal(isLocalSchemeUrl('not a URL'), false);
+  });
+
   await t.test('1008 project revocation is allowed only for clean explicit revoke cleanup', () => {
     const base = {
       closedAtUtc: '2026-10-17T00:00:00.000Z',
@@ -85,14 +101,54 @@ test('the offline CLI and fixture guards stay fail-closed', async t => {
     assert.equal(isAllowedSocketClose({ ...base, closePhase: 'idle' }, true), false);
     assert.equal(isAllowedSocketClose({ ...base, wasClean: false }, true), false);
     assert.equal(isAllowedSocketClose({ ...base, errors: 1 }, true), false);
-    assert.equal(isAllowedSocketClose({
+    const normalDisconnect = {
       ...base,
       closeCode: 1000,
       closeReason: 'disconnected',
-      wasClean: false,
-      closePhase: 'idle',
-    }, false), true);
+    };
+    assert.equal(isAllowedSocketClose(normalDisconnect, true), true);
+    assert.equal(isAllowedSocketClose(normalDisconnect, false), false);
+    assert.equal(isAllowedSocketClose({ ...normalDisconnect, wasClean: false }, true), false);
+    assert.equal(isAllowedSocketClose({ ...normalDisconnect, closePhase: 'idle' }, true), false);
     assert.equal(isAllowedSocketClose({ ...base, closeCode: 1011, closeReason: 'other' }, true), false);
+  });
+
+  await t.test('completed MCP status and public metadata remain reportable while credentials and IDs are refused', () => {
+    const credential = 'fake-private-credential-012';
+    const accessToken = 'fake-private-access-token-123';
+    const clientId = 'fake-private-client-id-456';
+    const operationId = 'fake-private-operation-id-789';
+    const completedMcpData = {
+      state: 'completed',
+      status: 'PASS',
+      version: 'fixture-v1',
+      generation: 7,
+      resource: 'https://video-scissors-mcp-do-staging.innosage-draft.workers.dev/mcp',
+      url: 'https://example.com/public-status',
+      result: { operationId, state: 'completed' },
+    };
+    const collected = new Set();
+    collectSensitiveStrings({
+      credential,
+      access_token: accessToken,
+      client_id: clientId,
+      mcpResult: completedMcpData,
+    }, collected);
+
+    assert.deepEqual(new Set([credential, accessToken, clientId, operationId]), collected);
+    const reportable = JSON.stringify({
+      status: 'PASS',
+      resultState: completedMcpData.state,
+      operationState: completedMcpData.result.state,
+      version: completedMcpData.version,
+      generation: completedMcpData.generation,
+      resource: completedMcpData.resource,
+      url: completedMcpData.url,
+    });
+    assert.equal(hasSensitiveValue(reportable, collected), false);
+    assert.equal(hasSensitiveValue(JSON.stringify({ leakedCredential: credential }), collected), true);
+    assert.equal(hasSensitiveValue(JSON.stringify({ leakedCredential: accessToken }), collected), true);
+    assert.equal(hasSensitiveValue(JSON.stringify({ leakedIdentifier: operationId }), collected), true);
   });
 
   await t.test('client starts and response completions are assigned separately', () => {

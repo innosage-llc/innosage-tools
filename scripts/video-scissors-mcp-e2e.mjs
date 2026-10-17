@@ -53,14 +53,18 @@ export function isOriginalPreviewReady(preview, expectedDurationSeconds) {
     Math.abs(preview.durationSeconds - expectedDurationSeconds) < 0.25;
 }
 
+export function isLocalSchemeUrl(value) {
+  try { return ['blob:', 'data:', 'about:'].includes(new URL(value).protocol); }
+  catch { return false; }
+}
+
 export function isAllowedSocketClose(socket, explicitRevokeStarted) {
   if (!socket || !socket.closedAtUtc || socket.errors !== 0) return false;
-  if (socket.closeCode === 1000 && socket.closeReason === 'disconnected') return true;
-  return explicitRevokeStarted === true &&
-    socket.closeCode === 1008 &&
-    socket.closeReason === 'project-revoked' &&
-    socket.wasClean === true &&
-    socket.closePhase === 'disconnect-cleanup';
+  if (explicitRevokeStarted !== true || socket.wasClean !== true || socket.closePhase !== 'disconnect-cleanup') {
+    return false;
+  }
+  return (socket.closeCode === 1000 && socket.closeReason === 'disconnected') ||
+    (socket.closeCode === 1008 && socket.closeReason === 'project-revoked');
 }
 
 export function summarizeRequestPhases(rows, phaseNames) {
@@ -133,18 +137,22 @@ function requestSummary(rows, phaseNames) {
   };
 }
 
-function collectSensitiveStrings(value) {
-  const sensitiveKey = /(?:token|proof|code|state|verifier|client.?id|project.?id|operation.?id|(?:^|_)id$|generation|version|redirect.?uri|resource|url|path|filename)/i;
+export function collectSensitiveStrings(value, values) {
+  const sensitiveKey = /^(?:credential|access[_-]?token|refresh[_-]?token|id[_-]?token|client[_-]?secret|client[_-]?id|project[_-]?id|(?:(?:latest|target)[_-]?)?operation[_-]?id|proof)$/i;
   if (Array.isArray(value)) {
-    for (const item of value) collectSensitiveStrings(item);
+    for (const item of value) collectSensitiveStrings(item, values);
   } else if (value && typeof value === 'object') {
     for (const [childKey, childValue] of Object.entries(value)) {
-      if (sensitiveKey.test(childKey) && typeof childValue === 'string' && childValue.length >= 8) {
-        sensitiveValues.add(childValue);
+      if (sensitiveKey.test(childKey) && typeof childValue === 'string' && childValue.length > 0) {
+        values.add(childValue);
       }
-      collectSensitiveStrings(childValue, childKey);
+      collectSensitiveStrings(childValue, values);
     }
   }
+}
+
+export function hasSensitiveValue(serialized, values) {
+  return [...values].some(value => value && serialized.includes(value));
 }
 
 const sensitiveValues = new Set();
@@ -284,7 +292,7 @@ async function runLive(arm) {
     targetDeployment: {
       version: 'UNKNOWN',
       sourceRevision: 'UNKNOWN',
-      identityBasis: 'no existing operator readback was performed; runner identity is not deployed Worker identity',
+      identityBasis: 'runner did not query deployment identity; runner identity is not deployed Worker identity',
     },
     runner: { gitRevision: readRunnerGitRevision(), sourceSha256: await readRunnerSourceHash() },
     fixture: { path: fixtureRelativePath, sha256: null },
@@ -381,7 +389,7 @@ async function runLive(arm) {
     await mkdir(outputDir, { recursive: true });
     const reportPath = join(outputDir, reportName);
     const serialized = JSON.stringify(report, null, 2) + '\n';
-    const leaked = [...sensitiveValues].some(value => value && serialized.includes(value));
+    const leaked = hasSensitiveValue(serialized, sensitiveValues);
     if (leaked) {
       const fallback = {
         schemaVersion: 1,
@@ -400,7 +408,7 @@ async function runLive(arm) {
         failure: { phase: 'report', code: 'REDACTION_GUARD_FAILED' },
       };
       const fallbackText = JSON.stringify(fallback, null, 2) + '\n';
-      ensure(![...sensitiveValues].some(value => value && fallbackText.includes(value)), 'REDACTION_FALLBACK_FAILED');
+      ensure(!hasSensitiveValue(fallbackText, sensitiveValues), 'REDACTION_FALLBACK_FAILED');
       Object.assign(report, fallback);
       report.status = 'FAIL';
       report.failure = fallback.failure;
@@ -503,7 +511,7 @@ async function runLive(arm) {
     await context.route('**/*', async route => {
       const request = route.request();
       const url = new URL(request.url());
-      if (['blob:', 'data:', 'about:'].includes(url.protocol)) return route.continue();
+      if (isLocalSchemeUrl(request.url())) return route.continue();
       if (url.origin === mockClientOrigin && url.pathname === mockCallbackPath) {
         callbackUrl = request.url();
         callbackIntercepts++;
@@ -522,6 +530,7 @@ async function runLive(arm) {
     context.on('request', request => {
       let url;
       try { url = new URL(request.url()); } catch { return; }
+      if (isLocalSchemeUrl(request.url())) return;
       if (url.origin !== origin) return;
       const row = addRequest(request.method(), safePathname(url.pathname), request.postDataBuffer(),
         request.headers()['content-type'] ?? '', currentPhase);
@@ -605,7 +614,7 @@ async function runLive(arm) {
     report.oauth.dcrStatus = dcrStatus;
     ensure(dcrStatus === 201, 'DCR_REGISTRATION_REJECTED');
     const client = await dcrResponse.json();
-    collectSensitiveStrings(client);
+    collectSensitiveStrings(client, sensitiveValues);
     ensure(typeof client.client_id === 'string', 'DCR_CLIENT_ID_MISSING');
 
     const verifier = randomBytes(32).toString('base64url');
@@ -658,7 +667,7 @@ async function runLive(arm) {
     report.oauth.tokenExchangeStatus = tokenStatus;
     ensure(tokenStatus === 200, 'OAUTH_TOKEN_EXCHANGE_REJECTED');
     const tokenResult = await tokenResponse.json();
-    collectSensitiveStrings(tokenResult);
+    collectSensitiveStrings(tokenResult, sensitiveValues);
     const accessToken = tokenResult.access_token;
     ensure(typeof accessToken === 'string' && accessToken.length > 0, 'OAUTH_ACCESS_TOKEN_MISSING');
     sensitiveValues.add(accessToken);
@@ -688,7 +697,7 @@ async function runLive(arm) {
         if (error?.safeCode) throw error;
         throw Object.assign(new Error('MCP_RESPONSE_INVALID'), { safeCode: 'MCP_RESPONSE_INVALID' });
       }
-      collectSensitiveStrings(parsed);
+      collectSensitiveStrings(parsed, sensitiveValues);
       return { response, parsed };
     };
 
@@ -737,7 +746,7 @@ async function runLive(arm) {
         let value;
         try { value = JSON.parse(content); }
         catch { throw Object.assign(new Error('MCP_TOOL_CONTENT_INVALID'), { safeCode: 'MCP_' + tool.toUpperCase() + '_CONTENT_INVALID' }); }
-        collectSensitiveStrings(value);
+        collectSensitiveStrings(value, sensitiveValues);
         resultState = typeof value?.state === 'string' ? value.state : 'RESULT';
         return value;
       } finally {

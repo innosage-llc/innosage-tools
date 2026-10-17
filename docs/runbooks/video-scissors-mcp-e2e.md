@@ -1,8 +1,7 @@
 # Video Scissors MCP staging check
 
 This is a manual check for the existing synthetic single-cut → Undo-to-original
-flow. It tests one staging arm per run and is not wired into default CI. No live
-staging run was performed while adding this runner.
+flow. It tests one staging arm per run and is not wired into default CI.
 
 Install project dependencies without downloading a browser with
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci`. The runner uses the installed
@@ -39,13 +38,26 @@ restricted to the selected origin and the locally intercepted callback;
 request bodies are inspected in memory for media or local-path leakage.
 
 The original preview assertion requires the exact “Original video preview”
-label, a 60-second `blob:` source and `readyState >= 1`. In the DO arm, close
-1000 with reason `disconnected` is accepted. Close 1008 with reason
-`project-revoked` is accepted only when clean and observed during explicit
-disconnect cleanup. Every WebSocket error and every other close remains a
-failure.
+label, a 60-second `blob:` source and `readyState >= 1`. Browser-local `blob:`,
+`data:` and `about:` URLs are excluded from the network-request audit; HTTP(S)
+requests remain subject to the body and URL checks. In the DO arm, close 1000
+`disconnected` and 1008 `project-revoked` are accepted only when clean and
+observed after explicit revoke during disconnect cleanup. Every WebSocket
+error and every other close remains a failure.
+
+One bounded DO smoke was attempted on 2026-10-17. It reported `FAIL` with
+`PRIVACY_AUDIT_FOUND_MEDIA_OR_LOCAL_PATH`; cut, download/ffprobe, Undo-to-original,
+explicit revoke and temporary-profile cleanup completed. The first audit counted
+local `blob:` preview URLs as network markers; that classification is corrected
+above, but the smoke was not repeated. Its redacted report is
+`.deploy/video-scissors-mcp-e2e-do-20261017T014534137Z.json` (63 request starts,
+59 completed responses). Existing operator readback identified the target as DO
+staging B version `fce5281b-e45e-498d-ac4e-3ccde3816f43`; the runner revision
+`502e4066b78454b7c6f0cdc7a0f2ac46f5d44a9c` and source hash
+`ba22cc9de573c651ade88af7df3c21d63cde557b0f1a406f80b4157ecf49d995` identify
+the local runner only, not the deployed Worker.
 
 The offline regression is `npm run test:video-scissors-mcp-e2e:offline`; it is
 included in Gatekeeper. It exercises argument rejection, preview readiness,
-close classification and request start/response accounting without loading
-Playwright or making network requests.
+report redaction, local-scheme exclusion, close classification and request
+start/response accounting without loading Playwright or making network requests.
