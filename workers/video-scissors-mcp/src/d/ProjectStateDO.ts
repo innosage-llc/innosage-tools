@@ -149,14 +149,15 @@ export class ProjectStateDO extends DurableObject<DEnv> {
     if (!row || row.owner_hash !== await sha256Hex(auth.credential)) return null;
     return { expiresAt: row.expires_at };
   }
-  async sync(auth: BrowserAuth, input: unknown): Promise<boolean> {
+  async sync(auth: BrowserAuth, input: unknown): Promise<{ ok: boolean; consented: boolean }> {
     const metadata = parseRemoteMetadata(input), serialized = JSON.stringify(metadata), ownerHash = await sha256Hex(auth.credential);
     const row = await this.current(auth.project, auth.epoch, false);
-    if (!row || row.owner_hash !== ownerHash) return false;
-    return !!this.transaction(() => this.row(`UPDATE project SET metadata=? WHERE singleton=1 AND project_id=? AND epoch=?
+    if (!row || row.owner_hash !== ownerHash) return { ok: false, consented: false };
+    const synced = this.transaction(() => this.row<{ consented: number }>(`UPDATE project SET metadata=? WHERE singleton=1 AND project_id=? AND epoch=?
       AND owner_hash=? AND revoked=0 AND expires_at>? AND
       (json_extract(metadata,'$.generation') IS NULL OR (? >= json_extract(metadata,'$.generation') AND ? >= json_extract(metadata,'$.version')))
-      RETURNING project_id`, serialized, auth.project, auth.epoch, ownerHash, Date.now(), metadata.generation, metadata.version));
+      RETURNING consented`, serialized, auth.project, auth.epoch, ownerHash, Date.now(), metadata.generation, metadata.version));
+    return { ok: !!synced, consented: synced?.consented === 1 };
   }
   async status(auth: ProjectAuth, operationId: string): Promise<{ operationId: string; state: string; cancelRequested: boolean; metadata: RemoteMetadata | null } | null> {
     if (!operationName.test(operationId) || !await this.current(auth.project, auth.epoch, true)) return null;

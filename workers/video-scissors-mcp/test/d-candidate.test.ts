@@ -59,7 +59,7 @@ async function world(experiment = 'true') {
     assert.equal(token.status, 200);
     const tokens = await token.json() as { access_token: string };
     const auth = { project: p.project, epoch: p.epoch, credential: p.credential };
-    assert.deepEqual(await (await json('/remote/sync', { auth, metadata })).json(), { ok: true });
+    assert.deepEqual(await (await json('/remote/sync', { auth, metadata })).json(), { ok: true, consented: true });
     return { p, auth, c, tokens };
   };
   const rpc = (token: string, method: string, params: unknown = {}) => json('/mcp',
@@ -149,8 +149,10 @@ test('wrong browser credential cannot read, sync, or claim another owner project
     const { auth, p } = await f.link(), state = await stateFor(f, p.project);
     const wrong = { ...auth, credential: 'f'.repeat(64) };
     assert.equal(await state.owner(wrong), null);
-    assert.equal(await state.sync(wrong, { ...metadata, duration: 29 }), false);
-    assert.deepEqual(await (await f.json('/remote/sync', { auth: wrong, metadata: { ...metadata, duration: 29 } })).json(), { ok: false });
+    const wrongSync = await state.sync(wrong, { ...metadata, duration: 29 });
+    assert.equal(wrongSync.ok, false);
+    assert.equal(wrongSync.consented, false);
+    assert.deepEqual(await (await f.json('/remote/sync', { auth: wrong, metadata: { ...metadata, duration: 29 } })).json(), { ok: false, consented: false });
     const queued = await state.admit({ project: auth.project, epoch: auth.epoch }, {
       kind: 'cut', operationId: 'owner-only', generation: 1, version: 1, clips: [{ start: 1, end: 3 }],
     });
@@ -238,7 +240,9 @@ test('Undo admission and atomic claim require the latest target and current gene
   try {
     const { auth, p } = await f.link(), state = await stateFor(f, p.project);
     const latest = { ...metadata, hasOutput: true, canUndo: true, latestOperationId: 'cut-latest' };
-    assert.equal(await state.sync(auth, latest), true);
+    const firstSync = await state.sync(auth, latest);
+    assert.equal(firstSync.ok, true);
+    assert.equal(firstSync.consented, true);
     const undo = (operationId: string, generation: number, version: number, targetOperationId: string) =>
       ({ kind: 'undo', operationId, generation, version, targetOperationId });
     assert.equal(await state.admit({ project: auth.project, epoch: auth.epoch }, undo('undo-wrong-target', 1, 1, 'cut-old')), null);
@@ -249,7 +253,9 @@ test('Undo admission and atomic claim require the latest target and current gene
     // Keep generation/version constant deliberately: claim must still fence
     // against the authoritative latest Undo target, not trust the queued one.
     const replacedTarget = { ...latest, latestOperationId: 'cut-newest' };
-    assert.equal(await state.sync(auth, replacedTarget), true);
+    const replacedSync = await state.sync(auth, replacedTarget);
+    assert.equal(replacedSync.ok, true);
+    assert.equal(replacedSync.consented, true);
     assert.equal(await state.claim(auth, replacedTarget), null);
     assert.equal((await state.inspectForTest()).commands[0].state, 'stale');
 
@@ -324,7 +330,7 @@ test('routing rejects forged, expired, and wrong-project wake tickets; browser b
     assert.equal((await socket(p.project, expired)).status, 401, 'expired ticket is rejected');
 
     const forged = { ...auth, project: 'f'.repeat(64) };
-    assert.deepEqual(await (await f.json('/remote/sync', { auth: forged, metadata })).json(), { ok: false },
+    assert.deepEqual(await (await f.json('/remote/sync', { auth: forged, metadata })).json(), { ok: false, consented: false },
       'browser-supplied project does not select or authorize a DO');
   } finally { await f.mf.dispose(); }
 });

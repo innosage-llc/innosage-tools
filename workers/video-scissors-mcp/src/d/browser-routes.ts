@@ -72,7 +72,7 @@ export async function dBrowserRoute(request: Request, env: DEnv): Promise<Respon
   // Never route by the caller's project field. DO identity derives only from
   // the private browser credential; ProjectStateDO verifies both fields.
   const routedProject = await projectForCredential(auth.credential), stub = wakeStub(env, routedProject);
-  if (path === '/remote/sync') return reply({ ok: await stub.sync(auth, data.metadata) });
+  if (path === '/remote/sync') return reply(await stub.sync(auth, data.metadata));
   if (path === '/remote/claim') return reply({ command: await stub.claim(auth, data.metadata), refresh: false });
   if (path === '/remote/revoke') {
     const ok = await stub.revoke(auth);
