@@ -49,10 +49,14 @@ persisted by D. The browser owns media processing and reports bounded results.
 ## Local D browser fixture evidence (2026-10-17)
 
 The local-only browser fixture passed Cut 1 → Cut 2 → Undo 2 → disconnect →
-fresh consent/reconnect → revoke. Undo restored Cut 1's MP4 byte-for-byte and
-restored its clip plan; reconnect created a new project, and both revoked OAuth
-tokens and browser credentials were denied. It observed 67 browser-origin
-Worker HTTP requests plus 28 fixture-harness Worker HTTP requests (95 total),
+fresh consent/reconnect → revoke. While authorization was pending, selecting the
+local fixture caused a successful metadata sync with `consented: false`; the
+page stayed in Awaiting Authorization with its one-time proof visible. After
+OAuth approval, a consented sync completed and the UI connected. Undo restored
+Cut 1's MP4 byte-for-byte and clip plan; reconnect created a new project, and
+both revoked OAuth tokens and browser credentials were denied. It observed 69
+browser-origin Worker HTTP requests plus 30 fixture-harness Worker HTTP requests
+(99 total),
 two local WebSocket wakeups, two project creations, and three commands. No media
 bytes or local paths appeared in request bodies; the browser made no external
 requests. This is a local request-count baseline, **not Cloudflare usage** and

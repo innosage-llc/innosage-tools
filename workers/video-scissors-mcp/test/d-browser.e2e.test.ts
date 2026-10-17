@@ -168,8 +168,6 @@ test('local D browser: Cut 1, Cut 2, Undo 2, reconnect with fresh consent, revok
       'committed D config stays disabled; only this local process overrides it');
     await page.goto(origin + '/tools/video-scissors');
     await page.getByRole('button', { name: 'Connect experimental ChatGPT control', exact: true }).waitFor();
-    await page.locator('input[type=file]').setInputFiles({ name: 'SYNTHETIC_MEDIA_CANARY.mp4', mimeType: 'video/mp4', buffer: await readFile(fixture) });
-    await page.getByText('Video ready. Clip times use the original video.', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Connect experimental ChatGPT control', exact: true }).click();
     await delay(500);
     await page.getByText('Awaiting Authorization', { exact: true }).waitFor();
@@ -177,7 +175,22 @@ test('local D browser: Cut 1, Cut 2, Undo 2, reconnect with fresh consent, revok
     const proof1 = (await page.locator('code').first().textContent())?.trim();
     assert.ok(proof1);
     assert.match(proof1, /^[A-Za-z0-9_-]{90,160}$/, 'the signed pairing ticket remains visible until consent');
+    const preConsentSyncPromise = page.waitForResponse(response =>
+      new URL(response.url()).pathname === '/remote/sync' && response.request().method() === 'POST');
+    await page.locator('input[type=file]').setInputFiles({ name: 'SYNTHETIC_MEDIA_CANARY.mp4', mimeType: 'video/mp4', buffer: await readFile(fixture) });
+    await page.getByText('Video ready. Clip times use the original video.', { exact: true }).waitFor();
+    const preConsentSync = await preConsentSyncPromise;
+    assert.deepEqual(await preConsentSync.json(), { ok: true, consented: false },
+      'metadata sync before OAuth consent succeeds without granting connection authority');
+    await page.getByText('Awaiting Authorization', { exact: true }).waitFor();
+    await page.getByText('One-Time Browser Pairing Proof', { exact: true }).waitFor();
+    const authorizedSyncPromise = page.waitForResponse(async response => {
+      if (new URL(response.url()).pathname !== '/remote/sync' || response.request().method() !== 'POST') return false;
+      const value = await response.json().catch(() => null) as { ok?: unknown; consented?: unknown } | null;
+      return value?.ok === true && value.consented === true;
+    });
     const token1 = await connectWithFreshConsent(proof1, 'cut1');
+    await authorizedSyncPromise;
     await page.getByText('Connected', { exact: true }).waitFor();
     const initial = await rpc(token1, 'getproject');
     assert.equal(initial.metadata.generation, 1);
