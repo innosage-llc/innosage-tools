@@ -50,7 +50,9 @@ export class ProjectStateDO extends DurableObject<DEnv> {
         worker_requests INTEGER NOT NULL CHECK(worker_requests BETWEEN 0 AND ${MAX_DAILY_D_WORKER_REQUESTS}),
         project_creations INTEGER NOT NULL CHECK(project_creations BETWEEN 0 AND ${MAX_DAILY_D_PROJECT_CREATIONS})
       )`);
-      ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS route_tickets_expiry ON route_tickets(expires_at)');
+      // Tickets are accessed by their primary key; expiry is checked on that row.
+      // Drop the unused legacy index without changing ticket data or semantics.
+      ctx.storage.sql.exec('DROP INDEX IF EXISTS route_tickets_expiry');
       ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS commands_state ON commands(state)');
     });
   }
@@ -71,7 +73,8 @@ export class ProjectStateDO extends DurableObject<DEnv> {
       } else if (row.utc_day !== utcDay) {
         this.ctx.storage.sql.exec('UPDATE d_experiment_budget SET utc_day=?,worker_requests=0,project_creations=0 WHERE singleton=1', utcDay);
       }
-      const current = this.row<DailyBudgetRow>('SELECT utc_day,worker_requests,project_creations FROM d_experiment_budget WHERE singleton=1');
+      const current = row?.utc_day === utcDay ? row :
+        this.row<DailyBudgetRow>('SELECT utc_day,worker_requests,project_creations FROM d_experiment_budget WHERE singleton=1');
       if (!current || current.utc_day !== utcDay || !Number.isSafeInteger(current[field]) || current[field] < 0) {
         throw new Error('D_EXPERIMENT_BUDGET_UNAVAILABLE');
       }

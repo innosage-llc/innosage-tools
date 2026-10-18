@@ -15,12 +15,14 @@ const metadata = { duration: 30, generation: 1, version: 1, hasOutput: false, ca
 const bundle = await build({ entryPoints: ['test/d-harness.ts'], bundle: true, format: 'esm', platform: 'browser',
   conditions: ['workerd'], external: ['node:*', 'cloudflare:*'], write: false });
 
-async function world(experiment = 'true') {
-  const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text,
+async function world(experiment = 'true', script = bundle.outputFiles[0].text) {
+  const options = (script: string) => convertV4MiniflareOptions({ modules: true, script,
     compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], kvNamespaces: ['OAUTH_KV'],
     serviceBindings: { ASSETS: async request => new Response(`asset:${new URL(request.url).pathname}`) },
     durableObjects: { PROJECT_STATE: { className: 'TestProjectStateDO', useSQLite: true } },
-    bindings: { EXPERIMENT_ENABLED: experiment, D_ROUTING_HMAC_KEY: key } }));
+    bindings: { EXPERIMENT_ENABLED: experiment, D_ROUTING_HMAC_KEY: key } });
+  const mf = new Miniflare(options(script));
+  const reloadScript = (script: string) => mf.setOptions(options(script));
   const request = (path: string, init: RequestInit = {}) => mf.dispatchFetch(origin + path, { ...init, redirect: 'manual' });
   const json = (path: string, body: unknown, headers: Record<string, string> = {}) => request(path, {
     method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body),
@@ -67,7 +69,7 @@ async function world(experiment = 'true') {
   const rpc = (token: string, method: string, params: unknown = {}) => json('/mcp',
     { jsonrpc: '2.0', id: 1, method, params }, { Authorization: `Bearer ${token}`,
       Accept: 'application/json, text/event-stream', 'MCP-Protocol-Version': '2025-06-18' });
-  return { mf, request, json, project, link, rpc, form };
+  return { mf, request, json, project, link, rpc, form, reloadScript };
 }
 async function stateFor(f: Awaited<ReturnType<typeof world>>, project: string) {
   const namespace = await f.mf.getDurableObjectNamespace('PROJECT_STATE') as DurableObjectNamespace<TestProjectStateDO>;
@@ -200,6 +202,72 @@ test('D official OAuth/MCP uses one project SQLite DO, and command is claimed on
     assert.equal((await claimed.json() as { command: { operationId: string } }).command.operationId, 'fixture-cut');
     assert.deepEqual(await (await f.json('/remote/claim', { auth, metadata })).json(), { command: null, refresh: false }, 'claimed commands are never dispatched twice');
     assert.equal(p.project, auth.project);
+  } finally { await f.mf.dispose(); }
+});
+
+test('same D fixture records local resource use without changing results', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    assert.equal(await (await budgetFor(f)).consumeWorkerRequest(), true);
+    const { p, auth, tokens } = await f.link(), state = await stateFor(f, p.project), budget = await budgetFor(f);
+    const delta = (after: Awaited<ReturnType<typeof state.resourceSnapshotForTest>>, before: typeof after) =>
+      Object.fromEntries(Object.entries(after).map(([key, value]) => [key, value - before[key as keyof typeof before]]));
+    const beforeBudget = await budget.resourceSnapshotForTest();
+    for (let i = 0; i < 10; i++) assert.equal(await budget.consumeWorkerRequest(), true);
+    const budgetUse = delta(await budget.resourceSnapshotForTest(), beforeBudget);
+    const beforeProject = await state.resourceSnapshotForTest();
+    const read = await rpcData(await f.rpc(tokens.access_token, 'tools/call', { name: 'getproject', arguments: {} })) as
+      { result: { content: Array<{ text: string }> } };
+    assert.deepEqual(JSON.parse(read.result.content[0].text).metadata, metadata);
+    const projectUse = delta(await state.resourceSnapshotForTest(), beforeProject);
+    const beforeTicket = await state.resourceSnapshotForTest();
+    assert.equal(await state.registerWakeTicket(auth, 'e'.repeat(64), Date.now() + 30_000), true);
+    const ticketUse = delta(await state.resourceSnapshotForTest(), beforeTicket);
+    // Frozen baseline 861b28b, identical local fixture: budget 50/50/10,
+    // getproject 4/4/0 + 2 RPC, ticket 2/2/3 (SQL/read/write).
+    assert.deepEqual(budgetUse, { statements: 40, rowsRead: 40, rowsWritten: 10, projectCalls: 0 });
+    assert.deepEqual(projectUse, { statements: 2, rowsRead: 2, rowsWritten: 0, projectCalls: 1 });
+    assert.deepEqual(ticketUse, { statements: 2, rowsRead: 2, rowsWritten: 2, projectCalls: 0 });
+    console.log('local-d-resource-fixture', JSON.stringify({ budgetUse, projectUse, ticketUse }));
+    assert.equal((await budget.budgetSnapshotForTest())?.project_creations, 1);
+    assert.equal(await state.revoke(auth), true);
+    const denied = await rpcData(await f.rpc(tokens.access_token, 'tools/call', { name: 'getproject', arguments: {} })) as
+      { result: { isError: boolean; content: Array<{ text: string }> } };
+    assert.equal(denied.result.isError, true);
+    assert.equal(denied.result.content[0].text, 'PROJECT_EXPIRED_OR_REVOKED');
+  } finally { await f.mf.dispose(); }
+});
+
+test('legacy ticket index upgrade and rollback retain existing authority and one-use tickets', { timeout: 30_000 }, async () => {
+  const candidate = bundle.outputFiles[0].text;
+  // Only reverse the index DDL, not runtime auth/expiry behavior, for the legacy schema fixture.
+  const legacy = candidate.replace('DROP INDEX IF EXISTS route_tickets_expiry',
+    'CREATE INDEX IF NOT EXISTS route_tickets_expiry ON route_tickets(expires_at)');
+  assert.notEqual(legacy, candidate);
+  const f = await world('true', legacy);
+  try {
+    const p = await f.project(), auth = { project: p.project, epoch: p.epoch, credential: p.credential };
+    const join = await f.json('/remote/bridge/join', { auth });
+    assert.equal(join.status, 200);
+    const { proof } = await join.json() as { proof: string };
+    let state = await stateFor(f, p.project);
+    assert.ok((await state.ticketIndexNamesForTest()).includes('route_tickets_expiry'));
+    const snapshot = async () => JSON.parse(JSON.stringify(await state.inspectForTest()));
+    const before = await snapshot();
+    await f.reloadScript(candidate);
+    state = await stateFor(f, p.project);
+    assert.equal((await state.ticketIndexNamesForTest()).includes('route_tickets_expiry'), false);
+    assert.deepEqual(await snapshot(), before, 'upgrade changes only the index, not rows or alarm');
+    await f.reloadScript(legacy);
+    state = await stateFor(f, p.project);
+    assert.ok((await state.ticketIndexNamesForTest()).includes('route_tickets_expiry'));
+    assert.deepEqual(await snapshot(), before, 'rollback recreates the index without restoring data');
+    await f.reloadScript(candidate);
+    const socket = () => f.request(`/remote/bridge/${p.project}/${p.epoch}`, { headers: {
+      Origin: origin, Upgrade: 'websocket', 'Sec-WebSocket-Protocol': `video-scissors-wakeup.v1, join.${proof}`,
+    } });
+    assert.equal((await socket()).status, 101, 'pre-upgrade ticket still works');
+    assert.equal((await socket()).status, 401, 'ticket remains single-use');
   } finally { await f.mf.dispose(); }
 });
 
