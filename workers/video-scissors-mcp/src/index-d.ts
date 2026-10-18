@@ -26,7 +26,10 @@ export default {
       }
     }
     if (isProtocol && env.EXPERIMENT_ENABLED !== 'true') return reply({ error: 'NOT_ENABLED' }, 503);
-    if (env.EXPERIMENT_ENABLED === 'true') {
+    // Cleanup alone must survive exhausted/unavailable admission. The existing
+    // handler still checks bounded JSON, origin and credential-derived ownership.
+    const isRevoke = path === '/remote/revoke' && request.method === 'POST';
+    if (env.EXPERIMENT_ENABLED === 'true' && !isRevoke) {
       try {
         if (!await env.PROJECT_STATE.getByName(D_EXPERIMENT_BUDGET_OBJECT).consumeWorkerRequest()) {
           return reply({ error: 'DAILY_REQUEST_LIMIT' }, 429);
@@ -37,8 +40,8 @@ export default {
     }
     if (!isProtocol) {
       // When D is enabled, static and protocol HTTP requests share the same
-      // account-wide daily Worker request ceiling. When disabled, static assets
-      // remain available without waking the budget object.
+      // ordinary-request daily admission ceiling (exact POST revoke is exempt).
+      // Disabled static assets remain available without waking the budget object.
       return env.ASSETS.fetch(request as never) as unknown as Response;
     }
     if (!isRoutingKey(env.D_ROUTING_HMAC_KEY)) return reply({ error: 'ROUTING_UNAVAILABLE' }, 503);

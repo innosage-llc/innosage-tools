@@ -92,6 +92,9 @@ export class TestProjectStateDO extends ProjectStateDO {
   socketAttachmentsForTest() {
     return this.ctx.getWebSockets().map(socket => socket.deserializeAttachment());
   }
+  socketReadyStatesForTest() {
+    return this.ctx.getWebSockets().map(socket => socket.readyState);
+  }
   async fastForwardTombstoneForTest() {
     this.ctx.storage.sql.exec('UPDATE project SET expires_at=? WHERE singleton=1 AND revoked=1', Date.now() - 1);
     await this.alarm();

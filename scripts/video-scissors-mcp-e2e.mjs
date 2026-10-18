@@ -72,6 +72,16 @@ export function isDRevokeResponse(status, body) {
   return status === 200 && body?.ok === true && Number.isInteger(body.closedSockets) && body.closedSockets >= 0;
 }
 
+// Public error codes only: never persist descriptions, internal reasons or raw
+// bodies. OAuth temporarily_unavailable does not identify a KV failure source.
+export function mcpHttpErrorCode(status, body) {
+  if (!Number.isInteger(status) || status < 300) return null;
+  if (status === 429 && body?.error === 'DAILY_REQUEST_LIMIT') return 'DAILY_REQUEST_LIMIT';
+  if (status === 503 && body?.error === 'BUDGET_UNAVAILABLE') return 'BUDGET_UNAVAILABLE';
+  if (body?.error === 'temporarily_unavailable') return 'OAUTH_TEMPORARILY_UNAVAILABLE';
+  return 'UNCLASSIFIED';
+}
+
 export function isRevokedProjectDenied(status, body) {
   return status === 200 && body?.result?.isError === true &&
     body.result.content?.some(item => item.type === 'text' && item.text === 'PROJECT_EXPIRED_OR_REVOKED') === true;
@@ -738,6 +748,8 @@ async function runLive(arm) {
         ensure(Boolean(bodyText), 'MCP_RESPONSE_WITHOUT_DATA');
         parsed = JSON.parse(bodyText);
       } catch (error) {
+        // Preserve only status/classification for non-JSON HTTP failures too.
+        if (response.status() < 200 || response.status() >= 300) return { response, parsed: null };
         if (error?.safeCode) throw error;
         throw Object.assign(new Error('MCP_RESPONSE_INVALID'), { safeCode: 'MCP_RESPONSE_INVALID' });
       }
@@ -778,6 +790,7 @@ async function runLive(arm) {
       const phaseAtStart = currentPhase;
       const callStarted = performance.now();
       let httpStatus = null;
+      let errorCode = null;
       let resultState = 'FAILED';
       try {
         const result = await apiPost('/mcp', {
@@ -787,6 +800,7 @@ async function runLive(arm) {
           params: { name: tool, arguments: args },
         });
         httpStatus = result.response.status();
+        errorCode = mcpHttpErrorCode(httpStatus, result.parsed);
         ensure(httpStatus === 200 && result.parsed?.result, 'MCP_' + tool.toUpperCase() + '_HTTP_OR_RPC_FAILURE');
         const callResult = result.parsed.result;
         if (callResult.isError) {
@@ -806,6 +820,7 @@ async function runLive(arm) {
           tool,
           phaseAtStart,
           httpStatus,
+          errorCode,
           resultState,
           elapsedMilliseconds: Math.round((performance.now() - callStarted) * 1000) / 1000,
         });

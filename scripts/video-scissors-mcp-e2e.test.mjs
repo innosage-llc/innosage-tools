@@ -13,6 +13,7 @@ import {
   isOriginalPreviewReady,
   isPreviewReady,
   matchedMutatingCommandSequence,
+  mcpHttpErrorCode,
   pairingProofPattern,
   wakePathPattern,
   parseRunArgs,
@@ -56,6 +57,27 @@ test('the offline CLI and fixture guards stay fail-closed', async t => {
 
   await t.test('the matched round is bounded to Cut 1, Cut 2, and Undo 2 mutations', () => {
     assert.deepEqual(matchedMutatingCommandSequence, ['cut', 'cut', 'undo']);
+  });
+
+  await t.test('MCP HTTP errors expose only allowlisted public codes, never raw malicious bodies or KV attribution', () => {
+    const privateValue = 'fake-secret-token-and-project-id';
+    const malicious = { error_description: privateValue, credential: privateValue,
+      metadata: { reason: privateValue }, internal: { reason: 'kv_rate_limited', detail: privateValue } };
+    for (const [status, body, expected] of [
+      [429, { ...malicious, error: 'DAILY_REQUEST_LIMIT' }, 'DAILY_REQUEST_LIMIT'],
+      [503, { ...malicious, error: 'BUDGET_UNAVAILABLE' }, 'BUDGET_UNAVAILABLE'],
+      [429, { ...malicious, error: 'temporarily_unavailable' }, 'OAUTH_TEMPORARILY_UNAVAILABLE'],
+      [429, { ...malicious, error: privateValue }, 'UNCLASSIFIED'],
+      [429, { error: { code: 'DAILY_REQUEST_LIMIT', secret: privateValue } }, 'UNCLASSIFIED'],
+      [429, '<html>' + privateValue + '</html>', 'UNCLASSIFIED'],
+      [429, null, 'UNCLASSIFIED'], [503, { error: 'DAILY_REQUEST_LIMIT' }, 'UNCLASSIFIED'],
+      [200, { error: 'DAILY_REQUEST_LIMIT' }, null],
+    ]) {
+      const evidence = { errorCode: mcpHttpErrorCode(status, body) };
+      assert.equal(evidence.errorCode, expected);
+      assert.equal(JSON.stringify(evidence).includes(privateValue), false);
+      assert.equal(JSON.stringify(evidence).includes('kv_rate_limited'), false);
+    }
   });
 
   await t.test('pairing uses the existing arm-specific proof format', () => {
