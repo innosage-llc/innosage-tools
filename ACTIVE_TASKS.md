@@ -1,5 +1,32 @@
 # Active task
 
+Hub #358 — source-only quota-safe D cleanup repair, codex/d-quota-cleanup,
+native start from clean main b2fc7dfd32603682f912f1925dc862dc337c3f9e.
+Only exact POST /remote/revoke skips the ordinary daily admission guard; the
+disabled protocol gate remains FIRST. Existing bounded JSON/origin/credential-
+derived project/epoch/owner/revoke/socket-close handler is unchanged. Ordinary
+HTTP cap200 and project attempts2 remain; no counter reset/new state/quota.
+Invalid cleanup requests also skip admission but cannot authorize cleanup; this
+cost is not bounded by the ordinary counter or a hard Cloudflare spend cap.
+Native SQLite baseline observed blocked revoke429 (or503 on injected budget
+failure), retained state/command/socket; candidate clears only its owner state,
+initiates native socket close, tombstone/alarm purges, preserves neighbor and
+counter200/2. Historical live Undo429 body was lost: strong source-supported
+daily-guard explanation, NOT observed historical counter/cause certification.
+Runner adds only public allowlisted HTTP errorCode; OAuth temporarily_unavailable
+is not proof of internal KV reason. No raw body/description/credential persisted.
+Local results: D20/20, check PASS, offline13/13, existing local D browser1/1
+PASS (Undo2 byte/plan, reconnect, both tokens revoked, no external browser HTTP).
+One fixture-only peer-close wait/proxy-identity comparison was corrected; native
+server closing/closed is observed, not a full-budget browser peer-close claim.
+Baseline replay plumbing removed after recording evidence; CI tests current only.
+No cloud/app traffic/deploy/A-B/config/Pro/fee changes, live retry or quota reset.
+Worker stops before commit/submit/PR/merge. Main owns independent review/native
+gates, submission and any later exact cloud/CTO approval. Evidence and commands:
+workers/video-scissors-mcp/docs/stateless-do-candidate.md quota-safe cleanup note.
+
+## Previous execution records (historical, not current permission)
+
 Hub #358 follow-up to CLOSED Tools #74 — authorized D second-read restoration,
 source/local only; this does not reopen #74 or claim new runtime work under it.
 Native start: codex/d-revoke-read-parity from clean main0079e2635b6b0be8b34fdc2bf806af8bd3e0e8eb.

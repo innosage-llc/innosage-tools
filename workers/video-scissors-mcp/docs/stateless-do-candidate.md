@@ -5,6 +5,46 @@ not change the existing A/B runtime, entrypoint, configuration, or worker
 integration tests. The shared staging E2E harness is matched across A/B/D. The
 candidate config is disabled by default and describes workers.dev only.
 
+## Hub #358 quota-safe cleanup repair — source/local only (2026-10-18)
+
+Only **exact POST `/remote/revoke`** skips ordinary HTTP admission, including
+budget-service failure. The disabled protocol gate stays first: revoke and all
+other protocol requests return 503 `NOT_ENABLED` when false. Existing bounded
+JSON/same-origin/credential-derived routing/project/epoch/owner checks and the
+real revoke/socket handler are unchanged. No MCP/Cut/Undo, creation, static,
+GET, neighboring-path or subpath exemption; no reset, schema or new quota state.
+The bounds remain **200 ordinary HTTP admissions / 2 project attempts per day**.
+
+Invalid-auth exact POST revoke also skips admission. Rejected calls still incur
+Worker/provider work; plausible fake credentials can hash, wake/initialize a
+derived SQLite DO and read authority. Body/origin checks are not bot-proof or
+a hard Cloudflare spend cap. No anti-abuse platform or cap increase is added.
+
+Real-SQLite replay of frozen `b2fc7dfd` at counter200 observed Undo429 and
+revoke429 `DAILY_REQUEST_LIMIT`, retaining metadata, one command and one socket;
+injected budget failure gave revoke503 `BUDGET_UNAVAILABLE`, also retaining state.
+Candidate: Undo remains429; revoke200 clears metadata/commands/authority and
+initiates native socket close; counters stay200/2. Existing tombstone/alarm purge
+removes only that project; neighbor and budget rows survive. Invalid requests
+cannot clear victim/neighbor state. Replay plumbing was removed; CI tests current.
+
+Verification: D20/20, TypeScript check PASS, offline guards13/13, existing local
+D browser1/1 (byte/plan Undo2, fresh reconnect, both tokens revoked, no external
+browser requests); focused ESLint/whitespace PASS. Miniflare proves server socket
+closing/closed, not a full-budget peer-close handshake. Existing resource counts
+remain budget40SQL/40read/10write, getproject4SQL/4read/2RPC, ticket2SQL/2read/2write.
+
+Runner evidence adds only public allowlisted `errorCode`: `DAILY_REQUEST_LIMIT`,
+`BUDGET_UNAVAILABLE`, `OAUTH_TEMPORARILY_UNAVAILABLE`, or `UNCLASSIFIED`; success
+is null. Descriptions/raw bodies/internal reasons are never retained; OAuth
+`temporarily_unavailable` does not prove the private `kv_rate_limited` reason.
+
+Historical live Undo429/failed cleanup remains FAIL: body/counter were lost.
+The daily guard is strongly source-supported and locally reproduced, not a
+certified historical cause/counter or Cloudflare quota finding. That project's
+revoke/purge remains unverified. This repair had **no live round/cloud writes**,
+deployment, A/B/config/Pro/fee changes or reset; inventory below is historical.
+
 ## Authority and routing
 
 - Browser project creation mints a private 256-bit credential. The stable
@@ -118,7 +158,8 @@ not recorded here.
   quota, or billing probes. A billing-subscription read returned `auth10000`
   and was not retried. This accepted unknown is not evidence of available
   account headroom, and does not authorize a plan upgrade.
-- D enforces at most **200 admitted D Worker HTTP requests** and **2 project
+- D enforces at most **200 admitted ordinary D Worker HTTP requests** (exact
+  POST `/remote/revoke` cleanup is exempt, as described above) and **2 project
   creation attempts per UTC day**. Each additional live matched round requires
   explicit approval and must fit those existing counters. There is no separate
   one-journey-per-day gate or mandatory UTC-rollover wait. A/B each run once in

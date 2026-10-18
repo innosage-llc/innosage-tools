@@ -79,11 +79,21 @@ async function budgetFor(f: Awaited<ReturnType<typeof world>>) {
   const namespace = await f.mf.getDurableObjectNamespace('PROJECT_STATE') as DurableObjectNamespace<TestProjectStateDO>;
   return namespace.getByName(D_EXPERIMENT_BUDGET_OBJECT);
 }
+async function exhaustRequests(f: Awaited<ReturnType<typeof world>>) {
+  const budget = await budgetFor(f);
+  const used = (await budget.budgetSnapshotForTest())?.worker_requests ?? 0;
+  const responses = await Promise.all(Array.from({ length: 200 - used }, () => f.request('/remote/capabilities')));
+  assert.ok(responses.every(response => response.status === 200));
+  assert.equal((await budget.budgetSnapshotForTest())?.worker_requests, 200);
+  return budget;
+}
 async function rpcData(response: Response): Promise<unknown> {
   const text = await response.text();
   const dataLine = text.split('\n').find(line => line.startsWith('data: '));
   return JSON.parse(dataLine ? dataLine.slice(6) : text);
 }
+// Miniflare RPC rows are lazy proxies; compare detached values, not proxy identity.
+const detached = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 test('D is disabled by default and its config template has no D1 or live identifiers', async () => {
   const config = readFileSync('wrangler.d-local.template.jsonc', 'utf8');
@@ -108,7 +118,106 @@ test('D is disabled by default and its config template has no D1 or live identif
     assert.equal(await asset.text(), 'asset:/tools/video-scissors');
     assert.equal((await f.request('/remote/capabilities')).status, 503);
     assert.equal((await f.request('/mcp')).status, 503);
+    assert.deepEqual(await (await f.json('/remote/revoke', {})).json(), { error: 'NOT_ENABLED' });
     assert.equal(await (await budgetFor(f)).budgetSnapshotForTest(), null, 'disabled traffic does not consume the experiment budget');
+  } finally { await f.mf.dispose(); }
+});
+
+test('D quota cleanup: exact owner revoke survives full or unavailable budget without resetting it', { timeout: 30_000 }, async () => {
+  for (const failure of [false, true]) {
+    const f = await world();
+    try {
+      const { p, auth, tokens } = await f.link(), state = await stateFor(f, p.project);
+      const neighbor = await f.project(), neighborState = await stateFor(f, neighbor.project);
+      const neighborBefore = detached(await neighborState.inspectForTest());
+      assert.equal((await state.admit(auth, { kind: 'cut', operationId: 'quota-queued',
+        generation: 1, version: 1, clips: [{ start: 2, end: 4 }] })).state, 'queued');
+      const join = await f.json('/remote/bridge/join', { auth });
+      const { proof } = await join.json() as { proof: string };
+      const upgraded = await f.request(`/remote/bridge/${p.project}/${p.epoch}`, { headers: {
+        Origin: origin, Upgrade: 'websocket', 'Sec-WebSocket-Protocol': `video-scissors-wakeup.v1, join.${proof}`,
+      } });
+      assert.equal(upgraded.status, 101);
+      const socket = upgraded.webSocket!; socket.accept();
+      assert.deepEqual(await state.socketReadyStatesForTest(), [1]);
+      const budget = await exhaustRequests(f), before = detached(await budget.budgetSnapshotForTest());
+      const undo = await f.rpc(tokens.access_token, 'tools/call', { name: 'undo', arguments: {
+        operationId: 'quota-undo', generation: 1, version: 1, targetOperationId: 'quota-queued',
+      } });
+      assert.equal(undo.status, 429);
+      assert.deepEqual(await undo.json(), { error: 'DAILY_REQUEST_LIMIT' });
+      if (failure) await budget.failNextWorkerBudgetForTest();
+      const revoked = await f.json('/remote/revoke', { auth });
+      assert.equal(revoked.status, 200);
+      assert.equal((await revoked.json() as { ok: boolean }).ok, true);
+      // Native server socket is closing/closed. Miniflare's dispatchFetch peer
+      // does not reliably emit close; the existing browser test covers the peer.
+      assert.ok((await state.socketReadyStatesForTest()).every(value => value === 2 || value === 3));
+      socket.close();
+      const tombstone = await state.inspectForTest();
+      assert.equal(tombstone.project.revoked, 1);
+      assert.equal(tombstone.project.epoch, auth.epoch + 1);
+      assert.equal(tombstone.project.owner_hash, '');
+      assert.equal(tombstone.project.metadata, '{}');
+      assert.deepEqual(tombstone.commands, []);
+      assert.deepEqual(tombstone.wakeTickets, []);
+      assert.ok(tombstone.alarm > Date.now() && tombstone.alarm <= Date.now() + 31 * 60_000);
+      assert.equal(await state.owner(auth), null);
+      assert.equal(await state.project(auth), null);
+      assert.equal((await state.sync(auth, metadata)).ok, false);
+      assert.equal(await state.admit(auth, { kind: 'cut', operationId: 'quota-after-revoke',
+        generation: 1, version: 1, clips: [{ start: 2, end: 4 }] }), null);
+      assert.equal(await state.claim(auth, metadata), null);
+      const ordinary = await f.request('/remote/capabilities');
+      assert.equal(ordinary.status, failure ? 503 : 429, 'revoke never consulted or consumed the injected budget failure');
+      assert.deepEqual(await ordinary.json(), { error: failure ? 'BUDGET_UNAVAILABLE' : 'DAILY_REQUEST_LIMIT' });
+      assert.equal((await f.request('/mcp')).status, 429);
+      assert.deepEqual(detached(await budget.budgetSnapshotForTest()), before, '200 ordinary requests and 2 project attempts remain unchanged');
+      await state.fastForwardTombstoneForTest();
+      const purged = await state.inspectForTest();
+      assert.equal(purged.project, null); assert.deepEqual(purged.commands, []); assert.equal(purged.alarm, null);
+      assert.deepEqual(detached(await neighborState.inspectForTest()), neighborBefore, 'cleanup and alarm never remove another project');
+      assert.deepEqual(detached(await budget.budgetSnapshotForTest()), before);
+      console.log('local-d-quota-cleanup', JSON.stringify({ workerRequests: 200, projectAttempts: 2, failure,
+        undo: 429, revoke: 200, socketClose: 'native server closing/closed', authority: 'denied', purge: true, neighborUnchanged: true }));
+    } finally { await f.mf.dispose(); }
+  }
+});
+
+test('D quota cleanup: invalid auth and neighboring paths cannot use the exact revoke exemption', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const { p, auth } = await f.link(), victim = await stateFor(f, p.project);
+    const neighbor = await f.project(), other = await stateFor(f, neighbor.project);
+    const before = detached(await victim.inspectForTest()), otherBefore = detached(await other.inspectForTest());
+    const budget = await exhaustRequests(f), budgetBefore = detached(await budget.budgetSnapshotForTest());
+    const raw = (body: string, headers: Record<string, string> = {}) => f.request('/remote/revoke', {
+      method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...headers }, body,
+    });
+    for (const response of [
+      await f.json('/remote/revoke', { auth }, { Origin: 'https://evil.example' }),
+      await raw(JSON.stringify({ auth }), { 'Content-Type': 'text/plain' }),
+      await raw('{'), await raw('x'.repeat(16_385)), await f.json('/remote/revoke', {}),
+      await f.json('/remote/revoke', { auth: { ...auth, credential: 'f'.repeat(64) } }),
+      await f.json('/remote/revoke', { auth: { ...auth, epoch: auth.epoch + 1 } }),
+      await f.json('/remote/revoke', { auth: { ...auth, project: neighbor.project } }),
+      await f.json('/remote/revoke', { auth: { ...auth, credential: neighbor.credential } }),
+    ]) {
+      assert.notEqual((await response.json() as { ok?: boolean }).ok, true);
+      assert.deepEqual(detached(await victim.inspectForTest()), before);
+      assert.deepEqual(detached(await other.inspectForTest()), otherBefore);
+    }
+    for (const [path, method] of [['/remote/revoke', 'GET'], ['/remote/revoke', 'PUT'],
+      ['/remote/revoke/', 'POST'], ['/remote/revoke/child', 'POST'], ['/remote/revoke-other', 'POST'],
+      ['/remote/%72evoke', 'POST'], ['/remote/projects', 'POST'], ['/remote/sync', 'POST'],
+      ['/mcp', 'POST'], ['/mcp/undo', 'POST'], ['/tools/video-scissors', 'GET']]) {
+      const response = await f.request(path, { method });
+      assert.equal(response.status, 429, `${method} ${path} remains budgeted`);
+      assert.deepEqual(await response.json(), { error: 'DAILY_REQUEST_LIMIT' });
+    }
+    assert.deepEqual(detached(await victim.inspectForTest()), before);
+    assert.deepEqual(detached(await other.inspectForTest()), otherBefore);
+    assert.deepEqual(detached(await budget.budgetSnapshotForTest()), budgetBefore);
   } finally { await f.mf.dispose(); }
 });
 
