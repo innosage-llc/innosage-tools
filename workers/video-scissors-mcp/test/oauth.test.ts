@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
+// Keep Batch1's native D1 counters/fences in the existing canonical test command.
+import './batch1.test.ts';
 
 const origin = 'https://localhost';
 const metadata = { duration: 30, generation: 1, version: 1, hasOutput: false, canUndo: false, latestOperationId: null, errorCode: 'NONE' };
@@ -67,6 +69,9 @@ test('official provider + stateless MCP: discovery/PKCE/resource/issuer and proj
     assert.ok(discovery.code_challenge_methods_supported.includes('S256'));
     assert.equal(discovery.registration_endpoint,origin+'/oauth/register');
     const {p,t,a} = await f.link();
+    const snapshot = await f.rpc(t.access_token,'tools/call',{name:'getproject',arguments:{}});
+    assert.equal(snapshot.data.result.isError,undefined);
+    assert.deepEqual(JSON.parse(snapshot.data.result.content[0].text).metadata,metadata);
     assert.doesNotMatch(a.html,/<img src=x/); assert.match(a.html,/&lt;img/); assert.match(a.html,/client\.example/);
     const listed = await f.rpc(t.access_token,'tools/list');
     assert.equal(listed.r.status,200); assert.equal(listed.data.result.tools.length,5);

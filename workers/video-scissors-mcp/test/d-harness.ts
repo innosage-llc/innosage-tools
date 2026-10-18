@@ -1,12 +1,13 @@
 import worker from '../src/index-d.ts';
 import { ProjectStateDO } from '../src/d/ProjectStateDO.ts';
-import type { ProjectAuth } from '../src/d/types.ts';
+import type { BrowserAuth, ProjectAuth } from '../src/d/types.ts';
 
 // Local fixture-only subclass: accelerates the real alarm path without
 // adding a production route or shortening the production tombstone lifetime.
 export class TestProjectStateDO extends ProjectStateDO {
   private readonly resourceCursors: SqlStorageCursor[];
   private projectCalls = 0;
+  private revokeAfterRead: BrowserAuth | null = null;
   constructor(ctx: DurableObjectState, env: ConstructorParameters<typeof ProjectStateDO>[1]) {
     const cursors: SqlStorageCursor[] = [];
     // Test-only observation: retain native objects and their receiver.
@@ -21,8 +22,15 @@ export class TestProjectStateDO extends ProjectStateDO {
   }
   override async project(auth: ProjectAuth) {
     this.projectCalls++;
-    return super.project(auth);
+    const project = await super.project(auth);
+    const revoke = this.revokeAfterRead;
+    if (project && revoke?.project === auth.project && revoke.epoch === auth.epoch) {
+      this.revokeAfterRead = null;
+      if (!await super.revoke(revoke)) throw new Error('fixture revoke failed');
+    }
+    return project;
   }
+  async revokeAfterNextProjectReadForTest(auth: BrowserAuth) { this.revokeAfterRead = auth; }
   resourceSnapshotForTest() {
     return { statements: this.resourceCursors.length,
       rowsRead: this.resourceCursors.reduce((sum, cursor) => sum + cursor.rowsRead, 0),
