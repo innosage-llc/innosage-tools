@@ -213,7 +213,7 @@ first matched round and are not Cloudflare usage. Historical staging reports
 and four-command journeys retain their original meaning; do not relabel them as
 the current Cut1/Cut2/Undo2 scenario.
 
-### Minimal internal resource optimization (local only, 2026-10-18)
+### Minimal internal resource optimization (historical PR #73 evidence, 2026-10-18)
 
 Approved scope is three D-only changes; architecture, public interface and
 authorization/revoke/expiry/idempotency behavior stay unchanged. No cross-request
@@ -246,3 +246,49 @@ Reproduce locally from `workers/video-scissors-mcp` with `npm run test:d` and
 `npm run check`. Full native pre-merge checks remain required. No new dependency,
 platform, default online CI or resource is introduced. A future disabled D-only
 deployment/test/restore needs separate exact Cloudflare mutation approval.
+
+### Source-only second-read restoration (Hub #358 follow-up, 2026-10-18)
+
+From clean main `0079e2635b6b0be8b34fdc2bf806af8bd3e0e8eb`, branch
+`codex/d-revoke-read-parity` is a separately authorized Hub #358 follow-up to
+**closed Tools #74**, not a reopening or new runtime claim under #74. It restores
+only pre-PR73 getproject's second project RPC and removes the request snapshot
+plumbing. The historical table above is
+retained as evidence of PR73, not a claim that its snapshot preserved every
+observable interleaving. The #74 NO-GO and merged audit exposed the mismatch;
+this separately authorized restoration reinstates successful JSON `null` when real
+revoke commits after the first authority read. Later reads/cuts/direct admission
+remain denied with zero commands. A failed second RPC returns COMMAND_REJECTED
+instead of reusing the first metadata; the fixture injects only an RPC failure,
+not a native SQLite corruption/failure claim.
+
+**OBSERVED LOCAL** regression counts: getproject **4 SQL / 4 rows read / 0 writes /
+2 project RPCs**; ten warm budget checks remain **40 / 40 / 10** (SQL/read/write),
+and wake ticket remains **2 SQL / 2 reads / 2 writes**. Restoring parity therefore
+adds 2 SQL reads and 1 project RPC versus main0079e263 for a successful getproject;
+it is not a new resource optimization or provider billing measurement.
+
+Verification from `workers/video-scissors-mcp`:
+
+- `npm run test:d`: **PASS 18/18**, 8.965 s. Real revoke-after-first-read yields
+  HTTP200, successful text `null`, two project RPCs, subsequent read/cut/direct
+  admission denied and zero commands. One-shot second-RPC failure yields
+  COMMAND_REJECTED, then a fresh request recovers normally.
+- `npm run check`: **PASS**.
+- `npm run test:d:browser`: **PASS 1/1**, 10.832 s. Existing local fixture produces
+  Cut1 11 s / Cut2 9 s, Undo2 restores Cut1 bytes and plan exactly, reconnect
+  creates a fresh project and both tokens are denied after revoke. Observed
+  69 browser + 29 harness local HTTP requests, 2 wake sockets, no media/path in
+  request bodies and zero external browser requests. No new media matrix.
+
+Focused root command `npx eslint workers/video-scissors-mcp/src/d/mcp.ts workers/video-scissors-mcp/test/d-harness.ts workers/video-scissors-mcp/test/d-candidate.test.ts`
+and `git diff --check`: **PASS**. Restored `src/d/mcp.ts` is byte-identical to
+pre73 `861b28b81f12c06fc59fdc162d39242a1478994c` by read-only Git comparison;
+`ProjectStateDO.ts` is unchanged from main0079e263.
+
+No A/B runtime/config, limits, subscription, schema or other PR73 optimization
+changes. This worker made no cloud/live test, secret/fee/reset or deployment and
+stops before commit, push, PR, native submit, full Gatekeeper or merge. Main lead
+owns authorized native submission/gates and the same CTO conversation's exact
+final PR greenlight before merge; these are next steps, not a permanent ban.
+This local handoff itself is not that greenlight or deployment authorization.

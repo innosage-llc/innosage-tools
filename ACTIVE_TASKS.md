@@ -1,5 +1,26 @@
 # Active task
 
+Hub #358 follow-up to CLOSED Tools #74 — authorized D second-read restoration,
+source/local only; this does not reopen #74 or claim new runtime work under it.
+Native start: codex/d-revoke-read-parity from clean main0079e2635b6b0be8b34fdc2bf806af8bd3e0e8eb.
+Restore pre-PR73 getproject callback's second authoritative project RPC and its
+successful null on revoke between reads; remove snapshot plumbing only. Retain
+PR73 budget40/40/10 and ticket index optimization. Real revoke fixture must assert
+two reads/null, later read/cut/direct admission denial and no commands; one-shot
+second-RPC failure must return COMMAND_REJECTED then recover on a fresh request.
+Targeted D/check and existing local D browser verification; no A/B runtime/config,
+Pro/limits, cloud mutations, live/staging/prod, secret/fee/reset or deployment.
+This worker stops before commit/push/PR/submit/merge. Main lead owns next steps:
+review, authorized native submission/gates and exact-PR greenlight in the same
+CTO conversation before merge. Those lead steps are not permanently prohibited.
+Local results: D18/18 PASS; check PASS; existing D browser1/1 PASS with byte/plan
+Undo2, fresh reconnect, both tokens revoked and no external browser requests;
+focused ESLint and whitespace PASS. Runtime mcp.ts byte-identical pre73 861b28b;
+ProjectStateDO.ts unchanged. Budget40/40/10 and ticket2/2/2 retained.
+Evidence: workers/video-scissors-mcp/docs/stateless-do-candidate.md restoration note.
+
+## Previous execution records (historical, not current permission)
+
 Tools #74 Batch1 — CTO NO-GO: REJECTED—observable behavior difference.
 Runtime snapshot hunk withdrawn with apply_patch; src/mcp.ts restored exactly to
 main99d237f7f4d1f18625a781038dcef415e445fc3e. Runtime remains unchanged.
