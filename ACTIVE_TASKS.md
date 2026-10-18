@@ -1,5 +1,27 @@
 # Active task
 
+Tools #74 Batch1 — CTO NO-GO: REJECTED—observable behavior difference.
+Runtime snapshot hunk withdrawn with apply_patch; src/mcp.ts restored exactly to
+main99d237f7f4d1f18625a781038dcef415e445fc3e. Runtime remains unchanged.
+Keep audit/contract regressions on codex/mcp-ab-resource-dedup: getproject must
+perform two reads and return null when revoke commits between them. Historical
+one-read candidate measurements are rejected evidence, not accepted gains.
+Budget consolidation dropped because it cannot preserve separately committed
+initialization on spend failure. Cumulative caps remain 2000 HTTP/20 DCR/20 OAuth.
+Existing integration fixture extension to Cut1[2,4], Cut2[6,10], byte/plan Undo2
+now PASSes A/B 2/2 on unchanged runtime. Earlier local ffprobe stdin EPIPE was
+repaired by probing the already-downloaded file; no assertions were relaxed.
+Both restore Cut1 bytes/hash/plan, retain hidden delivery and revoke/privacy.
+One D fixture regression observes already-merged PR73 snapshot after real revoke,
+then next-read/mutation denial: CONTRACT_CHANGE_REQUIRED, not a security-bug
+claim. D runtime/PR73 unchanged; pre73 comparison is SOURCE-DERIVED only.
+Evidence: workers/video-scissors-mcp/docs/batch1-measurements-74.md. Main owns
+Batch2 audit/Hub/browser coordination and future audit/regression-only PR/native
+gates. No new runtime/UI, cloud/live/secret/fee/reset, commit/push/PR/full Gatekeeper
+or merge here. Exact final PR still needs CTO greenlight; this NO-GO is not one.
+
+## Previous execution records (historical, not current permission)
+
 Hub #358 — approved minimal D-only internal optimization: reuse the same-day
 transaction budget row, reuse the authorized getproject snapshot, remove the
 unused ticket-expiry index. Preserve endpoints, auth/revoke/expiry/idempotency,

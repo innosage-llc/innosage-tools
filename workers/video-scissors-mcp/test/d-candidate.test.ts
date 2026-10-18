@@ -238,6 +238,38 @@ test('same D fixture records local resource use without changing results', { tim
   } finally { await f.mf.dispose(); }
 });
 
+test('D OBSERVED LOCAL: revoke after authority read returns snapshot; CONTRACT_CHANGE_REQUIRED, no later mutation', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const { p, auth, tokens } = await f.link(), state = await stateFor(f, p.project);
+    const before = await state.resourceSnapshotForTest();
+    await state.revokeAfterNextProjectReadForTest(auth);
+    const response = await f.rpc(tokens.access_token, 'tools/call', { name: 'getproject', arguments: {} });
+    assert.equal(response.status, 200);
+    const raced = await rpcData(response) as { result: { isError?: boolean; content: Array<{ text: string }> } };
+    assert.equal(raced.result.isError, undefined);
+    assert.deepEqual(JSON.parse(raced.result.content[0].text), { metadata, expiresAt: p.expiresAt });
+    assert.equal((await state.resourceSnapshotForTest()).projectCalls - before.projectCalls, 1);
+    const tombstone = await state.inspectForTest();
+    assert.equal(tombstone.project.revoked, 1);
+    assert.equal(tombstone.project.metadata, '{}', 'real super.revoke cleared authority before response');
+    for (const params of [{ name: 'getproject', arguments: {} }, { name: 'cut', arguments: {
+      operationId: 'after-read-revoke', generation: 1, version: 1, clips: [{ start: 2, end: 4 }],
+    } }]) {
+      const denied = await rpcData(await f.rpc(tokens.access_token, 'tools/call', params)) as
+        { result: { isError: boolean; content: Array<{ text: string }> } };
+      assert.equal(denied.result.isError, true);
+      assert.equal(denied.result.content[0].text, 'PROJECT_EXPIRED_OR_REVOKED');
+    }
+    assert.equal(await state.admit(auth, { kind: 'cut', operationId: 'direct-after-revoke',
+      generation: 1, version: 1, clips: [{ start: 2, end: 4 }] }), null);
+    assert.deepEqual((await state.inspectForTest()).commands, []);
+    console.log('local-d-read-revoke-contract', JSON.stringify({ current: 'OBSERVED LOCAL metadata snapshot',
+      pre73: 'SOURCE-DERIVED second-read null; not executed', projectCalls: 1, nextRead: 'denied',
+      subsequentMutation: 'denied', queuedCommands: 0, classification: 'CONTRACT_CHANGE_REQUIRED; not a security bug claim' }));
+  } finally { await f.mf.dispose(); }
+});
+
 test('legacy ticket index upgrade and rollback retain existing authority and one-use tickets', { timeout: 30_000 }, async () => {
   const candidate = bundle.outputFiles[0].text;
   // Only reverse the index DDL, not runtime auth/expiry behavior, for the legacy schema fixture.

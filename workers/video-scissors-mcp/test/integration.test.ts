@@ -4,13 +4,18 @@ import { spawn, execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, basename } from 'node:path';
+import { createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { unstable_dev } from 'wrangler';
 
-test('full LOCAL official OAuth/MCP + Gemini UI + background browser WASM cut/download/Undo/revoke/privacy', { timeout: 120_000 }, async () => {
+for (const arm of ['A', 'B'] as const) {
+test(`full LOCAL ${arm} official OAuth/MCP + hidden WASM Cut1[2,4]/Cut2[6,10]/byte-Undo2/revoke/privacy`, { timeout: 120_000 }, async () => {
   const { chromium } = await import(process.env.VIDEO_SCISSORS_PLAYWRIGHT_MODULE || 'playwright');
-  const worker = await unstable_dev('test/integration-worker.ts', { config: 'wrangler.jsonc', local: true, localProtocol: 'https', persist: false,
-    vars: { EXPERIMENT_ENABLED: 'true' }, experimental: { disableExperimentalWarning: true, disableDevRegistry: true }, logLevel: 'error' });
+  const worker = await unstable_dev('test/integration-worker.ts', { config: arm === 'B' ? 'wrangler.do-staging.template.jsonc' : 'wrangler.jsonc', local: true, localProtocol: 'https', persist: false,
+    // Override only this ephemeral local process, never the template/live bindings.
+    kv: [{ binding: 'OAUTH_KV', id: '00000000000000000000000000000000' }],
+    vars: { EXPERIMENT_ENABLED: 'true' }, experimental: { disableExperimentalWarning: true, disableDevRegistry: true,
+      d1Databases: [{ binding: 'DB', database_name: 'video-scissors-local-only', database_id: '00000000-0000-0000-0000-000000000000' }] }, logLevel: 'error' });
   console.log('local-integration-phase', 'worker-ready');
   const profile = await mkdtemp(join(tmpdir(),'hub346-integration-'));
   const downloads = join(profile,'downloads'); await mkdir(downloads);
@@ -24,12 +29,15 @@ test('full LOCAL official OAuth/MCP + Gemini UI + background browser WASM cut/do
     browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`,{noDefaults:true});
     const cdp = await browser.newBrowserCDPSession();
     await cdp.send('Security.setIgnoreCertificateErrors',{ignore:true});
-    await cdp.send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads,eventsEnabled:true});
+    await cdp.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:downloads,eventsEnabled:true});
     const context = browser.contexts()[0];
     context.setDefaultTimeout(15_000); context.setDefaultNavigationTimeout(15_000);
     const origin = `https://${worker.address}:${worker.port}`;
     const initialized = await context.request.post(origin+'/__fixture/init',{ignoreHTTPSErrors:true});
     assert.equal(initialized.status(),204);
+    const capabilities = await context.request.get(origin+'/remote/capabilities',{ignoreHTTPSErrors:true});
+    assert.equal(capabilities.status(),200);
+    assert.deepEqual(await capabilities.json(),{enabled:true,wakeup:arm === 'B' ? 'websocket' : 'poll'});
     const page = await context.newPage();
     const requests: {method:string;path:string;body:string|null;sameOrigin:boolean}[] = [];
     let appSockets=0;
@@ -68,36 +76,99 @@ test('full LOCAL official OAuth/MCP + Gemini UI + background browser WASM cut/do
       const response=await json('/mcp',{jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}},token);
       assert.equal(response.result.isError,undefined);return JSON.parse(response.result.content[0].text);
     };
+    const waitForOperation=async(operationId:string)=>{
+      for(let i=0;i<200;i++){
+        const status=await rpc('status',{operationId});
+        if(status.state==='completed')return status.metadata;
+        assert.ok(['queued','claimed'].includes(status.state),`${operationId} must not fail or disappear`);
+        await delay(250);
+      }
+      assert.fail(`${operationId} did not complete within 50 seconds`);
+    };
+    const waitForPreview=async(seconds:number)=>page.waitForFunction(expected=>{
+      const video=document.querySelector<HTMLVideoElement>('video[aria-label="Edited video preview"]');
+      return !!video&&video.readyState>=1&&Number.isFinite(video.duration)&&Math.abs(video.duration-expected)<0.15;
+    },seconds,{timeout:60_000});
+    const currentPlan=()=>page.locator('input[aria-label^="Clip "]').evaluateAll(inputs=>inputs.map(input=>{
+      const element=input as HTMLInputElement;
+      return [element.getAttribute('aria-label'),element.valueAsNumber];
+    }));
+    const download=async()=>{
+      const blobBytes=Buffer.from(await page.evaluate(async()=>{
+        const video=document.querySelector<HTMLVideoElement>('video[aria-label="Edited video preview"]');
+        if(!video?.src.startsWith('blob:'))throw new Error('Expected browser-local preview blob');
+        return Array.from(new Uint8Array(await(await fetch(video.src)).arrayBuffer()));
+      }));
+      // GUID filenames avoid repeated suggested download names resolving to an
+      // earlier Cut1 file. Match the completion event to this exact download.
+      const finished=new Promise<string>(resolve=>{
+        let guid='';
+        const begin=(event:{guid:string})=>{guid=event.guid;};
+        const progress=(event:{guid:string;state:string})=>{
+          if(event.guid===guid&&event.state==='completed'){
+            cdp.off('Browser.downloadWillBegin',begin);cdp.off('Browser.downloadProgress',progress);resolve(guid);
+          }
+        };
+        cdp.on('Browser.downloadWillBegin',begin);cdp.on('Browser.downloadProgress',progress);
+      });
+      await page.getByRole('button',{name:'Download cut MP4 video',exact:true}).click();
+      const filename=await finished;assert.equal(basename(filename),filename);
+      const downloadedPath=join(downloads,filename);
+      const bytes=await readFile(downloadedPath);
+      assert.deepEqual(bytes,blobBytes,'download matches the current preview blob byte-for-byte');
+      // Probe the existing download: ffprobe may stop reading stdin before Node
+      // finishes writing a larger MP4, causing an unrelated EPIPE in the harness.
+      const probe=JSON.parse(execFileSync('ffprobe',['-v','error','-show_entries','format=duration:stream=codec_name','-of','json',downloadedPath],{encoding:'utf8'}));
+      assert.deepEqual(probe.streams.map((stream:{codec_name:string})=>stream.codec_name),['h264','aac']);
+      return {bytes,hash:createHash('sha256').update(bytes).digest('hex'),seconds:Number(probe.format.duration)};
+    };
     await page.getByText('Connected',{exact:true}).waitFor();
     await consent.bringToFront();
     assert.equal(await page.evaluate(()=>document.visibilityState),'hidden');
     const project=await rpc('getproject');
     const started=Date.now();
-    await rpc('cut',{operationId:'browser-cut',generation:project.metadata.generation,version:project.metadata.version,clips:[{start:0,end:2}]});
-    await page.getByText('Cut complete. Your original video is unchanged.',{exact:true}).waitFor({timeout:60_000});
+    assert.equal((await rpc('cut',{operationId:'browser-cut-1',generation:project.metadata.generation,version:project.metadata.version,clips:[{start:2,end:4}]})).state,'queued');
+    const cut1Metadata=await waitForOperation('browser-cut-1');
     assert.equal(await page.evaluate(()=>document.visibilityState),'hidden');
-    const completed=await rpc('status',{operationId:'browser-cut'});
-    // Browser completion may precede terminal HTTP acknowledgement briefly.
-    for(let i=0;completed.state!=='completed'&&i<100;i++){await delay(50);Object.assign(completed,await rpc('status',{operationId:'browser-cut'}));}
-    assert.equal(completed.state,'completed');
     await page.bringToFront();
-    const downloadFinished=new Promise<string>(resolve=>{let name='';cdp.on('Browser.downloadWillBegin',e=>{name=e.suggestedFilename;});cdp.on('Browser.downloadProgress',e=>{if(e.state==='completed')resolve(name);});});
-    await page.getByRole('button',{name:'Download cut MP4 video',exact:true}).click();
-    const filename=await downloadFinished;assert.equal(basename(filename),filename);
-    const output=await readFile(join(downloads,filename));
-    const native=JSON.parse(execFileSync('ffprobe',['-v','error','-show_entries','format=duration:stream=codec_name','-of','json','pipe:0'],{input:output,encoding:'utf8'}));
-    assert.ok(Math.abs(Number(native.format.duration)-2)<0.1);assert.deepEqual(native.streams.map((s:{codec_name:string})=>s.codec_name),['h264','aac']);
+    // Completion above proves hidden execution. Preview metadata/rAF may be
+    // suspended in hidden Chrome tabs, so inspect readiness after foregrounding.
+    await waitForPreview(2);
+    const cut1Plan=await currentPlan();
+    assert.deepEqual(cut1Plan,[['Clip 1 start time in seconds',2],['Clip 1 end time in seconds',4]]);
+    const cut1=await download();assert.ok(Math.abs(cut1.seconds-2)<0.1);
+    await consent.bringToFront();assert.equal(await page.evaluate(()=>document.visibilityState),'hidden');
+    const beforeCut2=await rpc('getproject');
+    assert.equal(beforeCut2.metadata.latestOperationId,'browser-cut-1');
+    assert.equal((await rpc('cut',{operationId:'browser-cut-2',generation:beforeCut2.metadata.generation,version:beforeCut2.metadata.version,clips:[{start:6,end:10}]})).state,'queued');
+    const cut2Metadata=await waitForOperation('browser-cut-2');
+    assert.equal(await page.evaluate(()=>document.visibilityState),'hidden');
+    await page.bringToFront();
+    await waitForPreview(4);
+    assert.deepEqual(await currentPlan(),[['Clip 1 start time in seconds',6],['Clip 1 end time in seconds',10]]);
+    const cut2=await download();assert.ok(Math.abs(cut2.seconds-4)<0.1);
+    assert.notEqual(cut2.hash,cut1.hash,'Cut2 must not reuse Cut1 content');
+    await consent.bringToFront();assert.equal(await page.evaluate(()=>document.visibilityState),'hidden');
     const beforeUndo=await rpc('getproject');
-    await rpc('undo',{operationId:'browser-undo',generation:beforeUndo.metadata.generation,version:beforeUndo.metadata.version,targetOperationId:'browser-cut'});
-    await page.getByRole('button',{name:'Undo cut and restore previous plan',exact:true}).waitFor();
-    for(let i=0;i<100;i++){const s=await rpc('status',{operationId:'browser-undo'});if(s.state==='completed')break;await delay(50);}
-    assert.equal((await rpc('status',{operationId:'browser-undo'})).state,'completed');
+    assert.equal(beforeUndo.metadata.latestOperationId,'browser-cut-2');
+    assert.equal((await rpc('undo',{operationId:'browser-undo-2',generation:beforeUndo.metadata.generation,version:beforeUndo.metadata.version,targetOperationId:'browser-cut-2'})).state,'queued');
+    const restoredMetadata=await waitForOperation('browser-undo-2');
+    assert.equal(await page.evaluate(()=>document.visibilityState),'hidden');
+    await page.bringToFront();
+    await waitForPreview(2);
+    const restored=await download();
+    assert.deepEqual(restored.bytes,cut1.bytes,'Undo2 restores Cut1 bytes exactly');
+    assert.equal(restored.hash,cut1.hash,'Undo2 restores Cut1 SHA-256 exactly');
+    assert.deepEqual(await currentPlan(),cut1Plan,'Undo2 restores Cut1 clip plan exactly');
+    assert.equal(restoredMetadata.generation,cut1Metadata.generation);
+    assert.ok(restoredMetadata.version>cut2Metadata.version,'Undo2 version remains monotonic');
+    assert.equal(restoredMetadata.hasOutput,true);
     await page.getByRole('button',{name:'Disconnect',exact:true}).click();
     await page.getByText('Disconnected',{exact:true}).waitFor();
     const revoked=await json('/mcp',{jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'getproject',arguments:{}}},token);
     assert.equal(revoked.result.isError,true);
     // Local controls remain usable after cloud disconnect, with the same history.
-    await page.getByRole('button',{name:'Add clip segment',exact:true}).click();
+    await page.getByRole('spinbutton',{name:'Clip 1 start time in seconds',exact:true}).fill('0');
     await page.getByRole('spinbutton',{name:'Clip 1 end time in seconds',exact:true}).fill('2');
     await page.getByRole('button',{name:'Cut video segments',exact:true}).click();
     await page.getByText('Cut complete. Your original video is unchanged.',{exact:true}).waitFor();
@@ -114,11 +185,12 @@ test('full LOCAL official OAuth/MCP + Gemini UI + background browser WASM cut/do
     const appRequests=requests.filter(r=>!r.path.startsWith('/authorize')&&r.sameOrigin);
     assert.ok(appRequests.every(r=>!r.body?.includes('SYNTHETIC_MEDIA_CANARY')&&!r.body?.includes('data:video')&&!r.body?.includes('blob:')));
     assert.ok(requests.filter(r=>r.body&&r.sameOrigin).every(r=>['/remote/','/mcp','/oauth/','/authorize','/__fixture/'].some(prefix=>r.path.startsWith(prefix))));
-    assert.equal(appSockets,0);
-    console.log('local-integration-result',JSON.stringify({officialOAuth:true,syntheticMcpCaller:true,realChatGPT:false,geminiConsentUI:true,hiddenDelivery:true,wasmCut:true,download:true,outputSeconds:Number(native.format.duration),codecs:['h264','aac'],remoteUndo:true,localAfterDisconnect:true,invalidLocalRangesVisible:true,previousPreviewRetained:true,d1Revoke:true,appWebSockets:appSockets,mediaCanaryAbsent:true,controlBodyCount:requests.filter(r=>r.body&&r.sameOrigin).length,wallMilliseconds:Date.now()-started,cloudCpuMilliseconds:null}));
+    if(arm==='A')assert.equal(appSockets,0);else assert.ok(appSockets>=1,'B exercises its real local wake socket');
+    console.log('local-integration-result',JSON.stringify({arm,officialOAuth:true,syntheticMcpCaller:true,realChatGPT:false,geminiConsentUI:true,hiddenDelivery:true,wasmCut:true,download:true,cutRanges:[[2,4],[6,10]],outputSeconds:[cut1.seconds,cut2.seconds,restored.seconds],cut1Sha256:cut1.hash,undo2Sha256:restored.hash,undo2ByteIdenticalToCut1:true,undo2PlanIdenticalToCut1:true,previewBlobsMatchDownloads:true,codecs:['h264','aac'],remoteUndo:true,localAfterDisconnect:true,invalidLocalRangesVisible:true,previousPreviewRetained:true,d1Revoke:true,appWebSockets:appSockets,mediaCanaryAbsent:true,controlBodyCount:requests.filter(r=>r.body&&r.sameOrigin).length,wallMilliseconds:Date.now()-started,cloudCpuMilliseconds:null}));
   }finally{
     await browser?.close();
     if(chrome.exitCode===null){const exited=new Promise(resolve=>chrome.once('exit',resolve));chrome.kill('SIGTERM');await exited;}
     await worker.stop();await rm(profile,{recursive:true,force:true});
   }
 });
+}
