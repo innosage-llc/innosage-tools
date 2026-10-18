@@ -46,30 +46,18 @@ export class TestProjectStateDO extends ProjectStateDO {
   ticketIndexNamesForTest() {
     return this.ctx.storage.sql.exec<{ name: string }>("PRAGMA index_list('route_tickets')").toArray().map(row => row.name);
   }
-  private async failNextBudgetOperationForTest(name: string) {
-    this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS test_flags (name TEXT PRIMARY KEY)');
-    this.ctx.storage.sql.exec('INSERT OR REPLACE INTO test_flags(name) VALUES(?)', name);
+  // Local SQLite fixture only: model retained legacy data, never a runtime reset.
+  async seedLegacyBudgetForTest() {
+    this.ctx.storage.sql.exec(`CREATE TABLE d_experiment_budget (
+      singleton INTEGER PRIMARY KEY CHECK(singleton=1), utc_day TEXT NOT NULL,
+      worker_requests INTEGER NOT NULL CHECK(worker_requests BETWEEN 0 AND 200),
+      project_creations INTEGER NOT NULL CHECK(project_creations BETWEEN 0 AND 2))`);
+    this.ctx.storage.sql.exec('INSERT INTO d_experiment_budget VALUES(1,?,200,2)', new Date().toISOString().slice(0, 10));
   }
-  private consumeBudgetFailureForTest(name: string) {
-    this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS test_flags (name TEXT PRIMARY KEY)');
-    return this.ctx.storage.sql.exec<{ name: string }>('DELETE FROM test_flags WHERE name=? RETURNING name', name).toArray().length > 0;
-  }
-  async failNextWorkerBudgetForTest() { await this.failNextBudgetOperationForTest('fail_next_worker_budget'); }
-  async failNextProjectBudgetForTest() { await this.failNextBudgetOperationForTest('fail_next_project_budget'); }
-  override async consumeWorkerRequest() {
-    if (this.consumeBudgetFailureForTest('fail_next_worker_budget')) throw new Error('injected request-budget failure');
-    return super.consumeWorkerRequest();
-  }
-  override async reserveProjectCreation() {
-    if (this.consumeBudgetFailureForTest('fail_next_project_budget')) throw new Error('injected project-budget failure');
-    return super.reserveProjectCreation();
-  }
-  async budgetSnapshotForTest() {
+  async legacyBudgetSnapshotForTest() {
+    if (!this.ctx.storage.sql.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='d_experiment_budget'").toArray().length) return null;
     return this.ctx.storage.sql.exec<{ utc_day: string; worker_requests: number; project_creations: number }>(
       'SELECT utc_day,worker_requests,project_creations FROM d_experiment_budget WHERE singleton=1').toArray()[0] ?? null;
-  }
-  async rewindBudgetForTest() {
-    this.ctx.storage.sql.exec(`UPDATE d_experiment_budget SET utc_day='2000-01-01',worker_requests=200,project_creations=2 WHERE singleton=1`);
   }
   async failNextNotifyForTest() {
     this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS test_flags (name TEXT PRIMARY KEY)');

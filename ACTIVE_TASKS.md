@@ -1,5 +1,30 @@
 # Active task
 
+Hub #358 — Founder-directed removal of artificial D200 HTTP/day and2 project
+attempt/day caps. Source-only on codex/d-remove-artificial-caps, native start
+from clean fetched main7ef0105a79e7345da69b70eab0bf0b26a1815020.
+Deleted entrypoint budget guard/revoke exemption, project-creation reservation,
+unused budget helper and budget-only ProjectStateDO methods/type/import/DDL.
+Existing stored budget tables/rows intentionally remain untouched; no DROP,
+reset, rollover, migration, replacement cap/config switch or quota platform.
+Disabled protocol gate stays FIRST; static availability,16KiB/origin/ownership,
+OAuth/project/lease/revoke/socket/tombstone behavior preserved. A/B/UI/config/
+Pro/provider limits unchanged; no account-usage or unlimited-Free-capacity claim.
+RealSQLite accepts205 enabled ordinary requests and6 valid project creations;
+legacy full200/2 row survives local reload unchanged, with0 budget SQL/read/write
+during route traffic. Fresh projects create no budget table. Obsolete cap/fault/
+rollover tests and warm budget loops replaced, current-source-only native CI.
+Getproject4SQL/4read/2RPC and ticket2SQL/2read/2write remain passing. Historical
+budget40/40/10 and prior failed/blocked live receipts are not rewritten.
+Local results: D17/17, check PASS, offline13/13, local D browser1/1 PASS
+(byte/plan Undo2, fresh reconnect, both tokens denied,0 external browser HTTP),
+focused ESLint and whitespace PASS. No source-task cloud mutation/live traffic,
+secret read/deploy/counter change or full gate. Worker stops before commit/
+submit/push/PR/merge; lead owns review and separately authorized native steps.
+Owning evidence: workers/video-scissors-mcp/docs/stateless-do-candidate.md.
+
+## Previous execution records (historical, not current permission)
+
 Hub #358 — source-only quota-safe D cleanup repair, codex/d-quota-cleanup,
 native start from clean main b2fc7dfd32603682f912f1925dc862dc337c3f9e.
 Only exact POST /remote/revoke skips the ordinary daily admission guard; the
