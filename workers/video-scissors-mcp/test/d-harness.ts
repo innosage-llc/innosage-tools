@@ -8,6 +8,7 @@ export class TestProjectStateDO extends ProjectStateDO {
   private readonly resourceCursors: SqlStorageCursor[];
   private projectCalls = 0;
   private revokeAfterRead: BrowserAuth | null = null;
+  private failProjectReadAt: number | null = null;
   constructor(ctx: DurableObjectState, env: ConstructorParameters<typeof ProjectStateDO>[1]) {
     const cursors: SqlStorageCursor[] = [];
     // Test-only observation: retain native objects and their receiver.
@@ -22,6 +23,10 @@ export class TestProjectStateDO extends ProjectStateDO {
   }
   override async project(auth: ProjectAuth) {
     this.projectCalls++;
+    if (this.projectCalls === this.failProjectReadAt) {
+      this.failProjectReadAt = null;
+      throw new Error('fixture project RPC failed');
+    }
     const project = await super.project(auth);
     const revoke = this.revokeAfterRead;
     if (project && revoke?.project === auth.project && revoke.epoch === auth.epoch) {
@@ -31,6 +36,7 @@ export class TestProjectStateDO extends ProjectStateDO {
     return project;
   }
   async revokeAfterNextProjectReadForTest(auth: BrowserAuth) { this.revokeAfterRead = auth; }
+  async failSecondProjectReadForTest() { this.failProjectReadAt = this.projectCalls + 2; }
   resourceSnapshotForTest() {
     return { statements: this.resourceCursors.length,
       rowsRead: this.resourceCursors.reduce((sum, cursor) => sum + cursor.rowsRead, 0),

@@ -226,7 +226,7 @@ test('same D fixture records local resource use without changing results', { tim
     // Frozen baseline 861b28b, identical local fixture: budget 50/50/10,
     // getproject 4/4/0 + 2 RPC, ticket 2/2/3 (SQL/read/write).
     assert.deepEqual(budgetUse, { statements: 40, rowsRead: 40, rowsWritten: 10, projectCalls: 0 });
-    assert.deepEqual(projectUse, { statements: 2, rowsRead: 2, rowsWritten: 0, projectCalls: 1 });
+    assert.deepEqual(projectUse, { statements: 4, rowsRead: 4, rowsWritten: 0, projectCalls: 2 });
     assert.deepEqual(ticketUse, { statements: 2, rowsRead: 2, rowsWritten: 2, projectCalls: 0 });
     console.log('local-d-resource-fixture', JSON.stringify({ budgetUse, projectUse, ticketUse }));
     assert.equal((await budget.budgetSnapshotForTest())?.project_creations, 1);
@@ -238,7 +238,7 @@ test('same D fixture records local resource use without changing results', { tim
   } finally { await f.mf.dispose(); }
 });
 
-test('D OBSERVED LOCAL: revoke after authority read returns snapshot; CONTRACT_CHANGE_REQUIRED, no later mutation', { timeout: 30_000 }, async () => {
+test('D restored contract: revoke after first authority read returns successful null, no later mutation', { timeout: 30_000 }, async () => {
   const f = await world();
   try {
     const { p, auth, tokens } = await f.link(), state = await stateFor(f, p.project);
@@ -248,8 +248,9 @@ test('D OBSERVED LOCAL: revoke after authority read returns snapshot; CONTRACT_C
     assert.equal(response.status, 200);
     const raced = await rpcData(response) as { result: { isError?: boolean; content: Array<{ text: string }> } };
     assert.equal(raced.result.isError, undefined);
-    assert.deepEqual(JSON.parse(raced.result.content[0].text), { metadata, expiresAt: p.expiresAt });
-    assert.equal((await state.resourceSnapshotForTest()).projectCalls - before.projectCalls, 1);
+    assert.equal(raced.result.content[0].text, 'null');
+    assert.equal(JSON.parse(raced.result.content[0].text), null);
+    assert.equal((await state.resourceSnapshotForTest()).projectCalls - before.projectCalls, 2);
     const tombstone = await state.inspectForTest();
     assert.equal(tombstone.project.revoked, 1);
     assert.equal(tombstone.project.metadata, '{}', 'real super.revoke cleared authority before response');
@@ -264,9 +265,31 @@ test('D OBSERVED LOCAL: revoke after authority read returns snapshot; CONTRACT_C
     assert.equal(await state.admit(auth, { kind: 'cut', operationId: 'direct-after-revoke',
       generation: 1, version: 1, clips: [{ start: 2, end: 4 }] }), null);
     assert.deepEqual((await state.inspectForTest()).commands, []);
-    console.log('local-d-read-revoke-contract', JSON.stringify({ current: 'OBSERVED LOCAL metadata snapshot',
-      pre73: 'SOURCE-DERIVED second-read null; not executed', projectCalls: 1, nextRead: 'denied',
-      subsequentMutation: 'denied', queuedCommands: 0, classification: 'CONTRACT_CHANGE_REQUIRED; not a security bug claim' }));
+    console.log('local-d-read-revoke-contract', JSON.stringify({ current: 'OBSERVED LOCAL successful JSON null',
+      projectCalls: 2, nextRead: 'denied', subsequentMutation: 'denied', queuedCommands: 0,
+      classification: 'pre-PR73 second-read contract restored; not a security bug claim' }));
+  } finally { await f.mf.dispose(); }
+});
+
+test('D restored contract: second project RPC failure returns COMMAND_REJECTED and does not reuse metadata', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const { p, tokens } = await f.link(), state = await stateFor(f, p.project);
+    const before = await state.resourceSnapshotForTest();
+    await state.failSecondProjectReadForTest();
+    const response = await f.rpc(tokens.access_token, 'tools/call', { name: 'getproject', arguments: {} });
+    assert.equal(response.status, 200);
+    const failed = await rpcData(response) as { result: { isError: boolean; content: Array<{ text: string }> } };
+    assert.equal(failed.result.isError, true);
+    assert.equal(failed.result.content[0].text, 'COMMAND_REJECTED');
+    assert.equal((await state.resourceSnapshotForTest()).projectCalls - before.projectCalls, 2);
+    const recovered = await rpcData(await f.rpc(tokens.access_token, 'tools/call', { name: 'getproject', arguments: {} })) as
+      { result: { isError?: boolean; content: Array<{ text: string }> } };
+    assert.equal(recovered.result.isError, undefined);
+    assert.deepEqual(JSON.parse(recovered.result.content[0].text), { metadata, expiresAt: p.expiresAt });
+    assert.deepEqual((await state.inspectForTest()).commands, []);
+    console.log('local-d-second-read-failure', JSON.stringify({ error: 'COMMAND_REJECTED',
+      projectCalls: 2, nextRead: 'successful fresh metadata', queuedCommands: 0 }));
   } finally { await f.mf.dispose(); }
 });
 
