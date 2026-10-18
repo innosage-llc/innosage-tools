@@ -1,5 +1,13 @@
 # Active task
 
+Hub #358 — Founder removed the procedural one-journey-per-UTC-day wait on
+2026-10-18. Remove only that documentation constraint; retain 200 admitted
+HTTP/day, 2 project attempts/day, explicit additional-round approval, and no
+counter reset. No runtime/Cloudflare config change. Second approved live round
+uses the already merged #71 runner; native doc PR gates run after media tests,
+so build/load does not contaminate the latency comparison. Prior records below
+remain historical, not current permission.
+
 Hub #358 — one approved matched A/B/D live round completed; D restored to its
 captured disabled version. A/B complete PASS; D functional/security checks
 PASS but original whole-run FAIL at socket-close audit. Repair only the test

@@ -119,8 +119,10 @@ not recorded here.
   and was not retried. This accepted unknown is not evidence of available
   account headroom, and does not authorize a plan upgrade.
 - D enforces at most **200 admitted D Worker HTTP requests** and **2 project
-  creation attempts per UTC day**. Operationally, run at most **one complete
-  D journey per UTC day**; A/B each run once in the same matched window. The 200 limit is an application admission bound, not a
+  creation attempts per UTC day**. Each additional live matched round requires
+  explicit approval and must fit those existing counters. There is no separate
+  one-journey-per-day gate or mandatory UTC-rollover wait. A/B each run once in
+  the approved matched window. The 200 limit is an application admission bound, not a
   Cloudflare spend cap: the request still invokes the Worker and budget DO
   before it can be rejected at the application limit. The local fixture's
   99-request count is a local harness count, not Cloudflare usage or a forecast

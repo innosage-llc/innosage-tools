@@ -20,8 +20,10 @@ npm run test:video-scissors-mcp-e2e -- --arm d
 ```
 
 Run the three arms sequentially in the approved same-day comparison window,
-with a five-minute quiet baseline before each. The one-journey-per-UTC-day
-limit applies to D; do not repeat D or reset its counters that day.
+with a five-minute quiet baseline before each. Each additional live round needs
+explicit approval and must fit the existing request/project limits. There is no
+one-journey-per-UTC-day procedure gate or mandatory wait for UTC rollover. Never
+reset counters or silently raise limits to fit a retry.
 
 The runner allowlists only these three origins; arbitrary targets, production,
 missing arms, and extra arguments fail closed. D uses the isolated
@@ -85,8 +87,8 @@ non-negative integer; only those bounded fields are retained.
 
 Keep the origin/media privacy audit and browser traffic bounded. The existing D
 application limits are at most 200 admitted D Worker HTTP requests and 2
-project-creation attempts per UTC day; conduct at most one complete D journey per
-UTC day. The 200-request limit is an application admission limit, not a Cloudflare
+project-creation attempts per UTC day. The 200-request limit is an application
+admission limit, not a Cloudflare
 spend cap or account-quota measurement. Daily Durable Objects headroom remains
 UNKNOWN under the [accepted #358 waiver](https://github.com/innosage-llc/innosage-hub/issues/358#issuecomment-6233242829)
 and is not a blocker for this named bounded experiment. Do not perform further
