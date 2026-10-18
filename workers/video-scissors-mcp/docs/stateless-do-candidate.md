@@ -5,7 +5,31 @@ not change the existing A/B runtime, entrypoint, configuration, or worker
 integration tests. The shared staging E2E harness is matched across A/B/D. The
 candidate config is disabled by default and describes workers.dev only.
 
-## Hub #358 quota-safe cleanup repair — source/local only (2026-10-18)
+## Current decision: remove artificial D caps (2026-10-18)
+
+Founder removed the application-owned200 HTTP/day and2 project-attempt/day caps.
+D no longer calls the fixed-name global budget DO, checks/reserves those slots,
+or creates budget tables. The obsolete revoke-only admission exception is gone.
+Legacy budget tables/rows are left untouched: no DROP, reset, rollover or migration.
+The unused budget helper, methods, type/imports and DDL were deleted, not raised
+or replaced with another limit/config switch. Provider limits still apply;
+this is not a claim of available quota, unlimited Free capacity or bounded spend.
+Flagfalse remains first for all protocol routes; static assets stay available.
+16KiB bodies, origin/JSON/owner/epoch/OAuth, project state/lease/revoke/tombstone
+and socket protections remain unchanged; no A/B, UI or deployment config change.
+Real-SQLite regression:205 enabled ordinary requests and6 valid project creations
+accepted with a pre-existing full legacy200/2 row unchanged across local reload.
+Its native cursor delta was0 SQL/read/write during ordinary/static/project/OAuth/
+MCP/upgrade traffic. Fresh project objects create no budget table. Existing
+getproject4SQL/4read/2RPC and ticket2SQL/2read/2write assertions remain; budget
+40/40/10 is historical only and the obsolete warm-budget loop was removed.
+Local results: `test:d`17/17, `check` PASS, offline guards13/13, existing local
+D browser1/1 (byte/plan Undo2, reconnect, revoked tokens, no external HTTP),
+focused ESLint/whitespace PASS. No cloud mutation/live traffic in this source task.
+Earlier failed/blocked live receipts retain their original meaning; no live purge
+or provider-account quota conclusion is inferred from these local regressions.
+
+## Historical quota-safe cleanup repair — superseded caps (2026-10-18)
 
 Only **exact POST `/remote/revoke`** skips ordinary HTTP admission, including
 budget-service failure. The disabled protocol gate stays first: revoke and all
@@ -150,7 +174,7 @@ pins Wrangler `4.149.0`. Its all-zero KV ID and `EXPERIMENT_ENABLED=false` must
 remain unchanged until approval. The unknown `-oauth-kv` ID is intentionally
 not recorded here.
 
-### Accepted bounded-experiment risk and limits
+### Historical bounded-experiment risk and limits (application caps superseded)
 
 - The latest #358 lock's [accepted headroom waiver](https://github.com/innosage-llc/innosage-hub/issues/358#issuecomment-6233242829)
   accepts daily Durable Objects headroom as **UNKNOWN** and non-blocking for

@@ -2,7 +2,6 @@ import { DurableObject } from 'cloudflare:workers';
 import { parseRemoteCommand, parseRemoteMetadata, type RemoteCommand, type RemoteMetadata } from '../../../../lib/video-scissors-remote.ts';
 import type { BrowserAuth, DEnv, ProjectAuth } from './types';
 import { sha256Hex } from './routing';
-import { MAX_DAILY_D_PROJECT_CREATIONS, MAX_DAILY_D_WORKER_REQUESTS } from './budget';
 
 const WAKE_PROTOCOL = 'video-scissors-wakeup.v1';
 const LEASE_MS = 30 * 60_000;
@@ -15,7 +14,6 @@ type SqlRow = Record<string, string | number | null>;
 type ProjectRow = { project_id: string; epoch: number; owner_hash: string; expires_at: number; consented: number; revoked: number; metadata: string };
 type Attachment = { project: string; epoch: number; expiresAt: number };
 type CommandRow = { operation_id: string; payload_hash: string; payload: string; state: string; deadline: number; cancel_requested: number; result_metadata: string | null };
-type DailyBudgetRow = { utc_day: string; worker_requests: number; project_creations: number };
 
 const projectName = /^[a-f0-9]{64}$/;
 const operationName = /^[a-zA-Z0-9_-]{1,96}$/;
@@ -45,11 +43,7 @@ export class ProjectStateDO extends DurableObject<DEnv> {
         cancel_requested INTEGER NOT NULL DEFAULT 0, owner_hash TEXT, result_metadata TEXT,
         created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
       )`);
-      ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS d_experiment_budget (
-        singleton INTEGER PRIMARY KEY CHECK(singleton=1), utc_day TEXT NOT NULL,
-        worker_requests INTEGER NOT NULL CHECK(worker_requests BETWEEN 0 AND ${MAX_DAILY_D_WORKER_REQUESTS}),
-        project_creations INTEGER NOT NULL CHECK(project_creations BETWEEN 0 AND ${MAX_DAILY_D_PROJECT_CREATIONS})
-      )`);
+      // Legacy d_experiment_budget tables/rows, if present, are left untouched.
       // Tickets are accessed by their primary key; expiry is checked on that row.
       // Drop the unused legacy index without changing ticket data or semantics.
       ctx.storage.sql.exec('DROP INDEX IF EXISTS route_tickets_expiry');
@@ -64,33 +58,6 @@ export class ProjectStateDO extends DurableObject<DEnv> {
     return this.rows<T>(sql, ...values)[0] ?? null;
   }
   private transaction<T>(operation: () => T): T { return this.ctx.storage.transactionSync(operation); }
-  private consumeDailyBudget(field: 'worker_requests' | 'project_creations', limit: number): boolean {
-    const utcDay = new Date().toISOString().slice(0, 10);
-    return this.transaction(() => {
-      const row = this.row<DailyBudgetRow>('SELECT utc_day,worker_requests,project_creations FROM d_experiment_budget WHERE singleton=1');
-      if (!row) {
-        this.ctx.storage.sql.exec('INSERT INTO d_experiment_budget(singleton,utc_day,worker_requests,project_creations) VALUES(1,?,0,0)', utcDay);
-      } else if (row.utc_day !== utcDay) {
-        this.ctx.storage.sql.exec('UPDATE d_experiment_budget SET utc_day=?,worker_requests=0,project_creations=0 WHERE singleton=1', utcDay);
-      }
-      const current = row?.utc_day === utcDay ? row :
-        this.row<DailyBudgetRow>('SELECT utc_day,worker_requests,project_creations FROM d_experiment_budget WHERE singleton=1');
-      if (!current || current.utc_day !== utcDay || !Number.isSafeInteger(current[field]) || current[field] < 0) {
-        throw new Error('D_EXPERIMENT_BUDGET_UNAVAILABLE');
-      }
-      if (current[field] >= limit) return false;
-      return !!this.row<{ count: number }>(`UPDATE d_experiment_budget SET ${field}=${field}+1
-        WHERE singleton=1 AND utc_day=? AND ${field}=? RETURNING ${field} AS count`, utcDay, current[field]);
-    });
-  }
-  async consumeWorkerRequest(): Promise<boolean> {
-    await this.ready;
-    return this.consumeDailyBudget('worker_requests', MAX_DAILY_D_WORKER_REQUESTS);
-  }
-  async reserveProjectCreation(): Promise<boolean> {
-    await this.ready;
-    return this.consumeDailyBudget('project_creations', MAX_DAILY_D_PROJECT_CREATIONS);
-  }
   private async current(project: string, epoch: number, needsConsent: boolean): Promise<ProjectRow | null> {
     await this.ready;
     await this.expireIfNeeded();

@@ -1,6 +1,5 @@
 import { boundedBody, exactObject, reply, sameOrigin } from '../http';
 import { projectForCredential, sha256Hex, signConsentTicket, signWakeTicket, verifyConsentTicket, verifyWakeTicket } from './routing';
-import { D_EXPERIMENT_BUDGET_OBJECT } from './budget';
 import type { BrowserAuth, DEnv, ProjectAuth } from './types';
 
 const secret = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('');
@@ -43,13 +42,6 @@ export async function dBrowserRoute(request: Request, env: DEnv): Promise<Respon
     exactObject(body, []);
     const key = env.D_ROUTING_HMAC_KEY;
     if (!key || !/^[a-f0-9]{64}$/i.test(key)) return reply({ error: 'ROUTING_UNAVAILABLE' }, 503);
-    try {
-      if (!await env.PROJECT_STATE.getByName(D_EXPERIMENT_BUDGET_OBJECT).reserveProjectCreation()) {
-        return reply({ error: 'DAILY_PROJECT_LIMIT' }, 429);
-      }
-    } catch {
-      return reply({ error: 'BUDGET_UNAVAILABLE' }, 503);
-    }
     const credential = secret(), project = await projectForCredential(credential), epoch = 1;
     const now = Date.now(), expiresAt = now + 30 * 60_000, proofExpiresAt = Math.min(now + 5 * 60_000, expiresAt);
     const proof = await signConsentTicket(key, project, epoch, proofExpiresAt);
