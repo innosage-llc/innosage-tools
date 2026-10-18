@@ -3,6 +3,7 @@ import { createMcpHandler, getMcpAuthContext } from 'agents/mcp/server';
 import { z } from 'zod';
 import { boundedBody, exactObject } from '../http';
 import type { DEnv, ProjectAuth } from './types';
+import type { ProjectStateDO } from './ProjectStateDO';
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,96}$/);
 const version = { generation: z.number().int().nonnegative(), version: z.number().int().nonnegative() };
@@ -17,7 +18,7 @@ export function dMcpHandler(env: DEnv, props: Record<string, unknown>, origin: s
   return createMcpHandler(() => {
     const server = new McpServer({ name: 'video-scissors-stateless-do-candidate', version: '0.1.0' });
     const invoke = async (scope: string, scopes: string[] | undefined,
-      action: (auth: ProjectAuth) => Promise<unknown>) => {
+      action: (auth: ProjectAuth, project: NonNullable<Awaited<ReturnType<ProjectStateDO['project']>>>) => Promise<unknown>) => {
       const p = getMcpAuthContext()?.props;
       if (!p || typeof p.project !== 'string' || !/^[a-f0-9]{64}$/.test(p.project) || !Number.isSafeInteger(p.epoch) ||
         !Array.isArray(p.scopes) || !p.scopes.includes(scope) || !scopes?.includes(scope)) {
@@ -26,14 +27,15 @@ export function dMcpHandler(env: DEnv, props: Record<string, unknown>, origin: s
       }
       const auth = { project: p.project, epoch: Number(p.epoch) };
       const state = env.PROJECT_STATE.getByName(auth.project);
-      if (!await state.project(auth)) return { isError: true, content: [{ type: 'text' as const, text: 'PROJECT_EXPIRED_OR_REVOKED' }] };
-      try { return { content: [{ type: 'text' as const, text: JSON.stringify(await action(auth)) }] }; }
+      const project = await state.project(auth);
+      if (!project) return { isError: true, content: [{ type: 'text' as const, text: 'PROJECT_EXPIRED_OR_REVOKED' }] };
+      try { return { content: [{ type: 'text' as const, text: JSON.stringify(await action(auth, project)) }] }; }
       catch { return { isError: true, content: [{ type: 'text' as const, text: 'COMMAND_REJECTED' }] }; }
     };
     const stateFor = (auth: ProjectAuth) => env.PROJECT_STATE.getByName(auth.project);
     server.registerTool('getproject', { description: 'Read allowlisted local video session metadata. No media or file data is relayed.',
       inputSchema: z.object({}).strict(), _meta: security },
-    async (_input, context) => invoke('video:read', context.http?.authInfo?.scopes, auth => stateFor(auth).project(auth)));
+    async (_input, context) => invoke('video:read', context.http?.authInfo?.scopes, async (_auth, project) => project));
     server.registerTool('status', { description: 'Read one command status. Claimed commands are never replayed.',
       inputSchema: z.object({ operationId: id }).strict(), _meta: security },
     async (input, context) => invoke('video:read', context.http?.authInfo?.scopes, auth => stateFor(auth).status(auth, input.operationId)));

@@ -212,3 +212,37 @@ project/reconnect sequence and 99 local harness requests are not the locked
 first matched round and are not Cloudflare usage. Historical staging reports
 and four-command journeys retain their original meaning; do not relabel them as
 the current Cut1/Cut2/Undo2 scenario.
+
+### Minimal internal resource optimization (local only, 2026-10-18)
+
+Approved scope is three D-only changes; architecture, public interface and
+authorization/revoke/expiry/idempotency behavior stay unchanged. No cross-request
+auth cache. Daily caps and fail-closed accounting stay intact. A/B are untouched.
+
+The existing Miniflare fixture forwards real native SQLite `exec` calls and
+records consumed cursor counters; it does not mock storage or call Cloudflare.
+Same workload before/after, baseline Tools `861b28b81f12c06fc59fdc162d39242a1478994c`:
+
+| Isolated operation | Before | After |
+| --- | --- | --- |
+| 10 warm budget checks, SQL statements / rows read / rows written | 50 / 50 / 10 | 40 / 40 / 10 |
+| One authorized `getproject`, SQL statements / rows read / project RPCs | 4 / 4 / 2 | 2 / 2 / 1 |
+| Register one wake ticket, rows written | 3 | 2 |
+
+Budget numbers include unchanged fixture fault-injection checks. These are
+**observed local operation counts**, not whole-journey costs or a promised billing
+reduction. Candidate exact counts are regression assertions. All cursors are
+fully consumed; test-only counters/routes are absent from deployed exports.
+
+`route_tickets` is queried by its ticket-hash primary key, with expiry checked on
+the matching row; no query uses the removed expiry index. Startup drops only
+that recreatable index, not any table/row. Local script replacement verifies
+existing rows/alarm survive index upgrade and recreation and the pre-upgrade
+ticket remains usable once. This is not live hibernation/cold-recovery evidence.
+Runtime rollback uses the prior artifact, whose startup recreates the index;
+never restore old application rows, OAuth data or daily counters.
+
+Reproduce locally from `workers/video-scissors-mcp` with `npm run test:d` and
+`npm run check`. Full native pre-merge checks remain required. No new dependency,
+platform, default online CI or resource is introduced. A future disabled D-only
+deployment/test/restore needs separate exact Cloudflare mutation approval.

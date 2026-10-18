@@ -1,5 +1,16 @@
 # Active task
 
+Hub #358 — approved minimal D-only internal optimization: reuse the same-day
+transaction budget row, reuse the authorized getproject snapshot, remove the
+unused ticket-expiry index. Preserve endpoints, auth/revoke/expiry/idempotency,
+daily caps and all A/B code/config. Existing local SQLite fixture records real
+cursor row counters plus project RPC counts against baseline main861b28b.
+Independent review, native gates and merge authorized. No Cloudflare mutation,
+live round, production, counter reset, issue closure, archive or worktree reset.
+Hub session: docs/sessions/20261017T030321Z-stateless-mcp-bakeoff/.
+
+## Previous execution records (historical, not current permission)
+
 Hub #358 — Founder removed the procedural one-journey-per-UTC-day wait on
 2026-10-18. Remove only that documentation constraint; retain 200 admitted
 HTTP/day, 2 project attempts/day, explicit additional-round approval, and no
