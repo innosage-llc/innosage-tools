@@ -45,4 +45,5 @@ identity or actual ChatGPT behavior is established by local source/tests. A live
 synthetic MCP staging run still requires exact per-run fixture/count/budget,
 cleanup and usage disclosure/approval. Founder staging acceptance and production
 promotion remain separate gates. The architecture child draft is local only:
-remote filing/submission awaits restoration of intended existing GitHub CLI auth.
+remote filing/submission resumes after actual existing CLI API and SSH access
+were verified on 2026-10-22; the earlier sandbox-only auth diagnosis was incorrect.

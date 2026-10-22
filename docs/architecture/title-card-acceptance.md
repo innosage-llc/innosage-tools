@@ -25,7 +25,7 @@ UI generation/repair receipt: `title-card-ui-receipt.json`.
 | AC07 privacy | Strict remote-command allowlist rejects title/path/media fields. Actual WASM fixture permits only same-origin GETs; no external requests or media uploads. |
 | AC08 constraints | Existing limits unchanged; intro + clips must be ≤300 seconds; over-limit renders rejected visibly. Existing cut/Undo/OAuth regression gates apply. |
 | AC09 local download | Controller returns actual encoded MP4 Blob through existing download path; gallery points to local editor. Browser download journey still needs staged host acceptance. |
-| AC10 exact main/staging | Unrun. No PR, merge, Pages or experimental Worker deploy. Required existing CLI authentication is invalid; no identity switch attempted. |
+| AC10 exact main/staging | Pending submission/integration and exact Pages/Worker candidate. At 2026-10-22 09:04:51 UTC, actual CLI API and SSH remote reads succeeded using existing configuration; the earlier sandbox-only authentication diagnosis was incorrect. No identity switch or credential change occurred. |
 | AC11 Founder packet | Three staged journeys below; stop for acceptance once exact candidate is available. |
 | AC12 production/closure | Unrun; distinct release gate. Master remains open. |
 
