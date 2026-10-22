@@ -540,7 +540,7 @@ export function renderCoverPicker(): string {
             name: 'CoverPickerView',
             version: '0.1.0'
           },
-          capabilities: {}
+          appCapabilities: {}
         }).then(function(result) {
           // Validate protocolVersion is expected
           var version = result && result.protocolVersion;

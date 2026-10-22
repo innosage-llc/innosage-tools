@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 // Keep Batch1's native D1 counters/fences in the existing canonical test command.
@@ -109,6 +110,21 @@ test('A title-card resource and apply reuse project fences, strict preset allowl
     const resource = (await f.rpc(t.access_token, 'resources/read', { uri: show._meta.ui.resourceUri })).data.result.contents[0];
     assert.equal(resource.mimeType, 'text/html;profile=mcp-app');
     for (const preset of ['midnight-black','clean-white','sage-mist','ocean-gradient','lavender','sunrise']) assert.ok(resource.text.includes(preset));
+    // Execute the actual served resource's startup, rather than checking a
+    // source spelling: host validation happens before any user interaction.
+    const posted: {method: string; params: Record<string, unknown>}[] = [];
+    const element = { addEventListener() {}, setAttribute() {} };
+    const script = resource.text.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+    assert.ok(script, 'served gallery contains its initialization script');
+    runInNewContext(script, {
+      window: { parent: { postMessage(message: unknown) { posted.push(JSON.parse(JSON.stringify(message))); } }, addEventListener() {} },
+      document: { readyState: 'complete', getElementById: () => element, querySelectorAll: () => [] },
+      setTimeout: () => 0, clearTimeout() {},
+    });
+    assert.equal(posted[0].method, 'ui/initialize');
+    assert.equal(posted[0].params.protocolVersion, '2026-01-26');
+    assert.deepEqual(posted[0].params.appCapabilities, {}, 'required MCP Apps capability object reaches the host');
+    assert.equal('capabilities' in posted[0].params, false, 'ordinary MCP capability alias is not the Apps field');
     const apply = (extra = {}) => f.rpc(t.access_token, 'tools/call', { name: 'applycoverpreset', arguments: { operationId: 'card', generation: 1, version: 1, presetId: 'sage-mist', ...extra } });
     assert.ok((await apply({ presetId: 'unknown' })).data.error || (await apply({ presetId: 'unknown' })).data.result?.isError);
     assert.ok((await apply({ title: 'NEVER_FORWARD.mp4' })).data.error || (await apply({ title: 'NEVER_FORWARD.mp4' })).data.result?.isError);
