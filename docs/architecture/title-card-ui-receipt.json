@@ -1,0 +1,24 @@
+{
+  "route": "Antigravity CLI",
+  "cliVersion": "1.4.4",
+  "cliSha256": "b89677b741d8d9d38cf0a6911ab468fac629158194039904cbfd645fdb897554",
+  "requestedModel": "gemini-3.8-flash-high",
+  "requestedEffort": "high",
+  "modelCatalogMatchChecked": true,
+  "providerModelAttestation": "not independently available; requested CLI route recorded without relabeling it as provider attestation",
+  "mode": "accept-edits",
+  "sandbox": true,
+  "disabledSlashCommands": true,
+  "outputFormat": "stream-json",
+  "printTimeout": 0,
+  "invocations": [
+    { "phase": "initial gallery", "status": "SUCCESS", "exitCode": 0, "promptSha256": "252fdf69a9d930265a10b3a1fa6a72db8db11d255bb0fa035b0a5ff1e17f3489", "completedFileTools": { "read_file": 33, "write_file": 1, "edit_file": 2 } },
+    { "phase": "focused reconnect/uncertainty repair", "status": "SUCCESS", "exitCode": 0, "promptSha256": "e830450af374902affb6f8ea61e2909a048affbb48f406e3de6249c991966afa", "completedFileTools": { "read_file": 7, "write_file": 1 } }
+  ],
+  "denialEvidence": "No denial or denied_actions entry observed in either structured stream; CLI result omits denied_actions rather than explicitly attesting an empty list.",
+  "rawLogs": "private task-owned /tmp/tools79-ui; excluded from Git",
+  "artifact": "workers/video-scissors-mcp/src/CoverPickerView.ts",
+  "artifactSha256": "aec5beba6ecfa7ddc874137d296414817b5ef8d823894ebfc06a9de3669a130c",
+  "offlineIframeCheck": "PASS: six cards, nonmutating selection, explicit apply, queued/completed, uncertain same-ID recovery, unsupported host disabled",
+  "realChatGptHostProof": "UNRUN: current authorized browser URL disallowed by Computer Use; no session or mechanism workaround"
+}

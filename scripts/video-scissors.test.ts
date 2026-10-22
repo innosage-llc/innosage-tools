@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { COVER_PRESETS, localCoverTitle } from '../lib/video-scissors-covers.ts';
 import {
   VIDEO_SCISSORS_LIMITS,
   VideoScissorsController,
@@ -60,6 +61,61 @@ function command(controller: VideoScissorsController, operationId: string) {
   const { sourceGeneration, version } = controller.getSnapshot();
   return { operationId, sourceGeneration, version };
 }
+
+test('title cards replace from the original source, preserve cuts and Undo restores exact prior output/preset', async () => {
+  const seen: { source: File; clips: VideoClip[]; preset: unknown }[] = [];
+  const h = harness({ render: async (source, clips, _signal, _progress, cover) => {
+    seen.push({ source, clips, preset: cover?.presetId }); return new Blob([`render-${seen.length}`]);
+  } });
+  const original = file('本周_Founder_Sync.mp4');
+  await select(h.controller, original);
+  h.controller.setSegments([{ start: 20, end: 22 }, { start: 3, end: 5 }]);
+  await h.controller.applyCoverPreset(command(h.controller, 'cover-one'), 'sage-mist');
+  const first = h.controller.createDownload()!.blob;
+  await h.controller.applyCoverPreset(command(h.controller, 'cover-two'), 'sunrise');
+  assert.equal(seen.length, 2);
+  for (const call of seen) { assert.equal(call.source, original); assert.deepEqual(call.clips, [{ start: 20, end: 22 }, { start: 3, end: 5 }]); }
+  assert.deepEqual(seen.map(call => call.preset), ['sage-mist', 'sunrise']);
+  assert.equal(h.controller.getSnapshot().coverPresetId, 'sunrise');
+  assert.equal(h.controller.undo(command(h.controller, 'undo-card')), true);
+  assert.equal(h.controller.createDownload()!.blob, first);
+  assert.equal(h.controller.getSnapshot().coverPresetId, 'sage-mist');
+  await h.controller.cut(command(h.controller, 'cut-after-undo'));
+  assert.equal(seen.at(-1)!.preset, 'sage-mist');
+  h.controller.dispose();
+});
+
+test('cover duration includes intro, unknown presets do not render, full-source fallback and cancel preserve last good', async () => {
+  const h = harness(); await select(h.controller);
+  await h.controller.applyCoverPreset(command(h.controller, 'too-long'), 'midnight-black');
+  assert.match(h.controller.getSnapshot().error!, /title card.*300/);
+  assert.equal(h.rendered.length, 0);
+  h.controller.setSegments([{ start: 0, end: 298.5 }]);
+  await h.controller.applyCoverPreset(command(h.controller, 'boundary'), 'midnight-black');
+  const good = h.controller.createDownload()!.blob;
+  await h.controller.applyCoverPreset(command(h.controller, 'unknown'), '../../bad');
+  assert.equal(h.controller.createDownload()!.blob, good);
+  const pending = deferred<Blob>();
+  const race = harness({ render: () => pending.promise }); await select(race.controller);
+  race.controller.setSegments([{ start: 0, end: 1 }]);
+  const task = race.controller.applyCoverPreset(command(race.controller, 'cancel-card'), 'lavender');
+  race.controller.cancel(); pending.resolve(new Blob(['late'])); await task;
+  assert.equal(race.controller.getSnapshot().hasOutput, false);
+  assert.equal(race.controller.getSnapshot().coverPresetId, null);
+  const short = harness({ inspect: async () => ({ ...metadata, duration: 10 }) });
+  await short.controller.selectSource(file());
+  await short.controller.applyCoverPreset(command(short.controller, 'full'), 'clean-white');
+  assert.deepEqual(short.rendered, [[{ start: 0, end: 10 }]]);
+  h.controller.dispose(); race.controller.dispose(); short.controller.dispose();
+});
+
+test('preset IDs are bounded and local titles strip paths, controls, extension and safely bound Unicode', () => {
+  assert.equal(COVER_PRESETS.length, 6);
+  assert.equal(new Set(COVER_PRESETS.map(preset => preset.id)).size, 6);
+  assert.equal(localCoverTitle('C:\\private\\本周_会议\u202e.mp4'), '本周 会议');
+  assert.equal(localCoverTitle('.mp4'), 'Meeting recap');
+  assert.equal(Array.from(localCoverTitle('会'.repeat(100) + '.mp4')).length, 81);
+});
 
 test('source size and metadata limits accept exact boundaries and reject overages', () => {
   validateSourceSize(VIDEO_SCISSORS_LIMITS.maxSourceBytes);

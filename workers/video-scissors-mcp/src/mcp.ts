@@ -2,11 +2,15 @@ import { McpServer } from '@modelcontextprotocol/server';
 import { createMcpHandler, getMcpAuthContext } from 'agents/mcp/server';
 import { z } from 'zod';
 import { Mailbox, type ProjectAuth } from './mailbox';
+import { COVER_PRESETS } from '../../../lib/video-scissors-covers';
+import { renderCoverPicker } from './CoverPickerView';
+
+export const COVER_PICKER_URI = 'ui://video-scissors/cover-presets.html';
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,96}$/);
 const version = { generation: z.number().int().nonnegative(), version: z.number().int().nonnegative() };
 const security = (_scope: string) => ({ securitySchemes: [{ type: 'oauth2', scopes: ['video:read','video:edit'] }] });
-export function mcpHandler(db: D1Database, props: Record<string, unknown>, origin: string, wake?: (auth: ProjectAuth) => Promise<void>) {
+export function mcpHandler(db: D1Database, props: Record<string, unknown>, origin: string, wake?: (auth: ProjectAuth) => Promise<void>, coverPicker = false) {
   // A new server per request, never isolate-local routing/session state.
   return createMcpHandler(() => {
     const server = new McpServer({ name: 'local-video-scissors', version: '0.1.0' });
@@ -48,6 +52,23 @@ export function mcpHandler(db: D1Database, props: Record<string, unknown>, origi
         if (requested) await wake?.(auth).catch(() => {});
         return { requested };
       }));
+    // Candidate A only. Keep B/D experiment surfaces unchanged.
+    if (coverPicker) {
+      server.registerResource('cover-presets', COVER_PICKER_URI, { mimeType: 'text/html;profile=mcp-app' },
+        async uri => ({ contents: [{ uri: uri.href, mimeType: 'text/html;profile=mcp-app', text: renderCoverPicker() }] }));
+      server.registerTool('showcoverpresets', { description: 'Show six sample title-card presets. Selection does not edit the video. Apply runs locally; download the completed MP4 in the local Video Scissors editor.',
+        inputSchema: z.object({}).strict(), annotations: { readOnlyHint: true },
+        _meta: { ...security('video:read'), ui: { resourceUri: COVER_PICKER_URI }, 'openai/outputTemplate': COVER_PICKER_URI } },
+        async (_input, context) => invoke('video:read', context.http?.authInfo?.scopes, auth => mailbox.project(auth)));
+      server.registerTool('applycoverpreset', { description: 'Apply the explicitly selected preset as a 1.5-second local title card, replacing any previous card. Queued is pending; check status until completed. Download stays in the local editor.',
+        inputSchema: z.object({ operationId: id, ...version, presetId: z.enum(COVER_PRESETS.map(preset => preset.id)) }).strict(),
+        _meta: { ...security('video:edit'), ui: { visibility: ['app'] } } },
+        async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
+          const row = await mailbox.admit(auth, { ...input, kind: 'cover' });
+          if (row?.state === 'queued') await wake?.(auth).catch(() => {});
+          return row ? { operationId: row.id, state: row.state } : { error: 'STALE_OR_REJECTED' };
+        }));
+    }
     return server;
   }, { route: '/mcp', authContext: { props }, responseMode: 'json' });
 }

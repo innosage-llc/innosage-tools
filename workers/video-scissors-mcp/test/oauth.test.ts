@@ -74,7 +74,7 @@ test('official provider + stateless MCP: discovery/PKCE/resource/issuer and proj
     assert.deepEqual(JSON.parse(snapshot.data.result.content[0].text).metadata,metadata);
     assert.doesNotMatch(a.html,/<img src=x/); assert.match(a.html,/&lt;img/); assert.match(a.html,/client\.example/);
     const listed = await f.rpc(t.access_token,'tools/list');
-    assert.equal(listed.r.status,200); assert.equal(listed.data.result.tools.length,5);
+    assert.equal(listed.r.status,200); assert.equal(listed.data.result.tools.length,7);
     for (const tool of listed.data.result.tools) {
       assert.deepEqual(tool._meta.securitySchemes,[{type:'oauth2',scopes:['video:read','video:edit']}]);
       assert.deepEqual(tool.securitySchemes,tool._meta.securitySchemes);
@@ -96,6 +96,32 @@ test('official provider + stateless MCP: discovery/PKCE/resource/issuer and proj
     assert.equal((await (await f.json('/remote/revoke',{auth:auth(p)})).json()).ok,true);
     const revoked = await f.rpc(t.access_token,'tools/call',{name:'getproject',arguments:{}});
     assert.equal(revoked.data.result.isError,true);
+  } finally { await f.mf.dispose(); }
+});
+
+test('A title-card resource and apply reuse project fences, strict preset allowlist and terminal ACK', async () => {
+  const f = await fixture();
+  try {
+    const { p, t } = await f.link();
+    const listed = (await f.rpc(t.access_token, 'tools/list')).data.result.tools;
+    const show = listed.find((tool: {name: string}) => tool.name === 'showcoverpresets');
+    assert.equal(show._meta.ui.resourceUri, 'ui://video-scissors/cover-presets.html');
+    const resource = (await f.rpc(t.access_token, 'resources/read', { uri: show._meta.ui.resourceUri })).data.result.contents[0];
+    assert.equal(resource.mimeType, 'text/html;profile=mcp-app');
+    for (const preset of ['midnight-black','clean-white','sage-mist','ocean-gradient','lavender','sunrise']) assert.ok(resource.text.includes(preset));
+    const apply = (extra = {}) => f.rpc(t.access_token, 'tools/call', { name: 'applycoverpreset', arguments: { operationId: 'card', generation: 1, version: 1, presetId: 'sage-mist', ...extra } });
+    assert.ok((await apply({ presetId: 'unknown' })).data.error || (await apply({ presetId: 'unknown' })).data.result?.isError);
+    assert.ok((await apply({ title: 'NEVER_FORWARD.mp4' })).data.error || (await apply({ title: 'NEVER_FORWARD.mp4' })).data.result?.isError);
+    const queued = await apply(); assert.equal(JSON.parse(queued.data.result.content[0].text).state, 'queued');
+    assert.equal(JSON.parse((await apply()).data.result.content[0].text).state, 'queued');
+    const claimed = await (await f.json('/remote/poll', { auth: auth(p), metadata })).json();
+    assert.equal(claimed.command.kind, 'cover'); assert.equal(claimed.command.presetId, 'sage-mist');
+    assert.deepEqual(Object.keys(claimed.command).sort(), ['operationId','generation','version','kind','presetId'].sort());
+    const complete = { ...metadata, version: 3, hasOutput: true, canUndo: true, latestOperationId: 'card' };
+    assert.equal((await (await f.json('/remote/report', { auth: auth(p), operationId: 'card', state: 'completed', metadata: complete })).json()).ok, true);
+    assert.equal(JSON.parse((await f.rpc(t.access_token, 'tools/call', { name: 'status', arguments: {operationId: 'card'} })).data.result.content[0].text).state, 'completed');
+    await f.json('/remote/revoke', {auth: auth(p)});
+    assert.equal((await apply()).data.result.isError, true);
   } finally { await f.mf.dispose(); }
 });
 
