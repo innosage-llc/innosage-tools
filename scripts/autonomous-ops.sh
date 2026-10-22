@@ -60,9 +60,9 @@ case "$COMMAND" in
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
     git push origin "$CURRENT_BRANCH"
     
-    PR_ARGS=()
+    PR_ARGS=(--title "$TITLE" --body "$BODY")
     if [[ "${PR_DRAFT:-false}" == "true" ]]; then PR_ARGS+=(--draft); fi
-    gh pr create "${PR_ARGS[@]}" --title "$TITLE" --body "$BODY"
+    gh pr create "${PR_ARGS[@]}"
     
     echo "✅ PR Created: run scripts/auto-merge-ci.sh after the local CI gate passes."
     ;;
