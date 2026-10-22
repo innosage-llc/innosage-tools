@@ -1,3 +1,5 @@
+import { isCoverPresetId, TITLE_CARD_SECONDS, type CoverPresetId } from './video-scissors-covers.ts';
+
 export const VIDEO_SCISSORS_LIMITS = {
   maxSourceBytes: 100_000_000,
   maxDurationSeconds: 300,
@@ -25,6 +27,17 @@ export function videoScissorsFilter(clips: VideoClip[]): string {
   });
   parts.push(`${clips.map((_, index) => `[v${index}][a${index}]`).join('')}concat=n=${clips.length}:v=1:a=1[outv][outa]`);
   return parts.join(';');
+}
+
+export function videoScissorsCoverFilter(clips: VideoClip[], width: number, height: number): string {
+  const footage = videoScissorsFilter(clips).replace('[outv][outa]', '[footv][foota]');
+  return [footage,
+    `[1:v]trim=duration=${TITLE_CARD_SECONDS},setpts=PTS-STARTPTS,setsar=1,format=yuv420p[cardv]`,
+    `anullsrc=r=48000:cl=stereo,atrim=duration=${TITLE_CARD_SECONDS},asetpts=PTS-STARTPTS[carda]`,
+    `[footv]scale=${width}:${height},setsar=1,fps=30,format=yuv420p[video]`,
+    '[foota]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[audio]',
+    '[cardv][carda][video][audio]concat=n=2:v=1:a=1[outv][outa]',
+  ].join(';');
 }
 
 export interface VideoMetadata {
@@ -92,6 +105,7 @@ export interface VideoScissorsSnapshot {
   error: string | null;
   canUndo: boolean;
   hasOutput: boolean;
+  coverPresetId: CoverPresetId | null;
 }
 
 export interface VideoScissorsCommand {
@@ -107,6 +121,7 @@ export interface VideoScissorsRenderer {
     clips: VideoClip[],
     signal: AbortSignal,
     onProgress: (progress: number) => void,
+    cover?: { presetId: CoverPresetId; metadata: VideoMetadata },
   ): Promise<Blob>;
 }
 
@@ -169,6 +184,7 @@ interface StableView {
   segments: VideoClip[];
   previewUrl: string | null;
   outputBlob: Blob | null;
+  coverPresetId: CoverPresetId | null;
 }
 
 interface ActiveOperation {
@@ -204,6 +220,7 @@ export class VideoScissorsController {
     error: null,
     canUndo: false,
     hasOutput: false,
+    coverPresetId: null,
   };
   private source: File | null = null;
   private metadata: VideoMetadata | null = null;
@@ -256,6 +273,7 @@ export class VideoScissorsController {
       error: null,
       canUndo: false,
       hasOutput: false,
+      coverPresetId: null,
     };
     this.publish();
     const abort = new AbortController();
@@ -275,28 +293,45 @@ export class VideoScissorsController {
   }
 
   cut(command: VideoScissorsCommand): Promise<void> {
+    return this.renderPlan(command, this.snapshot.segments, this.snapshot.coverPresetId);
+  }
+
+  applyCoverPreset(command: VideoScissorsCommand, presetId: unknown): Promise<void> {
+    if (!isCoverPresetId(presetId)) return Promise.resolve();
+    // Always render from the original source, never prepend to a rendered output.
+    const clips = this.snapshot.segments.length ? this.snapshot.segments : [{ start: 0, end: this.snapshot.duration }];
+    return this.renderPlan(command, clips, presetId);
+  }
+
+  private renderPlan(command: VideoScissorsCommand, plan: VideoClip[], presetId: CoverPresetId | null): Promise<void> {
     const existing = this.commandResults.get(command.operationId) as Promise<void> | undefined;
     if (existing) return existing;
     if (this.acceptedIds.has(command.operationId)) return Promise.resolve();
     if (!this.isCurrent(command) || !this.source || !this.metadata || this.snapshot.busy) return Promise.resolve();
-    if (!this.validateCutPlan(this.snapshot.segments)) return Promise.resolve();
+    if (!this.validateCutPlan(plan, presetId)) return Promise.resolve();
     const source = this.source;
     this.acceptedIds.add(command.operationId);
     const generation = this.snapshot.sourceGeneration;
-    const clips = this.snapshot.segments.map((clip) => ({ ...clip }));
-    const before: StableView = { segments: this.latestCompletedPlan.map((clip) => ({ ...clip })), previewUrl: this.snapshot.previewUrl, outputBlob: this.outputBlob };
+    const clips = plan.map((clip) => ({ ...clip }));
+    const before: StableView = { segments: this.latestCompletedPlan.map((clip) => ({ ...clip })), previewUrl: this.snapshot.previewUrl, outputBlob: this.outputBlob, coverPresetId: this.snapshot.coverPresetId };
     const abort = new AbortController();
     this.active = { id: command.operationId, kind: 'cut', sourceGeneration: generation, abort };
     this.operationStatuses.set(command.operationId, 'running');
     this.snapshot = { ...this.snapshot, version: this.snapshot.version + 1, busy: true, progress: 0, status: 'Preparing local video…', error: null };
     this.publish();
-    const task = this.renderCut(command.operationId, generation, source, clips, before, abort);
+    const task = this.renderCut(command.operationId, generation, source, clips, before, abort, presetId);
     this.rememberCommand(command.operationId, task);
     return task;
   }
 
-  validateCutPlan(clips: VideoClip[]): boolean {
-    try { validateVideoClips(clips, this.snapshot.duration); return true; }
+  validateCutPlan(clips: VideoClip[], presetId = this.snapshot.coverPresetId): boolean {
+    try {
+      validateVideoClips(clips, this.snapshot.duration);
+      if (presetId && clips.reduce((total, clip) => total + clip.end - clip.start, TITLE_CARD_SECONDS) > VIDEO_SCISSORS_LIMITS.maxOutputSeconds) {
+        throw new Error('The title card and clips together cannot exceed 300 seconds. Shorten the clip plan.');
+      }
+      return true;
+    }
     catch (error) { this.setError(error instanceof Error ? error.message : 'The clip plan is invalid.'); return false; }
   }
 
@@ -324,6 +359,7 @@ export class VideoScissorsController {
       version: this.snapshot.version + 1,
       segments: latest.segments.map((clip) => ({ ...clip })),
       previewUrl: latest.previewUrl,
+      coverPresetId: latest.coverPresetId,
       canUndo: false,
       hasOutput: this.outputBlob !== null,
       status: 'Previous completed edit restored.',
@@ -383,13 +419,13 @@ export class VideoScissorsController {
     }
   }
 
-  private async renderCut(id: string, generation: number, source: File, clips: VideoClip[], before: StableView, abort: AbortController): Promise<void> {
+  private async renderCut(id: string, generation: number, source: File, clips: VideoClip[], before: StableView, abort: AbortController, presetId: CoverPresetId | null): Promise<void> {
     try {
       const output = await this.renderer.render(source, clips, abort.signal, (progress) => {
         if (!this.isActive(id, generation) || !Number.isFinite(progress)) return;
         this.snapshot = { ...this.snapshot, progress: Math.max(0, Math.min(99, Math.round(progress))) };
         this.publish();
-      });
+      }, presetId ? { presetId, metadata: this.metadata! } : undefined);
       if (!this.isActive(id, generation) || abort.signal.aborted) {
         if (this.operationStatuses.get(id) === 'running') this.operationStatuses.set(id, 'stale');
         return;
@@ -404,7 +440,7 @@ export class VideoScissorsController {
       this.latestCompletedPlan = clips.map((clip) => ({ ...clip }));
       this.active = null;
       this.operationStatuses.set(id, 'completed');
-      this.snapshot = { ...this.snapshot, version: this.snapshot.version + 1, previewUrl: url, hasOutput: true, busy: false, progress: 100, status: 'Cut complete. Your original video is unchanged.', error: null, canUndo: true };
+      this.snapshot = { ...this.snapshot, version: this.snapshot.version + 1, segments: clips, coverPresetId: presetId, previewUrl: url, hasOutput: true, busy: false, progress: 100, status: presetId ? 'Title card complete. Download your MP4 below.' : 'Cut complete. Your original video is unchanged.', error: null, canUndo: true };
       this.publish();
     } catch (error) {
       if (!this.isActive(id, generation)) {

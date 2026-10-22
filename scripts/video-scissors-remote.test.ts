@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { VideoScissorsController, type VideoScissorsRenderer } from '../lib/video-scissors.ts';
-import { VideoScissorsRemoteAdapter, type RemoteCommand, type RemoteTransport } from '../lib/video-scissors-remote.ts';
+import { VideoScissorsRemoteAdapter, parseRemoteCommand, type RemoteCommand, type RemoteTransport } from '../lib/video-scissors-remote.ts';
 import { VideoScissorsRemoteBrowser } from '../lib/video-scissors-remote-browser.ts';
 
 async function fixture(render?: VideoScissorsRenderer['render']) {
@@ -23,6 +23,23 @@ async function fixture(render?: VideoScissorsRenderer['render']) {
   return { adapter, controller, transport, cmd, count: () => count, reports: () => reports,
     enqueue: (c: RemoteCommand) => { incoming = c; }, cancel: () => { cancel = true; } };
 }
+
+test('preset command is allowlisted, private data is rejected and duplicate delivery computes once', async () => {
+  const f = await fixture();
+  const command = { operationId: 'cover', generation: f.adapter.metadata().generation, version: f.adapter.metadata().version, kind: 'cover', presetId: 'ocean-gradient' };
+  assert.throws(() => parseRemoteCommand({ ...command, presetId: 'unknown' }));
+  for (const key of ['fileName','title','path','media','frame','blob']) assert.throws(() => parseRemoteCommand({ ...command, [key]: 'PRIVATE' }));
+  const first = f.adapter.execute(command);
+  assert.equal(f.adapter.execute(command), first);
+  assert.equal((await first).status, 'completed'); assert.equal(f.count(), 1);
+  assert.equal(f.controller.getSnapshot().coverPresetId, 'ocean-gradient');
+  assert.doesNotMatch(JSON.stringify(f.adapter.metadata()), /private-name|ocean-gradient|fileName|title/);
+  await assert.rejects(f.adapter.execute({ ...command, presetId: 'sunrise' }), /ID_CONFLICT/);
+  assert.equal((await f.adapter.localUndo('undo-cover')).status, 'completed');
+  assert.equal(f.controller.getSnapshot().coverPresetId, null);
+  assert.equal(f.controller.getSnapshot().hasOutput, false);
+  await f.adapter.dispose(); f.controller.dispose();
+});
 
 class TestWebSocket extends EventTarget {
   static readonly CONNECTING = 0;

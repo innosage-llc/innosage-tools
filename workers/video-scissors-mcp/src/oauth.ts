@@ -20,7 +20,7 @@ export function providerFor(env: Env, origin: string, bridge?: BridgeNamespace) 
       const verified = ctx as ExecutionContext & OAuthResourceContext<Record<string, unknown>>;
       if (!verified.auth?.clientId || !verified.props || typeof verified.props !== 'object') return reply({ error: 'AUTH_CONTEXT' }, 401);
       if (!scopes.every(scope => verified.auth.scope.includes(scope))) return insufficientScope(verified.auth, scopes);
-      const handler = mcpHandler(currentEnv.DB, verified.props, origin, auth => wake(auth.project, auth.epoch));
+      const handler = mcpHandler(currentEnv.DB, verified.props, origin, auth => wake(auth.project, auth.epoch), !bridge);
       const rpc = request.method === 'POST' ? await request.clone().json<{method?: string}>() : null;
       const response = await handler.fetch(request, { authInfo: { token: verified.auth.token,
         clientId: verified.auth.clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt,

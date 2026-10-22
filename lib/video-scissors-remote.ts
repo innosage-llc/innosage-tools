@@ -1,4 +1,5 @@
 import { VideoScissorsController, validateVideoClips, type VideoClip, type OperationStatus } from './video-scissors.ts';
+import { isCoverPresetId, type CoverPresetId } from './video-scissors-covers.ts';
 
 export type RemoteMetadata = {
   duration: number; generation: number; version: number; hasOutput: boolean;
@@ -6,7 +7,7 @@ export type RemoteMetadata = {
 };
 export type RemoteCommand = {
   operationId: string; generation: number; version: number;
-} & ({ kind: 'cut'; clips: VideoClip[] } | { kind: 'undo'; targetOperationId: string });
+} & ({ kind: 'cut'; clips: VideoClip[] } | { kind: 'undo'; targetOperationId: string } | { kind: 'cover'; presetId: CoverPresetId });
 export type RemoteResult = { status: OperationStatus; metadata: RemoteMetadata };
 export interface RemoteTransport {
   // Credential stays inside this controller-lifetime transport closure, never URL/storage.
@@ -20,7 +21,7 @@ export interface RemoteTransport {
 export function parseRemoteCommand(value: unknown): RemoteCommand {
   if (!value || typeof value !== 'object') throw new Error('COMMAND');
   const v = value as Record<string, unknown>;
-  const keys = ['operationId', 'generation', 'version', 'kind', v.kind === 'cut' ? 'clips' : 'targetOperationId'];
+  const keys = ['operationId', 'generation', 'version', 'kind', v.kind === 'cut' ? 'clips' : v.kind === 'cover' ? 'presetId' : 'targetOperationId'];
   if (Object.keys(v).some(k => !keys.includes(k)) || typeof v.operationId !== 'string' ||
     !/^[a-zA-Z0-9_-]{1,96}$/.test(v.operationId) || !Number.isSafeInteger(v.generation) ||
     Number(v.generation) < 0 || !Number.isSafeInteger(v.version) || Number(v.version) < 0) throw new Error('COMMAND');
@@ -30,6 +31,10 @@ export function parseRemoteCommand(value: unknown): RemoteCommand {
     const clips: VideoClip[] = v.clips.map(c => ({ start: c.start, end: c.end }));
     validateVideoClips(clips, 300);
     return { operationId: v.operationId, generation: Number(v.generation), version: Number(v.version), kind: 'cut', clips };
+  }
+  if (v.kind === 'cover') {
+    if (!isCoverPresetId(v.presetId)) throw new Error('COMMAND');
+    return { operationId: v.operationId, generation: Number(v.generation), version: Number(v.version), kind: 'cover', presetId: v.presetId };
   }
   if (v.kind !== 'undo' || typeof v.targetOperationId !== 'string' || !/^[a-zA-Z0-9_-]{1,96}$/.test(v.targetOperationId)) throw new Error('COMMAND');
   return { operationId: v.operationId, generation: Number(v.generation), version: Number(v.version), kind: 'undo', targetOperationId: v.targetOperationId };
@@ -124,9 +129,13 @@ export class VideoScissorsRemoteAdapter {
       this.latest = c.operationId;
       return Promise.resolve(result('completed'));
     }
-    try { validateVideoClips(c.clips, before.duration); } catch { return Promise.resolve(result('failed')); }
-    if (!this.controller.setSegments(c.clips, c.generation)) return Promise.resolve(result('stale'));
-    const task = this.controller.cut({ operationId: c.operationId, sourceGeneration: c.generation, version: this.controller.getSnapshot().version });
+    if (c.kind === 'cut') {
+      try { validateVideoClips(c.clips, before.duration); } catch { return Promise.resolve(result('failed')); }
+      if (!this.controller.setSegments(c.clips, c.generation)) return Promise.resolve(result('stale'));
+    }
+    const command = { operationId: c.operationId, sourceGeneration: c.generation, version: this.controller.getSnapshot().version };
+    const task = c.kind === 'cover' ? this.controller.applyCoverPreset(command, c.presetId) : this.controller.cut(command);
+    if (this.controller.getSnapshot().error) return Promise.resolve(result('failed'));
     if (this.controller.getOperationStatus(c.operationId) !== 'running') return Promise.resolve(result('stale'));
     this.active = c.operationId;
     return task.then(() => {
