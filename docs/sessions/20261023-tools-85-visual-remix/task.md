@@ -1,10 +1,12 @@
-# Tools #85 — local motion ready for independent review
+# Tools #85 — version preparation ready for independent review
 
 - #86 ADR passed independent architecture review and merged via PR #90.
 - Core PR #91 merged as c02e2b00e6bab11886357adf43b09983a53afcde after independent
   review and native/GitHub gates. Editor PR #92 merged as
   adae10d1de135df52daf6d5bacee638dd6af00b9 after repair and independent rereview.
-  Current bounded increment adds local motion; actual vision reconstruction and
+  Motion PR #94 merged as 49d11a949716e5d50076a9201be9bfe6e6f0e381 after
+  independent review and native gates. Current bounded increment prepares version
+  0.1.6 for immutable static staging; actual vision reconstruction and
   live ChatGPT/MCP acceptance remain unproven.
 - User-assigned Astra MEDIUM executor / Astra HIGH lead override default V1/UI
   implementation routing only. Independent Sol HIGH review remains mandatory.
@@ -124,7 +126,7 @@
   route regression (77 requests, zero external), whitespace and license export parity.
   Exact-source rereview subsequently passed; lead ran native gate and merged #92.
 
-## Local motion increment — frozen for independent review
+## Local motion increment — integrated through PR #94
 
 - Native start created `codex/tools-87-visual-remix-motion` from clean main
   `adae10d1de135df52daf6d5bacee638dd6af00b9`.
@@ -151,4 +153,25 @@
 - Artifact/receipt: `.deploy/visual-remix-motion/`. Requested/routed Astra MEDIUM;
   provider-observed identity/effort/usage/cost UNKNOWN. No original vision acceptance,
   live MCP, staging, commit/push/PR or production action. Independent review and
-  native full submit gate remain pending with lead.
+  native full submit gate subsequently passed before lead integration as #94.
+
+## Version and staged vision harness preparation — frozen for review
+
+- Native start `codex/tools-85-version-016` pulled fresh main to 326d7e6; unrelated
+  BYOS remediation changes are preserved. Version changed with required
+  `npm version patch --no-git-tag-version`: 0.1.5 → 0.1.6. Only package version and
+  both root lockfile version fields changed; dependency graph remains identical.
+- Ignored operator-stepped UI driver prepared under `.deploy/visual-remix-vision/`.
+  It restricts network to exact immutable static origin, GET/HEAD without bodies,
+  blocks service workers/WebSockets/MCP/OAuth/API paths, and never injects Scene
+  or application/controller state. Apply and whole-file asset approval require
+  explicit operator authorization. Proposals, downloaded artifacts, timestamps,
+  hashes and redacted request metadata stay local and untracked.
+- Local smoke only: driver opened current static build, read status, downloaded
+  empty-project brief and closed successfully. No original/reference selected,
+  no proposal/reconstruction, no staged URL visit or upload. Remaining driver
+  actions are prepared from exercised app UI controls but not yet final acceptance.
+- Final first-vision/reuse/long-CJK/synthetic and same-original-Scene MP4 proof must
+  execute the immutable staged candidate after reviewed version integration.
+  Independent version review and native submit gate pending; no commit/push,
+  deployment, Worker/OAuth/MCP/network integration or acceptance claim here.
