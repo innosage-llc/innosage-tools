@@ -1,0 +1,16 @@
+{
+  "action": "lossless evidence packaging only; not a hypothesis or rerun",
+  "originalName": "foundation-tests.txt",
+  "originalBytes": 3135,
+  "originalSha256": "a3348fcb606d583fed833c0654ff53da105f3326f9977d270d3831802dae8b17",
+  "containerName": "foundation-tests.txt.gz",
+  "containerBytes": 950,
+  "containerSha256": "37e46f4242c6b6895596e283bee3a7bc2d0a17322fb2ec56c27d1ac23df30bc3",
+  "encoding": "gzip",
+  "gzipMtime": 0,
+  "gzipOriginalFilename": "",
+  "compressionLevel": 9,
+  "decompressedBytesVerifiedEqual": true,
+  "reason": "Preserve exact console bytes while avoiding trailing-whitespace checks on raw text evidence",
+  "verifyCommand": "gzip -dc spikes/byos-remediation/evidence/foundation-tests.txt.gz | shasum -a 256"
+}

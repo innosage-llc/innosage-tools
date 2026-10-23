@@ -1,0 +1,436 @@
+{
+  "scenario": "independent local immutable stores / full conflict bodies / reopen / integrity",
+  "acks": [
+    {
+      "state": "local-saved",
+      "acknowledged": [
+        {
+          "revisionId": "edit-A",
+          "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831"
+        }
+      ]
+    },
+    {
+      "state": "local-saved",
+      "acknowledged": [
+        {
+          "revisionId": "edit-B",
+          "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8"
+        }
+      ]
+    }
+  ],
+  "afterReopen": [
+    {
+      "revisions": [
+        {
+          "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+          "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+          "incarnation": "initial",
+          "kind": "put",
+          "metadata": {
+            "title": "page",
+            "updatedAt": 0
+          },
+          "pageId": "page",
+          "parent": null,
+          "parents": [
+            "root"
+          ],
+          "revisionId": "edit-A",
+          "supersedes": []
+        },
+        {
+          "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+          "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+          "incarnation": "initial",
+          "kind": "put",
+          "metadata": {
+            "title": "page",
+            "updatedAt": 0
+          },
+          "pageId": "page",
+          "parent": null,
+          "parents": [
+            "root"
+          ],
+          "revisionId": "edit-B",
+          "supersedes": []
+        },
+        {
+          "body": "Original complete body",
+          "hash": "c380c93182d5d1873a40440a129ca01f22342fc309a1445e45462682babe5792",
+          "incarnation": "initial",
+          "kind": "put",
+          "metadata": {
+            "title": "page",
+            "updatedAt": 0
+          },
+          "pageId": "page",
+          "parent": null,
+          "parents": [],
+          "revisionId": "root",
+          "supersedes": []
+        }
+      ],
+      "state": {
+        "local": "conflict",
+        "localError": null,
+        "remote": "pending",
+        "pending": [
+          "edit-A",
+          "edit-B",
+          "root"
+        ],
+        "receipt": null,
+        "projection": [
+          {
+            "pageId": "page",
+            "revisions": [
+              {
+                "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+                "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-A",
+                "supersedes": []
+              },
+              {
+                "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+                "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-B",
+                "supersedes": []
+              },
+              {
+                "body": "Original complete body",
+                "hash": "c380c93182d5d1873a40440a129ca01f22342fc309a1445e45462682babe5792",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [],
+                "revisionId": "root",
+                "supersedes": []
+              }
+            ],
+            "incarnations": {
+              "initial": {
+                "heads": [
+                  {
+                    "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+                    "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+                    "incarnation": "initial",
+                    "kind": "put",
+                    "metadata": {
+                      "title": "page",
+                      "updatedAt": 0
+                    },
+                    "pageId": "page",
+                    "parent": null,
+                    "parents": [
+                      "root"
+                    ],
+                    "revisionId": "edit-A",
+                    "supersedes": []
+                  },
+                  {
+                    "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+                    "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+                    "incarnation": "initial",
+                    "kind": "put",
+                    "metadata": {
+                      "title": "page",
+                      "updatedAt": 0
+                    },
+                    "pageId": "page",
+                    "parent": null,
+                    "parents": [
+                      "root"
+                    ],
+                    "revisionId": "edit-B",
+                    "supersedes": []
+                  }
+                ],
+                "superseded": false
+              }
+            },
+            "incomplete": false,
+            "active": [
+              "initial"
+            ],
+            "heads": [
+              {
+                "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+                "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-A",
+                "supersedes": []
+              },
+              {
+                "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+                "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-B",
+                "supersedes": []
+              }
+            ],
+            "conflict": true,
+            "deleted": false,
+            "suppressed": false
+          }
+        ]
+      }
+    },
+    {
+      "revisions": [
+        {
+          "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+          "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+          "incarnation": "initial",
+          "kind": "put",
+          "metadata": {
+            "title": "page",
+            "updatedAt": 0
+          },
+          "pageId": "page",
+          "parent": null,
+          "parents": [
+            "root"
+          ],
+          "revisionId": "edit-A",
+          "supersedes": []
+        },
+        {
+          "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+          "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+          "incarnation": "initial",
+          "kind": "put",
+          "metadata": {
+            "title": "page",
+            "updatedAt": 0
+          },
+          "pageId": "page",
+          "parent": null,
+          "parents": [
+            "root"
+          ],
+          "revisionId": "edit-B",
+          "supersedes": []
+        },
+        {
+          "body": "Original complete body",
+          "hash": "c380c93182d5d1873a40440a129ca01f22342fc309a1445e45462682babe5792",
+          "incarnation": "initial",
+          "kind": "put",
+          "metadata": {
+            "title": "page",
+            "updatedAt": 0
+          },
+          "pageId": "page",
+          "parent": null,
+          "parents": [],
+          "revisionId": "root",
+          "supersedes": []
+        }
+      ],
+      "state": {
+        "local": "conflict",
+        "localError": null,
+        "remote": "pending",
+        "pending": [
+          "edit-A",
+          "edit-B",
+          "root"
+        ],
+        "receipt": null,
+        "projection": [
+          {
+            "pageId": "page",
+            "revisions": [
+              {
+                "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+                "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-A",
+                "supersedes": []
+              },
+              {
+                "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+                "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-B",
+                "supersedes": []
+              },
+              {
+                "body": "Original complete body",
+                "hash": "c380c93182d5d1873a40440a129ca01f22342fc309a1445e45462682babe5792",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [],
+                "revisionId": "root",
+                "supersedes": []
+              }
+            ],
+            "incarnations": {
+              "initial": {
+                "heads": [
+                  {
+                    "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+                    "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+                    "incarnation": "initial",
+                    "kind": "put",
+                    "metadata": {
+                      "title": "page",
+                      "updatedAt": 0
+                    },
+                    "pageId": "page",
+                    "parent": null,
+                    "parents": [
+                      "root"
+                    ],
+                    "revisionId": "edit-A",
+                    "supersedes": []
+                  },
+                  {
+                    "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+                    "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+                    "incarnation": "initial",
+                    "kind": "put",
+                    "metadata": {
+                      "title": "page",
+                      "updatedAt": 0
+                    },
+                    "pageId": "page",
+                    "parent": null,
+                    "parents": [
+                      "root"
+                    ],
+                    "revisionId": "edit-B",
+                    "supersedes": []
+                  }
+                ],
+                "superseded": false
+              }
+            },
+            "incomplete": false,
+            "active": [
+              "initial"
+            ],
+            "heads": [
+              {
+                "body": "Complete acknowledged body from A\nUnique second paragraph A.",
+                "hash": "e4cbffe091b34c9dcaa76d09ddac2c7c2e7eb041b4d84f82498e2df833f6a831",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-A",
+                "supersedes": []
+              },
+              {
+                "body": "Complete acknowledged body from B\nUnique second paragraph B.",
+                "hash": "3608d03138c26a5fa131a272e03d8698787374c6bbb4a310af5925356de430f8",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "page",
+                  "updatedAt": 0
+                },
+                "pageId": "page",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "edit-B",
+                "supersedes": []
+              }
+            ],
+            "conflict": true,
+            "deleted": false,
+            "suppressed": false
+          }
+        ]
+      }
+    }
+  ],
+  "sameIdMismatch": "REJECTED",
+  "idempotentCount": 3,
+  "resolutionRetainsOriginalBodies": true
+}

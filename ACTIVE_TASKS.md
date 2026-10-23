@@ -1,3 +1,18 @@
+# Active task: Tools #84 offline remediation
+
+Master: https://github.com/innosage-llc/innosage-tools/issues/84
+
+| Role | Explicit model / effort | Ownership | State |
+| --- | --- | --- | --- |
+| Lead | gpt-6-astra / high | Scope, integration, local native gates and acceptance | Active |
+| Principal | gpt-6-astra / ultra | Separate read-only source/fixture unblock investigation | Complete; advice recorded |
+| Implementation | gpt-6-astra / high | New remediation code and experiment ledger | Foundation frozen: A1–A3 PASS; awaiting review |
+| Independent reviewer | gpt-6-astra / high | Separate read-only exact-head review | Pending exact-head foundation review |
+
+New Founder authorization supersedes baseline role/scope defaults only for this phase. Baseline study and measured artifacts remain preserved. No V2 activation; no live provider/OAuth/cloud execution or deployment. Provider-observed identity/effort/usage remains UNKNOWN where unavailable. At most two agents active; principal advice is not acceptance review. Current session: docs/sessions/20261023-byos-remediation.
+
+## Historical baseline routing and earlier records (not current assignments)
+
 # Active task: BYOS sync spike #84
 
 Master: https://github.com/innosage-llc/innosage-tools/issues/84

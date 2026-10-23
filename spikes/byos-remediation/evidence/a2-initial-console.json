@@ -1,0 +1,3296 @@
+[
+  {
+    "provider": "drive",
+    "customTransport": true,
+    "racingResults": [
+      {
+        "outcome": "verified",
+        "attempts": 1,
+        "trace": [
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "status": 200,
+            "etag": "\"2\"",
+            "ifMatch": null
+          },
+          {
+            "method": "PATCH",
+            "endpoint": "http://127.0.0.1:64956/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+            "status": 200,
+            "etag": "\"3\"",
+            "ifMatch": "\"2\""
+          },
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "status": 200,
+            "etag": "\"3\"",
+            "ifMatch": null
+          }
+        ],
+        "status": {
+          "local": "local-saved",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"3\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "drive:http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "verifiedAt": "2026-10-23T10:06:46.706Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                }
+              ],
+              "conflict": false,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        },
+        "elapsedMs": 13.51354200000003
+      },
+      {
+        "outcome": "verified",
+        "attempts": 2,
+        "trace": [
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "status": 200,
+            "etag": "\"2\"",
+            "ifMatch": null
+          },
+          {
+            "method": "PATCH",
+            "endpoint": "http://127.0.0.1:64956/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+            "status": 412,
+            "etag": null,
+            "ifMatch": "\"2\""
+          },
+          {
+            "boundary": "CAS-reload",
+            "attempt": 1
+          },
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "status": 200,
+            "etag": "\"3\"",
+            "ifMatch": null
+          },
+          {
+            "method": "PATCH",
+            "endpoint": "http://127.0.0.1:64956/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+            "status": 200,
+            "etag": "\"4\"",
+            "ifMatch": "\"3\""
+          },
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "status": 200,
+            "etag": "\"4\"",
+            "ifMatch": null
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "drive:http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "verifiedAt": "2026-10-23T10:06:46.712Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        },
+        "elapsedMs": 19.070791999999983
+      }
+    ],
+    "sameGetVersionBarrier": [
+      {
+        "etag": "\"2\"",
+        "revisions": [
+          "root-0"
+        ]
+      },
+      {
+        "etag": "\"2\"",
+        "revisions": [
+          "root-0"
+        ]
+      }
+    ],
+    "reopenedAndCold": [
+      {
+        "records": [
+          {
+            "body": "Whole offline body a\nMust survive CAS and restart.",
+            "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-a",
+            "supersedes": []
+          },
+          {
+            "body": "Whole offline body b\nMust survive CAS and restart.",
+            "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-b",
+            "supersedes": []
+          },
+          {
+            "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+            "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [],
+            "revisionId": "root-0",
+            "supersedes": []
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "drive:http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "verifiedAt": "2026-10-23T10:06:46.716Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        }
+      },
+      {
+        "records": [
+          {
+            "body": "Whole offline body a\nMust survive CAS and restart.",
+            "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-a",
+            "supersedes": []
+          },
+          {
+            "body": "Whole offline body b\nMust survive CAS and restart.",
+            "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-b",
+            "supersedes": []
+          },
+          {
+            "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+            "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [],
+            "revisionId": "root-0",
+            "supersedes": []
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "drive:http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "verifiedAt": "2026-10-23T10:06:46.722Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        }
+      },
+      {
+        "records": [
+          {
+            "body": "Whole offline body a\nMust survive CAS and restart.",
+            "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-a",
+            "supersedes": []
+          },
+          {
+            "body": "Whole offline body b\nMust survive CAS and restart.",
+            "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-b",
+            "supersedes": []
+          },
+          {
+            "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+            "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [],
+            "revisionId": "root-0",
+            "supersedes": []
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "drive:http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "verifiedAt": "2026-10-23T10:06:46.751Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        }
+      }
+    ],
+    "heldNetwork": {
+      "ack": {
+        "state": "local-saved",
+        "acknowledged": [
+          {
+            "revisionId": "during-held",
+            "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d"
+          }
+        ]
+      },
+      "ackElapsedMs": 0.5869999999999891,
+      "syncCompletedAtAck": false,
+      "barrier": {
+        "method": "PATCH",
+        "kind": "hold-before-write",
+        "bodyContains": "held-remote",
+        "used": true,
+        "matched": {
+          "file_id": "byos-remediation-v1",
+          "file_name": "byos-remediation-v1.json",
+          "method": "PATCH",
+          "path": "/upload/drive/v3/files/byos-remediation-v1",
+          "operation": "payload-update",
+          "version_before": 4,
+          "mutation_applied": false,
+          "response_delivered": false,
+          "request_body_bytes": 1470
+        }
+      },
+      "failedSync": {
+        "outcome": "verification-unknown",
+        "attempts": 1,
+        "trace": [
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "status": 200,
+            "etag": "\"4\"",
+            "ifMatch": null
+          },
+          {
+            "attempt": 1,
+            "error": "The operation was aborted due to timeout",
+            "state": "verification-unknown"
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verification-unknown",
+          "pending": [
+            "during-held",
+            "held-remote"
+          ],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "drive:http://127.0.0.1:64956/drive/v3/files/byos-remediation-v1?alt=media",
+            "verifiedAt": "2026-10-23T10:06:46.716Z"
+          },
+          "projection": [
+            {
+              "pageId": "held-page",
+              "revisions": [
+                {
+                  "body": "Locally saved while remote request is held",
+                  "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "held-page",
+                    "updatedAt": 0
+                  },
+                  "pageId": "held-page",
+                  "parent": null,
+                  "parents": [
+                    "held-remote"
+                  ],
+                  "revisionId": "during-held",
+                  "supersedes": []
+                },
+                {
+                  "body": "First held remote revision",
+                  "hash": "7e9c75ca2801170439eef8072d43f08a22a479bff4a6dc9799eb2a9a5ba7846e",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "held-page",
+                    "updatedAt": 0
+                  },
+                  "pageId": "held-page",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "held-remote",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Locally saved while remote request is held",
+                      "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "held-page",
+                        "updatedAt": 0
+                      },
+                      "pageId": "held-page",
+                      "parent": null,
+                      "parents": [
+                        "held-remote"
+                      ],
+                      "revisionId": "during-held",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Locally saved while remote request is held",
+                  "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "held-page",
+                    "updatedAt": 0
+                  },
+                  "pageId": "held-page",
+                  "parent": null,
+                  "parents": [
+                    "held-remote"
+                  ],
+                  "revisionId": "during-held",
+                  "supersedes": []
+                }
+              ],
+              "conflict": false,
+              "deleted": false,
+              "suppressed": false
+            },
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        },
+        "elapsedMs": 705.61925
+      }
+    },
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 61,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 1,
+        "duration_ms": 2.030499999999961
+      },
+      {
+        "method": "PATCH",
+        "path": "/upload/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "uploadType": "media"
+        },
+        "bytes_up": 565,
+        "bytes_down": 381,
+        "status": 200,
+        "if_match": "\"1\"",
+        "completion_order": 2,
+        "duration_ms": 1.5766250000000355
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 3,
+        "duration_ms": 1.3923330000000078
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 4,
+        "duration_ms": 1.394457999999986
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 5,
+        "duration_ms": 1.5339579999999842
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 6,
+        "duration_ms": 1.446708000000001
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 7,
+        "duration_ms": 1.5497909999999706
+      },
+      {
+        "method": "PATCH",
+        "path": "/upload/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "uploadType": "media"
+        },
+        "bytes_up": 874,
+        "bytes_down": 381,
+        "status": 200,
+        "if_match": "\"2\"",
+        "completion_order": 8,
+        "duration_ms": 1.7017090000000508
+      },
+      {
+        "method": "PATCH",
+        "path": "/upload/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "uploadType": "media"
+        },
+        "bytes_up": 874,
+        "bytes_down": 0,
+        "status": 412,
+        "if_match": "\"2\"",
+        "completion_order": 9,
+        "duration_ms": 1.59616699999998
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 874,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 10,
+        "duration_ms": 1.4922920000000204
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 874,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 11,
+        "duration_ms": 1.4925830000000246
+      },
+      {
+        "method": "PATCH",
+        "path": "/upload/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "uploadType": "media"
+        },
+        "bytes_up": 1183,
+        "bytes_down": 383,
+        "status": 200,
+        "if_match": "\"3\"",
+        "completion_order": 12,
+        "duration_ms": 1.4415420000000267
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 13,
+        "duration_ms": 1.3736660000000143
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 14,
+        "duration_ms": 0.07212499999997135
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 15,
+        "duration_ms": 1.3292090000000485
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 16,
+        "duration_ms": 1.4043330000000083
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 17,
+        "duration_ms": 1.3956249999999955
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 18,
+        "duration_ms": 1.3612919999999917
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 19,
+        "duration_ms": 1.333500000000015
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 20,
+        "duration_ms": 1.3900830000000042
+      },
+      {
+        "method": "PATCH",
+        "path": "/upload/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "uploadType": "media"
+        },
+        "bytes_up": 1470,
+        "bytes_down": 0,
+        "status": "NO_RESPONSE",
+        "if_match": "\"4\""
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 21,
+        "duration_ms": 1.3769170000000486
+      },
+      {
+        "method": "PATCH",
+        "path": "/upload/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "uploadType": "media"
+        },
+        "bytes_up": 1786,
+        "bytes_down": 383,
+        "status": 200,
+        "if_match": "\"4\"",
+        "completion_order": 22,
+        "duration_ms": 1.3632090000000971
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1786,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 23,
+        "duration_ms": 1.3306669999999485
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1786,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 24,
+        "duration_ms": 1.3898750000000746
+      },
+      {
+        "method": "GET",
+        "path": "/drive/v3/files/byos-remediation-v1",
+        "query": {
+          "alt": "media"
+        },
+        "bytes_up": 0,
+        "bytes_down": 1786,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 25,
+        "duration_ms": 1.3668339999999262
+      }
+    ]
+  },
+  {
+    "provider": "webdav",
+    "customTransport": true,
+    "racingResults": [
+      {
+        "outcome": "verified",
+        "attempts": 1,
+        "trace": [
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 200,
+            "etag": "\"2\"",
+            "ifMatch": null
+          },
+          {
+            "method": "PUT",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 204,
+            "etag": "\"3\"",
+            "ifMatch": "\"2\""
+          },
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 200,
+            "etag": "\"3\"",
+            "ifMatch": null
+          }
+        ],
+        "status": {
+          "local": "local-saved",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"3\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "webdav:http://127.0.0.1:64964/dav/backup.zip",
+            "verifiedAt": "2026-10-23T10:06:47.527Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                }
+              ],
+              "conflict": false,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        },
+        "elapsedMs": 6.359124999999949
+      },
+      {
+        "outcome": "verified",
+        "attempts": 2,
+        "trace": [
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 200,
+            "etag": "\"2\"",
+            "ifMatch": null
+          },
+          {
+            "method": "PUT",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 412,
+            "etag": null,
+            "ifMatch": "\"2\""
+          },
+          {
+            "boundary": "CAS-reload",
+            "attempt": 1
+          },
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 200,
+            "etag": "\"3\"",
+            "ifMatch": null
+          },
+          {
+            "method": "PUT",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 204,
+            "etag": "\"4\"",
+            "ifMatch": "\"3\""
+          },
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 200,
+            "etag": "\"4\"",
+            "ifMatch": null
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "webdav:http://127.0.0.1:64964/dav/backup.zip",
+            "verifiedAt": "2026-10-23T10:06:47.532Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        },
+        "elapsedMs": 11.16145900000015
+      }
+    ],
+    "sameGetVersionBarrier": [
+      {
+        "etag": "\"2\"",
+        "revisions": [
+          "root-0"
+        ]
+      },
+      {
+        "etag": "\"2\"",
+        "revisions": [
+          "root-0"
+        ]
+      }
+    ],
+    "reopenedAndCold": [
+      {
+        "records": [
+          {
+            "body": "Whole offline body a\nMust survive CAS and restart.",
+            "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-a",
+            "supersedes": []
+          },
+          {
+            "body": "Whole offline body b\nMust survive CAS and restart.",
+            "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-b",
+            "supersedes": []
+          },
+          {
+            "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+            "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [],
+            "revisionId": "root-0",
+            "supersedes": []
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "webdav:http://127.0.0.1:64964/dav/backup.zip",
+            "verifiedAt": "2026-10-23T10:06:47.537Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        }
+      },
+      {
+        "records": [
+          {
+            "body": "Whole offline body a\nMust survive CAS and restart.",
+            "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-a",
+            "supersedes": []
+          },
+          {
+            "body": "Whole offline body b\nMust survive CAS and restart.",
+            "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-b",
+            "supersedes": []
+          },
+          {
+            "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+            "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [],
+            "revisionId": "root-0",
+            "supersedes": []
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "webdav:http://127.0.0.1:64964/dav/backup.zip",
+            "verifiedAt": "2026-10-23T10:06:47.542Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        }
+      },
+      {
+        "records": [
+          {
+            "body": "Whole offline body a\nMust survive CAS and restart.",
+            "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-a",
+            "supersedes": []
+          },
+          {
+            "body": "Whole offline body b\nMust survive CAS and restart.",
+            "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [
+              "root-0"
+            ],
+            "revisionId": "race-b",
+            "supersedes": []
+          },
+          {
+            "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+            "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+            "incarnation": "initial",
+            "kind": "put",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 0
+            },
+            "pageId": "page-0",
+            "parent": null,
+            "parents": [],
+            "revisionId": "root-0",
+            "supersedes": []
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verified-revision-set",
+          "pending": [],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "webdav:http://127.0.0.1:64964/dav/backup.zip",
+            "verifiedAt": "2026-10-23T10:06:47.568Z"
+          },
+          "projection": [
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        }
+      }
+    ],
+    "heldNetwork": {
+      "ack": {
+        "state": "local-saved",
+        "acknowledged": [
+          {
+            "revisionId": "during-held",
+            "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d"
+          }
+        ]
+      },
+      "ackElapsedMs": 0.5272500000000946,
+      "syncCompletedAtAck": false,
+      "barrier": {
+        "method": "PUT",
+        "kind": "hold-before-write",
+        "bodyContains": "held-remote",
+        "used": true,
+        "matched": {
+          "file_id": "dav",
+          "file_name": "byos-remediation-v1.json",
+          "method": "PUT",
+          "path": "/dav/backup.zip",
+          "operation": "payload-update",
+          "version_before": 4,
+          "mutation_applied": false,
+          "response_delivered": false,
+          "request_body_bytes": 1470
+        }
+      },
+      "failedSync": {
+        "outcome": "verification-unknown",
+        "attempts": 1,
+        "trace": [
+          {
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:64964/dav/backup.zip",
+            "status": 200,
+            "etag": "\"4\"",
+            "ifMatch": null
+          },
+          {
+            "attempt": 1,
+            "error": "The operation was aborted due to timeout",
+            "state": "verification-unknown"
+          }
+        ],
+        "status": {
+          "local": "conflict",
+          "localError": null,
+          "remote": "verification-unknown",
+          "pending": [
+            "during-held",
+            "held-remote"
+          ],
+          "receipt": {
+            "remoteVersion": "\"4\"",
+            "revisions": [
+              {
+                "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                "revisionId": "race-a"
+              },
+              {
+                "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                "revisionId": "race-b"
+              },
+              {
+                "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                "revisionId": "root-0"
+              }
+            ],
+            "scope": "These exact revision IDs and hashes were present in this GET at this time/version; not global completeness or future presence.",
+            "target": "webdav:http://127.0.0.1:64964/dav/backup.zip",
+            "verifiedAt": "2026-10-23T10:06:47.537Z"
+          },
+          "projection": [
+            {
+              "pageId": "held-page",
+              "revisions": [
+                {
+                  "body": "Locally saved while remote request is held",
+                  "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "held-page",
+                    "updatedAt": 0
+                  },
+                  "pageId": "held-page",
+                  "parent": null,
+                  "parents": [
+                    "held-remote"
+                  ],
+                  "revisionId": "during-held",
+                  "supersedes": []
+                },
+                {
+                  "body": "First held remote revision",
+                  "hash": "7e9c75ca2801170439eef8072d43f08a22a479bff4a6dc9799eb2a9a5ba7846e",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "held-page",
+                    "updatedAt": 0
+                  },
+                  "pageId": "held-page",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "held-remote",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Locally saved while remote request is held",
+                      "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "held-page",
+                        "updatedAt": 0
+                      },
+                      "pageId": "held-page",
+                      "parent": null,
+                      "parents": [
+                        "held-remote"
+                      ],
+                      "revisionId": "during-held",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Locally saved while remote request is held",
+                  "hash": "9b35e32c52712a36161665cf38147275312a707f4cb6e7deedc2a66c24aaf62d",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "held-page",
+                    "updatedAt": 0
+                  },
+                  "pageId": "held-page",
+                  "parent": null,
+                  "parents": [
+                    "held-remote"
+                  ],
+                  "revisionId": "during-held",
+                  "supersedes": []
+                }
+              ],
+              "conflict": false,
+              "deleted": false,
+              "suppressed": false
+            },
+            {
+              "pageId": "page-0",
+              "revisions": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                },
+                {
+                  "body": "Complete synthetic page 0\nfixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. fixture paragraph. ",
+                  "hash": "4c1902e7d57af9ce4901b631ac3894f7cf0bdb8d50f2331ef0b12228276ab995",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [],
+                  "revisionId": "root-0",
+                  "supersedes": []
+                }
+              ],
+              "incarnations": {
+                "initial": {
+                  "heads": [
+                    {
+                      "body": "Whole offline body a\nMust survive CAS and restart.",
+                      "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-a",
+                      "supersedes": []
+                    },
+                    {
+                      "body": "Whole offline body b\nMust survive CAS and restart.",
+                      "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                      "incarnation": "initial",
+                      "kind": "put",
+                      "metadata": {
+                        "title": "page-0",
+                        "updatedAt": 0
+                      },
+                      "pageId": "page-0",
+                      "parent": null,
+                      "parents": [
+                        "root-0"
+                      ],
+                      "revisionId": "race-b",
+                      "supersedes": []
+                    }
+                  ],
+                  "superseded": false
+                }
+              },
+              "incomplete": false,
+              "active": [
+                "initial"
+              ],
+              "heads": [
+                {
+                  "body": "Whole offline body a\nMust survive CAS and restart.",
+                  "hash": "3d05063ef2495435d30603a37a6fe92394a1df242127a89d745cb54bb88b72c7",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-a",
+                  "supersedes": []
+                },
+                {
+                  "body": "Whole offline body b\nMust survive CAS and restart.",
+                  "hash": "e58070f77add77ed19884cc9a4c293fde3a953620a7a5c472fde1d4763817e2f",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "page-0",
+                    "updatedAt": 0
+                  },
+                  "pageId": "page-0",
+                  "parent": null,
+                  "parents": [
+                    "root-0"
+                  ],
+                  "revisionId": "race-b",
+                  "supersedes": []
+                }
+              ],
+              "conflict": true,
+              "deleted": false,
+              "suppressed": false
+            }
+          ]
+        },
+        "elapsedMs": 705.6228330000001
+      }
+    },
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 61,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 1,
+        "duration_ms": 1.3669999999999618
+      },
+      {
+        "method": "PUT",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 565,
+        "bytes_down": 0,
+        "status": 204,
+        "if_match": "\"1\"",
+        "completion_order": 2,
+        "duration_ms": 1.3379580000000715
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 3,
+        "duration_ms": 1.314834000000019
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 4,
+        "duration_ms": 1.3424999999999727
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 5,
+        "duration_ms": 1.3074589999998807
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 6,
+        "duration_ms": 1.474666999999954
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 565,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 7,
+        "duration_ms": 1.4552499999999782
+      },
+      {
+        "method": "PUT",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 874,
+        "bytes_down": 0,
+        "status": 204,
+        "if_match": "\"2\"",
+        "completion_order": 8,
+        "duration_ms": 0.5270419999999376
+      },
+      {
+        "method": "PUT",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 874,
+        "bytes_down": 0,
+        "status": 412,
+        "if_match": "\"2\"",
+        "completion_order": 9,
+        "duration_ms": 0.7941249999998945
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 874,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 10,
+        "duration_ms": 0.11620799999991505
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 874,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 11,
+        "duration_ms": 0.6401670000000195
+      },
+      {
+        "method": "PUT",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 1183,
+        "bytes_down": 0,
+        "status": 204,
+        "if_match": "\"3\"",
+        "completion_order": 12,
+        "duration_ms": 1.33075000000008
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 13,
+        "duration_ms": 1.312750000000051
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 14,
+        "duration_ms": 1.3208329999999933
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 15,
+        "duration_ms": 1.3279589999999644
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 16,
+        "duration_ms": 1.4680839999998625
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 17,
+        "duration_ms": 0.8061669999999594
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 18,
+        "duration_ms": 1.3669580000000678
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 19,
+        "duration_ms": 1.4149580000000697
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 20,
+        "duration_ms": 1.3801250000001346
+      },
+      {
+        "method": "PUT",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 1470,
+        "bytes_down": 0,
+        "status": "NO_RESPONSE",
+        "if_match": "\"4\""
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1183,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 21,
+        "duration_ms": 1.4087079999999332
+      },
+      {
+        "method": "PUT",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 1786,
+        "bytes_down": 0,
+        "status": 204,
+        "if_match": "\"4\"",
+        "completion_order": 22,
+        "duration_ms": 1.3690000000001419
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1786,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 23,
+        "duration_ms": 1.3147500000000036
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1786,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 24,
+        "duration_ms": 1.3387920000000122
+      },
+      {
+        "method": "GET",
+        "path": "/dav/backup.zip",
+        "query": {},
+        "bytes_up": 0,
+        "bytes_down": 1786,
+        "status": 200,
+        "if_match": null,
+        "completion_order": 25,
+        "duration_ms": 1.4344579999999496
+      }
+    ]
+  }
+]
