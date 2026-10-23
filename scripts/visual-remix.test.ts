@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { emptyScene, parseScene, importProject, importProposal, REMIX_LIMITS, type Scene, type Proposal } from '../lib/visual-remix.ts';
 import { LocalAssets, rasterHeader, loadPortableProject, savePortableProject } from '../lib/visual-remix-assets.ts';
 import { VisualRemixController, type RenderedScene } from '../lib/visual-remix-controller.ts';
+import { agentBrief, proposalSchema } from '../lib/visual-remix-agent.ts';
 
 function scene(): Scene {
   return { ...emptyScene(), nodes: [{ id: 'title', type: 'text', x: 80, y: 80, width: 900, height: 150, rotation: 0, opacity: 1, text: 'Hello 世界', font: 'sans', fontSize: 60, fontWeight: 'bold', lineHeight: 1.3, align: 'left', wrap: 'word', fill: '#111111' }] };
@@ -15,6 +16,19 @@ const signal = () => new AbortController().signal;
 function pngHeader(width = 2, height = 2): Uint8Array<ArrayBuffer> {
   const data = new Uint8Array(32); data.set([137,80,78,71,13,10,26,10]); const v = new DataView(data.buffer); v.setUint32(8,13); data.set([73,72,68,82],12); v.setUint32(16,width); v.setUint32(20,height); return data;
 }
+
+test('downloadable agent handoff includes exact current authority and descriptors, never local bytes or paths', () => {
+  const context = {projectId:'p',generation:'fresh-local-generation',revision:9,scene:scene(),reference:'PRIVATE_REFERENCE_BYTES',token:'PRIVATE_CREDENTIAL'};
+  const assets = [{id:'approved',mime:'image/png' as const,width:2,height:2,data:'PRIVATE_ASSET_BYTES',url:'blob:private'}];
+  const output = agentBrief(context,assets,'Replace copy and give the quote more space.');
+  const brief = JSON.parse(output);
+  assert.deepEqual(brief.proposalIdentity,{schemaVersion:1,projectId:'p',generation:'fresh-local-generation',baseRevision:9});
+  assert.deepEqual(brief.approvedAssets,[{id:'approved',mime:'image/png',width:2,height:2}]);
+  assert.deepEqual(brief.currentScene,scene());
+  assert.deepEqual(brief.proposalSchema,proposalSchema);
+  assert.doesNotMatch(output,/PRIVATE_|blob:private/);
+  assert.match(brief.instructions.join(' '),/actually inspect/);
+});
 
 test('strict schema rejects executable, unknown, inherited, invalid geometry and reference data', () => {
   const valid = scene(); assert.deepEqual(parseScene(valid), valid);
@@ -55,6 +69,7 @@ test('portable assets survive save/reload; header, MIME and decoded size must ag
   const store = new LocalAssets(); const decode = async () => ({width:2,height:2,close(){}});
   const a = await store.add('crop',new Blob([pngHeader()]),signal(),decode);
   const s = scene(); s.assets = [a];
+  s.nodes.push({id:"image",type:"image",x:0,y:0,width:100,height:100,rotation:0,opacity:1,assetId:a.id,crop:{x:0,y:0,width:1,height:2}});
   const text = await savePortableProject('p',4,s,store);
   const loaded = await loadPortableProject(text,signal(),decode);
   assert.deepEqual(loaded.project.scene,s); assert.deepEqual(await loaded.assets.blob(a).arrayBuffer(),await store.blob(a).arrayBuffer());
@@ -136,4 +151,18 @@ test('revoke while opening rejects late load and preserves last committed scene 
   assert.equal(c.snapshot().revision, before.revision);
   assert.deepEqual(c.snapshot().scene, before.scene);
   assert.equal(await c.exportPNG().text(), png);
+});
+
+
+test('portable export drops valid unused descriptors without touching approved store or input scene', async () => {
+  const store = new LocalAssets();
+  const descriptor = await store.add('unused', new Blob([pngHeader()]), signal(), async () => ({width:2,height:2,close(){}}));
+  const candidate = parseScene({...scene(), assets:[descriptor]});
+  const before = JSON.stringify(candidate);
+  const exported = importProject(await savePortableProject('p',3,candidate,store));
+  assert.deepEqual(exported.scene.assets, []);
+  assert.deepEqual(exported.assets, []);
+  assert.equal(JSON.stringify(candidate), before);
+  assert.deepEqual(store.descriptors(), [descriptor]);
+  assert.equal((await store.blob(descriptor).arrayBuffer()).byteLength, pngHeader().length);
 });

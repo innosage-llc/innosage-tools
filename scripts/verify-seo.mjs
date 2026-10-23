@@ -51,8 +51,13 @@ assert.ok(
 );
 assert.equal(collectionPage.url, canonicalUrl);
 assert.equal(collectionPage.mainEntity?.["@type"], "ItemList");
-assert.equal(collectionPage.mainEntity?.numberOfItems, 8);
-assert.equal(collectionPage.mainEntity?.itemListElement?.length, 8);
+assert.equal(collectionPage.mainEntity?.numberOfItems, 9);
+assert.equal(collectionPage.mainEntity?.itemListElement?.length, 9);
+assert.ok(
+  collectionPage.mainEntity.itemListElement.some(
+    (entry) => entry.item.url === `${canonicalUrl}/visual-remix`,
+  ),
+);
 
 assert.ok(faqPage, "The /tools page must publish FAQPage JSON-LD.");
 assert.equal(faqPage.url, canonicalUrl);
@@ -70,7 +75,7 @@ assert.equal(
 );
 assert.equal(
   html.match(/<h3(?:\s|>)/g)?.length,
-  8,
+  9,
   "Each listed tool must use an H3 heading under the collection section.",
 );
 
@@ -86,3 +91,12 @@ assert.match(
 );
 
 console.log("SEO contract verified for out/index.html");
+const remix = await readFile(resolve("out/visual-remix.html"), "utf8");
+assert.match(
+  remix,
+  /<link rel="canonical" href="https:\/\/innosage.co\/tools\/visual-remix"/,
+);
+assert.match(remix, /<title>Visual Remix/);
+assert.equal(remix.match(/<h1(?:\s|>)/g)?.length, 1);
+assert.match(html, /href="\/tools\/visual-remix"/);
+console.log("Visual Remix discovery and canonical verified.");

@@ -14,7 +14,7 @@ const canonicalUrl = "https://innosage.co/tools";
 const pageTitle = "Free Browser Developer Tools | InnoSage";
 const pageDescription =
   "Use free, open-source browser tools for QR codes, Markdown to PDF, audio, images, recordings, and video. Fast, private utilities from InnoSage.";
-const lastReviewed = "August 9, 2026";
+const lastReviewed = "October 23, 2026";
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -50,6 +50,12 @@ export const metadata: Metadata = {
 };
 
 const tools = [
+  {
+    name: "Visual Remix",
+    path: "/visual-remix",
+    description:
+      "Rebuild a reference image with your chosen agent, edit its scene, and export reusable projects and PNGs locally.",
+  },
   {
     name: "URL to QR Code",
     path: "/url-to-qrcode",
@@ -118,7 +124,7 @@ const faqs = [
   {
     question: "Which tasks can InnoSage DevTools handle?",
     answer:
-      "The collection covers QR codes, Markdown-to-PDF conversion, audio splitting, image joining, SVG conversion, recording, meeting repair, and video-to-GIF conversion.",
+      "The collection covers editable image remakes with Visual Remix, QR codes, Markdown-to-PDF conversion, audio splitting, image joining, SVG conversion, recording, meeting repair, and video-to-GIF conversion.",
   },
 ] as const;
 
@@ -237,6 +243,24 @@ export default function ToolsIndexPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Link href="/visual-remix" className="group">
+            <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Maximize2 className="text-orange-600" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 mb-2">
+                Visual Remix
+              </h3>
+              <p className="text-zinc-500 mb-6 flex-1">
+                Keep the design, change the story. Use your chosen vision agent
+                to rebuild an image, review editable proposals, and save
+                reusable projects and PNGs locally.
+              </p>
+              <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
+                Launch Tool <ArrowRight size={16} className="ml-2" />
+              </div>
+            </div>
+          </Link>
           {/* Tool Card: URL to QR Code */}
           <Link href="/url-to-qrcode" className="group">
             <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">

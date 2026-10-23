@@ -15,6 +15,7 @@
     "test:recorder": "node --experimental-strip-types --test scripts/recorder.test.ts",
     "test:visual-remix": "node --experimental-strip-types --test scripts/visual-remix.test.ts",
     "test:visual-remix-render": "node --test scripts/visual-remix-render.test.mjs",
+    "test:visual-remix-editor": "node --test scripts/visual-remix-editor.test.mjs",
     "test:meeting-fixer": "node --experimental-strip-types --test scripts/meeting-fixer-progress.test.ts",
     "test:video-scissors": "node --experimental-strip-types --test scripts/video-scissors.test.ts",
     "test:video-scissors-remote": "node --experimental-strip-types --test scripts/video-scissors-remote.test.ts",
