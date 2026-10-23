@@ -183,3 +183,12 @@
 - Static staging run39942121566 checks PASS; deploy job FAILED before upload at Next TypeScript: shared Worker UI types could not resolve its nested OAuth dependency. No deployment/success tag was created.
 - Root cause: the checks gate installs isolated Worker dependencies, but the separate staging job installed root only. Added the same locked, ignore-scripts nested install to staging and documented standalone local build prerequisite. No scopes, credentials, Worker runtime, version or production behavior changed.
 - Evidence is the actual failed clean GitHub staging build; next verification is native required gates and repaired clean staging job. Independent read-only review pending.
+
+## Offline Scene bridge preparation (#88, canonical lead-owned)
+
+- Added an unrouted browser-side adapter over the real Scene controller: explicit field consent, finite project/generation lease, descriptor-only get, proposal/status/cancel, no Apply/export/network/OAuth capability.
+- Reuses controller payload identity and revision fences; caps payloads at12KiB UTF-8 without altering existing16KiB HTTP limits. Actual wire-envelope verification and purpose-specific authentication remain future host work, not claimed by this adapter.
+- Targeted seven-case synthetic controller tests PASS initially; final unused-asset privacy fixture extended before freeze. TypeScript/scoped ESLint PASS on initial snapshot. Native full gate and independent security review pending.
+- Corrected static deployment ccb6f7e/v0.1.6 is verified at immutable Pages URL, receipt/tree/config/online identity PASS. Original image drove a14-layer staged Scene preview; one orphan-punctuation iteration fixed at unchanged39px.
+- Staged original Apply/download was denied by automatic approval review as lacking separate Apply approval after the Agent's preview-only instruction. Known unexecuted; read-only DOM confirms revision0 with candidate available. Explicit narrow user approval pending; no retry/workaround. Real Apply/PNG/reuse/motion journey remains NOT RUN.
+- Independent Sol review VR-BRIDGE-1 found consent could straddle a pending same-ID import. Lead repair exposes loading, rejects transitional shares and rotates authority again on successful commit. A held-render regression checks old, transitional and fresh settled consent; affected checks and exact rereview follow.

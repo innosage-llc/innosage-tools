@@ -24,7 +24,7 @@ export class VisualRemixController {
   constructor(renderer: SceneRenderer) { this.renderer = renderer; }
   snapshot() {
     const preview = this.previewId ? this.receipts.get(this.previewId) : undefined;
-    return copy({ projectId: this.projectId, generation: this.generation, revision: this.revision, scene: this.current?.scene ?? null, output: this.current?.render ?? null, canUndo: !!this.previous,
+    return copy({ projectId: this.projectId, generation: this.generation, revision: this.revision, loading: this.loading !== null, scene: this.current?.scene ?? null, output: this.current?.render ?? null, canUndo: !!this.previous,
       preview: preview?.status === 'preview' ? { requestId: preview.proposal.requestId, scene: preview.proposal.scene, explanation: preview.proposal.explanation, output: preview.render! } : null });
   }
   status(requestId: string): ProposalStatus | null { return this.receipts.get(requestId)?.status ?? null; }
@@ -45,6 +45,8 @@ export class VisualRemixController {
       const render = await this.renderer(copy(scene), assets, abort.signal);
       abort.signal.throwIfAborted();
       if (this.loading !== abort) throw new Error('STALE_RENDER');
+      // A transitional snapshot cannot grant authority over the committed import.
+      this.generation = crypto.randomUUID();
       this.projectId = projectId; this.revision = revision; this.assets = assets;
       this.current = { scene, render: copy(render) }; this.previous = null; this.receipts = new Map();
     } finally { if (this.loading === abort) this.loading = null; }
