@@ -34,7 +34,7 @@ export async function boundedSceneRpc(request: Request, run: (request: Request) 
   const text = await boundedBody(request), rpc = JSON.parse(text);
   if (!rpc || typeof rpc !== 'object' || Array.isArray(rpc) || rpc.jsonrpc !== '2.0' ||
     !['initialize','notifications/initialized','ping','tools/list','tools/call'].includes(rpc.method) ||
-    (rpc.id !== undefined && !(typeof rpc.id === 'string' && rpc.id.length <= 96) && !(typeof rpc.id === 'number' && Number.isSafeInteger(rpc.id))) ||
+    (rpc.id !== undefined && !(typeof rpc.id === 'string' && /^[a-zA-Z0-9_-]{1,96}$/.test(rpc.id)) && !(typeof rpc.id === 'number' && Number.isSafeInteger(rpc.id))) ||
     (rpc.method === 'tools/call' && rpc.id === undefined)) return reply({ error: 'SCENE_RPC' }, 400);
   const response = await run(new Request(request, { body: text }));
   if (!response.body) return response;

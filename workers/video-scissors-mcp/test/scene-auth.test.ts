@@ -70,6 +70,8 @@ test('inactive candidate: real provider consent/PKCE, exact audiences/scopes and
     const pending = await (await f.json('/scene/browser/poll',{auth:p.auth})).json(); assert.deepEqual(pending.cancellations,['one']);
     const before = await f.db.prepare('SELECT count(*) AS n FROM scene_requests').first('n');
     assert.equal((await f.rpc(t.access_token,'tools/call',{name:'propose_scene',arguments:{proposal:{...proposal,requestId:'too-long-id'}}},'/scene/mcp','x'.repeat(97))).r.status,400);
+    for (const id of ['\u0000'.repeat(96), '\"'.repeat(96), '']) assert.equal((await f.rpc(t.access_token,'tools/call',{name:'propose_scene',arguments:{proposal:{...proposal,requestId:'escaped-id'}}},'/scene/mcp',id)).r.status,400);
+    for (const id of ['safe_'.repeat(19)+'x', Number.MAX_SAFE_INTEGER]) assert.equal((await f.rpc(t.access_token,'tools/list',{},'/scene/mcp',id)).r.status,200);
     assert.equal((await f.rpc(t.access_token,'tools/call',{name:'export_png',arguments:{}})).data.error.code,-32602);
     assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_requests').first('n'),before);
     assert.equal((await f.json('/scene/browser/sync',{auth:{...p.auth,credential:'f'.repeat(64)},snapshot:snapshot()})).status,401);

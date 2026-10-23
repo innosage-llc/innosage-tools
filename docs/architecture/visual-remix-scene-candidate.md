@@ -93,7 +93,7 @@ video-only.
 
 Four actual SDK tools read/propose/status/cancel only. No Apply/export RPC exists.
 Scene POST bodies and complete finite JSON/SSE-fallback responses are bounded;
-ids are checked before admission. The resource challenge is available to an
+ids are checked before admission (safe integer or 1–96 ASCII letters/digits/underscore/hyphen). The resource challenge is available to an
 unauthorized host; authenticated GET is 405, not an indefinite event stream.
 Browser endpoints require same-origin JSON, exact fields and owner credentials.
 Only an explicitly confirmed creation uploads descriptor data. The browser adapter

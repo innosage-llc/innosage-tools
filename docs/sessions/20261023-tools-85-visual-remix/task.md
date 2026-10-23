@@ -224,3 +224,11 @@ scenarios PASS, including simulated pre-resource video compatibility and same-us
 resource isolation. One ordinary async-catch repair plus empty-401 fixture parser
 repair retained. No live MCP traffic or activation. Independent review/native gate
 pending. UI browser transport remains a subsequent slice.
+
+
+Independent Sol auth review initially PASS at9a329b8. Supplemental lead-raised
+escaped-ID estimate mismatch confirmed P3 read availability only, not mutation
+ACK loss. Repair uses safe-ASCII1–96 string ids (safe integers retained) matching
+pre-admission envelope reserve; real SDK regressions reject escaped/empty ids
+without request admission and retain96ASCII/safe-integer positive cases. Exact
+repair checks/rereview follow before merge.
