@@ -1,0 +1,148 @@
+{
+  "development_runs": [
+    {
+      "file": "first-selfstore.json",
+      "attempt_count": 1,
+      "status_counts": {
+        "FAIL": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "fixed.json",
+      "attempt_count": 45,
+      "status_counts": {
+        "ERROR": 1,
+        "FAIL": 9,
+        "PASS": 34,
+        "TIMEOUT": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "results.json",
+      "attempt_count": 351,
+      "status_counts": {
+        "BLOCKED": 2,
+        "ERROR": 1,
+        "FAIL": 159,
+        "PASS": 189
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "rxdb-integration.json",
+      "attempt_count": 1,
+      "status_counts": {},
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "rxdb-unknown-success.json",
+      "attempt_count": 1,
+      "status_counts": {
+        "PASS": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "extra.json",
+      "attempt_count": 20,
+      "status_counts": {
+        "PASS": 20
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "first-rxdb.json",
+      "attempt_count": 1,
+      "status_counts": {
+        "FAIL": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "browser-smoke.json",
+      "attempt_count": 3,
+      "status_counts": {
+        "FAIL": 1,
+        "PASS": 2
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    }
+  ],
+  "harness_defects_corrected": [
+    "RxDB Node ESM import incompatibility handled by unchanged published CommonJS entry",
+    "Multipart boundary quoting parsed",
+    "Worker IPC receipt delivery awaited",
+    "Equal-time unpropagated edits separated from silent loss",
+    "Mock Date aligned to modifiedTime; developmental unknown-success timeout INVALID as engine evidence",
+    "WebDAV reopen uses native persisted target instead of reconnect probing offline",
+    "CORS rejection counted as expected defensive outcome"
+  ],
+  "note": "Development probes and gate runs are documented here; only subsequently source-bound final results support decision claims.",
+  "review_round0": {
+    "classification": "HISTORICAL; superseded after REQUEST_CHANGES; RxDB faults hit lease not payload, browser local-only crash; no remote-ACK proof",
+    "artifacts": {
+      "results.json": {
+        "sha256": "7011dc93f5304dbe49c855dbe200f8a4b2483ba0df17d76ff7a036f90cc20e75",
+        "source_digest": "ce83977b8ad792a5ae697d458d4d394f62fb305b67ddda7a51df01dbf2da8a26",
+        "attempts": 354
+      },
+      "extra.json": {
+        "sha256": "4c3daca52c43f3bf21d7a4606892f40bbf8d682d19497e08ddfd89555382e922",
+        "source_digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+        "attempts": 20
+      },
+      "browser-smoke.json": {
+        "sha256": "5c2604b8eae8b4e79ba096329b804647518b7e22489ab27f350cd088c65e3f62",
+        "source_digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+        "attempts": 3
+      },
+      "fixture-check.json": {
+        "sha256": "abf64ff20d8aa164f30b3b9048d0666a0e3c10d0e81ce1a85dcae26f984618a1",
+        "source_digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+        "attempts": 6
+      },
+      "provenance.json": {
+        "sha256": "46e25a004b81b1803eeeb2df3db3f26bd9752df222769df0bfe0388bb2a67436",
+        "source_digest": null,
+        "attempts": 0
+      }
+    }
+  },
+  "repair_round1_development": {
+    "classification": "NON_ACCEPTANCE exploratory attempts before final source freeze",
+    "corrected_harness_issues": [
+      "RxDB page filenames require .json suffix; initial target not exercised correctly returned FAIL",
+      "Browser native Drive bundle required pinned events3.3.0 and globalThis alias",
+      "RxDB first native foreground cycle may leave payload in WAL; two cycles required for cold page fixture"
+    ],
+    "exploratory_browser_attempts": "Bundle build error; two startup BLOCKED attempts; two three-case RxDB missing-cold-object ERROR runs; successful nine-case rehearsal. Not included in final evidence counts.",
+    "page_and_wal_rehearsal": {
+      "page-target.json": {
+        "attempts": 1,
+        "source_digest": "fe01c4446726ba6d1036fa9479ea55a4d1cef9e4b65c07dc3ab94381a3a3fc4b",
+        "statuses": [
+          "PASS"
+        ]
+      },
+      "wal-target.json": {
+        "attempts": 1,
+        "source_digest": "4338f2b222711992ee51d9c1a44d9226ce53ee3f64d17d7f37e63ddf943fa1c3",
+        "statuses": [
+          "PASS"
+        ]
+      }
+    }
+  },
+  "superseded_visibility_probe": {
+    "classification": "NON_ACCEPTANCE for visibility; reused intention IDs masked new state and settlement was incomplete",
+    "sha256": "0ec97efafba60c92d93eed0b9597d57a12addf021e0d8c8aa6a8e2d5779405ed",
+    "captured_source_digest": "69f625ef7327486a46ce48a8a48dad506a6c9b1f5df7592ce8ee9672cafbf3cb",
+    "attempts": 20,
+    "previous_status_counts": {
+      "PASS": 20
+    },
+    "replacement": "extra.json records corrected full settlement, new intent IDs, observed checkpoint advancement; 19 PASS, 1 convergence FAIL"
+  }
+}

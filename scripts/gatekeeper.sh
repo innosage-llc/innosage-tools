@@ -24,6 +24,9 @@ fi
 
 echo "🛡️  Gatekeeper: Starting Validation Phase..."
 
+echo "🧪 Checking the offline BYOS harness..."
+npm ci --prefix spikes/byos-sync --ignore-scripts --no-audit --no-fund
+npm run test:byos-sync
 echo "🧪 Checking the deployment and release contract..."
 npm run test:deploy
 npm run test:recorder

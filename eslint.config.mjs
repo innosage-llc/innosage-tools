@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     "build/**",
     "public/video-scissors/ffmpeg/**",
+    "spikes/byos-sync/.browser-bundle.js",
     "next-env.d.ts",
   ]),
 ]);
