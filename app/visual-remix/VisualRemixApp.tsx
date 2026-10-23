@@ -25,6 +25,11 @@ import { renderScene } from "@/lib/visual-remix-renderer";
 import { RemixMotion } from "@/lib/visual-remix-motion";
 import { agentBrief, proposalSchema } from "@/lib/visual-remix-agent";
 
+import { VisualRemixTransport } from "@/lib/visual-remix-transport";
+import type { SceneSharingState } from "@/lib/visual-remix-sharing-view";
+import { SceneSharingPanel } from "./SceneSharingPanel";
+
+const sceneRemoteEnabled = process.env.NEXT_PUBLIC_SCENE_REMOTE === "true";
 type Snapshot = ReturnType<VisualRemixController["snapshot"]>;
 const button =
   "inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40";
@@ -101,6 +106,8 @@ function Preview({
 
 export default function VisualRemixApp() {
   const controller = useRef<VisualRemixController | null>(null);
+  const sharing = useRef<VisualRemixTransport | null>(null);
+  const [sharingState, setSharingState] = useState<SceneSharingState>({ available: sceneRemoteEnabled, canConnect: false, canDisconnect: false, phase: "disconnected" });
   const assets = useRef(new LocalAssets());
   const motion = useRef(new RemixMotion());
   const motionTicket = useRef(0);
@@ -145,6 +152,7 @@ export default function VisualRemixApp() {
       setMotionBlob(null);
       setMotionMessage("");
     }
+    sharing.current?.notifyLocalChange();
     setSnapshot(state);
     if (resetDraft && state.scene) {
       setDraft(structuredClone(state.scene));
@@ -207,6 +215,9 @@ export default function VisualRemixApp() {
       store = new LocalAssets();
     controller.current = c;
     assets.current = store;
+    // Default-off build gate. No capability probe, fetch or auto-connect at mount.
+    const remote = sceneRemoteEnabled ? new VisualRemixTransport(c, true, setSharingState, () => sync()) : null;
+    sharing.current = remote;
     const ticket = ++epoch.current;
     void c
       .open(crypto.randomUUID(), 0, emptyScene(), store)
@@ -214,6 +225,7 @@ export default function VisualRemixApp() {
         if (ticket !== epoch.current) return;
         const s = c.snapshot();
         setSnapshot(s);
+        if (remote) setSharingState(remote.snapshot());
         setDraft(s.scene);
         setBusy(false);
         setMessage("Ready. Select a reference or open a saved project.");
@@ -232,6 +244,8 @@ export default function VisualRemixApp() {
       epoch.current++;
       pending.current?.abort();
       video.cancel();
+      remote?.dispose();
+      sharing.current = null;
       c.dispose();
       for (const [url, timer] of urls) {
         clearTimeout(timer);
@@ -239,6 +253,7 @@ export default function VisualRemixApp() {
       }
       urls.clear();
     };
+  // The remote callback reads current refs; keep one owner per controller lifecycle.
   }, []);
 
   async function exportMotion() {
@@ -675,6 +690,16 @@ export default function VisualRemixApp() {
         process it remotely. No model key, social login or automatic posting
         here.
       </div>
+      {sceneRemoteEnabled && snapshot?.scene && (
+        <div className="mb-5">
+          <SceneSharingPanel
+            key={`${snapshot.generation}:${sharingState.phase === "disconnected" && sharingState.revocationConfirmed ? "revoked" : "current"}`}
+            state={sharingState}
+            onConnect={() => { void sharing.current?.connect(true).catch(() => setError("Scene sharing could not start. Check the Scene size and current project; local exports are preserved.")); }}
+            onDisconnect={() => { void sharing.current?.disconnect(); }}
+          />
+        </div>
+      )}
       <div
         aria-live="polite"
         role="status"

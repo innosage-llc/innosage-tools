@@ -232,3 +232,43 @@ ACK loss. Repair uses safe-ASCII1–96 string ids (safe integers retained) match
 pre-admission envelope reserve; real SDK regressions reject escaped/empty ids
 without request admission and retain96ASCII/safe-integer positive cases. Exact
 repair checks/rereview follow before merge.
+
+
+PR99 merged4dd9f51fdf5cc3aadc149b4a143235b8bd22250c at15:36:26Z. Repaired
+headf109fbf exact Sol rereview/post-hook hashes, native update/merge gates and
+GitHub39979269673 PASS. Native submit update had exit1 only because existingPR99
+already existed after successful gate/commit/push; native merge subsequently
+PASS. No active entrypoint/config or migration/traffic changed.
+
+Fresh native browser branch prepares default-off generated panel/adapter. Five
+actual-controller/mocked-HTTP lifecycle cases PASS, shared3auth regressionsPASS,
+and actual local provider/SDK/D1/controller integrationPASS6.36s (renderer stub,
+not PNG QA). Worker/root types and scopedlintPASS. Explicit connected local UI
+buildPASS. Full Chromium check initially stopped in fixture setup due to caller
+relative esbuild path; helper now uses explicit source/migration paths and the
+affected check is running. No live MCP or original image upload.
+
+
+Inactive browser continuation checks: transport5/mockHTTP+actualcontrollerPASS;
+auth3actualprovider scenariosPASS; integration1actualprovider/SDK/D1/controller
+PASS (renderer stub). Connected build and actual Next/React/Konva browser journey
+PASS after two proven header repairs: Referrer-Policy same-origin preserves real
+Origin; remove only new form-action directive to permit official callback. One
+conditional read-only AstraHIGH consultation for the redirect blocker, no routine
+Astra review. Exact advice/failed-baseline receipts retained. Principal also found
+Playwright redirects may skip user routing, so old interception cannot prove no
+browser egress. Final fixture uses deny-by-default proxy + real loopback callback;
+only exact callback forwards, source image never loaded/uploaded. BrowserPNG and
+desktop/mobile pixels inspected. SceneDeny/candidatevideo/disabledvideo real-browser
+callbacksPASS. Reload/reopenedScene yields identicalPNG; revokepurgespayload and
+oldtoken401; no autoconnect. One redirected rootHEAD failure retained, not hidden.
+All disposable resources closed. Normal deployment/index/migrations unchanged.
+
+Existing Worker control-plane GET settings/deployments read15:55:54Z identifies
+version77713e9d-d74b-46c6-8fc4-303310525fe8, existingDB/KV/assets and noSceneflag.
+No Worker/MCP endpoint invoked. Current usage/recentrequests/cumulativecounters and
+reportinglagUNKNOWN. Specific activation/access/live-MCP approval remains pending.
+Independent Sol review/native PR follows; Master85/87/88 remainopen. Original
+reference28m04.708s and reuse34.426s findings unchanged, no freshvisionbenchmark.
+
+Independent browser review found P2 VR-SCENE-BROWSER-1: revoked/expired Scene bindings returned a bare 401. Repaired using the official resource-server validator: reject a non-live D1 binding before handler dispatch, preserving the canonical Bearer invalid_token, resource_metadata and exact Scene scope challenge. Added actual provider revoked/expired and wrong-audience challenge assertions; data operations retain their D1 fences. Rereview and the repaired native gate remain pending at this checkpoint. Native submit previously passed its full gate but the commit hook rejected a new helper blank EOF; no commit/push/PR occurred, and the whitespace was repaired.

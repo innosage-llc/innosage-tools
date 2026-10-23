@@ -21,8 +21,9 @@ function sceneProps(input: unknown): SceneAuth {
 }
 const consentHeaders = (headers: Headers) => {
   headers.set('Content-Type','text/html; charset=utf-8'); headers.set('Cache-Control','no-store');
-  headers.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
-  headers.set('X-Frame-Options','DENY'); headers.set('Referrer-Policy','no-referrer');
+  headers.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'");
+  headers.set('X-Frame-Options','DENY'); // Preserve Origin on same-origin form POST; cross-origin redirects get no referrer.
+  headers.set('Referrer-Policy','same-origin');
   return headers;
 };
 export function sceneCandidateFor(env: Env, origin: string, enabled = false, bridge?: BridgeNamespace) {
@@ -46,13 +47,21 @@ export function sceneCandidateFor(env: Env, origin: string, enabled = false, bri
   });
   const localValidation = (current: Env) => (resource: string, token: string) => authorization.validateToken(resource, token, current);
   const video = new OAuthResourceServer<Env>({ resourceMetadata: { resource: videoResource, authorization_servers: [origin] }, requiredScopes: videoScopes, validateToken: localValidation, handler: options.apiHandler });
-  const scene = new OAuthResourceServer<Env>({ resourceMetadata: { resource: sceneResource, authorization_servers: [origin] }, requiredScopes: [...SCENE_SCOPES], validateToken: localValidation,
+  // Let the official resource server challenge revoked/expired bindings, just as
+  // it challenges invalid OAuth tokens. Data operations remain fenced by D1.
+  const sceneValidation = (current: Env) => async (resource: string, token: string) => {
+    const validation = await authorization.validateToken(resource, token, current);
+    if (!validation) return null;
+    let auth: SceneAuth;
+    try { auth = sceneProps(validation.props); } catch { return null; }
+    return await new SceneMailbox(current.DB).lease(auth) ? validation : null;
+  };
+  const scene = new OAuthResourceServer<Env>({ resourceMetadata: { resource: sceneResource, authorization_servers: [origin] }, requiredScopes: [...SCENE_SCOPES], validateToken: sceneValidation,
     handler: { async fetch(request, current, ctx) {
       const verified = ctx as ExecutionContext & OAuthResourceContext<Record<string, unknown>>;
       if (!verified.auth?.clientId) return reply({ error: 'AUTH_CONTEXT' }, 401);
       if (!scopesEqual(verified.auth.scope, SCENE_SCOPES)) return insufficientScope(verified.auth, [...SCENE_SCOPES]);
       const auth = sceneProps(verified.props), clientId = verified.auth.clientId;
-      if (!await new SceneMailbox(current.DB).lease(auth)) return reply({ error: 'SCENE_EXPIRED_OR_REVOKED' }, 401);
       return boundedSceneRpc(request, bounded => sceneMcpHandler(current.DB, auth).fetch(bounded, { authInfo: { token: verified.auth.token, clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt, resource: new URL(sceneResource) } }));
     } },
   });
