@@ -1,0 +1,29 @@
+{
+  "id": "google-drive-official-2026-10-23",
+  "retrieved": "2026-10-23",
+  "source": "https://developers.google.com/workspace/drive/api/guides/limits",
+  "new_project": {
+    "effective": "2026-05-01",
+    "project_units_per_minute": 1000000,
+    "user_project_units_per_minute": 325000,
+    "daily_billing_threshold_units": 400000000,
+    "daily_egress_threshold": "1 TB"
+  },
+  "legacy_project": {
+    "configured_caps": "UNKNOWN",
+    "eligible_activity": "2025-11 through 2026-04"
+  },
+  "weights": {
+    "v3.files.list": 100,
+    "v3.files.get.metadata": 5,
+    "v3.files.update": 50,
+    "v3.files.create": "UNKNOWN",
+    "v3.files.get.media": "UNKNOWN",
+    "v2.files.get.metadata": "UNKNOWN",
+    "v2.files.get.media": "UNKNOWN",
+    "v2.files.update": "UNKNOWN",
+    "v2.files.delete": "UNKNOWN"
+  },
+  "prices": "UNKNOWN",
+  "notes": "Explicit documented examples only. Media GET is not assumed to be metadata GET or files.download. Known subtotal is not total quota use. No monetary estimate."
+}

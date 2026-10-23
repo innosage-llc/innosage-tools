@@ -1,3 +1,17 @@
+# Active task: BYOS sync spike #84
+
+Master: https://github.com/innosage-llc/innosage-tools/issues/84
+
+| Role | Model / effort | Scope | State |
+| --- | --- | --- | --- |
+| Accountable lead | gpt-6-astra / high (explicit continuation selection) | Source audit, acceptance, integration, checks, final evidence | Active |
+| Implementation executor | gpt-6-astra / medium (explicit spawn route) | spikes/byos-sync and its session docs | Active |
+| Independent reviewer | gpt-6.1-sol / high | Read-only intent/source/diff/evidence review | Pending |
+
+User explicitly selected lead/executor models as an exception to V1 lead-only execution. No V2 activation. Runtime provider observation and usage are UNKNOWN unless independently exposed. All experiments are synthetic and offline; no staging/production or live provider calls. Model routing is not evidence of engine results.
+
+## Previous execution records (preserved)
+
 # Active task
 
 Hub #358 — Founder-directed removal of artificial D200 HTTP/day and2 project

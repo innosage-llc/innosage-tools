@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "oxlint && eslint",
     "test:seo": "node scripts/verify-seo.mjs",
+    "test:byos-sync": "npm --prefix spikes/byos-sync test",
     "test:deploy": "node --test scripts/deploy-*.test.mjs",
     "test:recorder": "node --experimental-strip-types --test scripts/recorder.test.ts",
     "test:meeting-fixer": "node --experimental-strip-types --test scripts/meeting-fixer-progress.test.ts",
