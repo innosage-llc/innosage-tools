@@ -44,6 +44,7 @@ npm run test:video-scissors-mcp-e2e:offline
 npm ci --prefix workers/video-scissors-mcp --ignore-scripts --no-audit --no-fund
 npm --prefix workers/video-scissors-mcp run check
 npm run test:visual-remix-scene-store
+npm run test:visual-remix-scene-auth
 npm run test:video-scissors-mcp
 
 # 1. Syntax & Correctness Check (Oxlint + ESLint)

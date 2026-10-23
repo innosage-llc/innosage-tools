@@ -213,3 +213,22 @@ Independent Sol review VR-SCENE-STORE-1 found applied ACK retries were wrongly
 rechecked against later snapshots. Lead repair preserves exact terminal retry
 idempotence while retaining live owner/lease checks; regression covers a later
 local revision, wrong credential and wrong epoch. Exact rereview follows.
+
+
+PR98 merged d1fed61541ed5407cd87a03a034d2a9df62d6052 at15:16:25Z after exact Sol
+rereview, native gates and GitHub39975180876 PASS. New native fresh-main branch
+codex/tools-88-inactive-scene-oauth prepares shared-issuer/two-resource auth,
+reviewed consent renderer and bounded four-tool/browser routes. Active index/config
+and migration path remain unchanged. Three disconnected actual provider/SDK/D1/KV
+scenarios PASS, including simulated pre-resource video compatibility and same-user
+resource isolation. One ordinary async-catch repair plus empty-401 fixture parser
+repair retained. No live MCP traffic or activation. Independent review/native gate
+pending. UI browser transport remains a subsequent slice.
+
+
+Independent Sol auth review initially PASS at9a329b8. Supplemental lead-raised
+escaped-ID estimate mismatch confirmed P3 read availability only, not mutation
+ACK loss. Repair uses safe-ASCII1–96 string ids (safe integers retained) matching
+pre-admission envelope reserve; real SDK regressions reject escaped/empty ids
+without request admission and retain96ASCII/safe-integer positive cases. Exact
+repair checks/rereview follow before merge.
