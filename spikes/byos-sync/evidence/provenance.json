@@ -1,0 +1,115 @@
+{
+  "final_source_manifest": {
+    "algorithm": "sha256",
+    "digest": "96c0a9ddc6245caff1705e55ada3d6924ea7433477592f24ecb4ff20f9a00cd6",
+    "files": {
+      "package-lock.json": "e16e4362d7a2f06ee2c1dc4800c9d19bf156dd4859a5156abfc5926d6d25e204",
+      "package.json": "74188f41ff7731061a46d627416cc39ac674c5e4739096306a4695fa0b08d0e5",
+      "quota-profile.json": "58e0d2b3de77cec1c3fcf53597628d53752b7e41d11337e2bd6cc86a73c53a64",
+      "src/browser-entry.mjs": "fd6152f8839b8036506ff005af79e12cd337f8d671c743212b5754734d282ad2",
+      "src/browser-smoke.mjs": "3545a5d11d0663bbb78c7bfc2e004198cfe095917332e3cf99cd0556ce3fe2cc",
+      "src/candidates.mjs": "d13c84f9379a4153aae874c01422b58737a0919b50a0a0f89de503d0ed49e14b",
+      "src/extra.mjs": "c801250a0d7f8baed4252c89ca1e776cb7ff70e031353934913ae65da9c29aa9",
+      "src/fixture-check.mjs": "b3dfdc25ba5ae85d9731d497523427cf220559b0a4cc767064031df3ad6ce0e2",
+      "src/fixture-oracle.mjs": "8a7093f8029e24d6ebc9a27b1bd704ef6603e828868c33a04a613bc0bf9ce2ba",
+      "src/manifest.mjs": "7924b59b06405baf1928c86f8088138206493fcdedd81319c13e57db12544a1e",
+      "src/metrics.mjs": "860980ac445121756059fe18ffd9fa8621bdf02c3ae1356d6fcabf5b8e3bdd56",
+      "src/mock.mjs": "eb2ec68f32473a6d9fe5bf9d93d136f14246065088347fd99fe6a5204eae543d",
+      "src/oracle.mjs": "752fd7fb9db33269f5877823bb453a1b0bd43d9d6f8c177eaf51578f44f5300c",
+      "src/probe.mjs": "d39890bdad71d85b4e5db2f6745101bac415e3f619ca264ce7b4423d39ff19bd",
+      "src/receipt.mjs": "2ff2def54124385e1a1f435ae0f7b68e4010b28c174f226c6ba045d8aef10354",
+      "src/report.mjs": "a6b3b809e89e46b64b506a326c5ae0c0aa91cc9968401849d57cdabee7c87e1a",
+      "src/run.mjs": "2f9f0303c540a2f89e786f1534a7552b639b44e118c31cb20f689906ce0e3fc7",
+      "src/trial.mjs": "18c196e719257e4026b2022344fad004e4381e7daff186e6f12ec5366eec40dd",
+      "src/worker.mjs": "380b62ab3c92394c45220545f190d4d04256e8fa2f8d51f5b307e98651473a24",
+      "test/fixture.test.mjs": "108039006f72995161772f6753cef0250e1c80f10f15328c09ed6b7fb443b278",
+      "test/metrics.test.mjs": "b173dd2f8c91e9e13acce561a2b98c87dabf60a6c51a6456323815d7de9dc4d9",
+      "test/mock.test.mjs": "29b6b070547abbfa516277d0e75abaee9e52c47c4ea20795c00be400ab1de908",
+      "test/native.test.mjs": "65017ba8e48ef876ce55ff708172db24df51f6566938fe6ce634314bd7a6b39d",
+      "test/oracle.test.mjs": "51abe886dc04706607c3063b376ab1acb173a0dd7c276152f54a589740555b76"
+    }
+  },
+  "artifacts": {
+    "results.json": {
+      "sha256": "7011dc93f5304dbe49c855dbe200f8a4b2483ba0df17d76ff7a036f90cc20e75",
+      "captured_source_digest": "ce83977b8ad792a5ae697d458d4d394f62fb305b67ddda7a51df01dbf2da8a26",
+      "report_only_drift": [
+        "src/fixture-check.mjs",
+        "src/fixture-oracle.mjs",
+        "src/receipt.mjs",
+        "src/report.mjs",
+        "test/fixture.test.mjs"
+      ],
+      "attempts": 354,
+      "status_counts": {
+        "BLOCKED": 3,
+        "FAIL": 159,
+        "PASS": 191,
+        "TIMEOUT": 1
+      }
+    },
+    "extra.json": {
+      "sha256": "4c3daca52c43f3bf21d7a4606892f40bbf8d682d19497e08ddfd89555382e922",
+      "captured_source_digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+      "report_only_drift": [
+        "src/report.mjs"
+      ],
+      "attempts": 20,
+      "status_counts": {
+        "PASS": 20
+      }
+    },
+    "browser-smoke.json": {
+      "sha256": "5c2604b8eae8b4e79ba096329b804647518b7e22489ab27f350cd088c65e3f62",
+      "captured_source_digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+      "report_only_drift": [
+        "src/report.mjs"
+      ],
+      "attempts": 3,
+      "status_counts": {
+        "PASS": 3
+      }
+    },
+    "fixture-check.json": {
+      "sha256": "abf64ff20d8aa164f30b3b9048d0666a0e3c10d0e81ce1a85dcae26f984618a1",
+      "captured_source_digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+      "report_only_drift": [
+        "src/report.mjs"
+      ],
+      "attempts": 6,
+      "status_counts": {
+        "PASS": 6
+      }
+    }
+  },
+  "pins": {
+    "rxdb": {
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887"
+    },
+    "selfstore": {
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236"
+    },
+    "indexeddb_emulator": "fake-indexeddb6.2.4",
+    "browser_automation": "playwright1.62.1"
+  },
+  "shared_contract": {
+    "classification": "MOCK-TESTED",
+    "real_provider": "NOT_RUN",
+    "synthetic_data_only": true,
+    "body_bytes": "HTTP entity bodies, excludes headers and TLS",
+    "seeded_cases": "100 fixture/order/jitter variations per combination, not exhaustive fuzz",
+    "browser": "one attempt per named assertion, two isolated contexts; deterministic non-random fixture, seed NOT_APPLICABLE",
+    "all_fees": "UNKNOWN"
+  },
+  "commands": [
+    "npm ci --ignore-scripts (network bootstrap only)",
+    "npm test",
+    "node src/run.mjs --seeds=100 --output=evidence/results.json",
+    "node src/extra.mjs",
+    "node src/browser-smoke.mjs",
+    "npm run report",
+    "node src/receipt.mjs"
+  ]
+}

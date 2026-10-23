@@ -1,0 +1,1861 @@
+{
+  "source_manifest": {
+    "algorithm": "sha256",
+    "digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+    "files": {
+      "package-lock.json": "e16e4362d7a2f06ee2c1dc4800c9d19bf156dd4859a5156abfc5926d6d25e204",
+      "package.json": "74188f41ff7731061a46d627416cc39ac674c5e4739096306a4695fa0b08d0e5",
+      "quota-profile.json": "58e0d2b3de77cec1c3fcf53597628d53752b7e41d11337e2bd6cc86a73c53a64",
+      "src/browser-entry.mjs": "fd6152f8839b8036506ff005af79e12cd337f8d671c743212b5754734d282ad2",
+      "src/browser-smoke.mjs": "3545a5d11d0663bbb78c7bfc2e004198cfe095917332e3cf99cd0556ce3fe2cc",
+      "src/candidates.mjs": "d13c84f9379a4153aae874c01422b58737a0919b50a0a0f89de503d0ed49e14b",
+      "src/extra.mjs": "c801250a0d7f8baed4252c89ca1e776cb7ff70e031353934913ae65da9c29aa9",
+      "src/fixture-check.mjs": "b3dfdc25ba5ae85d9731d497523427cf220559b0a4cc767064031df3ad6ce0e2",
+      "src/fixture-oracle.mjs": "8a7093f8029e24d6ebc9a27b1bd704ef6603e828868c33a04a613bc0bf9ce2ba",
+      "src/manifest.mjs": "7924b59b06405baf1928c86f8088138206493fcdedd81319c13e57db12544a1e",
+      "src/metrics.mjs": "860980ac445121756059fe18ffd9fa8621bdf02c3ae1356d6fcabf5b8e3bdd56",
+      "src/mock.mjs": "eb2ec68f32473a6d9fe5bf9d93d136f14246065088347fd99fe6a5204eae543d",
+      "src/oracle.mjs": "752fd7fb9db33269f5877823bb453a1b0bd43d9d6f8c177eaf51578f44f5300c",
+      "src/probe.mjs": "d39890bdad71d85b4e5db2f6745101bac415e3f619ca264ce7b4423d39ff19bd",
+      "src/receipt.mjs": "2ff2def54124385e1a1f435ae0f7b68e4010b28c174f226c6ba045d8aef10354",
+      "src/report.mjs": "219e820a220e2f88672f415a5796ecd0b2c10644c35eaac46cc9c00e3df0a0c9",
+      "src/run.mjs": "2f9f0303c540a2f89e786f1534a7552b639b44e118c31cb20f689906ce0e3fc7",
+      "src/trial.mjs": "18c196e719257e4026b2022344fad004e4381e7daff186e6f12ec5366eec40dd",
+      "src/worker.mjs": "380b62ab3c92394c45220545f190d4d04256e8fa2f8d51f5b307e98651473a24",
+      "test/fixture.test.mjs": "108039006f72995161772f6753cef0250e1c80f10f15328c09ed6b7fb443b278",
+      "test/metrics.test.mjs": "b173dd2f8c91e9e13acce561a2b98c87dabf60a6c51a6456323815d7de9dc4d9",
+      "test/mock.test.mjs": "29b6b070547abbfa516277d0e75abaee9e52c47c4ea20795c00be400ab1de908",
+      "test/native.test.mjs": "65017ba8e48ef876ce55ff708172db24df51f6566938fe6ce634314bd7a6b39d",
+      "test/oracle.test.mjs": "51abe886dc04706607c3063b376ab1acb173a0dd7c276152f54a589740555b76"
+    }
+  },
+  "results": [
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scenario": "parent-child-stale-replay",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "deleted_parent_absent": true,
+      "deleted_child_absent": true,
+      "acknowledged_edit_count": 1,
+      "merged_or_applied_count": 1,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "stale-unrelated-edit"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 340,
+        "by_method_endpoint": {
+          "GET v3.files.list": {
+            "requests": 110,
+            "bytes_up": 0,
+            "bytes_down": 24920,
+            "statuses": {
+              "200": 110
+            },
+            "conditional_requests": 0,
+            "quota_weight": 100
+          },
+          "POST v3.files.create": {
+            "requests": 40,
+            "bytes_up": 8426,
+            "bytes_down": 4625,
+            "statuses": {
+              "200": 40
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.metadata": {
+            "requests": 39,
+            "bytes_up": 0,
+            "bytes_down": 12082,
+            "statuses": {
+              "200": 39
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "PUT v2.files.update": {
+            "requests": 43,
+            "bytes_up": 6710,
+            "bytes_down": 12949,
+            "statuses": {
+              "200": 40,
+              "412": 3
+            },
+            "conditional_requests": 43,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.media": {
+            "requests": 79,
+            "bytes_up": 0,
+            "bytes_down": 11448,
+            "statuses": {
+              "200": 79
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.media": {
+            "requests": 29,
+            "bytes_up": 0,
+            "bytes_down": 8793,
+            "statuses": {
+              "200": 29
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          }
+        },
+        "bytes_up": 15136,
+        "bytes_down": 74817,
+        "known_quota_units": 11000,
+        "unknown_quota_requests": 230,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 10,
+      "native_conditional_write_requests": 43,
+      "assumption": null
+    },
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scenario": "clock-skew-different-pages",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 335,
+        "by_method_endpoint": {
+          "GET v3.files.list": {
+            "requests": 110,
+            "bytes_up": 0,
+            "bytes_down": 24266,
+            "statuses": {
+              "200": 110
+            },
+            "conditional_requests": 0,
+            "quota_weight": 100
+          },
+          "POST v3.files.create": {
+            "requests": 40,
+            "bytes_up": 8426,
+            "bytes_down": 4625,
+            "statuses": {
+              "200": 40
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.metadata": {
+            "requests": 38,
+            "bytes_up": 0,
+            "bytes_down": 11680,
+            "statuses": {
+              "200": 38
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "PUT v2.files.update": {
+            "requests": 42,
+            "bytes_up": 5325,
+            "bytes_down": 12937,
+            "statuses": {
+              "200": 39,
+              "412": 3
+            },
+            "conditional_requests": 42,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.media": {
+            "requests": 79,
+            "bytes_up": 0,
+            "bytes_down": 9700,
+            "statuses": {
+              "200": 79
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.media": {
+            "requests": 26,
+            "bytes_up": 0,
+            "bytes_down": 7452,
+            "statuses": {
+              "200": 26
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          }
+        },
+        "bytes_up": 13751,
+        "bytes_down": 70660,
+        "known_quota_units": 11000,
+        "unknown_quota_requests": 225,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 10,
+      "native_conditional_write_requests": 42,
+      "assumption": null
+    },
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scenario": "concurrent-reconnect",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 407,
+        "by_method_endpoint": {
+          "GET v3.files.list": {
+            "requests": 132,
+            "bytes_up": 0,
+            "bytes_down": 31866,
+            "statuses": {
+              "200": 132
+            },
+            "conditional_requests": 0,
+            "quota_weight": 100
+          },
+          "POST v3.files.create": {
+            "requests": 46,
+            "bytes_up": 8850,
+            "bytes_down": 4697,
+            "statuses": {
+              "200": 46
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.metadata": {
+            "requests": 48,
+            "bytes_up": 0,
+            "bytes_down": 15141,
+            "statuses": {
+              "200": 48
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "PUT v2.files.update": {
+            "requests": 54,
+            "bytes_up": 5563,
+            "bytes_down": 14692,
+            "statuses": {
+              "200": 44,
+              "412": 10
+            },
+            "conditional_requests": 54,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.media": {
+            "requests": 101,
+            "bytes_up": 0,
+            "bytes_down": 10014,
+            "statuses": {
+              "200": 101
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.media": {
+            "requests": 26,
+            "bytes_up": 0,
+            "bytes_down": 7452,
+            "statuses": {
+              "200": 26
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          }
+        },
+        "bytes_up": 14413,
+        "bytes_down": 83862,
+        "known_quota_units": 13200,
+        "unknown_quota_requests": 275,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 24,
+      "native_conditional_write_requests": 54,
+      "assumption": null
+    },
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scenario": "repeated-sync-idempotence",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "measurements": {
+        "requests": 285,
+        "by_method_endpoint": {
+          "GET v3.files.list": {
+            "requests": 106,
+            "bytes_up": 0,
+            "bytes_down": 22696,
+            "statuses": {
+              "200": 106
+            },
+            "conditional_requests": 0,
+            "quota_weight": 100
+          },
+          "POST v3.files.create": {
+            "requests": 40,
+            "bytes_up": 8420,
+            "bytes_down": 4625,
+            "statuses": {
+              "200": 40
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.metadata": {
+            "requests": 30,
+            "bytes_up": 0,
+            "bytes_down": 9791,
+            "statuses": {
+              "200": 30
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "PUT v2.files.update": {
+            "requests": 28,
+            "bytes_up": 3935,
+            "bytes_down": 9434,
+            "statuses": {
+              "200": 27,
+              "412": 1
+            },
+            "conditional_requests": 28,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.media": {
+            "requests": 61,
+            "bytes_up": 0,
+            "bytes_down": 7616,
+            "statuses": {
+              "200": 61
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.media": {
+            "requests": 20,
+            "bytes_up": 0,
+            "bytes_down": 6312,
+            "statuses": {
+              "200": 20
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          }
+        },
+        "bytes_up": 12355,
+        "bytes_down": 60474,
+        "known_quota_units": 10600,
+        "unknown_quota_requests": 179,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 14,
+      "native_conditional_write_requests": 28,
+      "assumption": null
+    },
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scenario": "duplicate-response",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 337,
+        "by_method_endpoint": {
+          "GET v3.files.list": {
+            "requests": 110,
+            "bytes_up": 0,
+            "bytes_down": 24068,
+            "statuses": {
+              "200": 110
+            },
+            "conditional_requests": 0,
+            "quota_weight": 100
+          },
+          "POST v3.files.create": {
+            "requests": 40,
+            "bytes_up": 8423,
+            "bytes_down": 4625,
+            "statuses": {
+              "200": 40
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.metadata": {
+            "requests": 38,
+            "bytes_up": 0,
+            "bytes_down": 11687,
+            "statuses": {
+              "200": 38
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "PUT v2.files.update": {
+            "requests": 43,
+            "bytes_up": 5325,
+            "bytes_down": 13288,
+            "statuses": {
+              "200": 40,
+              "412": 3
+            },
+            "conditional_requests": 43,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.media": {
+            "requests": 80,
+            "bytes_up": 0,
+            "bytes_down": 9700,
+            "statuses": {
+              "200": 80
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.media": {
+            "requests": 26,
+            "bytes_up": 0,
+            "bytes_down": 7452,
+            "statuses": {
+              "200": 26
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          }
+        },
+        "bytes_up": 13748,
+        "bytes_down": 70820,
+        "known_quota_units": 11000,
+        "unknown_quota_requests": 227,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [
+        {
+          "method": "GET",
+          "kind": "duplicate-response",
+          "used": true
+        }
+      ],
+      "replayed_responses": 1,
+      "response_order_inversions": 11,
+      "native_conditional_write_requests": 43,
+      "assumption": null
+    },
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scenario": "reordered-response",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 385,
+        "by_method_endpoint": {
+          "GET v3.files.list": {
+            "requests": 132,
+            "bytes_up": 0,
+            "bytes_down": 32331,
+            "statuses": {
+              "200": 132
+            },
+            "conditional_requests": 0,
+            "quota_weight": 100
+          },
+          "POST v3.files.create": {
+            "requests": 46,
+            "bytes_up": 8844,
+            "bytes_down": 4697,
+            "statuses": {
+              "200": 46
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.metadata": {
+            "requests": 44,
+            "bytes_up": 0,
+            "bytes_down": 13742,
+            "statuses": {
+              "200": 44
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "PUT v2.files.update": {
+            "requests": 47,
+            "bytes_up": 5402,
+            "bytes_down": 14691,
+            "statuses": {
+              "200": 44,
+              "412": 3
+            },
+            "conditional_requests": 47,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.media": {
+            "requests": 90,
+            "bytes_up": 0,
+            "bytes_down": 9854,
+            "statuses": {
+              "200": 90
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.media": {
+            "requests": 26,
+            "bytes_up": 0,
+            "bytes_down": 7452,
+            "statuses": {
+              "200": 26
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          }
+        },
+        "bytes_up": 14246,
+        "bytes_down": 82767,
+        "known_quota_units": 13200,
+        "unknown_quota_requests": 253,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [
+        {
+          "method": "GET",
+          "kind": "reorder",
+          "used": true
+        }
+      ],
+      "replayed_responses": 0,
+      "response_order_inversions": 15,
+      "native_conditional_write_requests": 47,
+      "assumption": null
+    },
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scenario": "visibility-delay",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 456,
+        "by_method_endpoint": {
+          "GET v3.files.list": {
+            "requests": 156,
+            "bytes_up": 0,
+            "bytes_down": 42261,
+            "statuses": {
+              "200": 156
+            },
+            "conditional_requests": 0,
+            "quota_weight": 100
+          },
+          "POST v3.files.create": {
+            "requests": 53,
+            "bytes_up": 9713,
+            "bytes_down": 5172,
+            "statuses": {
+              "200": 53
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.metadata": {
+            "requests": 53,
+            "bytes_up": 0,
+            "bytes_down": 16338,
+            "statuses": {
+              "200": 53
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "PUT v2.files.update": {
+            "requests": 56,
+            "bytes_up": 5853,
+            "bytes_down": 17485,
+            "statuses": {
+              "200": 52,
+              "412": 4
+            },
+            "conditional_requests": 56,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v2.files.get.media": {
+            "requests": 108,
+            "bytes_up": 0,
+            "bytes_down": 10670,
+            "statuses": {
+              "200": 108
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.media": {
+            "requests": 30,
+            "bytes_up": 0,
+            "bytes_down": 7976,
+            "statuses": {
+              "200": 30
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          }
+        },
+        "bytes_up": 15566,
+        "bytes_down": 99902,
+        "known_quota_units": 15600,
+        "unknown_quota_requests": 300,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 9,
+      "native_conditional_write_requests": 56,
+      "assumption": "ADVERSARIAL HYPOTHESIS: older changed file hidden for one pull, then revealed; not asserted Google behavior"
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scenario": "parent-child-stale-replay",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "deleted_parent_absent": true,
+      "deleted_child_absent": true,
+      "acknowledged_edit_count": 1,
+      "merged_or_applied_count": 1,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "stale-unrelated-edit"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 38,
+        "by_method_endpoint": {
+          "GET v3.files.get.media": {
+            "requests": 10,
+            "bytes_up": 0,
+            "bytes_down": 7705,
+            "statuses": {
+              "200": 10
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.metadata": {
+            "requests": 22,
+            "bytes_up": 0,
+            "bytes_down": 372,
+            "statuses": {
+              "200": 19,
+              "503": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": 5
+          },
+          "PATCH v3.files.update": {
+            "requests": 6,
+            "bytes_up": 5746,
+            "bytes_down": 132,
+            "statuses": {
+              "200": 3,
+              "503": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": 50
+          }
+        },
+        "bytes_up": 5746,
+        "bytes_down": 8209,
+        "known_quota_units": 410,
+        "unknown_quota_requests": 10,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scenario": "clock-skew-different-pages",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 36,
+        "by_method_endpoint": {
+          "GET v3.files.get.media": {
+            "requests": 10,
+            "bytes_up": 0,
+            "bytes_down": 7924,
+            "statuses": {
+              "200": 10
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.metadata": {
+            "requests": 21,
+            "bytes_up": 0,
+            "bytes_down": 343,
+            "statuses": {
+              "200": 19,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": 5
+          },
+          "PATCH v3.files.update": {
+            "requests": 5,
+            "bytes_up": 4944,
+            "bytes_down": 103,
+            "statuses": {
+              "200": 3,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": 50
+          }
+        },
+        "bytes_up": 4944,
+        "bytes_down": 8370,
+        "known_quota_units": 355,
+        "unknown_quota_requests": 10,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scenario": "concurrent-reconnect",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 43,
+        "by_method_endpoint": {
+          "GET v3.files.get.media": {
+            "requests": 12,
+            "bytes_up": 0,
+            "bytes_down": 9937,
+            "statuses": {
+              "200": 12
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.metadata": {
+            "requests": 25,
+            "bytes_up": 0,
+            "bytes_down": 403,
+            "statuses": {
+              "200": 23,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": 5
+          },
+          "PATCH v3.files.update": {
+            "requests": 6,
+            "bytes_up": 5958,
+            "bytes_down": 118,
+            "statuses": {
+              "200": 4,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": 50
+          }
+        },
+        "bytes_up": 5958,
+        "bytes_down": 10458,
+        "known_quota_units": 425,
+        "unknown_quota_requests": 12,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 2,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scenario": "repeated-sync-idempotence",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "measurements": {
+        "requests": 30,
+        "by_method_endpoint": {
+          "GET v3.files.get.media": {
+            "requests": 10,
+            "bytes_up": 0,
+            "bytes_down": 7760,
+            "statuses": {
+              "200": 10
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.metadata": {
+            "requests": 19,
+            "bytes_up": 0,
+            "bytes_down": 285,
+            "statuses": {
+              "200": 19
+            },
+            "conditional_requests": 0,
+            "quota_weight": 5
+          },
+          "PATCH v3.files.update": {
+            "requests": 1,
+            "bytes_up": 970,
+            "bytes_down": 15,
+            "statuses": {
+              "200": 1
+            },
+            "conditional_requests": 0,
+            "quota_weight": 50
+          }
+        },
+        "bytes_up": 970,
+        "bytes_down": 8060,
+        "known_quota_units": 145,
+        "unknown_quota_requests": 10,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scenario": "duplicate-response",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 36,
+        "by_method_endpoint": {
+          "GET v3.files.get.media": {
+            "requests": 10,
+            "bytes_up": 0,
+            "bytes_down": 7939,
+            "statuses": {
+              "200": 10
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.metadata": {
+            "requests": 21,
+            "bytes_up": 0,
+            "bytes_down": 357,
+            "statuses": {
+              "200": 18,
+              "503": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": 5
+          },
+          "PATCH v3.files.update": {
+            "requests": 5,
+            "bytes_up": 4954,
+            "bytes_down": 103,
+            "statuses": {
+              "200": 3,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": 50
+          }
+        },
+        "bytes_up": 4954,
+        "bytes_down": 8399,
+        "known_quota_units": 355,
+        "unknown_quota_requests": 10,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [
+        {
+          "method": "GET",
+          "kind": "duplicate-response",
+          "used": true
+        }
+      ],
+      "replayed_responses": 1,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scenario": "reordered-response",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 42,
+        "by_method_endpoint": {
+          "GET v3.files.get.media": {
+            "requests": 12,
+            "bytes_up": 0,
+            "bytes_down": 9974,
+            "statuses": {
+              "200": 12
+            },
+            "conditional_requests": 0,
+            "quota_weight": "UNKNOWN"
+          },
+          "GET v3.files.get.metadata": {
+            "requests": 25,
+            "bytes_up": 0,
+            "bytes_down": 403,
+            "statuses": {
+              "200": 23,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": 5
+          },
+          "PATCH v3.files.update": {
+            "requests": 5,
+            "bytes_up": 4974,
+            "bytes_down": 103,
+            "statuses": {
+              "200": 3,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": 50
+          }
+        },
+        "bytes_up": 4974,
+        "bytes_down": 10480,
+        "known_quota_units": 375,
+        "unknown_quota_requests": 12,
+        "quota_profile": "google-drive-official-2026-10-23"
+      },
+      "unsupported": [],
+      "faults": [
+        {
+          "method": "GET",
+          "kind": "reorder",
+          "used": true
+        }
+      ],
+      "replayed_responses": 0,
+      "response_order_inversions": 1,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scenario": "parent-child-stale-replay",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "deleted_parent_absent": true,
+      "deleted_child_absent": true,
+      "acknowledged_edit_count": 1,
+      "merged_or_applied_count": 1,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "stale-unrelated-edit"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 56,
+        "by_method_endpoint": {
+          "HEAD webdav.object": {
+            "requests": 41,
+            "bytes_up": 0,
+            "bytes_down": 0,
+            "statuses": {
+              "200": 34,
+              "404": 4,
+              "503": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "GET webdav.object": {
+            "requests": 12,
+            "bytes_up": 0,
+            "bytes_down": 9649,
+            "statuses": {
+              "200": 10,
+              "404": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "PUT webdav.object": {
+            "requests": 3,
+            "bytes_up": 2866,
+            "bytes_down": 0,
+            "statuses": {
+              "204": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          }
+        },
+        "bytes_up": 2866,
+        "bytes_down": 9649,
+        "known_quota_units": "NOT_APPLICABLE",
+        "unknown_quota_requests": "NOT_APPLICABLE",
+        "quota_profile": "NOT_APPLICABLE"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scenario": "clock-skew-different-pages",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 55,
+        "by_method_endpoint": {
+          "HEAD webdav.object": {
+            "requests": 40,
+            "bytes_up": 0,
+            "bytes_down": 0,
+            "statuses": {
+              "200": 34,
+              "404": 4,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "GET webdav.object": {
+            "requests": 12,
+            "bytes_up": 0,
+            "bytes_down": 9940,
+            "statuses": {
+              "200": 10,
+              "404": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "PUT webdav.object": {
+            "requests": 3,
+            "bytes_up": 2960,
+            "bytes_down": 0,
+            "statuses": {
+              "204": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          }
+        },
+        "bytes_up": 2960,
+        "bytes_down": 9940,
+        "known_quota_units": "NOT_APPLICABLE",
+        "unknown_quota_requests": "NOT_APPLICABLE",
+        "quota_profile": "NOT_APPLICABLE"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scenario": "concurrent-reconnect",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 64,
+        "by_method_endpoint": {
+          "HEAD webdav.object": {
+            "requests": 46,
+            "bytes_up": 0,
+            "bytes_down": 0,
+            "statuses": {
+              "200": 40,
+              "404": 4,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "GET webdav.object": {
+            "requests": 14,
+            "bytes_up": 0,
+            "bytes_down": 11890,
+            "statuses": {
+              "200": 12,
+              "404": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "PUT webdav.object": {
+            "requests": 4,
+            "bytes_up": 3966,
+            "bytes_down": 0,
+            "statuses": {
+              "204": 4
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          }
+        },
+        "bytes_up": 3966,
+        "bytes_down": 11890,
+        "known_quota_units": "NOT_APPLICABLE",
+        "unknown_quota_requests": "NOT_APPLICABLE",
+        "quota_profile": "NOT_APPLICABLE"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 1,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scenario": "repeated-sync-idempotence",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "measurements": {
+        "requests": 51,
+        "by_method_endpoint": {
+          "HEAD webdav.object": {
+            "requests": 38,
+            "bytes_up": 0,
+            "bytes_down": 0,
+            "statuses": {
+              "200": 34,
+              "404": 4
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "GET webdav.object": {
+            "requests": 12,
+            "bytes_up": 0,
+            "bytes_down": 9710,
+            "statuses": {
+              "200": 10,
+              "404": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "PUT webdav.object": {
+            "requests": 1,
+            "bytes_up": 971,
+            "bytes_down": 0,
+            "statuses": {
+              "204": 1
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          }
+        },
+        "bytes_up": 971,
+        "bytes_down": 9710,
+        "known_quota_units": "NOT_APPLICABLE",
+        "unknown_quota_requests": "NOT_APPLICABLE",
+        "quota_profile": "NOT_APPLICABLE"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scenario": "duplicate-response",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 55,
+        "by_method_endpoint": {
+          "HEAD webdav.object": {
+            "requests": 40,
+            "bytes_up": 0,
+            "bytes_down": 0,
+            "statuses": {
+              "200": 34,
+              "404": 4,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "GET webdav.object": {
+            "requests": 12,
+            "bytes_up": 0,
+            "bytes_down": 9941,
+            "statuses": {
+              "200": 10,
+              "404": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "PUT webdav.object": {
+            "requests": 3,
+            "bytes_up": 2958,
+            "bytes_down": 0,
+            "statuses": {
+              "204": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          }
+        },
+        "bytes_up": 2958,
+        "bytes_down": 9941,
+        "known_quota_units": "NOT_APPLICABLE",
+        "unknown_quota_requests": "NOT_APPLICABLE",
+        "quota_profile": "NOT_APPLICABLE"
+      },
+      "unsupported": [],
+      "faults": [
+        {
+          "method": "GET",
+          "kind": "duplicate-response",
+          "used": true
+        }
+      ],
+      "replayed_responses": 1,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scenario": "reordered-response",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 64,
+        "by_method_endpoint": {
+          "HEAD webdav.object": {
+            "requests": 46,
+            "bytes_up": 0,
+            "bytes_down": 0,
+            "statuses": {
+              "200": 40,
+              "404": 4,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "GET webdav.object": {
+            "requests": 15,
+            "bytes_up": 0,
+            "bytes_down": 12954,
+            "statuses": {
+              "200": 13,
+              "404": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "PUT webdav.object": {
+            "requests": 3,
+            "bytes_up": 2962,
+            "bytes_down": 0,
+            "statuses": {
+              "204": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          }
+        },
+        "bytes_up": 2962,
+        "bytes_down": 12954,
+        "known_quota_units": "NOT_APPLICABLE",
+        "unknown_quota_requests": "NOT_APPLICABLE",
+        "quota_profile": "NOT_APPLICABLE"
+      },
+      "unsupported": [],
+      "faults": [
+        {
+          "method": "GET",
+          "kind": "reorder",
+          "used": true
+        }
+      ],
+      "replayed_responses": 0,
+      "response_order_inversions": 1,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scenario": "missing-etag",
+      "seed": 84,
+      "scale": 10,
+      "network": "normal",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "replay": "node src/extra.mjs",
+      "status": "PASS",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "equal": true,
+      "acknowledged_edit_count": 2,
+      "merged_or_applied_count": 2,
+      "durably_preserved_conflict_count": 0,
+      "durable_unpropagated_count": 0,
+      "silent_lost_edit_count": 0,
+      "intent_preservation_rate": 1,
+      "applied_ids": [
+        "extra-A",
+        "extra-B"
+      ],
+      "durable_conflict_ids": [],
+      "durable_unpropagated_ids": [],
+      "lost_ids": [],
+      "measurements": {
+        "requests": 57,
+        "by_method_endpoint": {
+          "HEAD webdav.object": {
+            "requests": 42,
+            "bytes_up": 0,
+            "bytes_down": 0,
+            "statuses": {
+              "200": 36,
+              "404": 4,
+              "503": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "GET webdav.object": {
+            "requests": 12,
+            "bytes_up": 0,
+            "bytes_down": 9964,
+            "statuses": {
+              "200": 10,
+              "404": 2
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          },
+          "PUT webdav.object": {
+            "requests": 3,
+            "bytes_up": 2964,
+            "bytes_down": 0,
+            "statuses": {
+              "204": 3
+            },
+            "conditional_requests": 0,
+            "quota_weight": "NOT_APPLICABLE"
+          }
+        },
+        "bytes_up": 2964,
+        "bytes_down": 9964,
+        "known_quota_units": "NOT_APPLICABLE",
+        "unknown_quota_requests": "NOT_APPLICABLE",
+        "quota_profile": "NOT_APPLICABLE"
+      },
+      "unsupported": [],
+      "faults": [],
+      "replayed_responses": 0,
+      "response_order_inversions": 0,
+      "native_conditional_write_requests": 0,
+      "assumption": null
+    }
+  ]
+}

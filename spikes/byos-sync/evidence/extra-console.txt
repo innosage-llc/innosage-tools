@@ -1,0 +1,106 @@
+(node:53220) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+rxdb drive parent-child-stale-replay PASS
+rxdb drive clock-skew-different-pages PASS
+rxdb drive concurrent-reconnect PASS
+rxdb drive repeated-sync-idempotence PASS
+rxdb drive duplicate-response PASS
+rxdb drive reordered-response PASS
+rxdb drive visibility-delay PASS
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+selfstore drive parent-child-stale-replay PASS
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+selfstore drive clock-skew-different-pages PASS
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+selfstore drive concurrent-reconnect PASS
+selfstore drive repeated-sync-idempotence PASS
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+selfstore drive duplicate-response PASS
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+[selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
+    at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async pushDurable (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:676:23)
+    at async doSave (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-OCWNUAXV.js:733:7) {
+  code: 'TARGET_WRITE_FAILED'
+}
+selfstore drive reordered-response PASS
+selfstore webdav parent-child-stale-replay PASS
+selfstore webdav clock-skew-different-pages PASS
+selfstore webdav concurrent-reconnect PASS
+selfstore webdav repeated-sync-idempotence PASS
+selfstore webdav duplicate-response PASS
+selfstore webdav reordered-response PASS
+selfstore webdav missing-etag PASS

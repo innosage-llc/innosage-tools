@@ -1,0 +1,83 @@
+{
+  "development_runs": [
+    {
+      "file": "first-selfstore.json",
+      "attempt_count": 1,
+      "status_counts": {
+        "FAIL": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "fixed.json",
+      "attempt_count": 45,
+      "status_counts": {
+        "ERROR": 1,
+        "FAIL": 9,
+        "PASS": 34,
+        "TIMEOUT": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "results.json",
+      "attempt_count": 351,
+      "status_counts": {
+        "BLOCKED": 2,
+        "ERROR": 1,
+        "FAIL": 159,
+        "PASS": 189
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "rxdb-integration.json",
+      "attempt_count": 1,
+      "status_counts": {},
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "rxdb-unknown-success.json",
+      "attempt_count": 1,
+      "status_counts": {
+        "PASS": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "extra.json",
+      "attempt_count": 20,
+      "status_counts": {
+        "PASS": 20
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "first-rxdb.json",
+      "attempt_count": 1,
+      "status_counts": {
+        "FAIL": 1
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    },
+    {
+      "file": "browser-smoke.json",
+      "attempt_count": 3,
+      "status_counts": {
+        "FAIL": 1,
+        "PASS": 2
+      },
+      "eligibility": "NON_ACCEPTANCE developmental source; not bound to final source hash"
+    }
+  ],
+  "harness_defects_corrected": [
+    "RxDB Node ESM import incompatibility handled by unchanged published CommonJS entry",
+    "Multipart boundary quoting parsed",
+    "Worker IPC receipt delivery awaited",
+    "Equal-time unpropagated edits separated from silent loss",
+    "Mock Date aligned to modifiedTime; developmental unknown-success timeout INVALID as engine evidence",
+    "WebDAV reopen uses native persisted target instead of reconnect probing offline",
+    "CORS rejection counted as expected defensive outcome"
+  ],
+  "note": "Development probes and gate runs are documented here; only subsequently source-bound final results support decision claims."
+}

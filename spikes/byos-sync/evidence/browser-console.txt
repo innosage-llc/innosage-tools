@@ -1,0 +1,35 @@
+(node:53346) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[
+  {
+    engine: 'selfstore',
+    version: '1.8.29',
+    test: 'two isolated Chromium IndexedDB contexts; abrupt renderer crash after local durability ACK',
+    provider: 'native WebDAV pending-offline persistence',
+    network: 'loopback only',
+    status: 'PASS',
+    records: [ [Array], [Array] ],
+    browser: '151.0.7922.34'
+  },
+  {
+    engine: 'rxdb',
+    version: '17.6.0',
+    test: 'two isolated Chromium IndexedDB contexts; abrupt renderer crash after local durability ACK',
+    provider: 'NOT_RUN: local Dexie persistence only',
+    network: 'loopback only',
+    status: 'PASS',
+    records: [ [Array], [Array] ],
+    browser: '151.0.7922.34'
+  },
+  {
+    engine: 'selfstore',
+    provider: 'webdav',
+    test: 'native cross-origin target connection when server omits CORS',
+    status: 'PASS',
+    outcome: {
+      error: 'The WebDAV server did not answer (URL, credentials or CORS).'
+    },
+    write_requests: 0,
+    browser: '151.0.7922.34'
+  }
+]

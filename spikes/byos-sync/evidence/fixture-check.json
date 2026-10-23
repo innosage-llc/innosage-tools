@@ -1,0 +1,220 @@
+{
+  "source_manifest": {
+    "algorithm": "sha256",
+    "digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+    "files": {
+      "package-lock.json": "e16e4362d7a2f06ee2c1dc4800c9d19bf156dd4859a5156abfc5926d6d25e204",
+      "package.json": "74188f41ff7731061a46d627416cc39ac674c5e4739096306a4695fa0b08d0e5",
+      "quota-profile.json": "58e0d2b3de77cec1c3fcf53597628d53752b7e41d11337e2bd6cc86a73c53a64",
+      "src/browser-entry.mjs": "fd6152f8839b8036506ff005af79e12cd337f8d671c743212b5754734d282ad2",
+      "src/browser-smoke.mjs": "3545a5d11d0663bbb78c7bfc2e004198cfe095917332e3cf99cd0556ce3fe2cc",
+      "src/candidates.mjs": "d13c84f9379a4153aae874c01422b58737a0919b50a0a0f89de503d0ed49e14b",
+      "src/extra.mjs": "c801250a0d7f8baed4252c89ca1e776cb7ff70e031353934913ae65da9c29aa9",
+      "src/fixture-check.mjs": "b3dfdc25ba5ae85d9731d497523427cf220559b0a4cc767064031df3ad6ce0e2",
+      "src/fixture-oracle.mjs": "8a7093f8029e24d6ebc9a27b1bd704ef6603e828868c33a04a613bc0bf9ce2ba",
+      "src/manifest.mjs": "7924b59b06405baf1928c86f8088138206493fcdedd81319c13e57db12544a1e",
+      "src/metrics.mjs": "860980ac445121756059fe18ffd9fa8621bdf02c3ae1356d6fcabf5b8e3bdd56",
+      "src/mock.mjs": "eb2ec68f32473a6d9fe5bf9d93d136f14246065088347fd99fe6a5204eae543d",
+      "src/oracle.mjs": "752fd7fb9db33269f5877823bb453a1b0bd43d9d6f8c177eaf51578f44f5300c",
+      "src/probe.mjs": "d39890bdad71d85b4e5db2f6745101bac415e3f619ca264ce7b4423d39ff19bd",
+      "src/receipt.mjs": "2ff2def54124385e1a1f435ae0f7b68e4010b28c174f226c6ba045d8aef10354",
+      "src/report.mjs": "219e820a220e2f88672f415a5796ecd0b2c10644c35eaac46cc9c00e3df0a0c9",
+      "src/run.mjs": "2f9f0303c540a2f89e786f1534a7552b639b44e118c31cb20f689906ce0e3fc7",
+      "src/trial.mjs": "18c196e719257e4026b2022344fad004e4381e7daff186e6f12ec5366eec40dd",
+      "src/worker.mjs": "380b62ab3c92394c45220545f190d4d04256e8fa2f8d51f5b307e98651473a24",
+      "test/fixture.test.mjs": "108039006f72995161772f6753cef0250e1c80f10f15328c09ed6b7fb443b278",
+      "test/metrics.test.mjs": "b173dd2f8c91e9e13acce561a2b98c87dabf60a6c51a6456323815d7de9dc4d9",
+      "test/mock.test.mjs": "29b6b070547abbfa516277d0e75abaee9e52c47c4ea20795c00be400ab1de908",
+      "test/native.test.mjs": "65017ba8e48ef876ce55ff708172db24df51f6566938fe6ce634314bd7a6b39d",
+      "test/oracle.test.mjs": "51abe886dc04706607c3063b376ab1acb173a0dd7c276152f54a589740555b76"
+    }
+  },
+  "results": [
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scale": 10,
+      "scenario": "full-fixture-and-retained-sibling-verification",
+      "seed": 84,
+      "network": "fast",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "replay": "node src/fixture-check.mjs",
+      "initial_full_fixture": true,
+      "after_edit_and_reopen_full_fixture": true,
+      "expected_digest": "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b",
+      "actual_digests": [
+        "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b",
+        "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b"
+      ],
+      "expected_retained_unedited_pages": 9,
+      "actual_counts": [
+        10,
+        10
+      ],
+      "status": "PASS"
+    },
+    {
+      "engine": "rxdb",
+      "version": "17.6.0",
+      "commit": "9d60a86373730211c291f8c25668fca7aa531887",
+      "adapter": "replicateGoogleDrive + Dexie",
+      "provider": "drive",
+      "scale": 1000,
+      "scenario": "full-fixture-and-retained-sibling-verification",
+      "seed": 84,
+      "network": "fast",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "replay": "node src/fixture-check.mjs",
+      "initial_full_fixture": true,
+      "after_edit_and_reopen_full_fixture": true,
+      "expected_digest": "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac",
+      "actual_digests": [
+        "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac",
+        "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac"
+      ],
+      "expected_retained_unedited_pages": 999,
+      "actual_counts": [
+        1000,
+        1000
+      ],
+      "status": "PASS"
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scale": 10,
+      "scenario": "full-fixture-and-retained-sibling-verification",
+      "seed": 84,
+      "network": "fast",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "replay": "node src/fixture-check.mjs",
+      "initial_full_fixture": true,
+      "after_edit_and_reopen_full_fixture": true,
+      "expected_digest": "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b",
+      "actual_digests": [
+        "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b",
+        "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b"
+      ],
+      "expected_retained_unedited_pages": 9,
+      "actual_counts": [
+        10,
+        10
+      ],
+      "status": "PASS"
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "drive",
+      "scale": 1000,
+      "scenario": "full-fixture-and-retained-sibling-verification",
+      "seed": 84,
+      "network": "fast",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "replay": "node src/fixture-check.mjs",
+      "initial_full_fixture": true,
+      "after_edit_and_reopen_full_fixture": true,
+      "expected_digest": "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac",
+      "actual_digests": [
+        "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac",
+        "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac"
+      ],
+      "expected_retained_unedited_pages": 999,
+      "actual_counts": [
+        1000,
+        1000
+      ],
+      "status": "PASS"
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scale": 10,
+      "scenario": "full-fixture-and-retained-sibling-verification",
+      "seed": 84,
+      "network": "fast",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "replay": "node src/fixture-check.mjs",
+      "initial_full_fixture": true,
+      "after_edit_and_reopen_full_fixture": true,
+      "expected_digest": "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b",
+      "actual_digests": [
+        "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b",
+        "8ea32326805c4b443c9b503921f455c2aa1c04e9933272ca82b656cc51316a4b"
+      ],
+      "expected_retained_unedited_pages": 9,
+      "actual_counts": [
+        10,
+        10
+      ],
+      "status": "PASS"
+    },
+    {
+      "engine": "selfstore",
+      "version": "1.8.29",
+      "commit": "d5900893187e8832dc5cba510a928819b2042236",
+      "adapter": "native driveTarget.adopt / webdavTarget.connect + indexedDbCache",
+      "provider": "webdav",
+      "scale": 1000,
+      "scenario": "full-fixture-and-retained-sibling-verification",
+      "seed": 84,
+      "network": "fast",
+      "mock_contract": "byos-loopback-v1",
+      "policy": "default",
+      "attempts": 1,
+      "completed_runs": 1,
+      "failed_runs": 0,
+      "timed_out_runs": 0,
+      "replay": "node src/fixture-check.mjs",
+      "initial_full_fixture": true,
+      "after_edit_and_reopen_full_fixture": true,
+      "expected_digest": "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac",
+      "actual_digests": [
+        "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac",
+        "666b8dc303bcaf2d155af08036633bb54b45d8f99d3323cfffbc81363e7887ac"
+      ],
+      "expected_retained_unedited_pages": 999,
+      "actual_counts": [
+        1000,
+        1000
+      ],
+      "status": "PASS"
+    }
+  ]
+}
