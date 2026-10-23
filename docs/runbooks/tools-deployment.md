@@ -44,9 +44,16 @@ both build and upload; project selection is resolved after injection.
 
 ```bash
 npm ci
+npm ci --prefix workers/video-scissors-mcp --ignore-scripts --no-audit --no-fund
 npm run deploy:staging
 npm run deploy:verify:staging
 ```
+
+The static consent page imports shared Worker UI types. Install that isolated
+locked dependency graph before a standalone deployment build; the native gate
+already does so. CI installs it in the staging job as well because the checks
+job's dependencies do not carry across jobs. This installs build-time types and
+does not activate or contact the MCP service.
 
 Start from clean reviewed source. The adapter builds, checks SEO, and retains an
 identified export under `.deploy/releases/<FULL_SHA>/out/`. `release.json` includes

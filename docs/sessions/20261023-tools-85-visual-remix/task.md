@@ -175,3 +175,11 @@
   execute the immutable staged candidate after reviewed version integration.
   Independent version review and native submit gate pending; no commit/push,
   deployment, Worker/OAuth/MCP/network integration or acceptance claim here.
+
+## Canonical V1 staging repair
+
+- Top-level lead directly owns execution; earlier custom executor assignments are superseded.
+- Version PR95 merged192d2c178eb4768f5d526969c9a5c83cb0583c92,v0.1.6. Reused existing PASS evidence; no repeated merge.
+- Static staging run39942121566 checks PASS; deploy job FAILED before upload at Next TypeScript: shared Worker UI types could not resolve its nested OAuth dependency. No deployment/success tag was created.
+- Root cause: the checks gate installs isolated Worker dependencies, but the separate staging job installed root only. Added the same locked, ignore-scripts nested install to staging and documented standalone local build prerequisite. No scopes, credentials, Worker runtime, version or production behavior changed.
+- Evidence is the actual failed clean GitHub staging build; next verification is native required gates and repaired clean staging job. Independent read-only review pending.
