@@ -27,6 +27,7 @@ echo "🛡️  Gatekeeper: Starting Validation Phase..."
 echo "🧪 Checking the deployment and release contract..."
 npm run test:deploy
 npm run test:recorder
+npm run test:visual-remix
 npm run test:meeting-fixer
 npm run test:video-scissors
 npm run test:video-scissors-remote
