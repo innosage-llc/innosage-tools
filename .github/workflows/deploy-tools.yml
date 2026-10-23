@@ -40,6 +40,10 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install isolated Worker type dependencies
+        # The static consent page imports the Worker's shared UI types.
+        # The checks job's gate installs these too, but jobs have separate filesystems.
+        run: npm ci --prefix workers/video-scissors-mcp --ignore-scripts --no-audit --no-fund
       - name: Configure Git identity for the staging success tag
         run: |
           git config user.name "github-actions[bot]"
