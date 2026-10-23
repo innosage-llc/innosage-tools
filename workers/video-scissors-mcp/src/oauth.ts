@@ -1,4 +1,4 @@
-import { OAuthProvider, OAuthError, insufficientScope, type OAuthHelpers, type OAuthResourceContext } from '@cloudflare/workers-oauth-provider';
+import { OAuthProvider, OAuthError, insufficientScope, type OAuthHelpers, type OAuthResourceContext, type OAuthProviderOptions } from '@cloudflare/workers-oauth-provider';
 import { renderConsentView } from './ConsentView';
 import { Mailbox } from './mailbox';
 import { mcpHandler } from './mcp';
@@ -7,13 +7,15 @@ import type { BridgeNamespace } from './browser-routes';
 import { boundedBody, exactObject, sameOrigin, reply } from './http';
 
 const scopes = ['video:read', 'video:edit'];
-export function providerFor(env: Env, origin: string, bridge?: BridgeNamespace) {
+type VideoOptions = Omit<OAuthProviderOptions<Env>, 'apiHandler'> & { apiHandler: { fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> } };
+// Shared configuration; providerFor retains the existing single-resource behavior.
+export function videoOAuthOptionsFor(env: Env, origin: string, bridge?: BridgeNamespace): VideoOptions {
   const wake = async (project: string, epoch: number) => {
     if (!bridge) return;
     const stub = bridge.get(bridge.idFromName(project)) as {notify(project: string, epoch: number): Promise<void>};
     await stub.notify(project, epoch);
   };
-  return new OAuthProvider<Env>({
+  return {
     apiRoute: '/mcp', apiHandler: { async fetch(request, currentEnv, ctx) {
       // Provider 1.2.3 supplies ctx.auth, not the newer Agents verified-symbol
       // bridge. Map ONLY the provider-verified fields through the official API.
@@ -96,5 +98,9 @@ export function providerFor(env: Env, origin: string, bridge?: BridgeNamespace) 
       approved.headers.set('Location', redirectTo);
       return new Response(null, { status: 302, headers: approved.headers });
     } },
-  });
+  };
+}
+
+export function providerFor(env: Env, origin: string, bridge?: BridgeNamespace) {
+  return new OAuthProvider<Env>(videoOAuthOptionsFor(env, origin, bridge));
 }
