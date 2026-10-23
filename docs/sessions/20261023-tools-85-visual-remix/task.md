@@ -192,3 +192,24 @@
 - Corrected static deployment ccb6f7e/v0.1.6 is verified at immutable Pages URL, receipt/tree/config/online identity PASS. Original image drove a14-layer staged Scene preview; one orphan-punctuation iteration fixed at unchanged39px.
 - Staged original Apply/download was denied by automatic approval review as lacking separate Apply approval after the Agent's preview-only instruction. Known unexecuted; read-only DOM confirms revision0 with candidate available. Explicit narrow user approval pending; no retry/workaround. Real Apply/PNG/reuse/motion journey remains NOT RUN.
 - Independent Sol review VR-BRIDGE-1 found consent could straddle a pending same-ID import. Lead repair exposes loading, rejects transitional shares and rotates authority again on successful commit. A held-render regression checks old, transitional and fresh settled consent; affected checks and exact rereview follow.
+
+
+## Approved inactive Scene candidate continuation
+
+Founder approved proceeding with inactive Scene MCP auth/storage preparation and
+independent security review. Canonical V1 lead executes directly; Sol reviews;
+Astra remains conditional consulting only. Active auth/scopes/storage expansion
+and live MCP still need exact action-time approval; no production/Master closure.
+
+First slice adds descriptor-only protocol and separate inactive Scene store/SQL
+outside normal migrations. No active entrypoint, video scope/counter or deployment
+config changes. Four local Miniflare/D1 regressions plus one schema/envelope case PASS; fixture
+egress is denied;
+Worker/root TypeScript and scoped lint PASS. Local loopback sandbox EPERM was
+retried through the authorized native executor. Exact independent review and
+native full gates follow. Prior real-image staging evidence/timing is preserved.
+
+Independent Sol review VR-SCENE-STORE-1 found applied ACK retries were wrongly
+rechecked against later snapshots. Lead repair preserves exact terminal retry
+idempotence while retaining live owner/lease checks; regression covers a later
+local revision, wrong credential and wrong epoch. Exact rereview follows.

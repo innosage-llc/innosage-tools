@@ -16,6 +16,7 @@
     "test:recorder": "node --experimental-strip-types --test scripts/recorder.test.ts",
     "test:visual-remix": "node --experimental-strip-types --test scripts/visual-remix.test.ts",
     "test:visual-remix-bridge": "node --experimental-strip-types --test scripts/visual-remix-bridge.test.ts",
+    "test:visual-remix-scene-store": "npm --prefix workers/video-scissors-mcp run test:scene-store",
     "test:visual-remix-render": "node --test scripts/visual-remix-render.test.mjs",
     "test:visual-remix-motion": "node --experimental-strip-types --test scripts/visual-remix-motion.test.ts",
     "test:visual-remix-motion-browser": "node --test scripts/visual-remix-motion-browser.test.mjs",
