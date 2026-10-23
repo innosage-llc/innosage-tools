@@ -1,0 +1,1003 @@
+{
+  "decision": "OFFLINE_CANDIDATE_PASSES_ENGINEERING_EVIDENCE",
+  "passed": true,
+  "safety": {
+    "seededTrials": 100,
+    "distinctSeeds": 100,
+    "acknowledgedEdits": 700,
+    "preservedFullEdits": 700,
+    "lostEdits": 0,
+    "sampledStates": 915,
+    "falseStates": 0,
+    "stableRecoveryMs": {
+      "n": 100,
+      "p50": 37.612041999999974,
+      "p95": 1013.3299580000166,
+      "min": 30.895000000018626,
+      "max": 1095.090124999988
+    },
+    "rendererCases": 12,
+    "rendererAcknowledgedEdits": 24,
+    "rendererRecoveredEdits": 24,
+    "rendererSampledStates": 84,
+    "rendererFalseStates": 0,
+    "rendererRecoveryMs": {
+      "n": 12,
+      "p50": 40.463542000000416,
+      "p95": 46.990499999999884,
+      "min": 38.60370799999873,
+      "max": 46.990499999999884
+    },
+    "inversionProviders": 2,
+    "lifecycleProviders": 2
+  },
+  "cells": [
+    {
+      "provider": "drive",
+      "scale": 10,
+      "trials": 30,
+      "failures": 0,
+      "timeouts": 0,
+      "acknowledgedEdits": 90,
+      "appliedEdits": 30,
+      "durableManualConflictEdits": 60,
+      "autoMergedEdits": 0,
+      "lostEdits": 0,
+      "falseStates": 0,
+      "phases": {
+        "cold": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 50.07029199999988,
+            "p95": 55.56574999999998,
+            "min": 43.43204199999991,
+            "max": 73.18304199999997
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 14.188,
+            "p95": 38.054,
+            "min": 10.573,
+            "max": 66.528
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 5901,
+            "p95": 5901,
+            "min": 5901,
+            "max": 5901
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 18147,
+            "p95": 18147,
+            "min": 18147,
+            "max": 18147
+          },
+          "amplification": null,
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 120,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 30
+          },
+          "quotaUnits": "UNKNOWN_MEDIA_METHOD_WEIGHTS"
+        },
+        "incremental": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 50.5883330000006,
+            "p95": 55.91108299999996,
+            "min": 46.2954579999996,
+            "max": 58.977874999999585
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 13.753,
+            "p95": 24.326,
+            "min": 10.003,
+            "max": 29.059
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 6367,
+            "p95": 6367,
+            "min": 6367,
+            "max": 6367
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 25385,
+            "p95": 25385,
+            "min": 25385,
+            "max": 25385
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 240.54545454545453,
+            "p95": 240.54545454545453,
+            "min": 240.54545454545453,
+            "max": 240.54545454545453
+          },
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 120,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 30
+          },
+          "quotaUnits": "UNKNOWN_MEDIA_METHOD_WEIGHTS"
+        },
+        "reconnect": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 84.41937499999949,
+            "p95": 92.60129099999995,
+            "min": 78.23908400000028,
+            "max": 93.53666699999985
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 21.739,
+            "p95": 37.192,
+            "min": 18.351,
+            "max": 71.703
+          },
+          "requests": {
+            "n": 30,
+            "p50": 8,
+            "p95": 8,
+            "min": 8,
+            "max": 8
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 14351,
+            "p95": 14351,
+            "min": 14351,
+            "max": 14351
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 43280,
+            "p95": 43280,
+            "min": 43280,
+            "max": 43280
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 150.08072916666666,
+            "p95": 150.08072916666666,
+            "min": 150.08072916666666,
+            "max": 150.08072916666666
+          },
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 180,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 60
+          },
+          "quotaUnits": "UNKNOWN_MEDIA_METHOD_WEIGHTS"
+        }
+      },
+      "localInitializationMs": {
+        "n": 30,
+        "p50": 1.0877500000001419,
+        "p95": 1.9087919999999485,
+        "min": 0.9468339999993987,
+        "max": 4.210999999999984
+      },
+      "coldHydrationMs": {
+        "n": 30,
+        "p50": 20.950624999999945,
+        "p95": 26.224958000000015,
+        "min": 17.74083299999984,
+        "max": 29.041541999999993
+      },
+      "conflictDetectionMs": {
+        "n": 30,
+        "p50": 84.41937499999949,
+        "p95": 92.60129099999995,
+        "min": 78.23908400000028,
+        "max": 93.53666699999985
+      },
+      "runtimeMs": {
+        "n": 30,
+        "p50": 246.42466600000034,
+        "p95": 258.8690409999999,
+        "min": 235.1553329999997,
+        "max": 283.33712499999996
+      },
+      "harnessCpuMs": {
+        "n": 30,
+        "p50": 84.903,
+        "p95": 131.247,
+        "min": 69.781,
+        "max": 162.263
+      },
+      "coldRemoteBytes": {
+        "n": 30,
+        "p50": 5901,
+        "p95": 5901,
+        "min": 5901,
+        "max": 5901
+      },
+      "finalRemoteBytes": {
+        "n": 30,
+        "p50": 7445,
+        "p95": 7445,
+        "min": 7445,
+        "max": 7445
+      }
+    },
+    {
+      "provider": "drive",
+      "scale": 1000,
+      "trials": 30,
+      "failures": 0,
+      "timeouts": 0,
+      "acknowledgedEdits": 90,
+      "appliedEdits": 30,
+      "durableManualConflictEdits": 60,
+      "autoMergedEdits": 0,
+      "lostEdits": 0,
+      "falseStates": 0,
+      "phases": {
+        "cold": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 448.4782500000001,
+            "p95": 471.6422500000044,
+            "min": 424.5734589999993,
+            "max": 474.4075840000005
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 411.602,
+            "p95": 528.725,
+            "min": 386.724,
+            "max": 538.537
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 597359,
+            "p95": 597359,
+            "min": 597359,
+            "max": 597359
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 1792525,
+            "p95": 1792525,
+            "min": 1792525,
+            "max": 1792525
+          },
+          "amplification": null,
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 120,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 30
+          },
+          "quotaUnits": "UNKNOWN_MEDIA_METHOD_WEIGHTS"
+        },
+        "incremental": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 498.03533400000015,
+            "p95": 522.9182089999958,
+            "min": 468.380208999999,
+            "max": 526.0437910000037
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 485.272,
+            "p95": 512.954,
+            "min": 458.661,
+            "max": 522.99
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 597825,
+            "p95": 597825,
+            "min": 597825,
+            "max": 597825
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 2391221,
+            "p95": 2391221,
+            "min": 2391221,
+            "max": 2391221
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 22644.28787878788,
+            "p95": 22644.28787878788,
+            "min": 22644.28787878788,
+            "max": 22644.28787878788
+          },
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 120,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 30
+          },
+          "quotaUnits": "UNKNOWN_MEDIA_METHOD_WEIGHTS"
+        },
+        "reconnect": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 749.0744160000031,
+            "p95": 791.5319169999857,
+            "min": 712.4214169999996,
+            "max": 806.4798339999979
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 725.109,
+            "p95": 792.518,
+            "min": 684.589,
+            "max": 994.199
+          },
+          "requests": {
+            "n": 30,
+            "p50": 8,
+            "p95": 8,
+            "min": 8,
+            "max": 8
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 1197267,
+            "p95": 1197267,
+            "min": 1197267,
+            "max": 1197267
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 3592036,
+            "p95": 3592036,
+            "min": 3592036,
+            "max": 3592036
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 12472.143229166666,
+            "p95": 12472.143229166666,
+            "min": 12472.143229166666,
+            "max": 12472.143229166666
+          },
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 180,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 60
+          },
+          "quotaUnits": "UNKNOWN_MEDIA_METHOD_WEIGHTS"
+        }
+      },
+      "localInitializationMs": {
+        "n": 30,
+        "p50": 85.91466600000422,
+        "p95": 92.66116600000532,
+        "min": 81.71937499999694,
+        "max": 95.21270799997728
+      },
+      "coldHydrationMs": {
+        "n": 30,
+        "p50": 270.0444160000043,
+        "p95": 286.10870799999975,
+        "min": 255.16595799999777,
+        "max": 291.94541699999536
+      },
+      "conflictDetectionMs": {
+        "n": 30,
+        "p50": 749.0744160000031,
+        "p95": 791.5319169999857,
+        "min": 712.4214169999996,
+        "max": 806.4798339999979
+      },
+      "runtimeMs": {
+        "n": 30,
+        "p50": 4859.253041999997,
+        "p95": 5050.74433300001,
+        "min": 4628.1494999999995,
+        "max": 5104.049916000018
+      },
+      "harnessCpuMs": {
+        "n": 30,
+        "p50": 4793.466,
+        "p95": 5213.495,
+        "min": 4611.429,
+        "max": 5263.66
+      },
+      "coldRemoteBytes": {
+        "n": 30,
+        "p50": 597359,
+        "p95": 597359,
+        "min": 597359,
+        "max": 597359
+      },
+      "finalRemoteBytes": {
+        "n": 30,
+        "p50": 598903,
+        "p95": 598903,
+        "min": 598903,
+        "max": 598903
+      }
+    },
+    {
+      "provider": "webdav",
+      "scale": 10,
+      "trials": 30,
+      "failures": 0,
+      "timeouts": 0,
+      "acknowledgedEdits": 90,
+      "appliedEdits": 30,
+      "durableManualConflictEdits": 60,
+      "autoMergedEdits": 0,
+      "lostEdits": 0,
+      "falseStates": 0,
+      "phases": {
+        "cold": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 48.836542000004556,
+            "p95": 54.359874999994645,
+            "min": 44.79195799998706,
+            "max": 54.70920800001477
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 13.446,
+            "p95": 26.206,
+            "min": 9.063,
+            "max": 26.973
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 5901,
+            "p95": 5901,
+            "min": 5901,
+            "max": 5901
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 17764,
+            "p95": 17764,
+            "min": 17764,
+            "max": 17764
+          },
+          "amplification": null,
+          "endpoints": {
+            "GET /dav/backup.zip": 120,
+            "PUT /dav/backup.zip": 30
+          },
+          "quotaUnits": "NOT_APPLICABLE"
+        },
+        "incremental": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 50.68604199998663,
+            "p95": 57.87354200001573,
+            "min": 45.15016600000672,
+            "max": 58.78566699998919
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 13.612,
+            "p95": 29.93,
+            "min": 9.519,
+            "max": 34.096
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 6367,
+            "p95": 6367,
+            "min": 6367,
+            "max": 6367
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 25002,
+            "p95": 25002,
+            "min": 25002,
+            "max": 25002
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 237.6439393939394,
+            "p95": 237.6439393939394,
+            "min": 237.6439393939394,
+            "max": 237.6439393939394
+          },
+          "endpoints": {
+            "GET /dav/backup.zip": 120,
+            "PUT /dav/backup.zip": 30
+          },
+          "quotaUnits": "NOT_APPLICABLE"
+        },
+        "reconnect": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 83.4730410000193,
+            "p95": 90.58358299999963,
+            "min": 75.15179199998965,
+            "max": 90.61758399999235
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 20.021,
+            "p95": 31.204,
+            "min": 15.357,
+            "max": 32.748
+          },
+          "requests": {
+            "n": 30,
+            "p50": 8,
+            "p95": 8,
+            "min": 8,
+            "max": 8
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 14351,
+            "p95": 14351,
+            "min": 14351,
+            "max": 14351
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 42514,
+            "p95": 42514,
+            "min": 42514,
+            "max": 42514
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 148.0859375,
+            "p95": 148.0859375,
+            "min": 148.0859375,
+            "max": 148.0859375
+          },
+          "endpoints": {
+            "GET /dav/backup.zip": 180,
+            "PUT /dav/backup.zip": 60
+          },
+          "quotaUnits": "NOT_APPLICABLE"
+        }
+      },
+      "localInitializationMs": {
+        "n": 30,
+        "p50": 1.0257500000006985,
+        "p95": 1.3253339999937452,
+        "min": 0.8647920000075828,
+        "max": 1.624374999984866
+      },
+      "coldHydrationMs": {
+        "n": 30,
+        "p50": 20.973457999993116,
+        "p95": 25.073417000006884,
+        "min": 17.224041000008583,
+        "max": 25.078959000005852
+      },
+      "conflictDetectionMs": {
+        "n": 30,
+        "p50": 83.4730410000193,
+        "p95": 90.58358299999963,
+        "min": 75.15179199998965,
+        "max": 90.61758399999235
+      },
+      "runtimeMs": {
+        "n": 30,
+        "p50": 243.3265839999949,
+        "p95": 256.2932499999879,
+        "min": 231.49462499999208,
+        "max": 265.4222920000029
+      },
+      "harnessCpuMs": {
+        "n": 30,
+        "p50": 73.372,
+        "p95": 102.501,
+        "min": 61.676,
+        "max": 110.318
+      },
+      "coldRemoteBytes": {
+        "n": 30,
+        "p50": 5901,
+        "p95": 5901,
+        "min": 5901,
+        "max": 5901
+      },
+      "finalRemoteBytes": {
+        "n": 30,
+        "p50": 7445,
+        "p95": 7445,
+        "min": 7445,
+        "max": 7445
+      }
+    },
+    {
+      "provider": "webdav",
+      "scale": 1000,
+      "trials": 30,
+      "failures": 0,
+      "timeouts": 0,
+      "acknowledgedEdits": 90,
+      "appliedEdits": 30,
+      "durableManualConflictEdits": 60,
+      "autoMergedEdits": 0,
+      "lostEdits": 0,
+      "falseStates": 0,
+      "phases": {
+        "cold": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 485.58970799995586,
+            "p95": 534.6881250000151,
+            "min": 458.59983299998567,
+            "max": 544.0256670000381
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 445.384,
+            "p95": 502.588,
+            "min": 417.578,
+            "max": 872.792
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 597359,
+            "p95": 597359,
+            "min": 597359,
+            "max": 597359
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 1792138,
+            "p95": 1792138,
+            "min": 1792138,
+            "max": 1792138
+          },
+          "amplification": null,
+          "endpoints": {
+            "GET /dav/backup.zip": 120,
+            "PUT /dav/backup.zip": 30
+          },
+          "quotaUnits": "NOT_APPLICABLE"
+        },
+        "incremental": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 546.5478749999893,
+            "p95": 592.1426250000368,
+            "min": 508.0623750000086,
+            "max": 690.3287920000148
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 530.346,
+            "p95": 565.741,
+            "min": 495.811,
+            "max": 1169.398
+          },
+          "requests": {
+            "n": 30,
+            "p50": 5,
+            "p95": 5,
+            "min": 5,
+            "max": 5
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 597825,
+            "p95": 597825,
+            "min": 597825,
+            "max": 597825
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 2390834,
+            "p95": 2390834,
+            "min": 2390834,
+            "max": 2390834
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 22641.35606060606,
+            "p95": 22641.35606060606,
+            "min": 22641.35606060606,
+            "max": 22641.35606060606
+          },
+          "endpoints": {
+            "GET /dav/backup.zip": 120,
+            "PUT /dav/backup.zip": 30
+          },
+          "quotaUnits": "NOT_APPLICABLE"
+        },
+        "reconnect": {
+          "elapsedMs": {
+            "n": 30,
+            "p50": 822.8358749999898,
+            "p95": 889.3658339999965,
+            "min": 783.4572500000068,
+            "max": 913.7094579999975
+          },
+          "harnessCpuMs": {
+            "n": 30,
+            "p50": 796.59,
+            "p95": 860.71,
+            "min": 757.792,
+            "max": 1269.637
+          },
+          "requests": {
+            "n": 30,
+            "p50": 8,
+            "p95": 8,
+            "min": 8,
+            "max": 8
+          },
+          "bytesUp": {
+            "n": 30,
+            "p50": 1197267,
+            "p95": 1197267,
+            "min": 1197267,
+            "max": 1197267
+          },
+          "bytesDown": {
+            "n": 30,
+            "p50": 3591262,
+            "p95": 3591262,
+            "min": 3591262,
+            "max": 3591262
+          },
+          "amplification": {
+            "n": 30,
+            "p50": 12470.127604166666,
+            "p95": 12470.127604166666,
+            "min": 12470.127604166666,
+            "max": 12470.127604166666
+          },
+          "endpoints": {
+            "GET /dav/backup.zip": 180,
+            "PUT /dav/backup.zip": 60
+          },
+          "quotaUnits": "NOT_APPLICABLE"
+        }
+      },
+      "localInitializationMs": {
+        "n": 30,
+        "p50": 94.32454200001666,
+        "p95": 109.22995800001081,
+        "min": 89.17433300000266,
+        "max": 114.75266599998577
+      },
+      "coldHydrationMs": {
+        "n": 30,
+        "p50": 294.7353749999893,
+        "p95": 330.5457919999608,
+        "min": 275.62504199999967,
+        "max": 338.5329159999965
+      },
+      "conflictDetectionMs": {
+        "n": 30,
+        "p50": 822.8358749999898,
+        "p95": 889.3658339999965,
+        "min": 783.4572500000068,
+        "max": 913.7094579999975
+      },
+      "runtimeMs": {
+        "n": 30,
+        "p50": 5389.496332999988,
+        "p95": 5837.074790999992,
+        "min": 5056.562791000004,
+        "max": 5854.2278329999535
+      },
+      "harnessCpuMs": {
+        "n": 30,
+        "p50": 5340.111,
+        "p95": 5867.362,
+        "min": 4941.716,
+        "max": 6253.634
+      },
+      "coldRemoteBytes": {
+        "n": 30,
+        "p50": 597359,
+        "p95": 597359,
+        "min": 597359,
+        "max": 597359
+      },
+      "finalRemoteBytes": {
+        "n": 30,
+        "p50": 598903,
+        "p95": 598903,
+        "min": 598903,
+        "max": 598903
+      }
+    }
+  ],
+  "proofs": [
+    {
+      "id": "A4",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a4-2026-10-23T10-38-08-430Z.json",
+      "evidenceSha256": "65ef2552d2c08f938d706b912bf6935b9b91e13a3920013a5c154251511fbdbf",
+      "sourceDigest": "290ff3da1c60dab5fabcb058c8e30192527cf1fa1d13ca22a153fd5015ef00c1",
+      "hashVerified": true,
+      "runtimeEquivalent": true
+    },
+    {
+      "id": "A5",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T22-32-03-178Z.json",
+      "evidenceSha256": "84207cd41038dbb7bf7d32dc3b583088dbbaa976d666833c638044633589a892",
+      "sourceDigest": "158784b816540b68e004e149e8039aba59d21db2e9ad6340a7dd0a4a13eb91e6",
+      "hashVerified": true,
+      "runtimeEquivalent": true
+    },
+    {
+      "id": "A6",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a6-2026-10-23T22-32-35-463Z.json",
+      "evidenceSha256": "110b77da17b84503c6d7fba10885127178c63abefde2c7d12029a6799b10cc29",
+      "sourceDigest": "5935dec913229978fcc662dd9d3e3497b7378617772430c1c1329b86084441d5",
+      "hashVerified": true,
+      "runtimeEquivalent": true
+    },
+    {
+      "id": "A7",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a7-2026-10-23T22-38-13-191Z.json",
+      "evidenceSha256": "f5da6a388a013e37197c5c028eca175fb3aa511f23a32bac409adcbad862213d",
+      "sourceDigest": "5935dec913229978fcc662dd9d3e3497b7378617772430c1c1329b86084441d5",
+      "hashVerified": true,
+      "runtimeEquivalent": true
+    }
+  ],
+  "gaps": [],
+  "definitions": {
+    "timing": "Cold: after initial local fixture ACK through both stores inspected durable and pending settled; incremental: last local edit ACK through both stores inspected durable and pending settled; reconnect: restored connectivity through both stores inspected durable full conflicts and pending settled.",
+    "hydration": "Second initially empty device imports the complete existing snapshot and commits its verification receipt.",
+    "bytes": "HTTP body bytes only; headers, TLS and wire framing excluded. Amplification uses UTF8 full replacement Markdown body bytes, not text delta or protocol metadata.",
+    "backend": "Node native RxDB/Dexie with fake-indexeddb; separate real Chromium IndexedDB crash correctness evidence. Synthetic8ms RTT/2ms jitter, not measured Google/WebDAV latency.",
+    "cpu": "Node process CPU including harness/oracle work; heap observations are not peak memory or isolated database footprint.",
+    "failures": "All attempted rows retained. No percentile eligibility with non-PASS rows or fewer than30 completed paired rows per cell. Browser/OS/power-loss and real-provider validation remain separate."
+  },
+  "historicalAttempts": [
+    {
+      "attempt": "A1",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a1-initial-console.json",
+      "evidenceSha256": "c5a09031ee4f8e3685a292818ac84e1695a1d585da13b8a0c7864f1340dc153b",
+      "sourceDigest": "abb9baba1f0fd4fcfca5fa555d0e8cc4d01cea1cda964a6595979ac3a83d545f"
+    },
+    {
+      "attempt": "A2",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a2-initial-console.json",
+      "evidenceSha256": "9136ea9918f01cbc7b8d2ffff1e3bc4b8f09dcabb180c0a0f73a31e767a2359d",
+      "sourceDigest": "da02ed0ad96e153e470f30439c96a36c9db352d5a71f056f5613790a8d23e98f"
+    },
+    {
+      "attempt": "A3",
+      "kind": "hypothesis",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a3-2026-10-23T10-10-44-672Z.json",
+      "evidenceSha256": "76a2f9de25f1bc2dfbe909654eca3164216dba56d3e6cd8bcb99e4aa9a737622",
+      "sourceDigest": "64cc9a4c775de4ebd755692a4c9e522f7ee041e2875342ce61020890ad52a41c"
+    },
+    {
+      "attempt": "A4",
+      "kind": "hypothesis",
+      "result": "FAIL",
+      "evidence": "spikes/byos-remediation/evidence/a4-2026-10-23T10-37-48-288Z.json",
+      "evidenceSha256": "28aaa11812c0927a4c6cf5cace41383e28f1dad323639632b70f1d0bcceef0fb",
+      "sourceDigest": "d3ab886f09a71fa2a115a3ef1d4adfb1faed2378dad9995af07c9175d3cc3dce"
+    },
+    {
+      "attempt": "A4",
+      "kind": "validation",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a4-2026-10-23T10-38-08-430Z.json",
+      "evidenceSha256": "65ef2552d2c08f938d706b912bf6935b9b91e13a3920013a5c154251511fbdbf",
+      "sourceDigest": "290ff3da1c60dab5fabcb058c8e30192527cf1fa1d13ca22a153fd5015ef00c1"
+    },
+    {
+      "attempt": "A5",
+      "kind": "hypothesis",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T10-46-32-367Z.json",
+      "evidenceSha256": "e64336fa09d9e257e1f18ca598be72aadbba1b1e6eafa2413576c0f6e5034218",
+      "sourceDigest": "381fdbbbaa8a2ac4ab8452e4a2e2ea04eed600cd02901cace5a383bddac9bf8f"
+    },
+    {
+      "attempt": "REPORT_COVERAGE_GUARD",
+      "kind": "validation",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/local-report-schedule-validation.json",
+      "evidenceSha256": "213a8a4e524af70a45e4dab0520c0d3b71d39e02bdcf5a5b93e8cf5ebaee33dd",
+      "sourceDigest": "6181db9c571b8f524243d7e350cfb242e6fa7d4abc9937500fd94034d60b46f5"
+    },
+    {
+      "attempt": "REPORT_COVERAGE_GUARD",
+      "kind": "validation",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/local-report-schedule-validation-r2.json",
+      "evidenceSha256": "a7e0cf930f0f65f5b19743c441d73fc054653ac85d340b7b2018e4bfb2c77ced",
+      "sourceDigest": "691a6335c96eaa48cf052b000eb614ef0b17fefb074d8a1e5c99ff58b2d8fdcd"
+    },
+    {
+      "attempt": "A5",
+      "kind": "validation",
+      "result": "FAIL",
+      "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T22-25-10-173Z.json",
+      "evidenceSha256": "d5aadd991a7f5a1b6323dfed1b2316a152203550b6e5a51153af87cf842416c2",
+      "sourceDigest": "437233a75cef788fd044680cb4690acdc9667acf4f7e7ca91a659fc587d174fe"
+    },
+    {
+      "attempt": "A5",
+      "kind": "validation",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T22-32-03-178Z.json",
+      "evidenceSha256": "84207cd41038dbb7bf7d32dc3b583088dbbaa976d666833c638044633589a892",
+      "sourceDigest": "158784b816540b68e004e149e8039aba59d21db2e9ad6340a7dd0a4a13eb91e6"
+    },
+    {
+      "attempt": "A6",
+      "kind": "hypothesis",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a6-2026-10-23T22-32-35-463Z.json",
+      "evidenceSha256": "110b77da17b84503c6d7fba10885127178c63abefde2c7d12029a6799b10cc29",
+      "sourceDigest": "5935dec913229978fcc662dd9d3e3497b7378617772430c1c1329b86084441d5"
+    },
+    {
+      "attempt": "A7",
+      "kind": "hypothesis",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a7-2026-10-23T22-38-13-191Z.json",
+      "evidenceSha256": "f5da6a388a013e37197c5c028eca175fb3aa511f23a32bac409adcbad862213d",
+      "sourceDigest": "5935dec913229978fcc662dd9d3e3497b7378617772430c1c1329b86084441d5"
+    }
+  ],
+  "baseline": "496e9a8a1b605c81e71026d0ab217e6ccb9f41a4",
+  "baselineVerdict": "NO_SAFE_WINNER_UNCHANGED",
+  "reviewAndIntegration": "See final exact-head review/native-CI/merged-PR acceptance packet; data evidence is not independent approval",
+  "deployment": "NOT_AUTHORIZED_NOT_RUN"
+}

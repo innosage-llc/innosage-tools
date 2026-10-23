@@ -1,0 +1,12 @@
+{
+  "corrections": [
+    {
+      "artifact": "a4-2026-10-23T10-38-08-430Z.json",
+      "field": "command",
+      "recorded": "node spikes/byos-remediation/src/run-stage.mjs A4",
+      "actualCommandReportedByAuthor": "node spikes/byos-remediation/src/run-stage.mjs A4 --validation",
+      "semanticDifference": "Run-kind metadata only; same A4 witness. Original raw and ledger entry unchanged."
+    }
+  ],
+  "originalArtifactsModified": false
+}

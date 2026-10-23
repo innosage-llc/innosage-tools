@@ -19,6 +19,57 @@ const ref = ({ attempt, result, evidence, evidenceSha256, sourceDigest }) => ({
   evidenceSha256,
   sourceDigest,
 });
+
+// Trial combinations and distinct seeds are separate acceptance denominators.
+// This analyzes recorded JSON only; it never starts a replica or transport.
+export function safetyCoverage(output) {
+  const rows = Array.isArray(output?.results) ? output.results : [];
+  const valid = rows.filter((r) =>
+    r && ["drive", "webdav"].includes(r.provider) &&
+    [10, 1000].includes(r.scale) &&
+    Number.isSafeInteger(r.seed) && r.seed > 0,
+  );
+  const distinctSeeds = new Set(valid.map((r) => r.seed)).size;
+  const distinctCombinations = new Set(valid.map((r) => `${r.provider}:${r.scale}:${r.seed}`)).size;
+  const cells = Object.fromEntries(["drive", "webdav"].flatMap((provider) =>
+    [10, 1000].map((scale) => [
+      `${provider}:${scale}`,
+      valid.filter((r) => r.provider === provider && r.scale === scale).length,
+    ]),
+  ));
+  const passedTrials = rows.filter((r) => r?.status === "PASS").length;
+  const inversionVerified = ["drive", "webdav"].every((provider) => {
+    const row = output?.inversions?.find((r) => r.provider === provider);
+    const first = row?.receipts?.find((r) => r.operation === 1);
+    const second = row?.receipts?.find((r) => r.operation === 2);
+    return row?.passed === true && first?.method === "GET" && second?.method === "GET" &&
+      first.status === 200 && second.status === 200 &&
+      Number.isSafeInteger(first.deliveryOrder) && Number.isSafeInteger(second.deliveryOrder) &&
+      second.deliveryOrder > 0 && first.deliveryOrder > second.deliveryOrder &&
+      typeof first.capturedEtag === "string" && /^"[^"\r\n]+"$/.test(first.capturedEtag) &&
+      first.capturedEtag === second.capturedEtag &&
+      /^[a-f0-9]{64}$/.test(first.capturedBodySha256) && first.capturedBodySha256 === second.capturedBodySha256 &&
+      row.requests?.some((r) => r.status === 412 && r.if_match === first.capturedEtag) === true;
+  });
+  const complete = output?.passed === true && rows.length >= 100 &&
+    valid.length === rows.length && distinctSeeds >= 100 &&
+    distinctCombinations === rows.length && passedTrials === rows.length &&
+    Object.values(cells).every((count) => count > 0);
+  return {
+    status: complete ? "SEED_COVERAGE_MET_BROWSER_AND_OTHER_R5_GATES_SEPARATE" : "PARTIAL_OR_FAILED_SEED_COVERAGE",
+    seedCoverageMet: complete,
+    trialCount: rows.length,
+    passedTrials,
+    nonPassingTrials: rows.length - passedTrials,
+    invalidTrialIdentities: rows.length - valid.length,
+    distinctCombinations,
+    distinctSeeds,
+    minimumDistinctSeeds: 100,
+    cells,
+    inversionVerified,
+    fullR5Acceptance: false,
+  };
+}
 function a3Metrics(output) {
   if (
     !output ||
@@ -120,6 +171,27 @@ export async function buildReport(records, loadEvidence) {
     current.push(item);
   }
   const foundationPass = current.every((r) => r.result === "PASS");
+  const a5 = records.findLast((r) => r.attempt === "A5");
+  let safety = { status: "NOT_RUN", seedCoverageMet: false, fullR5Acceptance: false };
+  if (a5) {
+    try {
+      if (!recordedResults.includes(a5.result) || typeof a5.evidence !== "string" ||
+          !/^[a-f0-9]{64}$/.test(a5.evidenceSha256) || !/^[a-f0-9]{64}$/.test(a5.sourceDigest))
+        throw new Error("Invalid latest A5 ledger record");
+      const bytes = await loadEvidence(a5.evidence);
+      if (digest(bytes) !== a5.evidenceSha256) throw new Error("Latest A5 evidence hash mismatch");
+      const data = JSON.parse(bytes.toString());
+      if (data.id !== "A5" || data.result !== a5.result || data.source?.sourceDigest !== a5.sourceDigest)
+        throw new Error("Latest A5 envelope disagrees with ledger");
+      safety = { ...safetyCoverage(data.output), recordedResult: a5.result, evidence: a5.evidence, evidenceHashVerified: true };
+      if (a5.result !== "PASS") {
+        safety.seedCoverageMet = false;
+        safety.status = "RECORDED_RUN_NOT_PASS";
+      }
+    } catch (error) {
+      safety = { status: "INVALID_EVIDENCE", reason: error.message, seedCoverageMet: false, fullR5Acceptance: false };
+    }
+  }
   const historicalPasses = records
     .filter(
       (r) =>
@@ -147,9 +219,10 @@ export async function buildReport(records, loadEvidence) {
       quotaWeights: "UNKNOWN",
       providerCost: "UNKNOWN",
     },
-    fullSafety: "NOT_RUN",
+    safetyCoverage: safety,
+    fullSafety: safety.status === "NOT_RUN" ? "NOT_RUN" : "INCOMPLETE_R5",
     rendererCrashes: "NOT_RUN",
-    responseOrderInversion: "NOT_RUN",
+    responseOrderInversion: safety.inversionVerified ? "MOCK_TESTED_TWO_PROVIDERS_APPLICATION_DELIVERY" : "NOT_RUN",
     normalDiagnostics: "NOT_RUN",
     latencyPercentiles: "INELIGIBLE_UNTIL_HARD_GATES",
     independentReview: "PENDING",
@@ -181,13 +254,19 @@ export async function buildReport(records, loadEvidence) {
     ? `Latest valid A3 evidence sampled ${metrics.stateObservations} states across ${metrics.scenarios} provider/scenario cases, with ${metrics.falseStateCount} false local/remote/pending observations under the documented exact-set contract. Requests: ${metrics.requestCount}. These A3 observations do not override other required witness results.`
     : "Latest A3 metrics are unavailable; no counts or recovery claim are inferred from an older PASS.";
   const delayNote =
-    "Historical A3 raw/source labels `reordered-get` and mock `reorder` exercised only a single sequential GET delayed 250 ms. Current source calls this `delayed-get` / `delayed-response`. Actual response-order inversion is NOT RUN and remains R5 work; historical bytes are preserved.";
+    "Historical A3 raw/source labels `reordered-get` and mock `reorder` exercised only a single sequential GET delayed 250 ms. Current source calls this `delayed-get` / `delayed-response`. " +
+    (safety.inversionVerified
+      ? "Separate hash-verified A5 receipts demonstrate application delivery inversion of coherent captured HTTP responses on both mock providers, including the resulting 412. This does not relabel the historical delay witness."
+      : "Actual response-order inversion is NOT RUN and remains R5 work; historical bytes are preserved.");
   const limits =
     "Full 10/1,000-page/100-seed safety and real renderer crashes: NOT RUN. Normal repeated diagnostics: NOT RUN; percentile comparison INELIGIBLE until hard gates pass. Quota weights and provider cost are UNKNOWN. Custom transport requires complete coherent GET/strong ETag/If-Match semantics; live providers were not tested. Independent review, native gates and integration remain required. No deployment or Master closure.";
+  const safetyText = safety.trialCount === undefined
+    ? `Additional safety evidence: ${safety.status}. Full R5 remains incomplete.`
+    : `Latest A5: ${safety.passedTrials}/${safety.trialCount} passing trial combinations, ${safety.distinctSeeds} distinct seeds (required minimum ${safety.minimumDistinctSeeds}). Seed coverage: ${safety.seedCoverageMet ? "MET" : "NOT MET"}. This does not establish the separate browser and other R5 gates. Historical raw results are unchanged.`;
   return {
     summary,
-    scorecard: `# Remediation foundation scorecard\n\n**${headline}**\n\n| Latest witness | Result | Source hash prefix | Evidence | Reason |\n| --- | --- | --- | --- | --- |\n${currentTable}\n\n${metricsText}\n\n${delayNote}\n\nHistorical recorded PASS entries (not current acceptance; not revalidated here):\n\n| Witness | Historical status | Source hash prefix | Evidence |\n| --- | --- | --- | --- |\n${history}\n\n${limits}\n\nEndpoint/method counts and complete ledger references are in the [machine summary](evidence/foundation-summary.json). [Original baseline scorecard](../byos-sync/SCORECARD.md) remains unchanged.\n`,
-    overview: `# Remediation foundation result\n\n${headline}\n\n${metricsText}\n\n${delayNote}\n\nSee [scorecard](SCORECARD.md), [contract and replay](README.md), and [attempt ledger](../../docs/sessions/20261023-byos-remediation/attempts.md).\n\n${limits}\n`,
+    scorecard: `# Remediation foundation scorecard\n\n**${headline}**\n\n| Latest witness | Result | Source hash prefix | Evidence | Reason |\n| --- | --- | --- | --- | --- |\n${currentTable}\n\n${metricsText}\n\n${safetyText}\n\n${delayNote}\n\nHistorical recorded PASS entries (not current acceptance; not revalidated here):\n\n| Witness | Historical status | Source hash prefix | Evidence |\n| --- | --- | --- | --- |\n${history}\n\n${limits}\n\nEndpoint/method counts and complete ledger references are in the [machine summary](evidence/foundation-summary.json). [Original baseline scorecard](../byos-sync/SCORECARD.md) remains unchanged.\n`,
+    overview: `# Remediation foundation result\n\n${headline}\n\n${metricsText}\n\n${safetyText}\n\n${delayNote}\n\nSee [scorecard](SCORECARD.md), [contract and replay](README.md), and [attempt ledger](../../docs/sessions/20261023-byos-remediation/attempts.md).\n\n${limits}\n`,
   };
 }
 
@@ -200,20 +279,33 @@ async function main() {
   const report = await buildReport(records, (file) =>
     readFile(path.resolve(root, "../..", file)),
   );
+  const { buildDecision } = await import("./decision.mjs");
+  const decision = await buildDecision(records,
+    (file) => readFile(path.resolve(root, "../..", file)),
+    (file) => readFile(path.resolve(root, file)), report.summary);
+  // This compatibility file is foundation lineage only. Current R5/R6 status
+  // belongs to the fully validated decision, never obsolete NOT_RUN defaults.
+  Object.assign(report.summary, {
+    scope: "A1–A3 foundation lineage; current acceptance in decision-summary.json",
+    fullSafety: decision.summary.safety ? "PASS_OFFLINE" : "NOT_ACCEPTED",
+    rendererCrashes: decision.summary.safety ? "PASS_12_NATIVE_INDEXEDDB_RENDERER_CASES" : "NOT_ACCEPTED",
+    normalDiagnostics: decision.summary.cells ? "PASS_120_PAIRED_TRIALS" : "NOT_ACCEPTED",
+    latencyPercentiles: decision.summary.cells ? "ELIGIBLE_SYNTHETIC_ONLY" : "INELIGIBLE_UNTIL_HARD_GATES",
+  });
   await writeFile(
     path.join(root, "evidence/foundation-summary.json"),
     JSON.stringify(report.summary, null, 2) + "\n",
   );
-  await writeFile(path.join(root, "SCORECARD.md"), report.scorecard);
-  await writeFile(path.join(root, "SUMMARY.md"), report.overview);
+  await writeFile(path.join(root, "evidence/decision-summary.json"), JSON.stringify(decision.summary, null, 2) + "\n");
+  await writeFile(path.join(root, "SCORECARD.md"), decision.scorecard);
+  await writeFile(path.join(root, "SUMMARY.md"), decision.overview);
   console.log(
     JSON.stringify({
-      status: report.summary.status,
-      current: report.summary.current,
-      a3: report.summary.a3,
+      status: decision.summary.decision,
+      gaps: decision.summary.gaps,
     }),
   );
-  if (!report.summary.foundationPass) process.exitCode = 1;
+  if (!decision.summary.passed) process.exitCode = 1;
 }
 if (
   process.argv[1] &&

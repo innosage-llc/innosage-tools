@@ -99,7 +99,9 @@ export async function openStore(name) {
         ? "local-error"
         : projection.some((p) => p.incomplete)
           ? "incomplete"
-          : projection.some((p) => p.conflict)
+          : projection.some((p) => p.recoveryNeeded)
+            ? "recovery-needed"
+            : projection.some((p) => p.conflict)
             ? "conflict"
             : "local-saved";
       return {

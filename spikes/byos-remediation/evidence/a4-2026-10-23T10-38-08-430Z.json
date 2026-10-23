@@ -1,0 +1,499 @@
+{
+  "id": "A4",
+  "kind": "validation",
+  "hypothesis": "Deletion and incarnation suppression must expose every retained acknowledged body as visible recovery-needed, including a single child head and stale old-incarnation head",
+  "command": "node spikes/byos-remediation/src/run-stage.mjs A4",
+  "source": {
+    "sourceDigest": "290ff3da1c60dab5fabcb058c8e30192527cf1fa1d13ca22a153fd5015ef00c1",
+    "sourceDigestAlgorithm": "SHA-256 of JSON.stringify(manifest), preserving manifest insertion order",
+    "manifest": {
+      "package-lock.json": "7a83167782ded554ace6c36811c5e11c044f70f26f2cfeeb4c272c69eaff8693",
+      "package.json": "2a7a18a44ef275448854bbb0543a37a9d1c728e7ff008cb2ca0e760707eca3f5",
+      "src/evidence.mjs": "21beb1b3e6752ad0e704c870022ee7a7c3f2b658c12153327075e3506995197a",
+      "src/experiments.mjs": "681dec275a29d67637e29f5c0d851e0cba57b35a47445b74ecbd95ca15317ab3",
+      "src/focused.mjs": "ec5a564a92f4e73a40028ef7b69646696f6f7467b3aa9356cad63629cb81dafc",
+      "src/hierarchy.mjs": "2935c262d2e1428a899126cee6a9b29159481479c7a3c4b890a2784019d79b08",
+      "src/protocol.mjs": "b02a24f7edd8bcd6f9b66926cb1f8e9eb66c75ccf84311849613608c1112c823",
+      "src/report.mjs": "bf9bccdcfdad852747c458c0671d02bae178318c16e06e0a2289730e556af957",
+      "src/revisions.mjs": "326a64f114115f7a1366877d494d19cfac4d3bd8802a49876cce3525a6bbe2cd",
+      "src/run-stage.mjs": "48263236c1cbb951d89beb4654bf891774940f2fdea73cafae03d96631bc1382",
+      "src/store.mjs": "f74c059c9d7582af7c200a0e3b5f893539ed618f038f0159a089e674044d2974",
+      "src/test-support.mjs": "070d4a44afa911db1fd05f91801dbd9bf521beebba76bfbc37f8360c5ad88e2e",
+      "test/foundation.test.mjs": "7df290e427c4fcb73f7d99f63836d990ba3271b7f5b88bc68e21f752f331ea69",
+      "test/report.test.mjs": "9bd476f46d8232d93773822a476f6d68454e9c92067175bb2186f9f6a48c3b3b",
+      "../byos-sync/src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
+      "../byos-sync/package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23"
+    },
+    "node": "v22.22.3",
+    "baselineCommit": "496e9a8a1b605c81e71026d0ab217e6ccb9f41a4",
+    "runtime": {
+      "rxdb": "17.6.0",
+      "fake-indexeddb": "6.2.4",
+      "esbuild": "0.25.12",
+      "playwright": "1.62.1",
+      "dexie": "4.4.2"
+    }
+  },
+  "result": "PASS",
+  "output": {
+    "passed": true,
+    "results": [
+      {
+        "scenario": "parent-delete-single-head-child-edit",
+        "expected": {
+          "fullBodyRetained": true,
+          "visibleRecovery": true,
+          "local": "recovery-needed"
+        },
+        "observed": {
+          "fullBodyRetained": true,
+          "visibleRecovery": true,
+          "local": "recovery-needed"
+        },
+        "acknowledged": {
+          "revisionId": "child-edit",
+          "pageId": "child",
+          "incarnation": "initial",
+          "parents": [
+            "child"
+          ],
+          "supersedes": [],
+          "kind": "put",
+          "body": "Acknowledged complete concurrent child edit",
+          "metadata": {
+            "title": "child",
+            "updatedAt": 0
+          },
+          "parent": {
+            "pageId": "parent",
+            "incarnation": "initial"
+          },
+          "hash": "e5a1d4f0cc58f9e65ea99bfac0387dccfbf726e253c18e19c81eb68b22c238d8"
+        },
+        "projection": [
+          {
+            "pageId": "child",
+            "revisions": [
+              {
+                "body": "Child original",
+                "hash": "fd0758ad3403a9ca0e45271eb37faafd1e12df6a42b85f4df2f487b6a8d85a96",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "child",
+                  "updatedAt": 0
+                },
+                "pageId": "child",
+                "parent": {
+                  "incarnation": "initial",
+                  "pageId": "parent"
+                },
+                "parents": [],
+                "revisionId": "child",
+                "supersedes": []
+              },
+              {
+                "body": "Acknowledged complete concurrent child edit",
+                "hash": "e5a1d4f0cc58f9e65ea99bfac0387dccfbf726e253c18e19c81eb68b22c238d8",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "child",
+                  "updatedAt": 0
+                },
+                "pageId": "child",
+                "parent": {
+                  "incarnation": "initial",
+                  "pageId": "parent"
+                },
+                "parents": [
+                  "child"
+                ],
+                "revisionId": "child-edit",
+                "supersedes": []
+              }
+            ],
+            "incarnations": {
+              "initial": {
+                "heads": [
+                  {
+                    "body": "Acknowledged complete concurrent child edit",
+                    "hash": "e5a1d4f0cc58f9e65ea99bfac0387dccfbf726e253c18e19c81eb68b22c238d8",
+                    "incarnation": "initial",
+                    "kind": "put",
+                    "metadata": {
+                      "title": "child",
+                      "updatedAt": 0
+                    },
+                    "pageId": "child",
+                    "parent": {
+                      "incarnation": "initial",
+                      "pageId": "parent"
+                    },
+                    "parents": [
+                      "child"
+                    ],
+                    "revisionId": "child-edit",
+                    "supersedes": []
+                  }
+                ],
+                "superseded": false
+              }
+            },
+            "incomplete": false,
+            "active": [
+              "initial"
+            ],
+            "heads": [
+              {
+                "body": "Acknowledged complete concurrent child edit",
+                "hash": "e5a1d4f0cc58f9e65ea99bfac0387dccfbf726e253c18e19c81eb68b22c238d8",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "child",
+                  "updatedAt": 0
+                },
+                "pageId": "child",
+                "parent": {
+                  "incarnation": "initial",
+                  "pageId": "parent"
+                },
+                "parents": [
+                  "child"
+                ],
+                "revisionId": "child-edit",
+                "supersedes": []
+              }
+            ],
+            "conflict": false,
+            "deleted": false,
+            "suppressed": true,
+            "recovery": [
+              {
+                "reason": "suppressed-by-parent",
+                "revision": {
+                  "body": "Acknowledged complete concurrent child edit",
+                  "hash": "e5a1d4f0cc58f9e65ea99bfac0387dccfbf726e253c18e19c81eb68b22c238d8",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "child",
+                    "updatedAt": 0
+                  },
+                  "pageId": "child",
+                  "parent": {
+                    "incarnation": "initial",
+                    "pageId": "parent"
+                  },
+                  "parents": [
+                    "child"
+                  ],
+                  "revisionId": "child-edit",
+                  "supersedes": []
+                }
+              }
+            ],
+            "recoveryNeeded": true
+          },
+          {
+            "pageId": "parent",
+            "revisions": [
+              {
+                "body": "Parent tombstone retains full original",
+                "hash": "af977b3d216e6614d94d75e6b892652e67a80058daae0e67ebeb40a3e1b23a1c",
+                "incarnation": "initial",
+                "kind": "delete",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "deleted",
+                "supersedes": []
+              },
+              {
+                "body": "Parent full original",
+                "hash": "fcb692386d2f28c68df3142650d3ab6b1dc267543c3caf7a2d9f245041aa4742",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [],
+                "revisionId": "root",
+                "supersedes": []
+              }
+            ],
+            "incarnations": {
+              "initial": {
+                "heads": [
+                  {
+                    "body": "Parent tombstone retains full original",
+                    "hash": "af977b3d216e6614d94d75e6b892652e67a80058daae0e67ebeb40a3e1b23a1c",
+                    "incarnation": "initial",
+                    "kind": "delete",
+                    "metadata": {
+                      "title": "parent",
+                      "updatedAt": 0
+                    },
+                    "pageId": "parent",
+                    "parent": null,
+                    "parents": [
+                      "root"
+                    ],
+                    "revisionId": "deleted",
+                    "supersedes": []
+                  }
+                ],
+                "superseded": false
+              }
+            },
+            "incomplete": false,
+            "active": [
+              "initial"
+            ],
+            "heads": [
+              {
+                "body": "Parent tombstone retains full original",
+                "hash": "af977b3d216e6614d94d75e6b892652e67a80058daae0e67ebeb40a3e1b23a1c",
+                "incarnation": "initial",
+                "kind": "delete",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "deleted",
+                "supersedes": []
+              }
+            ],
+            "conflict": false,
+            "deleted": true,
+            "suppressed": false,
+            "recovery": [],
+            "recoveryNeeded": false
+          }
+        ],
+        "passed": true
+      },
+      {
+        "scenario": "recreate-stale-old-incarnation-edit",
+        "expected": {
+          "fullBodyRetained": true,
+          "visibleRecovery": true,
+          "local": "recovery-needed"
+        },
+        "observed": {
+          "fullBodyRetained": true,
+          "visibleRecovery": true,
+          "local": "recovery-needed"
+        },
+        "acknowledged": {
+          "revisionId": "stale-edit",
+          "pageId": "parent",
+          "incarnation": "initial",
+          "parents": [
+            "root"
+          ],
+          "supersedes": [],
+          "kind": "put",
+          "body": "Acknowledged complete stale old-incarnation edit",
+          "metadata": {
+            "title": "parent",
+            "updatedAt": 0
+          },
+          "parent": null,
+          "hash": "f3c6fe66bff7501a1a9c6e20abf715994d095fd5367590b6554222969f3ea721"
+        },
+        "projection": [
+          {
+            "pageId": "parent",
+            "revisions": [
+              {
+                "body": "Parent tombstone retains full original",
+                "hash": "af977b3d216e6614d94d75e6b892652e67a80058daae0e67ebeb40a3e1b23a1c",
+                "incarnation": "initial",
+                "kind": "delete",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "deleted",
+                "supersedes": []
+              },
+              {
+                "body": "Explicit new incarnation",
+                "hash": "b843fcc688fffb3a824a419fe927b50031b31b2b62b50bc75c4f83c362499115",
+                "incarnation": "second",
+                "kind": "put",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [
+                  "deleted"
+                ],
+                "revisionId": "recreated",
+                "supersedes": [
+                  "initial"
+                ]
+              },
+              {
+                "body": "Parent full original",
+                "hash": "fcb692386d2f28c68df3142650d3ab6b1dc267543c3caf7a2d9f245041aa4742",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [],
+                "revisionId": "root",
+                "supersedes": []
+              },
+              {
+                "body": "Acknowledged complete stale old-incarnation edit",
+                "hash": "f3c6fe66bff7501a1a9c6e20abf715994d095fd5367590b6554222969f3ea721",
+                "incarnation": "initial",
+                "kind": "put",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [
+                  "root"
+                ],
+                "revisionId": "stale-edit",
+                "supersedes": []
+              }
+            ],
+            "incarnations": {
+              "initial": {
+                "heads": [
+                  {
+                    "body": "Acknowledged complete stale old-incarnation edit",
+                    "hash": "f3c6fe66bff7501a1a9c6e20abf715994d095fd5367590b6554222969f3ea721",
+                    "incarnation": "initial",
+                    "kind": "put",
+                    "metadata": {
+                      "title": "parent",
+                      "updatedAt": 0
+                    },
+                    "pageId": "parent",
+                    "parent": null,
+                    "parents": [
+                      "root"
+                    ],
+                    "revisionId": "stale-edit",
+                    "supersedes": []
+                  }
+                ],
+                "superseded": true
+              },
+              "second": {
+                "heads": [
+                  {
+                    "body": "Explicit new incarnation",
+                    "hash": "b843fcc688fffb3a824a419fe927b50031b31b2b62b50bc75c4f83c362499115",
+                    "incarnation": "second",
+                    "kind": "put",
+                    "metadata": {
+                      "title": "parent",
+                      "updatedAt": 0
+                    },
+                    "pageId": "parent",
+                    "parent": null,
+                    "parents": [
+                      "deleted"
+                    ],
+                    "revisionId": "recreated",
+                    "supersedes": [
+                      "initial"
+                    ]
+                  }
+                ],
+                "superseded": false
+              }
+            },
+            "incomplete": false,
+            "active": [
+              "second"
+            ],
+            "heads": [
+              {
+                "body": "Explicit new incarnation",
+                "hash": "b843fcc688fffb3a824a419fe927b50031b31b2b62b50bc75c4f83c362499115",
+                "incarnation": "second",
+                "kind": "put",
+                "metadata": {
+                  "title": "parent",
+                  "updatedAt": 0
+                },
+                "pageId": "parent",
+                "parent": null,
+                "parents": [
+                  "deleted"
+                ],
+                "revisionId": "recreated",
+                "supersedes": [
+                  "initial"
+                ]
+              }
+            ],
+            "conflict": false,
+            "deleted": false,
+            "suppressed": false,
+            "recovery": [
+              {
+                "reason": "superseded-incarnation",
+                "revision": {
+                  "body": "Acknowledged complete stale old-incarnation edit",
+                  "hash": "f3c6fe66bff7501a1a9c6e20abf715994d095fd5367590b6554222969f3ea721",
+                  "incarnation": "initial",
+                  "kind": "put",
+                  "metadata": {
+                    "title": "parent",
+                    "updatedAt": 0
+                  },
+                  "pageId": "parent",
+                  "parent": null,
+                  "parents": [
+                    "root"
+                  ],
+                  "revisionId": "stale-edit",
+                  "supersedes": []
+                }
+              }
+            ],
+            "recoveryNeeded": true
+          }
+        ],
+        "passed": true
+      }
+    ]
+  },
+  "createdAt": "2026-10-23T10:38:08.430Z"
+}

@@ -206,6 +206,15 @@ export function project(revisions) {
     return !p.incomplete;
   };
   for (const p of pages.values()) visit(p);
+  for (const p of pages.values()) {
+    // Suppression is only a visibility rule, never silent disposal. A user can
+    // inspect every hidden complete head and explicitly recover it elsewhere.
+    p.recovery = [
+      ...Object.values(p.incarnations).filter((g) => g.superseded).flatMap((g) => g.heads.map((revision) => ({ reason: "superseded-incarnation", revision }))),
+      ...(p.suppressed ? p.heads.filter((r) => r.kind === "put").map((revision) => ({ reason: "suppressed-by-parent", revision })) : []),
+    ];
+    p.recoveryNeeded = p.recovery.length > 0;
+  }
   return [...pages.values()].sort((a, b) => a.pageId.localeCompare(b.pageId));
 }
 export function snapshot(revisions) {

@@ -1,0 +1,56 @@
+{
+  "kind": "independent-local-report-and-input-validation",
+  "command": "node --test spikes/byos-remediation/test/report.test.mjs spikes/byos-remediation/test/coverage.test.mjs spikes/byos-remediation/test/trial-schedule.test.mjs",
+  "exitCode": 0,
+  "tests": 22,
+  "passed": 22,
+  "failed": 0,
+  "networkOrReplicaExecution": false,
+  "source": {
+    "sourceDigest": "691a6335c96eaa48cf052b000eb614ef0b17fefb074d8a1e5c99ff58b2d8fdcd",
+    "sourceDigestAlgorithm": "SHA-256 of JSON.stringify(manifest), preserving manifest insertion order",
+    "manifest": {
+      "package-lock.json": "7a83167782ded554ace6c36811c5e11c044f70f26f2cfeeb4c272c69eaff8693",
+      "package.json": "2a7a18a44ef275448854bbb0543a37a9d1c728e7ff008cb2ca0e760707eca3f5",
+      "src/browser-entry.mjs": "35ae4e08659238f31882e26b51648e8be8239dca6c69837b05026c86e558228a",
+      "src/browser.mjs": "b55ed14c4c222056fae4e9a0511834c197a2b149055e365a808dcf13d5fb9f10",
+      "src/evidence.mjs": "21beb1b3e6752ad0e704c870022ee7a7c3f2b658c12153327075e3506995197a",
+      "src/experiments.mjs": "681dec275a29d67637e29f5c0d851e0cba57b35a47445b74ecbd95ca15317ab3",
+      "src/focused.mjs": "ec5a564a92f4e73a40028ef7b69646696f6f7467b3aa9356cad63629cb81dafc",
+      "src/hierarchy.mjs": "2935c262d2e1428a899126cee6a9b29159481479c7a3c4b890a2784019d79b08",
+      "src/matrix.mjs": "cb41e74a11c3cde80945ab81bddd3d3156daa3dba43a7beb5bde015a3e31da49",
+      "src/protocol.mjs": "b02a24f7edd8bcd6f9b66926cb1f8e9eb66c75ccf84311849613608c1112c823",
+      "src/report.mjs": "14f55ee8684a3d4a40e9209bf00026b46e66c492a868eeb6b690985e86f3c46d",
+      "src/revisions.mjs": "326a64f114115f7a1366877d494d19cfac4d3bd8802a49876cce3525a6bbe2cd",
+      "src/run-stage.mjs": "e438674f483594b8dc6aee526131c43eb7be99250238936ae8f853310a30b6ff",
+      "src/safety.mjs": "f332850ea861932a5ca0cdf622dc13aa9956776e0b4f21bfbc5ad9c00158cb17",
+      "src/store.mjs": "f74c059c9d7582af7c200a0e3b5f893539ed618f038f0159a089e674044d2974",
+      "src/test-support.mjs": "070d4a44afa911db1fd05f91801dbd9bf521beebba76bfbc37f8360c5ad88e2e",
+      "src/trial-schedule.mjs": "6c81a747594d2eac9531d532eee0f23348a38f7e5116bb64f58aeba0fee408a7",
+      "test/coverage.test.mjs": "4f6825187271a66af765dc609061a3cdd49f050f18b3c0d0efed73ef01fa7c03",
+      "test/foundation.test.mjs": "7df290e427c4fcb73f7d99f63836d990ba3271b7f5b88bc68e21f752f331ea69",
+      "test/report.test.mjs": "9bd476f46d8232d93773822a476f6d68454e9c92067175bb2186f9f6a48c3b3b",
+      "test/trial-schedule.test.mjs": "895fb2c20fd13765375e980cf8cdf96c9b42f27e814ee00c4cc4366f3a97c7cd",
+      "../byos-sync/src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
+      "../byos-sync/package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23"
+    },
+    "node": "v22.22.3",
+    "baselineCommit": "496e9a8a1b605c81e71026d0ab217e6ccb9f41a4",
+    "runtime": {
+      "rxdb": "17.6.0",
+      "fake-indexeddb": "6.2.4",
+      "esbuild": "0.25.12",
+      "playwright": "1.62.1",
+      "dexie": "4.4.2"
+    }
+  },
+  "log": {
+    "path": "spikes/byos-remediation/evidence/local-report-schedule-tests-r2.txt.gz",
+    "rawSha256": "6cab8f98beec3b44e76d1b6cf572423784161b5b135f8374b582ea8aa5cb54da",
+    "gzipSha256": "ae8898474db3d608c951b4892c3b62e12d068f620af9d28f1be7d6762d85019d"
+  },
+  "lint": "PASS",
+  "review": "Round1 REQUEST_CHANGES repaired; refreshed static review pending",
+  "scope": "Local report arithmetic/provenance and input-generator regressions only. No data-sync or browser execution; platform flag clearance unconfirmed.",
+  "newRuntimeSafetyAcceptance": false
+}

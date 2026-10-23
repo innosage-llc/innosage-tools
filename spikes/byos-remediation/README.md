@@ -1,6 +1,6 @@
 # BYOS remediation: immutable revisions and conditional snapshots
 
-**Offline prototype; foundation increment only.** This is a custom protocol on
+**Offline prototype with full synthetic safety and diagnostic evidence.** This is a custom protocol on
 native RxDB 17.6.0 / Dexie local persistence. It does not repair or masquerade as
 RxDB's Google Drive replication, selfstore, or either native cloud adapter.
 The historical [study](../byos-sync/SUMMARY.md) and
@@ -17,8 +17,8 @@ The historical [study](../byos-sync/SUMMARY.md) and
 - Projection retains every revision and exposes concurrent heads with full bodies.
   Manual resolution is another revision referencing the conflicting heads. No
   physical deletes, history compaction, automatic text merge, or GC is implemented.
-  Tombstone/recreation/parent visibility policy exists but its full safety matrix
-  is deferred to the next increment; it is not yet accepted.
+  Tombstone/recreation/parent visibility and explicit resolution are tested. Hidden
+  full heads are exposed as `recovery-needed`, never silently discarded.
 - The remote object is precreated, known, and isolated under the versioned
   `byos-remediation-v1` snapshot namespace. Each sync GETs the full body and strong
   ETag together, validates it, durably imports its revisions, unions local history,
@@ -34,7 +34,7 @@ The historical [study](../byos-sync/SUMMARY.md) and
   pending until a persisted receipt covers them. Restart after an interrupted
   sync conservatively exposes `verification-unknown`; persisted receipts remain
   historical evidence. No state says generic `Synced`.
-- Local states are `local-saved`, `local-error`, `conflict`, or `incomplete`;
+- Local states are `local-saved`, `local-error`, `recovery-needed`, `conflict`, or `incomplete`;
   remote states include `pending`, current-worker `syncing`, `blocked`,
   `blocked-reauth`, `verification-unknown`, and `verified-revision-set`.
   These are two axes: a remotely verified set can still contain manual conflicts.
@@ -61,8 +61,8 @@ it is a bounded adoption prototype, not a large-workspace production architectur
 There is one owner per local database (`multiInstance: false`); cross-tab writers,
 local-device power-loss/fsync guarantees, hostile-server availability, migration
 from legacy writers and concurrent third-party writers in this namespace are
-unsupported. Renderer-crash durability will be measured separately in real
-IndexedDB; fake-indexeddb close/reopen is not that evidence.
+unsupported. Renderer-crash durability is separately measured in real Chromium IndexedDB;
+fake-indexeddb close/reopen is not that evidence.
 
 The fixed-object algorithm has **no listing/timestamp checkpoint**. Thirty
 same-timestamp edits and a deliberately hidden listing object therefore restore
@@ -109,18 +109,62 @@ latest evidence blocks foundation PASS; it cannot fall back to historical succes
 Superseded recorded PASS entries are labeled separately. Report regressions use
 in-memory fixtures and do not append fabricated attempts to the real ledger.
 
-Historical A3 source/raw labels `reordered-get` and mock `reorder` mean only a
-single sequential GET delayed by 250 ms. Current source uses `delayed-get` and
-`delayed-response`. That witness does **not** establish response-order inversion;
-actual inversion remains NOT RUN for the full R5 matrix. Historical bytes retain
-their original names and hashes.
+## Current replay and evidence
 
-## Remaining delivery
+Historical A3 `reordered-get` means a sequential delayed GET. Separate A5
+receipts prove actual captured-response application delivery inversion, including
+coherent full bytes/ETag and the resulting stale conditional-write412. Historical
+bytes and original engine/provider comparison tables remain unchanged.
 
-A1–A3 are meaningful, partial R2–R4 evidence. R5 full 10/1,000-page fixtures,
-100 safety seeds, clock/delete/recreate/parent-child/stale-client/concurrent
-resolution coverage and real renderer-crash barriers remain NOT RUN. R6 repeated
-normal-network diagnostics (30 per provider/scale), latency eligibility, bytes
-and amplification decision evidence follow safety. R7 independent Astra HIGH
-review, native gates, reviewed PR merge and Hub integration are lead-owned.
-The Master remains open for offline Founder acceptance; no deployment is implied.
+After installing the pinned dependencies, run the complete continuation offline:
+
+```sh
+node spikes/byos-remediation/src/run-stage.mjs A4
+node spikes/byos-remediation/src/run-stage.mjs A5
+node spikes/byos-remediation/src/run-stage.mjs A6
+node spikes/byos-remediation/src/run-stage.mjs A7
+npm --prefix spikes/byos-remediation run report
+```
+
+A5 uses100 distinct global seeds,25 per provider/scale; seeded page choices and
+recovery order affect execution. It includes full10/1000-page hierarchical data,
+same/different-page edits, clock skew, deletion/recreation, stale descendants,
+concurrent resolutions, actual fault receipts and reopened/cold replicas. The
+historical100-combination/25-seed run is partial evidence. A6 uses installed
+Playwright Chromium and12 actual renderer crashes across2providers×6 proven
+boundaries: after durable local ACK; before remote mutation; after mutation before
+response; after write response; before persisted receipt; after persisted receipt.
+It checks native IndexedDB identity, full bodies, pending/conflict state and cold
+restore. Browser/OS/power loss remains unsupported. Browser install, if absent,
+is a separate environment prerequisite; no real provider credentials are needed.
+
+A7 refuses measurements unless latest A5/A6 hashes, safety outcomes and current
+core runtime match. It runs30 paired normal trials per provider/scale (120rows),
+with local initialization, cold publish/hydration, single-page edit, offline
+concurrent edit/reconnect, inspection, reopen and cold restore. Mock8msRTT/2ms
+jitter is not Google/WebDAV performance. CPU includes Node harness/oracle work;
+heap is an observation, not peak or isolated storage. Full source dependencies,
+raw rows, actual request/fault receipts and hashes accompany each run.
+
+`npm run report` selects latest A4–A7, checks raw/envelope/manifest hashes and
+executed runtime dependencies, and regenerates SUMMARY.md, SCORECARD.md and
+`evidence/decision-summary.json`. Missing/failed/stale evidence fails closed;
+percentiles require safety and30 unique paired PASS rows per cell. The separate
+foundation-summary preserves A1–A3 lineage. Report-only edits do not masquerade
+as executed runtime versions. Unit/report/recovery regressions run in native CI;
+the full100-seed/120-trial evidence is explicit, not repeated in every gate.
+
+## Decision and delivery boundary
+
+The candidate preserves complete conflict versions rather than automatically
+merging text. Every normal concurrent same-page trial retains2manual conflict
+heads plus its applied predecessor. Whole-history snapshot cost grows with data
+and edit history; the numeric scorecard discloses transfer amplification. This
+is a bounded viable offline path for later real-provider validation, not a claim
+that native RxDB/selfstore blockers were repaired or that product adoption is safe.
+
+Canonical Hub V1 requests Sol HIGH lead/reviewer; the lead implements/operates/tests,
+with separate read-only independent review. Historical custom assignments remain
+historical. Exact reviewed/merged revisions, native gates, Hub pin and the short
+Founder offline journey live in the delivery packet. Master remains OPEN for
+Founder acceptance. No real provider/OAuth, staging, production or deployment.

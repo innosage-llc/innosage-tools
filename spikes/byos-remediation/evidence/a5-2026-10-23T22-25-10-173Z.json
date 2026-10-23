@@ -1,0 +1,4626 @@
+{
+  "id": "A5",
+  "kind": "validation",
+  "hypothesis": "The immutable-CAS route retains complete acknowledged intent, truthful state and visible recovery across 100 seeded hierarchical trials at 10/1000 pages and both providers, including actual response delivery inversion",
+  "command": "node spikes/byos-remediation/src/run-stage.mjs A5 --validation",
+  "source": {
+    "sourceDigest": "437233a75cef788fd044680cb4690acdc9667acf4f7e7ca91a659fc587d174fe",
+    "sourceDigestAlgorithm": "SHA-256 of JSON.stringify(manifest), preserving manifest insertion order",
+    "manifest": {
+      "package-lock.json": "7a83167782ded554ace6c36811c5e11c044f70f26f2cfeeb4c272c69eaff8693",
+      "package.json": "2a7a18a44ef275448854bbb0543a37a9d1c728e7ff008cb2ca0e760707eca3f5",
+      "src/browser-entry.mjs": "cf612993a748bb2e1d9a072900cf2d1a120964aed53efb3f6465ae5d3a1d996c",
+      "src/browser.mjs": "b55ed14c4c222056fae4e9a0511834c197a2b149055e365a808dcf13d5fb9f10",
+      "src/evidence.mjs": "21beb1b3e6752ad0e704c870022ee7a7c3f2b658c12153327075e3506995197a",
+      "src/experiments.mjs": "681dec275a29d67637e29f5c0d851e0cba57b35a47445b74ecbd95ca15317ab3",
+      "src/focused.mjs": "ec5a564a92f4e73a40028ef7b69646696f6f7467b3aa9356cad63629cb81dafc",
+      "src/hierarchy.mjs": "2935c262d2e1428a899126cee6a9b29159481479c7a3c4b890a2784019d79b08",
+      "src/matrix.mjs": "cb41e74a11c3cde80945ab81bddd3d3156daa3dba43a7beb5bde015a3e31da49",
+      "src/protocol.mjs": "b02a24f7edd8bcd6f9b66926cb1f8e9eb66c75ccf84311849613608c1112c823",
+      "src/report.mjs": "14f55ee8684a3d4a40e9209bf00026b46e66c492a868eeb6b690985e86f3c46d",
+      "src/revisions.mjs": "326a64f114115f7a1366877d494d19cfac4d3bd8802a49876cce3525a6bbe2cd",
+      "src/run-stage.mjs": "7574a1a2e27d5254f9f49aafc1fae7ad6fb3303679e9033299f1999b7b0645e0",
+      "src/safety.mjs": "9ffa5eeeef4f35992e6d7f7767670f034a5301905fda27a87499262eda42c35b",
+      "src/store.mjs": "f74c059c9d7582af7c200a0e3b5f893539ed618f038f0159a089e674044d2974",
+      "src/test-support.mjs": "070d4a44afa911db1fd05f91801dbd9bf521beebba76bfbc37f8360c5ad88e2e",
+      "src/trial-schedule.mjs": "6c81a747594d2eac9531d532eee0f23348a38f7e5116bb64f58aeba0fee408a7",
+      "test/coverage.test.mjs": "4f6825187271a66af765dc609061a3cdd49f050f18b3c0d0efed73ef01fa7c03",
+      "test/foundation.test.mjs": "7df290e427c4fcb73f7d99f63836d990ba3271b7f5b88bc68e21f752f331ea69",
+      "test/report.test.mjs": "9bd476f46d8232d93773822a476f6d68454e9c92067175bb2186f9f6a48c3b3b",
+      "test/trial-schedule.test.mjs": "895fb2c20fd13765375e980cf8cdf96c9b42f27e814ee00c4cc4366f3a97c7cd",
+      "../byos-sync/src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
+      "../byos-sync/package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23"
+    },
+    "node": "v22.22.3",
+    "baselineCommit": "496e9a8a1b605c81e71026d0ab217e6ccb9f41a4",
+    "runtime": {
+      "rxdb": "17.6.0",
+      "fake-indexeddb": "6.2.4",
+      "esbuild": "0.25.12",
+      "playwright": "1.62.1",
+      "dexie": "4.4.2"
+    }
+  },
+  "result": "FAIL",
+  "output": {
+    "passed": false,
+    "results": [
+      {
+        "provider": "drive",
+        "scale": 10,
+        "seed": 1,
+        "plan": {
+          "provider": "drive",
+          "scale": 10,
+          "seed": 1,
+          "differentPageIndices": [
+            5,
+            6
+          ],
+          "recoveryOrder": [
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        },
+        "fixture": "binary-tree-v1",
+        "scenario": 1,
+        "status": "PASS",
+        "observations": [
+          {
+            "phase": "initial-local-ack",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 10,
+            "localRevisionCount": 10,
+            "expectedDigest": "32675fb7ba02d3fab9c71ef3e5a5add1f78bed293c6fb5be7299faa492910819",
+            "localDigest": "32675fb7ba02d3fab9c71ef3e5a5add1f78bed293c6fb5be7299faa492910819",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 10,
+            "receiptCount": 0,
+            "receiptVersion": null,
+            "receiptSetDigest": null
+          },
+          {
+            "phase": "offline-ack-a",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "46f87766b195257aa1f77cd96d0c91c4b8036053600d59a7b8982ab2927bfdfc",
+            "localDigest": "46f87766b195257aa1f77cd96d0c91c4b8036053600d59a7b8982ab2927bfdfc",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "27361d6cfdbb284cc5cbb993641289ee2b5aaede40e1d386de183f7b003ab886"
+          },
+          {
+            "phase": "offline-ack-b",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "07dc358b6191ad0412aa94ba12555ddb11f5618a68347166557de51bfc7ddeb2",
+            "localDigest": "07dc358b6191ad0412aa94ba12555ddb11f5618a68347166557de51bfc7ddeb2",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "27361d6cfdbb284cc5cbb993641289ee2b5aaede40e1d386de183f7b003ab886"
+          },
+          {
+            "phase": "after-fault",
+            "local": "local-saved",
+            "remote": "blocked-reauth",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "46f87766b195257aa1f77cd96d0c91c4b8036053600d59a7b8982ab2927bfdfc",
+            "localDigest": "46f87766b195257aa1f77cd96d0c91c4b8036053600d59a7b8982ab2927bfdfc",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "27361d6cfdbb284cc5cbb993641289ee2b5aaede40e1d386de183f7b003ab886"
+          },
+          {
+            "phase": "reopen-or-cold-0",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 17,
+            "localRevisionCount": 17,
+            "expectedDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "localDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 2,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 17,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "f19b6bb1b6a67ee680064c200c69ccca08b8e7a449aa6ff76fa59a75aba0d039"
+          },
+          {
+            "phase": "reopen-or-cold-1",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 17,
+            "localRevisionCount": 17,
+            "expectedDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "localDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 2,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 17,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "f19b6bb1b6a67ee680064c200c69ccca08b8e7a449aa6ff76fa59a75aba0d039"
+          },
+          {
+            "phase": "reopen-or-cold-2",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 17,
+            "localRevisionCount": 17,
+            "expectedDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "localDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 2,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 17,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "f19b6bb1b6a67ee680064c200c69ccca08b8e7a449aa6ff76fa59a75aba0d039"
+          },
+          {
+            "phase": "repeated-sync-a",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 17,
+            "localRevisionCount": 17,
+            "expectedDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "localDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 2,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 17,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "f19b6bb1b6a67ee680064c200c69ccca08b8e7a449aa6ff76fa59a75aba0d039"
+          },
+          {
+            "phase": "repeated-sync-b",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 17,
+            "localRevisionCount": 17,
+            "expectedDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "localDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 2,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 17,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "f19b6bb1b6a67ee680064c200c69ccca08b8e7a449aa6ff76fa59a75aba0d039"
+          }
+        ],
+        "concurrentRecreatedPage": "page-9",
+        "fault": "401",
+        "firstOutcome": {
+          "outcome": "blocked-reauth",
+          "attempts": 1,
+          "trace": [
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49230/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 401,
+              "etag": null,
+              "ifMatch": null
+            },
+            {
+              "attempt": 1,
+              "error": "HTTP 401",
+              "state": "blocked-reauth"
+            }
+          ]
+        },
+        "faultReceipt": {
+          "method": "GET",
+          "status": 401,
+          "used": true,
+          "matched": {
+            "file_id": "byos-remediation-v1",
+            "file_name": "byos-remediation-v1.json",
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "operation": "get",
+            "version_before": 2,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
+        },
+        "stableRecoveryMs": 36.369542000000024,
+        "fixtureDigest": "32675fb7ba02d3fab9c71ef3e5a5add1f78bed293c6fb5be7299faa492910819",
+        "expectedDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+        "acknowledgedBodies": [
+          {
+            "revisionId": "s1-same-a",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s1-root-0"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete same-a body for seed 1.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": -950400000
+            },
+            "parent": null,
+            "hash": "b621cc6a3d9bf1b13f64b7b2d40e4a72451e45daaa6ffd7188c7267baab45422"
+          },
+          {
+            "revisionId": "s1-same-b",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s1-root-0"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete same-b body for seed 1.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": -950400000
+            },
+            "parent": null,
+            "hash": "57179e920dad54cd4ed23a20a7c9bc6aab6bb9ad0464f76155402b53e727f85e"
+          },
+          {
+            "revisionId": "s1-different-a",
+            "pageId": "page-5",
+            "incarnation": "initial",
+            "parents": [
+              "s1-root-5"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete different-a body for seed 1.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-5",
+              "updatedAt": -950400000
+            },
+            "parent": {
+              "pageId": "page-2",
+              "incarnation": "initial"
+            },
+            "hash": "2c479c5b15fa819acd0e357dc9836d503dd94cd1ce19a81cf24e499df931e7b9"
+          },
+          {
+            "revisionId": "s1-different-b",
+            "pageId": "page-6",
+            "incarnation": "initial",
+            "parents": [
+              "s1-root-6"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete different-b body for seed 1.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-6",
+              "updatedAt": 4320086400000
+            },
+            "parent": {
+              "pageId": "page-2",
+              "incarnation": "initial"
+            },
+            "hash": "9454b3ee7f4a69428819e8f3d6100ebf4c03372d4c317a1aa12cc058a5b7aca3"
+          },
+          {
+            "revisionId": "s1-shared-delete",
+            "pageId": "page-9",
+            "incarnation": "initial",
+            "parents": [
+              "s1-root-9"
+            ],
+            "supersedes": [],
+            "kind": "delete",
+            "body": "Complete shared-delete body for seed 1.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-9",
+              "updatedAt": -950400000
+            },
+            "parent": {
+              "pageId": "page-4",
+              "incarnation": "initial"
+            },
+            "hash": "716a809e14aa0012d66f6204b4bd238808cddb743cd9bc0c2ab8d5dcb6eddb37"
+          },
+          {
+            "revisionId": "s1-recreate-a",
+            "pageId": "page-9",
+            "incarnation": "new-a",
+            "parents": [
+              "s1-shared-delete"
+            ],
+            "supersedes": [
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Complete recreate-a body for seed 1.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-9",
+              "updatedAt": -950400000
+            },
+            "parent": {
+              "pageId": "page-4",
+              "incarnation": "initial"
+            },
+            "hash": "3eb85cac97946d37b6cd3e089f74e4d01235d0150711941ca8e2620185613929"
+          },
+          {
+            "revisionId": "s1-recreate-b",
+            "pageId": "page-9",
+            "incarnation": "new-b",
+            "parents": [
+              "s1-shared-delete"
+            ],
+            "supersedes": [
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Complete recreate-b body for seed 1.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-9",
+              "updatedAt": -950400000
+            },
+            "parent": {
+              "pageId": "page-4",
+              "incarnation": "initial"
+            },
+            "hash": "492b20f2dd9b87b96c38fc1c6bf931fc28beab15240dd4bd42323f532e63abfc"
+          }
+        ],
+        "intentCount": 7,
+        "expectedRevisionCount": 17,
+        "remoteDigest": "90def968e37a49634c911105d5956a3544d8a06e39eff913a04b2a2e7eaff7d9",
+        "appliedIntentCount": 7,
+        "lostIntentCount": 0,
+        "falseStateCount": 0,
+        "metrics": {
+          "requests": 22,
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 19,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 3
+          },
+          "bytesUp": 22605,
+          "bytesDown": 139895,
+          "quotaUnits": "UNKNOWN",
+          "unknownWeightRequests": 22
+        },
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 1.4343750000000455
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 5821,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 1.3346250000000737
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.3396250000000691
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.3414579999999887
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 5,
+            "duration_ms": 1.5059580000000778
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 32,
+            "status": 401,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.4259170000000267
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.3292500000000018
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 7695,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"2\"",
+            "completion_order": 8,
+            "duration_ms": 1.3426249999999982
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7695,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 9,
+            "duration_ms": 1.3091660000000047
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7695,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 10,
+            "duration_ms": 1.3320420000000013
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 9089,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"3\"",
+            "completion_order": 11,
+            "duration_ms": 1.347582999999986
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 12,
+            "duration_ms": 1.3060409999999365
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 13,
+            "duration_ms": 1.3759999999999764
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 1.4232920000000604
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 15,
+            "duration_ms": 1.3700410000000147
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.32487500000002
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3927919999999858
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 18,
+            "duration_ms": 1.3498329999999896
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 19,
+            "duration_ms": 1.4096660000000156
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 20,
+            "duration_ms": 1.3538340000000062
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 21,
+            "duration_ms": 1.3424170000000686
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 9089,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 22,
+            "duration_ms": 1.3452500000000782
+          }
+        ]
+      },
+      {
+        "provider": "drive",
+        "scale": 10,
+        "seed": 2,
+        "plan": {
+          "provider": "drive",
+          "scale": 10,
+          "seed": 2,
+          "differentPageIndices": [
+            6,
+            8
+          ],
+          "recoveryOrder": [
+            "b",
+            "a",
+            "b",
+            "a"
+          ]
+        },
+        "fixture": "binary-tree-v1",
+        "scenario": 2,
+        "status": "PASS",
+        "observations": [
+          {
+            "phase": "initial-local-ack",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 10,
+            "localRevisionCount": 10,
+            "expectedDigest": "816130e1b9a3e3d24ffb8ee1b6a6abffaf6b45aa05c377557e237e32f77c7ff0",
+            "localDigest": "816130e1b9a3e3d24ffb8ee1b6a6abffaf6b45aa05c377557e237e32f77c7ff0",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 10,
+            "receiptCount": 0,
+            "receiptVersion": null,
+            "receiptSetDigest": null
+          },
+          {
+            "phase": "offline-ack-a",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "1f11ed934941f0db4b1c9b1917dfa3e778d6e20c0c23c7a7f308ad87f759c44b",
+            "localDigest": "1f11ed934941f0db4b1c9b1917dfa3e778d6e20c0c23c7a7f308ad87f759c44b",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "54a6062bdf8a99674ce2083e25173c9bc91a9ece7575bab908ebb2653db18e0e"
+          },
+          {
+            "phase": "offline-ack-b",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "367bc9e8d856a0c89324016c9be5364ea03664d73048314acaecbd43218e0790",
+            "localDigest": "367bc9e8d856a0c89324016c9be5364ea03664d73048314acaecbd43218e0790",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "54a6062bdf8a99674ce2083e25173c9bc91a9ece7575bab908ebb2653db18e0e"
+          },
+          {
+            "phase": "permanent-denial-retains-intent",
+            "local": "local-saved",
+            "remote": "blocked",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "367bc9e8d856a0c89324016c9be5364ea03664d73048314acaecbd43218e0790",
+            "localDigest": "367bc9e8d856a0c89324016c9be5364ea03664d73048314acaecbd43218e0790",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "54a6062bdf8a99674ce2083e25173c9bc91a9ece7575bab908ebb2653db18e0e"
+          },
+          {
+            "phase": "after-fault",
+            "local": "local-saved",
+            "remote": "blocked",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "1f11ed934941f0db4b1c9b1917dfa3e778d6e20c0c23c7a7f308ad87f759c44b",
+            "localDigest": "1f11ed934941f0db4b1c9b1917dfa3e778d6e20c0c23c7a7f308ad87f759c44b",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "54a6062bdf8a99674ce2083e25173c9bc91a9ece7575bab908ebb2653db18e0e"
+          },
+          {
+            "phase": "reopen-or-cold-0",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "localDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "283d485964a19c458038d0216dc3a9d9bc421674ee4cb7fb29da48317109bbd3"
+          },
+          {
+            "phase": "reopen-or-cold-1",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "localDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "283d485964a19c458038d0216dc3a9d9bc421674ee4cb7fb29da48317109bbd3"
+          },
+          {
+            "phase": "reopen-or-cold-2",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "localDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "283d485964a19c458038d0216dc3a9d9bc421674ee4cb7fb29da48317109bbd3"
+          },
+          {
+            "phase": "repeated-sync-a",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "localDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "283d485964a19c458038d0216dc3a9d9bc421674ee4cb7fb29da48317109bbd3"
+          },
+          {
+            "phase": "repeated-sync-b",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "localDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "283d485964a19c458038d0216dc3a9d9bc421674ee4cb7fb29da48317109bbd3"
+          }
+        ],
+        "concurrentResolutionIds": [
+          "s2-resolution-a",
+          "s2-resolution-b"
+        ],
+        "fault": "403-denied",
+        "firstOutcome": {
+          "outcome": "blocked",
+          "attempts": 1,
+          "trace": [
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49233/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 403,
+              "etag": null,
+              "ifMatch": null
+            },
+            {
+              "attempt": 1,
+              "error": "HTTP 403: access denied or unknown reason",
+              "state": "blocked"
+            }
+          ]
+        },
+        "stableRecoveryMs": 34.358416000000034,
+        "fixtureDigest": "816130e1b9a3e3d24ffb8ee1b6a6abffaf6b45aa05c377557e237e32f77c7ff0",
+        "expectedDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+        "acknowledgedBodies": [
+          {
+            "revisionId": "s2-same-a",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s2-root-0"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete same-a body for seed 2.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": -1036800000
+            },
+            "parent": null,
+            "hash": "bb2998b70b7100c5d3fe704a3253d91cd03bbd27634ff3a04ae5e9ccbdb3fcfa"
+          },
+          {
+            "revisionId": "s2-same-b",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s2-root-0"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete same-b body for seed 2.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": -1036800000
+            },
+            "parent": null,
+            "hash": "67a2d8396628665606a9e54a251894ff24e79e68fde06aa1b8a8f39ff2257bbe"
+          },
+          {
+            "revisionId": "s2-different-a",
+            "pageId": "page-6",
+            "incarnation": "initial",
+            "parents": [
+              "s2-root-6"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete different-a body for seed 2.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-6",
+              "updatedAt": -1036800000
+            },
+            "parent": {
+              "pageId": "page-2",
+              "incarnation": "initial"
+            },
+            "hash": "f3f4ab7ab0dac2e77552ceb35000fcdf4f0572e9c8ab7a65e838153d5effa598"
+          },
+          {
+            "revisionId": "s2-different-b",
+            "pageId": "page-8",
+            "incarnation": "initial",
+            "parents": [
+              "s2-root-8"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete different-b body for seed 2.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-8",
+              "updatedAt": 4320172800000
+            },
+            "parent": {
+              "pageId": "page-3",
+              "incarnation": "initial"
+            },
+            "hash": "336a89aa31706c770a2a438697fde206e27b2eb81487bad97623aae55fd00507"
+          },
+          {
+            "revisionId": "s2-resolution-a",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s2-same-a",
+              "s2-same-b"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete resolution-a body for seed 2.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": -1036800000
+            },
+            "parent": null,
+            "hash": "ddfe69c95e3d35deffa318a559eeb0f89a433c60995902b7b8c5329177229b16"
+          },
+          {
+            "revisionId": "s2-resolution-b",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s2-same-a",
+              "s2-same-b"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete resolution-b body for seed 2.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": 4320172800000
+            },
+            "parent": null,
+            "hash": "b976991fa221aa826dce2f3f16c90e901f8226331cc746c2a00deddb6d0f60d1"
+          }
+        ],
+        "intentCount": 6,
+        "expectedRevisionCount": 16,
+        "remoteDigest": "1e1b775ef2e3999febcfbdbcbc3fba5e62b51a4e7b21b6d11d131cb3ec049421",
+        "appliedIntentCount": 6,
+        "lostIntentCount": 0,
+        "falseStateCount": 0,
+        "metrics": {
+          "requests": 23,
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 20,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 3
+          },
+          "bytesUp": 21970,
+          "bytesDown": 133737,
+          "quotaUnits": "UNKNOWN",
+          "unknownWeightRequests": 23
+        },
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 1.3733340000001135
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 5821,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 0.09066599999982827
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.3523749999999382
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.3548749999999927
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 5,
+            "duration_ms": 1.3236659999997755
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 47,
+            "status": 403,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.3588750000001255
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 47,
+            "status": 403,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.3454580000000078
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 8,
+            "duration_ms": 1.347250000000031
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 7610,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"2\"",
+            "completion_order": 9,
+            "duration_ms": 1.3912499999999
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7610,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 10,
+            "duration_ms": 1.3374169999999594
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7610,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 11,
+            "duration_ms": 1.3362500000000637
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 8539,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"3\"",
+            "completion_order": 12,
+            "duration_ms": 1.355916999999863
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 13,
+            "duration_ms": 1.3894999999999982
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 1.3394999999998163
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 15,
+            "duration_ms": 1.422708000000057
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.3291670000000977
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3442499999998745
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 18,
+            "duration_ms": 1.2852080000000115
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 19,
+            "duration_ms": 1.3242909999999029
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 20,
+            "duration_ms": 1.3638750000000073
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 21,
+            "duration_ms": 1.353166999999985
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 22,
+            "duration_ms": 1.3378750000001673
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8539,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 23,
+            "duration_ms": 1.383874999999989
+          }
+        ]
+      },
+      {
+        "provider": "drive",
+        "scale": 10,
+        "seed": 3,
+        "plan": {
+          "provider": "drive",
+          "scale": 10,
+          "seed": 3,
+          "differentPageIndices": [
+            7,
+            6
+          ],
+          "recoveryOrder": [
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        },
+        "fixture": "binary-tree-v1",
+        "scenario": 3,
+        "status": "PASS",
+        "observations": [
+          {
+            "phase": "initial-local-ack",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 10,
+            "localRevisionCount": 10,
+            "expectedDigest": "d10d150360100d70c37ea82ddf1678d0307453fe75b0fbb79e0b1d9b9a12dfac",
+            "localDigest": "d10d150360100d70c37ea82ddf1678d0307453fe75b0fbb79e0b1d9b9a12dfac",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 10,
+            "receiptCount": 0,
+            "receiptVersion": null,
+            "receiptSetDigest": null
+          },
+          {
+            "phase": "offline-ack-a",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "87b48a9b540711ab4a6d89db61abfe8179893998ee4b1665e86d32571c5dc0ec",
+            "localDigest": "87b48a9b540711ab4a6d89db61abfe8179893998ee4b1665e86d32571c5dc0ec",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "119d69c1ee7e522e8dca03b1973d69ca7cb77d2545c818adc4c1ac9be19466b1"
+          },
+          {
+            "phase": "offline-ack-b",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 12,
+            "localRevisionCount": 12,
+            "expectedDigest": "54195d3f465fb9e1e332f9918798f20419917bed987f2109959f5fbebd134e01",
+            "localDigest": "54195d3f465fb9e1e332f9918798f20419917bed987f2109959f5fbebd134e01",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 2,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "119d69c1ee7e522e8dca03b1973d69ca7cb77d2545c818adc4c1ac9be19466b1"
+          },
+          {
+            "phase": "after-fault",
+            "local": "local-saved",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "87b48a9b540711ab4a6d89db61abfe8179893998ee4b1665e86d32571c5dc0ec",
+            "localDigest": "87b48a9b540711ab4a6d89db61abfe8179893998ee4b1665e86d32571c5dc0ec",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 14,
+            "receiptVersion": "\"3\"",
+            "receiptSetDigest": "4d94589280ed82b840d84a7b83c8886c8bd69d66507b7c1c1a8cfd94bb716305"
+          },
+          {
+            "phase": "reopen-or-cold-0",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "localDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "bb77c83a53bb8d30335d6f286fad7b447f8933289d245cad7760846506b5f4e5"
+          },
+          {
+            "phase": "reopen-or-cold-1",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "localDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "bb77c83a53bb8d30335d6f286fad7b447f8933289d245cad7760846506b5f4e5"
+          },
+          {
+            "phase": "reopen-or-cold-2",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "localDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "bb77c83a53bb8d30335d6f286fad7b447f8933289d245cad7760846506b5f4e5"
+          },
+          {
+            "phase": "repeated-sync-a",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "localDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "bb77c83a53bb8d30335d6f286fad7b447f8933289d245cad7760846506b5f4e5"
+          },
+          {
+            "phase": "repeated-sync-b",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 16,
+            "localRevisionCount": 16,
+            "expectedDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "localDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 16,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "bb77c83a53bb8d30335d6f286fad7b447f8933289d245cad7760846506b5f4e5"
+          }
+        ],
+        "incompleteTreeObserved": true,
+        "fault": "429",
+        "firstOutcome": {
+          "outcome": "verified",
+          "attempts": 2,
+          "trace": [
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49236/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 429,
+              "etag": null,
+              "ifMatch": null
+            },
+            {
+              "attempt": 1,
+              "error": "HTTP 429",
+              "state": "verification-unknown"
+            },
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49236/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 200,
+              "etag": "\"2\"",
+              "ifMatch": null
+            },
+            {
+              "method": "PATCH",
+              "endpoint": "http://127.0.0.1:49236/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+              "status": 200,
+              "etag": "\"3\"",
+              "ifMatch": "\"2\""
+            },
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49236/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 200,
+              "etag": "\"3\"",
+              "ifMatch": null
+            }
+          ]
+        },
+        "faultReceipt": {
+          "method": "GET",
+          "status": 429,
+          "used": true,
+          "matched": {
+            "file_id": "byos-remediation-v1",
+            "file_name": "byos-remediation-v1.json",
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "operation": "get",
+            "version_before": 2,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
+        },
+        "stableRecoveryMs": 32.36808399999995,
+        "fixtureDigest": "d10d150360100d70c37ea82ddf1678d0307453fe75b0fbb79e0b1d9b9a12dfac",
+        "expectedDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+        "acknowledgedBodies": [
+          {
+            "revisionId": "s3-same-a",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s3-root-0"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete same-a body for seed 3.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": -1123200000
+            },
+            "parent": null,
+            "hash": "72022b030e82cb9a80dce2d8d0836d585c36b7658ccfd318b4d0459b46fdc4f2"
+          },
+          {
+            "revisionId": "s3-same-b",
+            "pageId": "page-0",
+            "incarnation": "initial",
+            "parents": [
+              "s3-root-0"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete same-b body for seed 3.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-0",
+              "updatedAt": -1123200000
+            },
+            "parent": null,
+            "hash": "ef22eadf2836a1f7e977bbda67678befe733485e5a713fde0b6f8d8879b75579"
+          },
+          {
+            "revisionId": "s3-different-a",
+            "pageId": "page-7",
+            "incarnation": "initial",
+            "parents": [
+              "s3-root-7"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete different-a body for seed 3.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-7",
+              "updatedAt": -1123200000
+            },
+            "parent": {
+              "pageId": "page-3",
+              "incarnation": "initial"
+            },
+            "hash": "85231f65e21a035e53a15c7a85de87ccf0c6402fbcc0fd2d64b6bcc6392c343e"
+          },
+          {
+            "revisionId": "s3-different-b",
+            "pageId": "page-6",
+            "incarnation": "initial",
+            "parents": [
+              "s3-root-6"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete different-b body for seed 3.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-6",
+              "updatedAt": 4320259200000
+            },
+            "parent": {
+              "pageId": "page-2",
+              "incarnation": "initial"
+            },
+            "hash": "de76524c76b20d15369745106e695d9e31f65da4f0523a1cd3e481801d6334ee"
+          },
+          {
+            "revisionId": "s3-missing-tree",
+            "pageId": "page-4",
+            "incarnation": "initial",
+            "parents": [
+              "s3-root-4"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete missing-tree body for seed 3.\nNever infer preservation from IDs only. Never infer preservation from IDs only. Never infer preservation from IDs only. ",
+            "metadata": {
+              "title": "page-4",
+              "updatedAt": 4320259200000
+            },
+            "parent": {
+              "pageId": "missing-tree-parent",
+              "incarnation": "initial"
+            },
+            "hash": "17f8022afad3eac15842c9198f128edfdcffd02ebc4d61666f5a8a5cb31aaef7"
+          },
+          {
+            "revisionId": "s3-missing-parent-now-present",
+            "pageId": "missing-tree-parent",
+            "incarnation": "initial",
+            "parents": [],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Full recovered tree parent",
+            "metadata": {
+              "title": "missing-tree-parent",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "670d727a658256805888385263de2aaf383213652b588aec69dac5a6ddf324b9"
+          }
+        ],
+        "intentCount": 6,
+        "expectedRevisionCount": 16,
+        "remoteDigest": "243a94e6a7907faf5a624e329ef573faf55d9fd867166bbe2696445fc85c1339",
+        "appliedIntentCount": 6,
+        "lostIntentCount": 0,
+        "falseStateCount": 0,
+        "metrics": {
+          "requests": 24,
+          "endpoints": {
+            "GET /drive/v3/files/byos-remediation-v1": 21,
+            "PATCH /upload/drive/v3/files/byos-remediation-v1": 3
+          },
+          "bytesUp": 21818,
+          "bytesDown": 147678,
+          "quotaUnits": "UNKNOWN",
+          "unknownWeightRequests": 24
+        },
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 1.3974169999999049
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 5821,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 1.418374999999969
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.3463340000000699
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.3405829999999241
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 5,
+            "duration_ms": 1.3205420000001595
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 32,
+            "status": 429,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.3551660000000538
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.3921669999999722
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 7545,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"2\"",
+            "completion_order": 8,
+            "duration_ms": 1.3424159999999574
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7545,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 9,
+            "duration_ms": 1.3117499999998472
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7545,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 10,
+            "duration_ms": 1.3912499999999
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7545,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 11,
+            "duration_ms": 1.3647909999999683
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 7545,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 12,
+            "duration_ms": 1.4537920000000213
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 8452,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"3\"",
+            "completion_order": 13,
+            "duration_ms": 1.3479999999999563
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 0.06712500000003274
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 15,
+            "duration_ms": 1.3319159999998647
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.3550420000001395
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3214579999998932
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 18,
+            "duration_ms": 1.3210409999999229
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 19,
+            "duration_ms": 1.4051249999999982
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 20,
+            "duration_ms": 1.3863330000001497
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 21,
+            "duration_ms": 1.4341670000001159
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 22,
+            "duration_ms": 1.3514999999999873
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 23,
+            "duration_ms": 1.4279579999999896
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8452,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 24,
+            "duration_ms": 1.3568749999999454
+          }
+        ]
+      },
+      {
+        "provider": "drive",
+        "scale": 10,
+        "seed": 4,
+        "plan": {
+          "provider": "drive",
+          "scale": 10,
+          "seed": 4,
+          "differentPageIndices": [
+            8,
+            5
+          ],
+          "recoveryOrder": [
+            "b",
+            "a",
+            "b",
+            "a"
+          ]
+        },
+        "fixture": "binary-tree-v1",
+        "scenario": 0,
+        "status": "FAIL",
+        "observations": [
+          {
+            "phase": "initial-local-ack",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 10,
+            "localRevisionCount": 10,
+            "expectedDigest": "6aa62ec7ee386f6d39fa4e5369bec55ff54fbbbaa59e505f93a6d55a6d0061dd",
+            "localDigest": "6aa62ec7ee386f6d39fa4e5369bec55ff54fbbbaa59e505f93a6d55a6d0061dd",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 10,
+            "receiptCount": 0,
+            "receiptVersion": null,
+            "receiptSetDigest": null
+          },
+          {
+            "phase": "offline-ack-a",
+            "local": "recovery-needed",
+            "remote": "pending",
+            "expectedMinimumCount": 15,
+            "localRevisionCount": 15,
+            "expectedDigest": "0fbd087e7dca929c600d5696d593fcc3f16941f2372ecbbf7a16c30b3f8e4b36",
+            "localDigest": "0fbd087e7dca929c600d5696d593fcc3f16941f2372ecbbf7a16c30b3f8e4b36",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 5,
+            "incomplete": 0,
+            "pendingCount": 5,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "0187a2a15243ab0d060ed16e522b25328b2a0d6d91b357c02db5e1851782aea5"
+          },
+          {
+            "phase": "offline-ack-b",
+            "local": "local-saved",
+            "remote": "pending",
+            "expectedMinimumCount": 14,
+            "localRevisionCount": 14,
+            "expectedDigest": "98bd74249afc36dedfd0bcfdd172821fef8208df40439b7239c2ba49d2373732",
+            "localDigest": "98bd74249afc36dedfd0bcfdd172821fef8208df40439b7239c2ba49d2373732",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 4,
+            "receiptCount": 10,
+            "receiptVersion": "\"2\"",
+            "receiptSetDigest": "0187a2a15243ab0d060ed16e522b25328b2a0d6d91b357c02db5e1851782aea5"
+          },
+          {
+            "phase": "after-fault",
+            "local": "recovery-needed",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 15,
+            "localRevisionCount": 15,
+            "expectedDigest": "0fbd087e7dca929c600d5696d593fcc3f16941f2372ecbbf7a16c30b3f8e4b36",
+            "localDigest": "0fbd087e7dca929c600d5696d593fcc3f16941f2372ecbbf7a16c30b3f8e4b36",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 5,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 15,
+            "receiptVersion": "\"3\"",
+            "receiptSetDigest": "804db6d82ebb067b5449c037222b840f58834f23b5c7da733a674a0f0e663991"
+          }
+        ],
+        "requiredRecoveryIds": [
+          "s4-child-edit",
+          "s4-stale-old"
+        ],
+        "fault": "503",
+        "firstOutcome": {
+          "outcome": "verified",
+          "attempts": 2,
+          "trace": [
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49239/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 503,
+              "etag": null,
+              "ifMatch": null
+            },
+            {
+              "attempt": 1,
+              "error": "HTTP 503",
+              "state": "verification-unknown"
+            },
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49239/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 200,
+              "etag": "\"2\"",
+              "ifMatch": null
+            },
+            {
+              "method": "PATCH",
+              "endpoint": "http://127.0.0.1:49239/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+              "status": 200,
+              "etag": "\"3\"",
+              "ifMatch": "\"2\""
+            },
+            {
+              "method": "GET",
+              "endpoint": "http://127.0.0.1:49239/drive/v3/files/byos-remediation-v1?alt=media",
+              "status": 200,
+              "etag": "\"3\"",
+              "ifMatch": null
+            }
+          ]
+        },
+        "faultReceipt": {
+          "method": "GET",
+          "status": 503,
+          "used": true,
+          "matched": {
+            "file_id": "byos-remediation-v1",
+            "file_name": "byos-remediation-v1.json",
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "operation": "get",
+            "version_before": 2,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
+        },
+        "stableRecoveryMs": 34.952375000000075,
+        "error": {
+          "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'recovery-needed'\n- 'conflict'\n"
+        },
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 1.3554169999999885
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 5821,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 1.4485839999999826
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.3524580000000697
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.338707999999997
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 5,
+            "duration_ms": 1.319582999999966
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 32,
+            "status": 503,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.3901249999998981
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5821,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.3633330000000115
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 8173,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"2\"",
+            "completion_order": 8,
+            "duration_ms": 1.3672080000001188
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8173,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 9,
+            "duration_ms": 1.3235830000000988
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 8173,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 10,
+            "duration_ms": 1.3544580000000224
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 10030,
+            "bytes_down": 385,
+            "status": 200,
+            "if_match": "\"3\"",
+            "completion_order": 11,
+            "duration_ms": 0.09266699999989214
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 12,
+            "duration_ms": 1.3097499999998945
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 13,
+            "duration_ms": 1.3465419999999995
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 1.3375409999998737
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 15,
+            "duration_ms": 1.41862500000002
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.3618329999999332
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3519160000000738
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 18,
+            "duration_ms": 1.3279579999998532
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 19,
+            "duration_ms": 1.3832079999999678
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 10030,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 20,
+            "duration_ms": 1.3314170000001013
+          }
+        ]
+      }
+    ],
+    "inversions": [
+      {
+        "provider": "drive",
+        "passed": true,
+        "boundary": "actual coherent HTTP bytes captured, application fetch response delivery held and inverted",
+        "receipts": [
+          {
+            "operation": 1,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49213/drive/v3/files/byos-remediation-v1?alt=media",
+            "capturedEtag": "\"2\"",
+            "capturedBodySha256": "f0010eb9ee2797de8005ae58282adb02c1bf84618d37c85a08b3c1471e35b6de",
+            "status": 200,
+            "deliveryOrder": 4
+          },
+          {
+            "operation": 2,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49213/drive/v3/files/byos-remediation-v1?alt=media",
+            "capturedEtag": "\"2\"",
+            "capturedBodySha256": "f0010eb9ee2797de8005ae58282adb02c1bf84618d37c85a08b3c1471e35b6de",
+            "status": 200,
+            "deliveryOrder": 1
+          },
+          {
+            "operation": 3,
+            "method": "PATCH",
+            "endpoint": "http://127.0.0.1:49213/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+            "capturedEtag": "\"3\"",
+            "capturedBodySha256": "bc8097048021526de24b97341647efaa839ea7c5f7df1659ac75a276393cb72f",
+            "status": 200,
+            "deliveryOrder": 2
+          },
+          {
+            "operation": 4,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49213/drive/v3/files/byos-remediation-v1?alt=media",
+            "capturedEtag": "\"3\"",
+            "capturedBodySha256": "d63381c53be68841f18e5e267b8665978b239ee9b5a30a3dbe374c80875199a8",
+            "status": 200,
+            "deliveryOrder": 3
+          },
+          {
+            "operation": 5,
+            "method": "PATCH",
+            "endpoint": "http://127.0.0.1:49213/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+            "capturedEtag": null,
+            "capturedBodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": 412,
+            "deliveryOrder": 5
+          },
+          {
+            "operation": 6,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49213/drive/v3/files/byos-remediation-v1?alt=media",
+            "capturedEtag": "\"3\"",
+            "capturedBodySha256": "d63381c53be68841f18e5e267b8665978b239ee9b5a30a3dbe374c80875199a8",
+            "status": 200,
+            "deliveryOrder": 6
+          },
+          {
+            "operation": 7,
+            "method": "PATCH",
+            "endpoint": "http://127.0.0.1:49213/upload/drive/v3/files/byos-remediation-v1?uploadType=media",
+            "capturedEtag": "\"4\"",
+            "capturedBodySha256": "1a972c1b08b47206099603cf14a47d7f75fe08aa635ac6d96147931c611b2567",
+            "status": 200,
+            "deliveryOrder": 7
+          },
+          {
+            "operation": 8,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49213/drive/v3/files/byos-remediation-v1?alt=media",
+            "capturedEtag": "\"4\"",
+            "capturedBodySha256": "c4a3e6792e3981054b148a5e8da9c457bfdaac1076b8d2a3c59d9af9947049d4",
+            "status": 200,
+            "deliveryOrder": 8
+          }
+        ],
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 2.119000000000028
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 5881,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 1.705709000000013
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.456624999999974
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.4057500000000118
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 5,
+            "duration_ms": 1.5185829999999783
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.4852500000000077
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.4128329999999778
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 6195,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"2\"",
+            "completion_order": 8,
+            "duration_ms": 1.4618330000000128
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 6195,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 9,
+            "duration_ms": 1.468291000000022
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 6195,
+            "bytes_down": 0,
+            "status": 412,
+            "if_match": "\"2\"",
+            "completion_order": 10,
+            "duration_ms": 1.3087920000000395
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 6195,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 11,
+            "duration_ms": 1.4015419999999494
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 6509,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"3\"",
+            "completion_order": 12,
+            "duration_ms": 1.359375
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 13,
+            "duration_ms": 1.3249999999999886
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 1.3832079999999678
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 15,
+            "duration_ms": 1.3338750000000346
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.3633330000000115
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3596670000000017
+          }
+        ],
+        "observations": [
+          {
+            "phase": "inverted-restored-0",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 12,
+            "localRevisionCount": 12,
+            "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "localDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 12,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "c3d229f36eb2d66fd4142e83b219ad33ceb0821b5397aa186e334c652650249d"
+          },
+          {
+            "phase": "inverted-restored-1",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 12,
+            "localRevisionCount": 12,
+            "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "localDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 12,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "c3d229f36eb2d66fd4142e83b219ad33ceb0821b5397aa186e334c652650249d"
+          },
+          {
+            "phase": "inverted-restored-2",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 12,
+            "localRevisionCount": 12,
+            "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "localDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 12,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "c3d229f36eb2d66fd4142e83b219ad33ceb0821b5397aa186e334c652650249d"
+          }
+        ],
+        "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d"
+      },
+      {
+        "provider": "webdav",
+        "passed": true,
+        "boundary": "actual coherent HTTP bytes captured, application fetch response delivery held and inverted",
+        "receipts": [
+          {
+            "operation": 1,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": "\"2\"",
+            "capturedBodySha256": "f0010eb9ee2797de8005ae58282adb02c1bf84618d37c85a08b3c1471e35b6de",
+            "status": 200,
+            "deliveryOrder": 4
+          },
+          {
+            "operation": 2,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": "\"2\"",
+            "capturedBodySha256": "f0010eb9ee2797de8005ae58282adb02c1bf84618d37c85a08b3c1471e35b6de",
+            "status": 200,
+            "deliveryOrder": 1
+          },
+          {
+            "operation": 3,
+            "method": "PUT",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": "\"3\"",
+            "capturedBodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": 204,
+            "deliveryOrder": 2
+          },
+          {
+            "operation": 4,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": "\"3\"",
+            "capturedBodySha256": "d63381c53be68841f18e5e267b8665978b239ee9b5a30a3dbe374c80875199a8",
+            "status": 200,
+            "deliveryOrder": 3
+          },
+          {
+            "operation": 5,
+            "method": "PUT",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": null,
+            "capturedBodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": 412,
+            "deliveryOrder": 5
+          },
+          {
+            "operation": 6,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": "\"3\"",
+            "capturedBodySha256": "d63381c53be68841f18e5e267b8665978b239ee9b5a30a3dbe374c80875199a8",
+            "status": 200,
+            "deliveryOrder": 6
+          },
+          {
+            "operation": 7,
+            "method": "PUT",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": "\"4\"",
+            "capturedBodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": 204,
+            "deliveryOrder": 7
+          },
+          {
+            "operation": 8,
+            "method": "GET",
+            "endpoint": "http://127.0.0.1:49216/dav/backup.zip",
+            "capturedEtag": "\"4\"",
+            "capturedBodySha256": "c4a3e6792e3981054b148a5e8da9c457bfdaac1076b8d2a3c59d9af9947049d4",
+            "status": 200,
+            "deliveryOrder": 8
+          }
+        ],
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 1.418166000000042
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 5881,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 1.22787500000004
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.322334000000012
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.343166999999994
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 5,
+            "duration_ms": 1.3576249999999845
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.2445830000000342
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 5881,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.3702920000000631
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 6195,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"2\"",
+            "completion_order": 8,
+            "duration_ms": 1.3453339999999798
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 6195,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 9,
+            "duration_ms": 1.3145000000000664
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 6195,
+            "bytes_down": 0,
+            "status": 412,
+            "if_match": "\"2\"",
+            "completion_order": 10,
+            "duration_ms": 1.3782919999999876
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 6195,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 11,
+            "duration_ms": 1.3121249999999236
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 6509,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"3\"",
+            "completion_order": 12,
+            "duration_ms": 1.3461670000000368
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 13,
+            "duration_ms": 1.3144169999999349
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 1.3367920000000595
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 15,
+            "duration_ms": 1.3581669999999804
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.3700410000000147
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 6509,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3545420000000377
+          }
+        ],
+        "observations": [
+          {
+            "phase": "inverted-restored-0",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 12,
+            "localRevisionCount": 12,
+            "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "localDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 12,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "c3d229f36eb2d66fd4142e83b219ad33ceb0821b5397aa186e334c652650249d"
+          },
+          {
+            "phase": "inverted-restored-1",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 12,
+            "localRevisionCount": 12,
+            "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "localDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 12,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "c3d229f36eb2d66fd4142e83b219ad33ceb0821b5397aa186e334c652650249d"
+          },
+          {
+            "phase": "inverted-restored-2",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 12,
+            "localRevisionCount": 12,
+            "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "localDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 12,
+            "receiptVersion": "\"4\"",
+            "receiptSetDigest": "c3d229f36eb2d66fd4142e83b219ad33ceb0821b5397aa186e334c652650249d"
+          }
+        ],
+        "expectedDigest": "d58e70ad24105b9c427aefe5400aa2c504fdb603515f9cb6c9c777319496e15d"
+      }
+    ],
+    "lifecycle": [
+      {
+        "provider": "drive",
+        "passed": true,
+        "expected": [
+          {
+            "revisionId": "life-root",
+            "pageId": "life",
+            "incarnation": "initial",
+            "parents": [],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete original",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "9203c9a3c51e3b2e8f29bf57c5e1049974312128ca9523327bee766ff7628304"
+          },
+          {
+            "revisionId": "life-delete",
+            "pageId": "life",
+            "incarnation": "initial",
+            "parents": [
+              "life-root"
+            ],
+            "supersedes": [],
+            "kind": "delete",
+            "body": "Explicit deletion intent",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "d7c99a1400744acb0dc6520fa789578155cdc23cd700fe116a10059f6f1aa130"
+          },
+          {
+            "revisionId": "life-edit",
+            "pageId": "life",
+            "incarnation": "initial",
+            "parents": [
+              "life-root"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete concurrent same-incarnation edit",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "7717509e3bfb695d610a5a077e41d5d28d25e7e364e05fa36c8dc6e5e66109e7"
+          },
+          {
+            "revisionId": "life-recreate-a",
+            "pageId": "life",
+            "incarnation": "a",
+            "parents": [
+              "life-delete"
+            ],
+            "supersedes": [
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Complete recreated body a",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "e626792d975fa458ec282290e373dd717abbc4201f08ff72a3ee31980f68f126"
+          },
+          {
+            "revisionId": "life-recreate-b",
+            "pageId": "life",
+            "incarnation": "b",
+            "parents": [
+              "life-delete"
+            ],
+            "supersedes": [
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Complete recreated body b",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "2b1f21f1c4c59ecafe0a7d149e841038ca7bb29340d89c02049bde746fb80870"
+          },
+          {
+            "revisionId": "life-retire-b",
+            "pageId": "life",
+            "incarnation": "b",
+            "parents": [
+              "life-recreate-b"
+            ],
+            "supersedes": [],
+            "kind": "delete",
+            "body": "User explicitly retires incarnation b",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "f739b4fe879ea11ad0350a16a64ed3d2df265acbdc5ea27ff201da2246d4eebf"
+          },
+          {
+            "revisionId": "life-resolution",
+            "pageId": "life",
+            "incarnation": "a",
+            "parents": [
+              "life-delete",
+              "life-edit",
+              "life-recreate-a",
+              "life-retire-b"
+            ],
+            "supersedes": [
+              "b",
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Explicit manual resolution of both recreated versions and the old concurrent edit",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "b5d1764f2977ce20e82c6c9ef73adc2fb4efad7b27593de98845b4688fbe82d6"
+          }
+        ],
+        "observations": [
+          {
+            "phase": "delete-versus-edit-after-reopen",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 3,
+            "localRevisionCount": 3,
+            "expectedDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "localDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 3,
+            "receiptVersion": "\"3\"",
+            "receiptSetDigest": "367c69474e85748f6cde07b06c40a1f57fd85282f2f019ea68ea821d6d2f7974"
+          },
+          {
+            "phase": "delete-versus-edit-after-reopen",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 3,
+            "localRevisionCount": 3,
+            "expectedDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "localDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 3,
+            "receiptVersion": "\"3\"",
+            "receiptSetDigest": "367c69474e85748f6cde07b06c40a1f57fd85282f2f019ea68ea821d6d2f7974"
+          },
+          {
+            "phase": "concurrent-recreation-with-stale-edit",
+            "local": "recovery-needed",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 5,
+            "localRevisionCount": 5,
+            "expectedDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "localDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 1,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 5,
+            "receiptVersion": "\"5\"",
+            "receiptSetDigest": "82893bf487d370d59320664f82393fb469d80e408118ef1bdbd824c3bbdd39fb"
+          },
+          {
+            "phase": "concurrent-recreation-with-stale-edit",
+            "local": "recovery-needed",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 5,
+            "localRevisionCount": 5,
+            "expectedDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "localDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 1,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 5,
+            "receiptVersion": "\"5\"",
+            "receiptSetDigest": "82893bf487d370d59320664f82393fb469d80e408118ef1bdbd824c3bbdd39fb"
+          },
+          {
+            "phase": "explicit-resolution-after-reopen-or-cold-restore",
+            "local": "local-saved",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 7,
+            "localRevisionCount": 7,
+            "expectedDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "localDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 7,
+            "receiptVersion": "\"6\"",
+            "receiptSetDigest": "f7af636e18b4e4cdb3ffa385439eb1f453a2188de700d137b5de0534070b32e6"
+          },
+          {
+            "phase": "explicit-resolution-after-reopen-or-cold-restore",
+            "local": "local-saved",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 7,
+            "localRevisionCount": 7,
+            "expectedDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "localDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 7,
+            "receiptVersion": "\"6\"",
+            "receiptSetDigest": "f7af636e18b4e4cdb3ffa385439eb1f453a2188de700d137b5de0534070b32e6"
+          },
+          {
+            "phase": "explicit-resolution-after-reopen-or-cold-restore",
+            "local": "local-saved",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 7,
+            "localRevisionCount": 7,
+            "expectedDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "localDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 7,
+            "receiptVersion": "\"6\"",
+            "receiptSetDigest": "f7af636e18b4e4cdb3ffa385439eb1f453a2188de700d137b5de0534070b32e6"
+          }
+        ],
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 1.3746660000000475
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 615,
+            "bytes_down": 381,
+            "status": 200,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 1.382665999999972
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 615,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.3374579999999696
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 615,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.3497920000000931
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 916,
+            "bytes_down": 381,
+            "status": 200,
+            "if_match": "\"2\"",
+            "completion_order": 5,
+            "duration_ms": 1.398416999999995
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.3325829999999996
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.406582999999955
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 8,
+            "duration_ms": 1.3944170000000895
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 9,
+            "duration_ms": 1.3442909999999983
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 10,
+            "duration_ms": 1.3221670000000358
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 11,
+            "duration_ms": 1.3654579999999896
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 1212,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"3\"",
+            "completion_order": 12,
+            "duration_ms": 1.3563749999999573
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1212,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 13,
+            "duration_ms": 0.05841700000007677
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1212,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 1.3637499999999818
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 1508,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"4\"",
+            "completion_order": 15,
+            "duration_ms": 1.3548749999999927
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.315499999999929
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3519579999999678
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 18,
+            "duration_ms": 1.32387499999993
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 19,
+            "duration_ms": 1.334041999999954
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 20,
+            "duration_ms": 1.341707999999926
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 21,
+            "duration_ms": 1.3341249999999718
+          },
+          {
+            "method": "PATCH",
+            "path": "/upload/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "uploadType": "media"
+            },
+            "bytes_up": 2214,
+            "bytes_down": 383,
+            "status": 200,
+            "if_match": "\"5\"",
+            "completion_order": 22,
+            "duration_ms": 1.3437079999999924
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 23,
+            "duration_ms": 1.3087080000000242
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 24,
+            "duration_ms": 1.3464170000000877
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 25,
+            "duration_ms": 1.3088749999999436
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 26,
+            "duration_ms": 1.3683340000000044
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 27,
+            "duration_ms": 1.3310829999999214
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 28,
+            "duration_ms": 1.3608749999999645
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 29,
+            "duration_ms": 1.315417000000025
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 30,
+            "duration_ms": 1.4238749999999527
+          },
+          {
+            "method": "GET",
+            "path": "/drive/v3/files/byos-remediation-v1",
+            "query": {
+              "alt": "media"
+            },
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 31,
+            "duration_ms": 1.3705420000000004
+          }
+        ]
+      },
+      {
+        "provider": "webdav",
+        "passed": true,
+        "expected": [
+          {
+            "revisionId": "life-root",
+            "pageId": "life",
+            "incarnation": "initial",
+            "parents": [],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete original",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "9203c9a3c51e3b2e8f29bf57c5e1049974312128ca9523327bee766ff7628304"
+          },
+          {
+            "revisionId": "life-delete",
+            "pageId": "life",
+            "incarnation": "initial",
+            "parents": [
+              "life-root"
+            ],
+            "supersedes": [],
+            "kind": "delete",
+            "body": "Explicit deletion intent",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "d7c99a1400744acb0dc6520fa789578155cdc23cd700fe116a10059f6f1aa130"
+          },
+          {
+            "revisionId": "life-edit",
+            "pageId": "life",
+            "incarnation": "initial",
+            "parents": [
+              "life-root"
+            ],
+            "supersedes": [],
+            "kind": "put",
+            "body": "Complete concurrent same-incarnation edit",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "7717509e3bfb695d610a5a077e41d5d28d25e7e364e05fa36c8dc6e5e66109e7"
+          },
+          {
+            "revisionId": "life-recreate-a",
+            "pageId": "life",
+            "incarnation": "a",
+            "parents": [
+              "life-delete"
+            ],
+            "supersedes": [
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Complete recreated body a",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "e626792d975fa458ec282290e373dd717abbc4201f08ff72a3ee31980f68f126"
+          },
+          {
+            "revisionId": "life-recreate-b",
+            "pageId": "life",
+            "incarnation": "b",
+            "parents": [
+              "life-delete"
+            ],
+            "supersedes": [
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Complete recreated body b",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "2b1f21f1c4c59ecafe0a7d149e841038ca7bb29340d89c02049bde746fb80870"
+          },
+          {
+            "revisionId": "life-retire-b",
+            "pageId": "life",
+            "incarnation": "b",
+            "parents": [
+              "life-recreate-b"
+            ],
+            "supersedes": [],
+            "kind": "delete",
+            "body": "User explicitly retires incarnation b",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "f739b4fe879ea11ad0350a16a64ed3d2df265acbdc5ea27ff201da2246d4eebf"
+          },
+          {
+            "revisionId": "life-resolution",
+            "pageId": "life",
+            "incarnation": "a",
+            "parents": [
+              "life-delete",
+              "life-edit",
+              "life-recreate-a",
+              "life-retire-b"
+            ],
+            "supersedes": [
+              "b",
+              "initial"
+            ],
+            "kind": "put",
+            "body": "Explicit manual resolution of both recreated versions and the old concurrent edit",
+            "metadata": {
+              "title": "life",
+              "updatedAt": 0
+            },
+            "parent": null,
+            "hash": "b5d1764f2977ce20e82c6c9ef73adc2fb4efad7b27593de98845b4688fbe82d6"
+          }
+        ],
+        "observations": [
+          {
+            "phase": "delete-versus-edit-after-reopen",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 3,
+            "localRevisionCount": 3,
+            "expectedDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "localDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 3,
+            "receiptVersion": "\"3\"",
+            "receiptSetDigest": "367c69474e85748f6cde07b06c40a1f57fd85282f2f019ea68ea821d6d2f7974"
+          },
+          {
+            "phase": "delete-versus-edit-after-reopen",
+            "local": "conflict",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 3,
+            "localRevisionCount": 3,
+            "expectedDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "localDigest": "953143c13410db66c0aabd8e5475ef3668680a6fa9036e897670cced0d6eb1c1",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 3,
+            "receiptVersion": "\"3\"",
+            "receiptSetDigest": "367c69474e85748f6cde07b06c40a1f57fd85282f2f019ea68ea821d6d2f7974"
+          },
+          {
+            "phase": "concurrent-recreation-with-stale-edit",
+            "local": "recovery-needed",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 5,
+            "localRevisionCount": 5,
+            "expectedDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "localDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 1,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 5,
+            "receiptVersion": "\"5\"",
+            "receiptSetDigest": "82893bf487d370d59320664f82393fb469d80e408118ef1bdbd824c3bbdd39fb"
+          },
+          {
+            "phase": "concurrent-recreation-with-stale-edit",
+            "local": "recovery-needed",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 5,
+            "localRevisionCount": 5,
+            "expectedDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "localDigest": "94eca3dcfcead5c634b5dd83bc94a68e3d34c61a01229c4c8ce5d4880a01af99",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 1,
+            "recoveryHeads": 1,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 5,
+            "receiptVersion": "\"5\"",
+            "receiptSetDigest": "82893bf487d370d59320664f82393fb469d80e408118ef1bdbd824c3bbdd39fb"
+          },
+          {
+            "phase": "explicit-resolution-after-reopen-or-cold-restore",
+            "local": "local-saved",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 7,
+            "localRevisionCount": 7,
+            "expectedDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "localDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 7,
+            "receiptVersion": "\"6\"",
+            "receiptSetDigest": "f7af636e18b4e4cdb3ffa385439eb1f453a2188de700d137b5de0534070b32e6"
+          },
+          {
+            "phase": "explicit-resolution-after-reopen-or-cold-restore",
+            "local": "local-saved",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 7,
+            "localRevisionCount": 7,
+            "expectedDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "localDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 7,
+            "receiptVersion": "\"6\"",
+            "receiptSetDigest": "f7af636e18b4e4cdb3ffa385439eb1f453a2188de700d137b5de0534070b32e6"
+          },
+          {
+            "phase": "explicit-resolution-after-reopen-or-cold-restore",
+            "local": "local-saved",
+            "remote": "verified-revision-set",
+            "expectedMinimumCount": 7,
+            "localRevisionCount": 7,
+            "expectedDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "localDigest": "d69dc99d68a2461b23f5e8a6a352adb7430cbdf6962cab61a8b44c25631f74e7",
+            "missingFullBodies": [],
+            "falseLocal": false,
+            "falseVerified": false,
+            "falsePending": false,
+            "conflicts": 0,
+            "recoveryHeads": 0,
+            "incomplete": 0,
+            "pendingCount": 0,
+            "receiptCount": 7,
+            "receiptVersion": "\"6\"",
+            "receiptSetDigest": "f7af636e18b4e4cdb3ffa385439eb1f453a2188de700d137b5de0534070b32e6"
+          }
+        ],
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 61,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 1,
+            "duration_ms": 1.3488330000000133
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 615,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"1\"",
+            "completion_order": 2,
+            "duration_ms": 1.3459170000000995
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 615,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 3,
+            "duration_ms": 1.3179169999999658
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 615,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 4,
+            "duration_ms": 1.33299999999997
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 916,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"2\"",
+            "completion_order": 5,
+            "duration_ms": 1.3489170000000286
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 6,
+            "duration_ms": 1.374166999999943
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 7,
+            "duration_ms": 1.2219589999999698
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 8,
+            "duration_ms": 1.31737499999997
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 9,
+            "duration_ms": 1.3104170000000295
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 10,
+            "duration_ms": 1.306459000000018
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 916,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 11,
+            "duration_ms": 1.3734580000000278
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 1212,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"3\"",
+            "completion_order": 12,
+            "duration_ms": 1.35125000000005
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1212,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 13,
+            "duration_ms": 1.317625000000021
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1212,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 14,
+            "duration_ms": 1.3187090000000126
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 1508,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"4\"",
+            "completion_order": 15,
+            "duration_ms": 1.3269169999999804
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 16,
+            "duration_ms": 1.3042499999999109
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 17,
+            "duration_ms": 1.3422080000000278
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 18,
+            "duration_ms": 1.347417000000064
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 19,
+            "duration_ms": 1.403332999999975
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 20,
+            "duration_ms": 1.3093749999999318
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 1508,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 21,
+            "duration_ms": 1.3382089999998925
+          },
+          {
+            "method": "PUT",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 2214,
+            "bytes_down": 0,
+            "status": 204,
+            "if_match": "\"5\"",
+            "completion_order": 22,
+            "duration_ms": 1.3426670000000058
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 23,
+            "duration_ms": 1.3188330000000406
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 24,
+            "duration_ms": 1.4402919999999995
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 25,
+            "duration_ms": 1.3912090000000035
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 26,
+            "duration_ms": 1.3435409999999592
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 27,
+            "duration_ms": 1.312917000000084
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 28,
+            "duration_ms": 1.3099170000000413
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 29,
+            "duration_ms": 1.3387500000000045
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 30,
+            "duration_ms": 1.3706670000000258
+          },
+          {
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "query": {},
+            "bytes_up": 0,
+            "bytes_down": 2214,
+            "status": 200,
+            "if_match": null,
+            "completion_order": 31,
+            "duration_ms": 1.325207999999975
+          }
+        ]
+      }
+    ],
+    "causal": {
+      "passed": true,
+      "missingCausal": {
+        "local": "incomplete",
+        "remote": "blocked",
+        "body": {
+          "revisionId": "orphan",
+          "pageId": "orphan",
+          "incarnation": "initial",
+          "parents": [
+            "unknown"
+          ],
+          "supersedes": [],
+          "kind": "put",
+          "body": "Full orphan durable intent",
+          "metadata": {
+            "title": "orphan",
+            "updatedAt": 0
+          },
+          "parent": null,
+          "hash": "b6b80edefe1b90019f3dc3bf7e4866d3be63c29b1c0f291a9b95be94f12cfdd9"
+        }
+      },
+      "causalCycleRejected": true,
+      "treeCycleLocal": "incomplete",
+      "fullTreeBodies": [
+        {
+          "revisionId": "tree-a",
+          "pageId": "tree-a",
+          "incarnation": "initial",
+          "parents": [],
+          "supersedes": [],
+          "kind": "put",
+          "body": "Full tree cycle tree-a",
+          "metadata": {
+            "title": "tree-a",
+            "updatedAt": 0
+          },
+          "parent": {
+            "pageId": "tree-b",
+            "incarnation": "initial"
+          },
+          "hash": "19ef0916b560ae1254501808c1d765e8e517949adcafcf66c53f5ce6fc82fd9c"
+        },
+        {
+          "revisionId": "tree-b",
+          "pageId": "tree-b",
+          "incarnation": "initial",
+          "parents": [],
+          "supersedes": [],
+          "kind": "put",
+          "body": "Full tree cycle tree-b",
+          "metadata": {
+            "title": "tree-b",
+            "updatedAt": 0
+          },
+          "parent": {
+            "pageId": "tree-a",
+            "incarnation": "initial"
+          },
+          "hash": "8b4dd6b92e800390bb9572a64de664a4b910ff106958d85f88d1762906d437c4"
+        }
+      ]
+    },
+    "plannedTrials": 100,
+    "completedTrials": 4
+  },
+  "error": {
+    "message": "Acceptance witness failed; see full actual observations"
+  },
+  "createdAt": "2026-10-23T22:25:10.173Z"
+}
