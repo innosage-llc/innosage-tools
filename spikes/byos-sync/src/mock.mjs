@@ -1,5 +1,5 @@
 import http from "node:http";
-export const CONTRACT = "byos-loopback-v1";
+export const CONTRACT = "byos-loopback-v2";
 export const NETWORKS = {
   fast: { rtt: 0, jitter: 0 },
   normal: { rtt: 8, jitter: 2 },
@@ -85,13 +85,44 @@ export async function mock({
         Math.max(0, preset.rtt + (random() * 2 - 1) * preset.jitter),
       ),
     );
+    const objectId =
+      u.pathname === "/dav/backup.zip"
+        ? "dav"
+        : u.pathname.match(/\/files\/([^/]+)$/)?.[1];
+    const object = files.get(objectId);
     let fault = faults.find(
       (f) =>
         !f.used &&
         (!f.method || f.method === req.method) &&
-        (!f.path || u.pathname.includes(f.path)),
+        (!f.path || u.pathname.includes(f.path)) &&
+        (!f.fileId || f.fileId === objectId) &&
+        (!f.fileName || f.fileName === object?.name) &&
+        (!f.bodyContains || body.includes(f.bodyContains)),
     );
-    if (fault) fault.used = true;
+    if (fault) {
+      fault.used = true;
+      fault.matched = {
+        file_id: objectId ?? null,
+        file_name: object?.name ?? null,
+        method: req.method,
+        path: u.pathname,
+        operation: ["PUT", "PATCH"].includes(req.method)
+          ? "payload-update"
+          : req.method.toLowerCase(),
+        version_before: object?.version ?? null,
+        mutation_applied: false,
+        response_delivered: false,
+        request_body_bytes: body.length,
+      };
+    }
+    const mutated = (f) => {
+      if (fault)
+        Object.assign(fault.matched, {
+          mutation_applied: true,
+          version_after: f.version,
+          stored_body_matches_request: f.body.equals(body),
+        });
+    };
     const finish = (status, data = "", headers = {}) => {
       const responseKey = req.method + req.url;
       responseCache.set(responseKey, { status, data, headers });
@@ -100,6 +131,7 @@ export async function mock({
         delete headers.ETag;
         delete headers.etag;
       }
+      if (fault) fault.matched.response_delivered = true;
       entry.completion_order = ++completion;
       const bytes = Buffer.isBuffer(data)
         ? data
@@ -134,7 +166,7 @@ export async function mock({
       entry.status = "DROPPED";
       return req.socket.destroy();
     }
-    if (fault?.kind === "timeout") {
+    if (["timeout", "hold-before-write"].includes(fault?.kind)) {
       entry.status = "NO_RESPONSE";
       return;
     }
@@ -163,7 +195,9 @@ export async function mock({
         : m;
     };
     const send = (...args) => {
-      if (fault?.kind === "unknown-success") {
+      if (fault?.kind === "hold-after-write") {
+        entry.status = "HELD_AFTER_WRITE";
+      } else if (fault?.kind === "unknown-success") {
         entry.status = "DROPPED_AFTER_WRITE";
         req.socket.destroy();
       } else finish(...args);
@@ -182,6 +216,7 @@ export async function mock({
         f.body = body;
         f.version++;
         f.modifiedTime = stamp();
+        mutated(f);
         return send(204, "", { ETag: meta(f).etag });
       }
       if (["GET", "HEAD"].includes(req.method)) {
@@ -278,6 +313,7 @@ export async function mock({
         f.body = body;
         f.version++;
         f.modifiedTime = stamp();
+        mutated(f);
         return send(200, project(meta(f)), { ETag: meta(f).etag });
       }
       if (id && req.method === "DELETE") {

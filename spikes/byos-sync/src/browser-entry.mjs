@@ -57,3 +57,35 @@ window.connectWebdav = (url) =>
     username: "synthetic",
     password: "synthetic",
   });
+
+import { replicateGoogleDrive } from "rxdb/plugins/replication-google-drive";
+window.syncRx = async (url) => {
+  const replication = await replicateGoogleDrive({
+    collection: window.rx.pages,
+    replicationIdentifier: "browser-byos",
+    googleDrive: {
+      apiEndpoint: url,
+      authToken: "synthetic",
+      oauthClientId: "synthetic",
+      folderPath: "workspace",
+      transactionTimeout: 50,
+    },
+    pull: { batchSize: 10 },
+    push: { batchSize: 100 },
+    live: false,
+    waitForLeadership: false,
+    retryTime: 20,
+  });
+  window.replicationErrors = [];
+  replication.error$.subscribe((e) => window.replicationErrors.push(String(e)));
+  await replication.awaitInitialReplication();
+  await replication.awaitInSync();
+};
+window.readNative = async (engine) =>
+  engine === "rxdb"
+    ? (await window.rx.pages.find().exec()).map((d) => d.toJSON())
+    : window.store.all("pages");
+window.nativeStatus = (engine) =>
+  engine === "rxdb"
+    ? { state: "UNKNOWN", pending: "UNKNOWN" }
+    : structuredClone(window.store.status);

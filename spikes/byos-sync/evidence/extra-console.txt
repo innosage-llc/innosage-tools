@@ -1,4 +1,4 @@
-(node:53220) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:59041) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 -------------- RxDB Open Core RxStorage -------------------------------
 You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
@@ -13,7 +13,7 @@ rxdb drive concurrent-reconnect PASS
 rxdb drive repeated-sync-idempotence PASS
 rxdb drive duplicate-response PASS
 rxdb drive reordered-response PASS
-rxdb drive visibility-delay PASS
+rxdb drive visibility-delay FAIL
 [selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
     at Object.save (file:///Users/weijingliu/Documents/Codex/2026-10-23/task/innosage-hub/products/innosage-tools/spikes/byos-sync/node_modules/selfstore/dist/chunk-25U6AKIX.js:101:15)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)

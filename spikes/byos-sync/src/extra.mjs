@@ -1,6 +1,6 @@
 import { sourceManifest } from "./manifest.mjs";
 const source_manifest = await sourceManifest();
-import { mock } from "./mock.mjs";
+import { mock, CONTRACT } from "./mock.mjs";
 import { replica, intercept } from "./candidates.mjs";
 import { fixture, pins } from "./trial.mjs";
 import { canonical, intentOracle } from "./oracle.mjs";
@@ -35,7 +35,7 @@ for (const [engine, provider] of [
       seed: 84,
       scale: 10,
       network: "normal",
-      mock_contract: "byos-loopback-v1",
+      mock_contract: CONTRACT,
       policy: "default",
       replay: "node src/extra.mjs",
       status: "ERROR",
@@ -81,26 +81,70 @@ for (const [engine, provider] of [
       if (scenario === "reordered-response")
         m.faults.push({ method: "GET", kind: "reorder" });
       if (scenario === "visibility-delay") {
-        await a.sync();
+        for (let i = 0; i < 3; i++) {
+          await a.sync();
+          await b.sync();
+        }
+        const settled = [await a.read(), await b.read()];
+        r.visibility_precondition =
+          canonical(settled[0]) === canonical(settled[1]) &&
+          intentOracle(["extra-A", "extra-B"], settled)
+            .merged_or_applied_count === 2;
+        if (!r.visibility_precondition)
+          throw new Error("Visibility fixture not settled");
+        // New unsuperseded intent IDs prevent old baseline content from passing.
+        for (const [i, id] of [
+          [0, "visibility-first-new-intent"],
+          [1, "visibility-second-new-intent"],
+        ]) {
+          m.control.offline = true;
+          await a.put({ ...pages[i], body: id, editIds: [id] });
+          m.control.offline = false;
+          await a.sync();
+          await a.sync();
+        }
+        const changed = [...m.files.values()]
+          .filter((f) =>
+            [pages[0].id + ".json", pages[1].id + ".json"].includes(f.name),
+          )
+          .sort((a, b) => a.modifiedTime.localeCompare(b.modifiedTime));
+        const [older, newer] = changed;
+        r.visibility_remote_order = changed.map((f) => ({
+          id: f.id,
+          name: f.name,
+          modifiedTime: f.modifiedTime,
+          document: JSON.parse(f.body.toString()),
+        }));
+        m.control.hiddenIds = [older.id];
+        const requestStart = m.requests.length;
         await b.sync();
-        m.control.offline = true;
-        await a.put({
-          ...pages[0],
-          body: "extra-A-visibility",
-          editIds: ["extra-A"],
-        });
-        await a.put({
-          ...pages[1],
-          body: "extra-B-visibility",
-          editIds: ["extra-B"],
-        });
-        m.control.offline = false;
-        await a.sync();
-        const hidden = [...m.files.values()].find(
-          (f) => f.name === pages[0].id + ".json",
+        await b.sync();
+        const hiddenState = await b.read();
+        const olderIntent = JSON.parse(older.body.toString()).editIds[0];
+        const newerIntent = JSON.parse(newer.body.toString()).editIds[0];
+        r.visibility_hidden_state = hiddenState.filter((p) =>
+          [pages[0].id, pages[1].id].includes(p.id),
         );
-        m.control.hiddenIds = [hidden.id];
-        await b.sync();
+        r.visibility_checkpoint_queries = m.requests
+          .slice(requestStart)
+          .filter(
+            (q) => q.method === "GET" && q.query.q?.includes("modifiedTime"),
+          )
+          .map((q) => q.query.q);
+        r.visibility_exercised =
+          older.modifiedTime < newer.modifiedTime &&
+          !hiddenState.some(
+            (p) =>
+              p.body.includes(olderIntent) && p.editIds.includes(olderIntent),
+          ) &&
+          hiddenState.some(
+            (p) =>
+              p.body.includes(newerIntent) && p.editIds.includes(newerIntent),
+          ) &&
+          r.visibility_checkpoint_queries.some((q) => {
+            const time = q.match(/modifiedTime >= '([^']+)'/)?.[1];
+            return time && time >= newer.modifiedTime;
+          });
         m.control.hiddenIds = [];
       }
       if (["concurrent-reconnect", "reordered-response"].includes(scenario))
@@ -136,9 +180,23 @@ for (const [engine, provider] of [
             ? "PASS"
             : "FAIL";
       else {
-        Object.assign(r, intentOracle(["extra-A", "extra-B"], states));
+        Object.assign(
+          r,
+          intentOracle(
+            scenario === "visibility-delay"
+              ? ["visibility-first-new-intent", "visibility-second-new-intent"]
+              : ["extra-A", "extra-B"],
+            states,
+          ),
+        );
+        if (scenario === "visibility-delay")
+          r.visibility_after_reveal = states.map((ps) =>
+            ps.filter((p) => [pages[0].id, pages[1].id].includes(p.id)),
+          );
         r.status = r.equal && r.silent_lost_edit_count === 0 ? "PASS" : "FAIL";
       }
+      if (scenario === "visibility-delay" && !r.visibility_exercised)
+        r.status = "NOT_EXERCISED";
       r.completed_runs = 1;
       r.failed_runs = r.status === "PASS" ? 0 : 1;
     } catch (e) {

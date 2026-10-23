@@ -72,7 +72,7 @@ export async function trial({
     completed_runs: 0,
     failed_runs: 0,
     timed_out_runs: 0,
-    replay: `node src/run.mjs --engine=${engine} --provider=${provider} --scenario=${scenario} --scale=${scale} --seed=${seed} --network=${network} --policy=${policy}`,
+    replay: `node src/run.mjs --engine=${engine} --provider=${provider} --scenario=${scenario} --scale=${scale} --seed=${seed} --network=${network} --policy=${policy} --suite=${suite}`,
   };
   const progressTimer = process.send
     ? setInterval(
@@ -167,14 +167,29 @@ export async function trial({
       const reconnectAt = performance.now();
       const faultMatch =
         provider === "webdav"
-          ? { method: "PUT" }
-          : { method: engine === "rxdb" ? "PUT" : "PATCH" };
+          ? { method: "PUT", fileId: "dav" }
+          : engine === "rxdb"
+            ? {
+                method: "PUT",
+                fileId: [...m.files.values()].find(
+                  (f) =>
+                    f.name ===
+                    (scenario.includes("wal-")
+                      ? "rxdb-wal.json"
+                      : pA.id + ".json"),
+                )?.id,
+                fileName: scenario.includes("wal-")
+                  ? "rxdb-wal.json"
+                  : pA.id + ".json",
+                bodyContains: idA,
+              }
+            : { method: "PATCH", fileId: "selfstore" };
       if (scenario === "revoked-401") m.control.status = 401;
       observations.durable_before_recovery = (
         await Promise.all([a.read(), b.read()])
       ).map((ps) => ps.filter((p) => p.editIds.some((id) => ack.includes(id))));
       if (scenario.startsWith("fault-")) {
-        const f = scenario.slice(6);
+        const f = scenario.slice(6).replace(/^wal-/, "");
         m.faults.push(
           /^\d+$/.test(f)
             ? { ...faultMatch, status: Number(f) }
@@ -236,7 +251,14 @@ export async function trial({
         : output.silent_lost_edit_count === 0 &&
             output.equal &&
             observations.initial_equal &&
-            m.unsupported.length === 0
+            m.unsupported.length === 0 &&
+            (!scenario.startsWith("fault-") ||
+              m.faults.some(
+                (f) =>
+                  f.used &&
+                  f.matched &&
+                  (f.kind !== "unknown-success" || f.matched.mutation_applied),
+              ))
           ? "PASS"
           : "FAIL";
     completed = true;

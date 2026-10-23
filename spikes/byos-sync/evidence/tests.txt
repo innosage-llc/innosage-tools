@@ -1,32 +1,32 @@
-(node:53213) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:58346) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 > byos-sync-offline-spike@1.0.0 test
 > node --test test/*.test.mjs
 
-(node:53385) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:58366) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 TAP version 13
-# (node:53386) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (node:58367) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: equal replicas missing the same baseline page do not match fixture
 ok 1 - equal replicas missing the same baseline page do not match fixture
   ---
-  duration_ms: 6.488042
+  duration_ms: 6.131917
   type: 'test'
   ...
 # Subtest: full fixture matching checks stable identity, parent relationship and Markdown
 ok 2 - full fixture matching checks stable identity, parent relationship and Markdown
   ---
-  duration_ms: 0.130292
+  duration_ms: 0.123
   type: 'test'
   ...
-# (node:53387) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (node:58368) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: unknown media and v2 weights cannot become zero quota
 ok 3 - unknown media and v2 weights cannot become zero quota
   ---
-  duration_ms: 0.514666
+  duration_ms: 0.493541
   type: 'test'
   ...
 # Subtest: WebDAV does not inherit Drive quota accounting
@@ -35,21 +35,33 @@ ok 4 - WebDAV does not inherit Drive quota accounting
   duration_ms: 0.059833
   type: 'test'
   ...
-# (node:53388) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (node:58369) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: Drive fields, pagination, conditional writes and fail-closed API subset
 ok 5 - Drive fields, pagination, conditional writes and fail-closed API subset
   ---
-  duration_ms: 34.777459
+  duration_ms: 35.244083
   type: 'test'
   ...
 # Subtest: WebDAV unknown-success commits bytes while caller sees transport failure
 ok 6 - WebDAV unknown-success commits bytes while caller sees transport failure
   ---
-  duration_ms: 10.266292
+  duration_ms: 9.45375
   type: 'test'
   ...
-# (node:53389) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# Subtest: payload fault excludes lease and records actual mutation before lost response
+ok 7 - payload fault excludes lease and records actual mutation before lost response
+  ---
+  duration_ms: 9.425333
+  type: 'test'
+  ...
+# Subtest: pre-write barrier cannot be credited as remote mutation
+ok 8 - pre-write barrier cannot be credited as remote mutation
+  ---
+  duration_ms: 103.29825
+  type: 'test'
+  ...
+# (node:58370) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # -------------- RxDB Open Core RxStorage -------------------------------
 # You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
@@ -59,27 +71,27 @@ ok 6 - WebDAV unknown-success commits bytes while caller sees transport failure
 # If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
 # ---------------------------------------------------------------------
 # Subtest: rxdb/drive native initial + incremental + persistent reopen
-ok 7 - rxdb/drive native initial + incremental + persistent reopen
+ok 9 - rxdb/drive native initial + incremental + persistent reopen
   ---
-  duration_ms: 799.235417
+  duration_ms: 789.5635
   type: 'test'
   ...
 # Subtest: selfstore/drive native initial + incremental + persistent reopen
-ok 8 - selfstore/drive native initial + incremental + persistent reopen
+ok 10 - selfstore/drive native initial + incremental + persistent reopen
   ---
-  duration_ms: 94.173167
+  duration_ms: 99.716583
   type: 'test'
   ...
 # Subtest: selfstore/webdav native initial + incremental + persistent reopen
-ok 9 - selfstore/webdav native initial + incremental + persistent reopen
+ok 11 - selfstore/webdav native initial + incremental + persistent reopen
   ---
-  duration_ms: 136.95025
+  duration_ms: 128.236542
   type: 'test'
   ...
 # Subtest: rxdb/drive oracle detects native same-page loss after reopen
-ok 10 - rxdb/drive oracle detects native same-page loss after reopen
+ok 12 - rxdb/drive oracle detects native same-page loss after reopen
   ---
-  duration_ms: 848.397625
+  duration_ms: 845.815667
   type: 'test'
   ...
 # [selfstore] push to durable failed SelfstoreError: Drive upload failed: 503
@@ -98,56 +110,68 @@ ok 10 - rxdb/drive oracle detects native same-page loss after reopen
 # }
 # [selfstore] concurrent edits auto-resolved (latest kept): pages/00000000-0000-4000-8000-000000000000
 # Subtest: selfstore/drive oracle detects native same-page loss after reopen
-ok 11 - selfstore/drive oracle detects native same-page loss after reopen
+ok 13 - selfstore/drive oracle detects native same-page loss after reopen
   ---
-  duration_ms: 86.642166
+  duration_ms: 89.563208
   type: 'test'
   ...
 # [selfstore] concurrent edits auto-resolved (latest kept): pages/00000000-0000-4000-8000-000000000000
 # Subtest: selfstore/webdav oracle detects native same-page loss after reopen
-ok 12 - selfstore/webdav oracle detects native same-page loss after reopen
+ok 14 - selfstore/webdav oracle detects native same-page loss after reopen
   ---
-  duration_ms: 132.363916
+  duration_ms: 125.775125
   type: 'test'
   ...
 # Subtest: RxDB equal-time checkpoint stalls without calling durable local edits lost
-ok 13 - RxDB equal-time checkpoint stalls without calling durable local edits lost
+ok 15 - RxDB equal-time checkpoint stalls without calling durable local edits lost
   ---
-  duration_ms: 264.688833
+  duration_ms: 257.002416
   type: 'test'
   ...
-# (node:53390) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# Subtest: native RxDB fault-unknown-success exercises payload not lease
+ok 16 - native RxDB fault-unknown-success exercises payload not lease
+  ---
+  duration_ms: 1231.348667
+  type: 'test'
+  ...
+# Subtest: native RxDB fault-wal-unknown-success exercises payload not lease
+ok 17 - native RxDB fault-wal-unknown-success exercises payload not lease
+  ---
+  duration_ms: 1017.895792
+  type: 'test'
+  ...
+# (node:58371) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: equal LWW replicas do not imply intent preservation
-ok 14 - equal LWW replicas do not imply intent preservation
+ok 18 - equal LWW replicas do not imply intent preservation
   ---
-  duration_ms: 0.80225
+  duration_ms: 0.999416
   type: 'test'
   ...
 # Subtest: unpropagated durable intent is not silently lost
-ok 15 - unpropagated durable intent is not silently lost
+ok 19 - unpropagated durable intent is not silently lost
   ---
-  duration_ms: 0.067
+  duration_ms: 0.086792
   type: 'test'
   ...
 # Subtest: redacted journal IDs are not recoverable conflict bodies
-ok 16 - redacted journal IDs are not recoverable conflict bodies
+ok 20 - redacted journal IDs are not recoverable conflict bodies
   ---
-  duration_ms: 0.070916
+  duration_ms: 0.079375
   type: 'test'
   ...
 # Subtest: IDs without matching content and duplicate expected IDs cannot inflate preservation
-ok 17 - IDs without matching content and duplicate expected IDs cannot inflate preservation
+ok 21 - IDs without matching content and duplicate expected IDs cannot inflate preservation
   ---
-  duration_ms: 0.056
+  duration_ms: 0.086583
   type: 'test'
   ...
-1..17
-# tests 17
+1..21
+# tests 21
 # suites 0
-# pass 17
+# pass 21
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 2551.386459
+# duration_ms 4800.009

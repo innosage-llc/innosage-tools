@@ -1,31 +1,31 @@
 {
   "source_manifest": {
     "algorithm": "sha256",
-    "digest": "4a51a6adfccce2d52eed9a5c67d543b2c4ede5f4b34b6840f9ca1634e7074a59",
+    "digest": "5cae7940df005472a8ecdae6fff1ecb0fa1096e973538810bf23aaae39addfe1",
     "files": {
-      "package-lock.json": "e16e4362d7a2f06ee2c1dc4800c9d19bf156dd4859a5156abfc5926d6d25e204",
-      "package.json": "74188f41ff7731061a46d627416cc39ac674c5e4739096306a4695fa0b08d0e5",
+      "package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23",
+      "package.json": "9d32fe8fd586cbdf8c7e33c9c2bf7a1103d32ed9b0d021e24eebc91d4e91ad0c",
       "quota-profile.json": "58e0d2b3de77cec1c3fcf53597628d53752b7e41d11337e2bd6cc86a73c53a64",
-      "src/browser-entry.mjs": "fd6152f8839b8036506ff005af79e12cd337f8d671c743212b5754734d282ad2",
-      "src/browser-smoke.mjs": "3545a5d11d0663bbb78c7bfc2e004198cfe095917332e3cf99cd0556ce3fe2cc",
+      "src/browser-entry.mjs": "fff05e33d69611aeb9ca64aa5a082f4a94e135ebf01255d677b44c3cbe0a04b5",
+      "src/browser-smoke.mjs": "270ada44f648fd7f6b42f467d1cf1353742806adacd83a2622ef1e95bf120867",
       "src/candidates.mjs": "d13c84f9379a4153aae874c01422b58737a0919b50a0a0f89de503d0ed49e14b",
-      "src/extra.mjs": "c801250a0d7f8baed4252c89ca1e776cb7ff70e031353934913ae65da9c29aa9",
+      "src/extra.mjs": "0861a308c470d56dc5f9f45aacd79553078565bdf465f02ed15df38eb742a7f0",
       "src/fixture-check.mjs": "b3dfdc25ba5ae85d9731d497523427cf220559b0a4cc767064031df3ad6ce0e2",
       "src/fixture-oracle.mjs": "8a7093f8029e24d6ebc9a27b1bd704ef6603e828868c33a04a613bc0bf9ce2ba",
       "src/manifest.mjs": "7924b59b06405baf1928c86f8088138206493fcdedd81319c13e57db12544a1e",
       "src/metrics.mjs": "860980ac445121756059fe18ffd9fa8621bdf02c3ae1356d6fcabf5b8e3bdd56",
-      "src/mock.mjs": "eb2ec68f32473a6d9fe5bf9d93d136f14246065088347fd99fe6a5204eae543d",
+      "src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
       "src/oracle.mjs": "752fd7fb9db33269f5877823bb453a1b0bd43d9d6f8c177eaf51578f44f5300c",
       "src/probe.mjs": "d39890bdad71d85b4e5db2f6745101bac415e3f619ca264ce7b4423d39ff19bd",
-      "src/receipt.mjs": "2ff2def54124385e1a1f435ae0f7b68e4010b28c174f226c6ba045d8aef10354",
-      "src/report.mjs": "219e820a220e2f88672f415a5796ecd0b2c10644c35eaac46cc9c00e3df0a0c9",
-      "src/run.mjs": "2f9f0303c540a2f89e786f1534a7552b639b44e118c31cb20f689906ce0e3fc7",
-      "src/trial.mjs": "18c196e719257e4026b2022344fad004e4381e7daff186e6f12ec5366eec40dd",
+      "src/receipt.mjs": "b298da35b3018cbe744d3a1b7345981f4478c6850731280b1ada04f8d07eef66",
+      "src/report.mjs": "0771e7740bfcc275147ada8ef069ef4fb1d3ec9595026372804ecb65bbbdde0e",
+      "src/run.mjs": "1762b56127b9de537fc4827bd3b896a6116c72a8e6fac721f9105d6ab50fb728",
+      "src/trial.mjs": "98ec6721062260ae4b43582b27d77df0273d215ba82605a6bb6c5d3070a7cadb",
       "src/worker.mjs": "380b62ab3c92394c45220545f190d4d04256e8fa2f8d51f5b307e98651473a24",
       "test/fixture.test.mjs": "108039006f72995161772f6753cef0250e1c80f10f15328c09ed6b7fb443b278",
       "test/metrics.test.mjs": "b173dd2f8c91e9e13acce561a2b98c87dabf60a6c51a6456323815d7de9dc4d9",
-      "test/mock.test.mjs": "29b6b070547abbfa516277d0e75abaee9e52c47c4ea20795c00be400ab1de908",
-      "test/native.test.mjs": "65017ba8e48ef876ce55ff708172db24df51f6566938fe6ce634314bd7a6b39d",
+      "test/mock.test.mjs": "01ecffd939e4083d4c0492ca37fd3930e043f9567b1f1669b44727d4f17ed611",
+      "test/native.test.mjs": "63a9cd37ba06cf6554faff3e09230dfcb7c08c59c81a63d6eb612799f25ff0b6",
       "test/oracle.test.mjs": "51abe886dc04706607c3063b376ab1acb173a0dd7c276152f54a589740555b76"
     }
   },
@@ -40,7 +40,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -69,7 +69,7 @@
           "GET v3.files.list": {
             "requests": 110,
             "bytes_up": 0,
-            "bytes_down": 24920,
+            "bytes_down": 24732,
             "statuses": {
               "200": 110
             },
@@ -78,7 +78,7 @@
           },
           "POST v3.files.create": {
             "requests": 40,
-            "bytes_up": 8426,
+            "bytes_up": 8420,
             "bytes_down": 4625,
             "statuses": {
               "200": 40
@@ -89,7 +89,7 @@
           "GET v2.files.get.metadata": {
             "requests": 39,
             "bytes_up": 0,
-            "bytes_down": 12082,
+            "bytes_down": 12095,
             "statuses": {
               "200": 39
             },
@@ -99,7 +99,7 @@
           "PUT v2.files.update": {
             "requests": 43,
             "bytes_up": 6710,
-            "bytes_down": 12949,
+            "bytes_down": 12952,
             "statuses": {
               "200": 40,
               "412": 3
@@ -128,8 +128,8 @@
             "quota_weight": "UNKNOWN"
           }
         },
-        "bytes_up": 15136,
-        "bytes_down": 74817,
+        "bytes_up": 15130,
+        "bytes_down": 74645,
         "known_quota_units": 11000,
         "unknown_quota_requests": 230,
         "quota_profile": "google-drive-official-2026-10-23"
@@ -137,7 +137,7 @@
       "unsupported": [],
       "faults": [],
       "replayed_responses": 0,
-      "response_order_inversions": 10,
+      "response_order_inversions": 16,
       "native_conditional_write_requests": 43,
       "assumption": null
     },
@@ -151,7 +151,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -174,12 +174,12 @@
       "durable_unpropagated_ids": [],
       "lost_ids": [],
       "measurements": {
-        "requests": 335,
+        "requests": 337,
         "by_method_endpoint": {
           "GET v3.files.list": {
             "requests": 110,
             "bytes_up": 0,
-            "bytes_down": 24266,
+            "bytes_down": 24068,
             "statuses": {
               "200": 110
             },
@@ -199,7 +199,7 @@
           "GET v2.files.get.metadata": {
             "requests": 38,
             "bytes_up": 0,
-            "bytes_down": 11680,
+            "bytes_down": 11687,
             "statuses": {
               "200": 38
             },
@@ -207,22 +207,22 @@
             "quota_weight": "UNKNOWN"
           },
           "PUT v2.files.update": {
-            "requests": 42,
-            "bytes_up": 5325,
-            "bytes_down": 12937,
+            "requests": 43,
+            "bytes_up": 5324,
+            "bytes_down": 13288,
             "statuses": {
-              "200": 39,
+              "200": 40,
               "412": 3
             },
-            "conditional_requests": 42,
+            "conditional_requests": 43,
             "quota_weight": "UNKNOWN"
           },
           "GET v2.files.get.media": {
-            "requests": 79,
+            "requests": 80,
             "bytes_up": 0,
-            "bytes_down": 9700,
+            "bytes_down": 9699,
             "statuses": {
-              "200": 79
+              "200": 80
             },
             "conditional_requests": 0,
             "quota_weight": "UNKNOWN"
@@ -238,17 +238,17 @@
             "quota_weight": "UNKNOWN"
           }
         },
-        "bytes_up": 13751,
-        "bytes_down": 70660,
+        "bytes_up": 13750,
+        "bytes_down": 70819,
         "known_quota_units": 11000,
-        "unknown_quota_requests": 225,
+        "unknown_quota_requests": 227,
         "quota_profile": "google-drive-official-2026-10-23"
       },
       "unsupported": [],
       "faults": [],
       "replayed_responses": 0,
-      "response_order_inversions": 10,
-      "native_conditional_write_requests": 42,
+      "response_order_inversions": 13,
+      "native_conditional_write_requests": 43,
       "assumption": null
     },
     {
@@ -261,7 +261,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -284,12 +284,12 @@
       "durable_unpropagated_ids": [],
       "lost_ids": [],
       "measurements": {
-        "requests": 407,
+        "requests": 409,
         "by_method_endpoint": {
           "GET v3.files.list": {
             "requests": 132,
             "bytes_up": 0,
-            "bytes_down": 31866,
+            "bytes_down": 32069,
             "statuses": {
               "200": 132
             },
@@ -298,7 +298,7 @@
           },
           "POST v3.files.create": {
             "requests": 46,
-            "bytes_up": 8850,
+            "bytes_up": 8847,
             "bytes_down": 4697,
             "statuses": {
               "200": 46
@@ -309,7 +309,7 @@
           "GET v2.files.get.metadata": {
             "requests": 48,
             "bytes_up": 0,
-            "bytes_down": 15141,
+            "bytes_down": 15131,
             "statuses": {
               "200": 48
             },
@@ -317,22 +317,22 @@
             "quota_weight": "UNKNOWN"
           },
           "PUT v2.files.update": {
-            "requests": 54,
+            "requests": 55,
             "bytes_up": 5563,
-            "bytes_down": 14692,
+            "bytes_down": 15040,
             "statuses": {
-              "200": 44,
+              "200": 45,
               "412": 10
             },
-            "conditional_requests": 54,
+            "conditional_requests": 55,
             "quota_weight": "UNKNOWN"
           },
           "GET v2.files.get.media": {
-            "requests": 101,
+            "requests": 102,
             "bytes_up": 0,
             "bytes_down": 10014,
             "statuses": {
-              "200": 101
+              "200": 102
             },
             "conditional_requests": 0,
             "quota_weight": "UNKNOWN"
@@ -348,17 +348,17 @@
             "quota_weight": "UNKNOWN"
           }
         },
-        "bytes_up": 14413,
-        "bytes_down": 83862,
+        "bytes_up": 14410,
+        "bytes_down": 84403,
         "known_quota_units": 13200,
-        "unknown_quota_requests": 275,
+        "unknown_quota_requests": 277,
         "quota_profile": "google-drive-official-2026-10-23"
       },
       "unsupported": [],
       "faults": [],
       "replayed_responses": 0,
-      "response_order_inversions": 24,
-      "native_conditional_write_requests": 54,
+      "response_order_inversions": 18,
+      "native_conditional_write_requests": 55,
       "assumption": null
     },
     {
@@ -371,7 +371,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -395,7 +395,7 @@
           },
           "POST v3.files.create": {
             "requests": 40,
-            "bytes_up": 8420,
+            "bytes_up": 8426,
             "bytes_down": 4625,
             "statuses": {
               "200": 40
@@ -445,7 +445,7 @@
             "quota_weight": "UNKNOWN"
           }
         },
-        "bytes_up": 12355,
+        "bytes_up": 12361,
         "bytes_down": 60474,
         "known_quota_units": 10600,
         "unknown_quota_requests": 179,
@@ -454,7 +454,7 @@
       "unsupported": [],
       "faults": [],
       "replayed_responses": 0,
-      "response_order_inversions": 14,
+      "response_order_inversions": 10,
       "native_conditional_write_requests": 28,
       "assumption": null
     },
@@ -468,7 +468,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -496,7 +496,7 @@
           "GET v3.files.list": {
             "requests": 110,
             "bytes_up": 0,
-            "bytes_down": 24068,
+            "bytes_down": 24266,
             "statuses": {
               "200": 110
             },
@@ -505,7 +505,7 @@
           },
           "POST v3.files.create": {
             "requests": 40,
-            "bytes_up": 8423,
+            "bytes_up": 8426,
             "bytes_down": 4625,
             "statuses": {
               "200": 40
@@ -516,7 +516,7 @@
           "GET v2.files.get.metadata": {
             "requests": 38,
             "bytes_up": 0,
-            "bytes_down": 11687,
+            "bytes_down": 11680,
             "statuses": {
               "200": 38
             },
@@ -526,7 +526,7 @@
           "PUT v2.files.update": {
             "requests": 43,
             "bytes_up": 5325,
-            "bytes_down": 13288,
+            "bytes_down": 13287,
             "statuses": {
               "200": 40,
               "412": 3
@@ -555,8 +555,8 @@
             "quota_weight": "UNKNOWN"
           }
         },
-        "bytes_up": 13748,
-        "bytes_down": 70820,
+        "bytes_up": 13751,
+        "bytes_down": 71010,
         "known_quota_units": 11000,
         "unknown_quota_requests": 227,
         "quota_profile": "google-drive-official-2026-10-23"
@@ -566,11 +566,22 @@
         {
           "method": "GET",
           "kind": "duplicate-response",
-          "used": true
+          "used": true,
+          "matched": {
+            "file_id": null,
+            "file_name": null,
+            "method": "GET",
+            "path": "/drive/v3/files",
+            "operation": "get",
+            "version_before": null,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
         }
       ],
       "replayed_responses": 1,
-      "response_order_inversions": 11,
+      "response_order_inversions": 8,
       "native_conditional_write_requests": 43,
       "assumption": null
     },
@@ -584,7 +595,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -607,12 +618,12 @@
       "durable_unpropagated_ids": [],
       "lost_ids": [],
       "measurements": {
-        "requests": 385,
+        "requests": 383,
         "by_method_endpoint": {
           "GET v3.files.list": {
             "requests": 132,
             "bytes_up": 0,
-            "bytes_down": 32331,
+            "bytes_down": 32123,
             "statuses": {
               "200": 132
             },
@@ -621,7 +632,7 @@
           },
           "POST v3.files.create": {
             "requests": 46,
-            "bytes_up": 8844,
+            "bytes_up": 8850,
             "bytes_down": 4697,
             "statuses": {
               "200": 46
@@ -632,7 +643,7 @@
           "GET v2.files.get.metadata": {
             "requests": 44,
             "bytes_up": 0,
-            "bytes_down": 13742,
+            "bytes_down": 13745,
             "statuses": {
               "200": 44
             },
@@ -640,22 +651,22 @@
             "quota_weight": "UNKNOWN"
           },
           "PUT v2.files.update": {
-            "requests": 47,
-            "bytes_up": 5402,
-            "bytes_down": 14691,
+            "requests": 46,
+            "bytes_up": 5401,
+            "bytes_down": 13992,
             "statuses": {
-              "200": 44,
-              "412": 3
+              "200": 42,
+              "412": 4
             },
-            "conditional_requests": 47,
+            "conditional_requests": 46,
             "quota_weight": "UNKNOWN"
           },
           "GET v2.files.get.media": {
-            "requests": 90,
+            "requests": 89,
             "bytes_up": 0,
-            "bytes_down": 9854,
+            "bytes_down": 9853,
             "statuses": {
-              "200": 90
+              "200": 89
             },
             "conditional_requests": 0,
             "quota_weight": "UNKNOWN"
@@ -671,10 +682,10 @@
             "quota_weight": "UNKNOWN"
           }
         },
-        "bytes_up": 14246,
-        "bytes_down": 82767,
+        "bytes_up": 14251,
+        "bytes_down": 81862,
         "known_quota_units": 13200,
-        "unknown_quota_requests": 253,
+        "unknown_quota_requests": 251,
         "quota_profile": "google-drive-official-2026-10-23"
       },
       "unsupported": [],
@@ -682,12 +693,23 @@
         {
           "method": "GET",
           "kind": "reorder",
-          "used": true
+          "used": true,
+          "matched": {
+            "file_id": null,
+            "file_name": null,
+            "method": "GET",
+            "path": "/drive/v3/files",
+            "operation": "get",
+            "version_before": null,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
         }
       ],
       "replayed_responses": 0,
-      "response_order_inversions": 15,
-      "native_conditional_write_requests": 47,
+      "response_order_inversions": 21,
+      "native_conditional_write_requests": 46,
       "assumption": null
     },
     {
@@ -700,104 +722,197 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
-      "status": "PASS",
+      "status": "FAIL",
       "attempts": 1,
       "completed_runs": 1,
-      "failed_runs": 0,
+      "failed_runs": 1,
       "timed_out_runs": 0,
-      "equal": true,
+      "visibility_precondition": true,
+      "visibility_remote_order": [
+        {
+          "id": "f9",
+          "name": "00000000-0000-4000-8000-000000000000.json",
+          "modifiedTime": "2026-10-23T09:00:06.305Z",
+          "document": {
+            "id": "00000000-0000-4000-8000-000000000000",
+            "parentId": null,
+            "body": "visibility-first-new-intent",
+            "editIds": [
+              "visibility-first-new-intent"
+            ],
+            "_deleted": false
+          }
+        },
+        {
+          "id": "f15",
+          "name": "00000000-0000-4000-8000-000000000001.json",
+          "modifiedTime": "2026-10-23T09:00:06.326Z",
+          "document": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "parentId": "00000000-0000-4000-8000-000000000000",
+            "body": "visibility-second-new-intent",
+            "editIds": [
+              "visibility-second-new-intent"
+            ],
+            "_deleted": false
+          }
+        }
+      ],
+      "visibility_hidden_state": [
+        {
+          "id": "00000000-0000-4000-8000-000000000000",
+          "parentId": null,
+          "body": "extra-A",
+          "editIds": [
+            "extra-A"
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "parentId": "00000000-0000-4000-8000-000000000000",
+          "body": "visibility-second-new-intent",
+          "editIds": [
+            "visibility-second-new-intent"
+          ]
+        }
+      ],
+      "visibility_checkpoint_queries": [
+        "'f3' in parents and trashed = false and modifiedTime >= '2026-10-23T09:00:06.279Z'",
+        "'f3' in parents and trashed = false and modifiedTime >= '2026-10-23T09:00:06.326Z'"
+      ],
+      "visibility_exercised": true,
+      "equal": false,
       "acknowledged_edit_count": 2,
-      "merged_or_applied_count": 2,
+      "merged_or_applied_count": 1,
       "durably_preserved_conflict_count": 0,
-      "durable_unpropagated_count": 0,
+      "durable_unpropagated_count": 1,
       "silent_lost_edit_count": 0,
-      "intent_preservation_rate": 1,
+      "intent_preservation_rate": 0.5,
       "applied_ids": [
-        "extra-A",
-        "extra-B"
+        "visibility-second-new-intent"
       ],
       "durable_conflict_ids": [],
-      "durable_unpropagated_ids": [],
+      "durable_unpropagated_ids": [
+        "visibility-first-new-intent"
+      ],
       "lost_ids": [],
+      "visibility_after_reveal": [
+        [
+          {
+            "id": "00000000-0000-4000-8000-000000000000",
+            "parentId": null,
+            "body": "visibility-first-new-intent",
+            "editIds": [
+              "visibility-first-new-intent"
+            ]
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "parentId": "00000000-0000-4000-8000-000000000000",
+            "body": "visibility-second-new-intent",
+            "editIds": [
+              "visibility-second-new-intent"
+            ]
+          }
+        ],
+        [
+          {
+            "id": "00000000-0000-4000-8000-000000000000",
+            "parentId": null,
+            "body": "extra-A",
+            "editIds": [
+              "extra-A"
+            ]
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "parentId": "00000000-0000-4000-8000-000000000000",
+            "body": "visibility-second-new-intent",
+            "editIds": [
+              "visibility-second-new-intent"
+            ]
+          }
+        ]
+      ],
       "measurements": {
-        "requests": 456,
+        "requests": 672,
         "by_method_endpoint": {
           "GET v3.files.list": {
-            "requests": 156,
+            "requests": 246,
             "bytes_up": 0,
-            "bytes_down": 42261,
+            "bytes_down": 93802,
             "statuses": {
-              "200": 156
+              "200": 246
             },
             "conditional_requests": 0,
             "quota_weight": 100
           },
           "POST v3.files.create": {
-            "requests": 53,
-            "bytes_up": 9713,
-            "bytes_down": 5172,
+            "requests": 76,
+            "bytes_up": 10970,
+            "bytes_down": 5057,
             "statuses": {
-              "200": 53
+              "200": 76
             },
             "conditional_requests": 0,
             "quota_weight": "UNKNOWN"
           },
           "GET v2.files.get.metadata": {
-            "requests": 53,
+            "requests": 82,
             "bytes_up": 0,
-            "bytes_down": 16338,
+            "bytes_down": 25928,
             "statuses": {
-              "200": 53
+              "200": 82
             },
             "conditional_requests": 0,
             "quota_weight": "UNKNOWN"
           },
           "PUT v2.files.update": {
-            "requests": 56,
-            "bytes_up": 5853,
-            "bytes_down": 17485,
+            "requests": 80,
+            "bytes_up": 7019,
+            "bytes_down": 24868,
             "statuses": {
-              "200": 52,
-              "412": 4
+              "200": 75,
+              "412": 5
             },
-            "conditional_requests": 56,
+            "conditional_requests": 80,
             "quota_weight": "UNKNOWN"
           },
           "GET v2.files.get.media": {
-            "requests": 108,
+            "requests": 157,
             "bytes_up": 0,
-            "bytes_down": 10670,
+            "bytes_down": 12208,
             "statuses": {
-              "200": 108
+              "200": 157
             },
             "conditional_requests": 0,
             "quota_weight": "UNKNOWN"
           },
           "GET v3.files.get.media": {
-            "requests": 30,
+            "requests": 31,
             "bytes_up": 0,
-            "bytes_down": 7976,
+            "bytes_down": 8263,
             "statuses": {
-              "200": 30
+              "200": 31
             },
             "conditional_requests": 0,
             "quota_weight": "UNKNOWN"
           }
         },
-        "bytes_up": 15566,
-        "bytes_down": 99902,
-        "known_quota_units": 15600,
-        "unknown_quota_requests": 300,
+        "bytes_up": 17989,
+        "bytes_down": 170126,
+        "known_quota_units": 24600,
+        "unknown_quota_requests": 426,
         "quota_profile": "google-drive-official-2026-10-23"
       },
       "unsupported": [],
       "faults": [],
       "replayed_responses": 0,
-      "response_order_inversions": 9,
-      "native_conditional_write_requests": 56,
+      "response_order_inversions": 12,
+      "native_conditional_write_requests": 80,
       "assumption": "ADVERSARIAL HYPOTHESIS: older changed file hidden for one pull, then revealed; not asserted Google behavior"
     },
     {
@@ -810,7 +925,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -839,7 +954,7 @@
           "GET v3.files.get.media": {
             "requests": 10,
             "bytes_up": 0,
-            "bytes_down": 7705,
+            "bytes_down": 7721,
             "statuses": {
               "200": 10
             },
@@ -859,7 +974,7 @@
           },
           "PATCH v3.files.update": {
             "requests": 6,
-            "bytes_up": 5746,
+            "bytes_up": 5760,
             "bytes_down": 132,
             "statuses": {
               "200": 3,
@@ -869,8 +984,8 @@
             "quota_weight": 50
           }
         },
-        "bytes_up": 5746,
-        "bytes_down": 8209,
+        "bytes_up": 5760,
+        "bytes_down": 8225,
         "known_quota_units": 410,
         "unknown_quota_requests": 10,
         "quota_profile": "google-drive-official-2026-10-23"
@@ -892,7 +1007,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -920,7 +1035,7 @@
           "GET v3.files.get.media": {
             "requests": 10,
             "bytes_up": 0,
-            "bytes_down": 7924,
+            "bytes_down": 7931,
             "statuses": {
               "200": 10
             },
@@ -940,7 +1055,7 @@
           },
           "PATCH v3.files.update": {
             "requests": 5,
-            "bytes_up": 4944,
+            "bytes_up": 4950,
             "bytes_down": 103,
             "statuses": {
               "200": 3,
@@ -950,8 +1065,8 @@
             "quota_weight": 50
           }
         },
-        "bytes_up": 4944,
-        "bytes_down": 8370,
+        "bytes_up": 4950,
+        "bytes_down": 8377,
         "known_quota_units": 355,
         "unknown_quota_requests": 10,
         "quota_profile": "google-drive-official-2026-10-23"
@@ -973,7 +1088,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1001,7 +1116,7 @@
           "GET v3.files.get.media": {
             "requests": 12,
             "bytes_up": 0,
-            "bytes_down": 9937,
+            "bytes_down": 9866,
             "statuses": {
               "200": 12
             },
@@ -1021,7 +1136,7 @@
           },
           "PATCH v3.files.update": {
             "requests": 6,
-            "bytes_up": 5958,
+            "bytes_up": 5950,
             "bytes_down": 118,
             "statuses": {
               "200": 4,
@@ -1031,8 +1146,8 @@
             "quota_weight": 50
           }
         },
-        "bytes_up": 5958,
-        "bytes_down": 10458,
+        "bytes_up": 5950,
+        "bytes_down": 10387,
         "known_quota_units": 425,
         "unknown_quota_requests": 12,
         "quota_profile": "google-drive-official-2026-10-23"
@@ -1040,7 +1155,7 @@
       "unsupported": [],
       "faults": [],
       "replayed_responses": 0,
-      "response_order_inversions": 2,
+      "response_order_inversions": 1,
       "native_conditional_write_requests": 0,
       "assumption": null
     },
@@ -1054,7 +1169,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1120,7 +1235,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1148,7 +1263,7 @@
           "GET v3.files.get.media": {
             "requests": 10,
             "bytes_up": 0,
-            "bytes_down": 7939,
+            "bytes_down": 7900,
             "statuses": {
               "200": 10
             },
@@ -1168,7 +1283,7 @@
           },
           "PATCH v3.files.update": {
             "requests": 5,
-            "bytes_up": 4954,
+            "bytes_up": 4934,
             "bytes_down": 103,
             "statuses": {
               "200": 3,
@@ -1178,8 +1293,8 @@
             "quota_weight": 50
           }
         },
-        "bytes_up": 4954,
-        "bytes_down": 8399,
+        "bytes_up": 4934,
+        "bytes_down": 8360,
         "known_quota_units": 355,
         "unknown_quota_requests": 10,
         "quota_profile": "google-drive-official-2026-10-23"
@@ -1189,7 +1304,18 @@
         {
           "method": "GET",
           "kind": "duplicate-response",
-          "used": true
+          "used": true,
+          "matched": {
+            "file_id": "selfstore",
+            "file_name": "byos.zip",
+            "method": "GET",
+            "path": "/drive/v3/files/selfstore",
+            "operation": "get",
+            "version_before": 2,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
         }
       ],
       "replayed_responses": 1,
@@ -1207,7 +1333,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1235,7 +1361,7 @@
           "GET v3.files.get.media": {
             "requests": 12,
             "bytes_up": 0,
-            "bytes_down": 9974,
+            "bytes_down": 9967,
             "statuses": {
               "200": 12
             },
@@ -1255,7 +1381,7 @@
           },
           "PATCH v3.files.update": {
             "requests": 5,
-            "bytes_up": 4974,
+            "bytes_up": 4971,
             "bytes_down": 103,
             "statuses": {
               "200": 3,
@@ -1265,8 +1391,8 @@
             "quota_weight": 50
           }
         },
-        "bytes_up": 4974,
-        "bytes_down": 10480,
+        "bytes_up": 4971,
+        "bytes_down": 10473,
         "known_quota_units": 375,
         "unknown_quota_requests": 12,
         "quota_profile": "google-drive-official-2026-10-23"
@@ -1276,7 +1402,18 @@
         {
           "method": "GET",
           "kind": "reorder",
-          "used": true
+          "used": true,
+          "matched": {
+            "file_id": "selfstore",
+            "file_name": "byos.zip",
+            "method": "GET",
+            "path": "/drive/v3/files/selfstore",
+            "operation": "get",
+            "version_before": 2,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
         }
       ],
       "replayed_responses": 0,
@@ -1294,7 +1431,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1335,7 +1472,7 @@
           "GET webdav.object": {
             "requests": 12,
             "bytes_up": 0,
-            "bytes_down": 9649,
+            "bytes_down": 9619,
             "statuses": {
               "200": 10,
               "404": 2
@@ -1345,7 +1482,7 @@
           },
           "PUT webdav.object": {
             "requests": 3,
-            "bytes_up": 2866,
+            "bytes_up": 2860,
             "bytes_down": 0,
             "statuses": {
               "204": 3
@@ -1354,8 +1491,8 @@
             "quota_weight": "NOT_APPLICABLE"
           }
         },
-        "bytes_up": 2866,
-        "bytes_down": 9649,
+        "bytes_up": 2860,
+        "bytes_down": 9619,
         "known_quota_units": "NOT_APPLICABLE",
         "unknown_quota_requests": "NOT_APPLICABLE",
         "quota_profile": "NOT_APPLICABLE"
@@ -1377,7 +1514,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1417,7 +1554,7 @@
           "GET webdav.object": {
             "requests": 12,
             "bytes_up": 0,
-            "bytes_down": 9940,
+            "bytes_down": 9942,
             "statuses": {
               "200": 10,
               "404": 2
@@ -1427,7 +1564,7 @@
           },
           "PUT webdav.object": {
             "requests": 3,
-            "bytes_up": 2960,
+            "bytes_up": 2959,
             "bytes_down": 0,
             "statuses": {
               "204": 3
@@ -1436,8 +1573,8 @@
             "quota_weight": "NOT_APPLICABLE"
           }
         },
-        "bytes_up": 2960,
-        "bytes_down": 9940,
+        "bytes_up": 2959,
+        "bytes_down": 9942,
         "known_quota_units": "NOT_APPLICABLE",
         "unknown_quota_requests": "NOT_APPLICABLE",
         "quota_profile": "NOT_APPLICABLE"
@@ -1459,7 +1596,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1499,7 +1636,7 @@
           "GET webdav.object": {
             "requests": 14,
             "bytes_up": 0,
-            "bytes_down": 11890,
+            "bytes_down": 11945,
             "statuses": {
               "200": 12,
               "404": 2
@@ -1509,7 +1646,7 @@
           },
           "PUT webdav.object": {
             "requests": 4,
-            "bytes_up": 3966,
+            "bytes_up": 3964,
             "bytes_down": 0,
             "statuses": {
               "204": 4
@@ -1518,8 +1655,8 @@
             "quota_weight": "NOT_APPLICABLE"
           }
         },
-        "bytes_up": 3966,
-        "bytes_down": 11890,
+        "bytes_up": 3964,
+        "bytes_down": 11945,
         "known_quota_units": "NOT_APPLICABLE",
         "unknown_quota_requests": "NOT_APPLICABLE",
         "quota_profile": "NOT_APPLICABLE"
@@ -1541,7 +1678,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1567,7 +1704,7 @@
           "GET webdav.object": {
             "requests": 12,
             "bytes_up": 0,
-            "bytes_down": 9710,
+            "bytes_down": 9690,
             "statuses": {
               "200": 10,
               "404": 2
@@ -1577,7 +1714,7 @@
           },
           "PUT webdav.object": {
             "requests": 1,
-            "bytes_up": 971,
+            "bytes_up": 969,
             "bytes_down": 0,
             "statuses": {
               "204": 1
@@ -1586,8 +1723,8 @@
             "quota_weight": "NOT_APPLICABLE"
           }
         },
-        "bytes_up": 971,
-        "bytes_down": 9710,
+        "bytes_up": 969,
+        "bytes_down": 9690,
         "known_quota_units": "NOT_APPLICABLE",
         "unknown_quota_requests": "NOT_APPLICABLE",
         "quota_profile": "NOT_APPLICABLE"
@@ -1609,7 +1746,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1649,7 +1786,7 @@
           "GET webdav.object": {
             "requests": 12,
             "bytes_up": 0,
-            "bytes_down": 9941,
+            "bytes_down": 9922,
             "statuses": {
               "200": 10,
               "404": 2
@@ -1659,7 +1796,7 @@
           },
           "PUT webdav.object": {
             "requests": 3,
-            "bytes_up": 2958,
+            "bytes_up": 2954,
             "bytes_down": 0,
             "statuses": {
               "204": 3
@@ -1668,8 +1805,8 @@
             "quota_weight": "NOT_APPLICABLE"
           }
         },
-        "bytes_up": 2958,
-        "bytes_down": 9941,
+        "bytes_up": 2954,
+        "bytes_down": 9922,
         "known_quota_units": "NOT_APPLICABLE",
         "unknown_quota_requests": "NOT_APPLICABLE",
         "quota_profile": "NOT_APPLICABLE"
@@ -1679,7 +1816,18 @@
         {
           "method": "GET",
           "kind": "duplicate-response",
-          "used": true
+          "used": true,
+          "matched": {
+            "file_id": "dav",
+            "file_name": "backup.zip",
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "operation": "get",
+            "version_before": 2,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
         }
       ],
       "replayed_responses": 1,
@@ -1697,7 +1845,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1737,7 +1885,7 @@
           "GET webdav.object": {
             "requests": 15,
             "bytes_up": 0,
-            "bytes_down": 12954,
+            "bytes_down": 12928,
             "statuses": {
               "200": 13,
               "404": 2
@@ -1747,7 +1895,7 @@
           },
           "PUT webdav.object": {
             "requests": 3,
-            "bytes_up": 2962,
+            "bytes_up": 2956,
             "bytes_down": 0,
             "statuses": {
               "204": 3
@@ -1756,8 +1904,8 @@
             "quota_weight": "NOT_APPLICABLE"
           }
         },
-        "bytes_up": 2962,
-        "bytes_down": 12954,
+        "bytes_up": 2956,
+        "bytes_down": 12928,
         "known_quota_units": "NOT_APPLICABLE",
         "unknown_quota_requests": "NOT_APPLICABLE",
         "quota_profile": "NOT_APPLICABLE"
@@ -1767,7 +1915,18 @@
         {
           "method": "GET",
           "kind": "reorder",
-          "used": true
+          "used": true,
+          "matched": {
+            "file_id": "dav",
+            "file_name": "backup.zip",
+            "method": "GET",
+            "path": "/dav/backup.zip",
+            "operation": "get",
+            "version_before": 2,
+            "mutation_applied": false,
+            "response_delivered": true,
+            "request_body_bytes": 0
+          }
         }
       ],
       "replayed_responses": 0,
@@ -1785,7 +1944,7 @@
       "seed": 84,
       "scale": 10,
       "network": "normal",
-      "mock_contract": "byos-loopback-v1",
+      "mock_contract": "byos-loopback-v2",
       "policy": "default",
       "replay": "node src/extra.mjs",
       "status": "PASS",
@@ -1825,7 +1984,7 @@
           "GET webdav.object": {
             "requests": 12,
             "bytes_up": 0,
-            "bytes_down": 9964,
+            "bytes_down": 9925,
             "statuses": {
               "200": 10,
               "404": 2
@@ -1835,7 +1994,7 @@
           },
           "PUT webdav.object": {
             "requests": 3,
-            "bytes_up": 2964,
+            "bytes_up": 2954,
             "bytes_down": 0,
             "statuses": {
               "204": 3
@@ -1844,8 +2003,8 @@
             "quota_weight": "NOT_APPLICABLE"
           }
         },
-        "bytes_up": 2964,
-        "bytes_down": 9964,
+        "bytes_up": 2954,
+        "bytes_down": 9925,
         "known_quota_units": "NOT_APPLICABLE",
         "unknown_quota_requests": "NOT_APPLICABLE",
         "quota_profile": "NOT_APPLICABLE"

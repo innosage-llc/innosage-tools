@@ -20,6 +20,7 @@ if (args.engine)
     seed: Number(args.seed ?? 1),
     network: args.network ?? "fast",
     policy: args.policy ?? "default",
+    suite: args.suite ?? "fixed",
   });
 else
   for (const [engine, provider] of [
@@ -42,7 +43,9 @@ else
       "fault-timeout",
       "fault-delayed-response",
       "revoked-401",
-      ...(engine === "rxdb" ? ["same-time-boundary"] : []),
+      ...(engine === "rxdb"
+        ? ["same-time-boundary", "fault-wal-unknown-success"]
+        : []),
     ])
       configs.push({
         engine,

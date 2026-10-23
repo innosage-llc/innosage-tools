@@ -48,3 +48,22 @@ test("RxDB equal-time checkpoint stalls without calling durable local edits lost
   assert.equal(r.durable_unpropagated_count, 14);
   assert.equal(r.silent_lost_edit_count, 0);
 });
+for (const scenario of ["fault-unknown-success", "fault-wal-unknown-success"])
+  test(`native RxDB ${scenario} exercises payload not lease`, async () => {
+    const r = await trial({
+      engine: "rxdb",
+      provider: "drive",
+      scenario,
+      scale: 10,
+      seed: 7,
+    });
+    const f = r.faults[0];
+    assert.equal(f.used, true);
+    assert.equal(f.matched.file_name, f.fileName);
+    assert.notEqual(f.matched.file_name, "transaction.json");
+    assert.equal(f.matched.mutation_applied, true);
+    assert.equal(f.matched.stored_body_matches_request, true);
+    assert.equal(f.matched.response_delivered, false);
+    assert.equal(r.status, "PASS");
+    assert.equal(r.recovered_within_bounded_test_count, 1);
+  });
