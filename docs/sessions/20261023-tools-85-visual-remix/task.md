@@ -1,14 +1,16 @@
-# Tools #85 — core implementation ready for independent review
+# Tools #85 — local editor ready for independent review
 
 - #86 ADR passed independent architecture review and merged via PR #90.
-- Current bounded #87/#88 increment adds local core primitives; public UI,
-  image reconstruction, motion and live ChatGPT/MCP acceptance remain unproven.
+- Core PR #91 merged as c02e2b00e6bab11886357adf43b09983a53afcde after independent
+  review and native/GitHub gates. Current bounded increment adds the local editor.
+  Actual vision reconstruction, motion and live ChatGPT/MCP acceptance remain unproven.
 - User-assigned Astra MEDIUM executor / Astra HIGH lead override default V1/UI
   implementation routing only. Independent Sol HIGH review remains mandatory.
 - Founder original reference is available locally outside the repo at
   `reference-assets/1(1).png` (workspace root), SHA256
   `a933a808934eb8bf521b0d32c4bedb950698e76fccb62a997221e2d7b39715b5`.
-  It was not consumed by this core increment or committed as a fixture.
+  Its actual pixels were inspected before editor work; bytes remain outside the repo.
+  No reconstruction acceptance is inferred from inspection or control-fixture tests.
 - No model API service, deployment, live MCP call, production or closure action.
 
 ## Core implementation increment
@@ -40,7 +42,7 @@
   fixture, not a reconstructed poster. Machine evidence lives beside the PNG.
 - Founder original reference now materialized outside the repo by coordinator;
   not inspected in this core increment. No image reconstruction acceptance claim.
-- Independent Sol HIGH review, native full gate and lead publication remain pending.
+- Core independent review and native full gate passed; lead merged PR #91.
   No commit/push/PR/merge/deploy/live MCP performed by executor.
 
 ## Independent review repair cycle 1
@@ -59,6 +61,63 @@
   the last committed scene, revision, project ID or PNG after revoke.
 - Affected checks PASS: 10/10 core tests, Chromium 151.0.7922.34 renderer regressions,
   TypeScript, lint (baseline warnings only), diff whitespace. Prior build/SEO/clean
-  install evidence retained; full native gate follows renewed independent review.
+  install evidence retained; renewed independent review and full native gate passed
+  before lead integration as PR #91.
 - Requested/routed Astra MEDIUM; provider observation, usage and cost UNKNOWN.
   No additional scope, commits, external transport or publication action.
+
+## Local editor increment — frozen for independent review
+
+- Branch `codex/tools-87-visual-remix-editor`, base `c02e2b00e6bab11886357adf43b09983a53afcde`.
+  Unrelated BYOS #89 changes on main are preserved.
+- Added `/tools/visual-remix`, discovery and SEO, local reference and explicit asset
+  approval, descriptor-only agent brief/schema, proposal preview/diff/Apply, Undo,
+  cancellation/revocation, node content/geometry/stacking controls, editable CN/EN
+  captions, portable project save/open and committed PNG/caption downloads.
+- Actual static-route Chromium test covers PNG reference plus real canvas JPEG
+  approval/decode/portable reload; explicit candidate/Apply and byte-identical PNG;
+  edits, Undo/Cancel/revoke/stale proposals and delayed file-read cancellation;
+  invalid export blocking, mobile layout and zero external requests/uploads.
+- Checks PASS: 11/11 core units, TypeScript, lint (existing baseline warnings only),
+  production build, SEO contract and actual route test. Final targeted editor/test
+  lint and whitespace checks pass. Existing font fetch and local loopback server
+  required approved sandbox escalation; no auto-review denial.
+- Route initial HTML adds 57,959 raw / 19,784 gzip JS bytes relative to index HTML.
+  Dynamic Konva chunk is 190,548 raw / 57,032 gzip bytes, absent initial HTML and
+  index observed fetches; editor initializes it for the first local render. Index
+  prefetch may fetch editor chunks after hydration. This is not a prior-build delta.
+- Evidence: `.deploy/visual-remix-editor/route-evidence.json`, desktop/mobile PNGs,
+  and `editor-review-receipt.json` (exact file hashes and checks). Generated control
+  scene tests workflow only, not agent vision accuracy or first-use/reuse timing.
+- Independent second input: ignored `.deploy/visual-remix-editor/second-design.png`,
+  1080×1440, SHA256 `48c93e58baf8453ec7d68c3f51aed2fccd3ac5ea8fe408da48373bfa8d81bfb9`.
+  Original geometric art/event copy; public-safe, no external logos/portraits. Only
+  pixels/path/provenance were supplied to lead, not construction coordinates.
+- Requested/routed Astra MEDIUM; provider observation, usage and cost UNKNOWN.
+  Independent Sol HIGH review, native full submit gate and lead publication pending.
+  No commits/push/PR, live transport, motion, deployment or closure in this increment.
+
+### Pre-review packaging correction
+
+- Added exact installed Konva MIT license as a public distributable notice, with
+  both author copyright lines and complete terms, linked from the editor.
+- Targeted production export verifies notice presence and byte parity against
+  `node_modules/konva/LICENSE`; scoped lint and whitespace checks pass.
+
+### Editor independent review repair cycle 1 — frozen for rereview
+
+- Review VR-EDITOR-1 (P2) reproduced in actual exported route before repair:
+  remove crop → Preview edits → Apply → Save left the JPEG descriptor and bytes.
+  Regression failed at expected empty `scene.assets` assertion.
+- Central `savePortableProject` now validates/copies the scene, derives referenced
+  asset IDs from image nodes, and serializes only referenced descriptors and bytes.
+  Live scene, approved store and Undo history remain untouched.
+- Unit regression covers a valid agent-style scene with unused descriptors; existing
+  roundtrip test now has a real image reference/crop. Browser regression proves
+  removal excludes both descriptor/payload, while Undo restores scene/crop and exact
+  JPEG bytes. Retained JPEG already roundtrips through project reload.
+- Approval copy and agent brief disclose whole approved PNG/JPG embedding for each
+  referenced asset, including pixels outside any crop; docs aligned.
+- PASS: 12/12 units, TypeScript, scoped ESLint, production build, actual Chromium
+  route regression (77 requests, zero external), whitespace and license export parity.
+  No native full gate rerun; exact-source independent rereview remains required.

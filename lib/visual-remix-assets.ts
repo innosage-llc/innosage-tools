@@ -1,4 +1,4 @@
-import { REMIX_LIMITS, importProject, type Project, type RasterAsset, type Scene } from './visual-remix.ts';
+import { REMIX_LIMITS, importProject, parseScene, type Project, type RasterAsset, type Scene } from './visual-remix.ts';
 
 // Read dimensions BEFORE asking a browser decoder to allocate the raster.
 export function rasterHeader(bytes: Uint8Array): Omit<RasterAsset, 'id'> {
@@ -77,14 +77,18 @@ export async function loadPortableProject(text: string, signal: AbortSignal, dec
   return { project, assets };
 }
 export async function savePortableProject(projectId: string, revision: number, scene: Scene, store: LocalAssets): Promise<string> {
+  // Normalize a copy: exporting must not mutate live state or Undo history.
+  const portableScene = parseScene(scene);
+  const referenced = new Set(portableScene.nodes.flatMap(node => node.type === 'image' ? [node.assetId] : []));
+  portableScene.assets = portableScene.assets.filter(asset => referenced.has(asset.id));
   const assets: Project['assets'] = [];
-  for (const a of scene.assets) {
+  for (const a of portableScene.assets) {
     const bytes = new Uint8Array(await store.blob(a).arrayBuffer());
     let binary = '';
     for (let offset = 0; offset < bytes.length; offset += 8192) binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
     assets.push({ id: a.id, data: `data:${a.mime};base64,${btoa(binary)}` });
   }
-  const text = JSON.stringify({ schemaVersion: 1, projectId, revision, scene, assets });
+  const text = JSON.stringify({ schemaVersion: 1, projectId, revision, scene: portableScene, assets });
   importProject(text); // Same limits on export and import; no unusable saved file.
   return text;
 }
