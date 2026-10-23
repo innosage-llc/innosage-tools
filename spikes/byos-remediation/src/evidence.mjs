@@ -48,6 +48,8 @@ export async function archiveSources(overrides = {}) {
   );
   return {
     sourceDigest,
+    sourceDigestAlgorithm:
+      "SHA-256 of JSON.stringify(manifest), preserving manifest insertion order",
     manifest,
     node: process.version,
     baselineCommit: "496e9a8a1b605c81e71026d0ab217e6ccb9f41a4",

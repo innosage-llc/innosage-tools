@@ -100,7 +100,20 @@ assumes the original layout. To replay, restore the snapshot's files into
 its manifest-pinned `spikes/byos-sync/src/mock.mjs`, run its lockfile install, then
 run the recorded command. The A1/A2 initial snapshots predate the evidence runner
 and use their explicit `node --input-type=module` commands. Do not edit or format
-historical snapshot source to match newer code.
+historical snapshot source to match newer code. See [source digest verification](SOURCE_PROVENANCE.md)
+for the exact legacy Python and current JavaScript serialization recipes.
+
+The report takes the **last ledger entry for each of A1, A2 and A3**, including
+failures, and verifies each latest raw artifact hash. Missing, invalid or non-PASS
+latest evidence blocks foundation PASS; it cannot fall back to historical success.
+Superseded recorded PASS entries are labeled separately. Report regressions use
+in-memory fixtures and do not append fabricated attempts to the real ledger.
+
+Historical A3 source/raw labels `reordered-get` and mock `reorder` mean only a
+single sequential GET delayed by 250 ms. Current source uses `delayed-get` and
+`delayed-response`. That witness does **not** establish response-order inversion;
+actual inversion remains NOT RUN for the full R5 matrix. Historical bytes retain
+their original names and hashes.
 
 ## Remaining delivery
 

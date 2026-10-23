@@ -270,7 +270,7 @@ export async function a3() {
       "verified-read-before-receipt",
       "new-edit-after-readback",
       "stale-readback",
-      "reordered-get",
+      "delayed-get",
       "duplicate-get",
       "401",
       "403-denied",
@@ -305,8 +305,9 @@ export async function a3() {
         let fault, restore, stale, localAfterRead;
         if (scenario === "applied-no-response")
           fault = { method, kind: "unknown-success" };
-        if (scenario === "reordered-get") {
-          fault = { method: "GET", kind: "reorder" };
+        if (scenario === "delayed-get") {
+          // This holds one sequential response; it does not invert responses.
+          fault = { method: "GET", kind: "delayed-response" };
           options.requestTimeoutMs = 500;
         }
         if (scenario === "duplicate-get") {
@@ -455,7 +456,7 @@ export async function a3() {
           "403-rate-limit",
           "429",
           "503",
-          "reordered-get",
+          "delayed-get",
           "duplicate-get",
           "new-edit-after-readback",
         ];

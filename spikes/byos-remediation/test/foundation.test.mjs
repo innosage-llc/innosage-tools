@@ -26,6 +26,28 @@ test(
     assert.equal(result.results.length, 38);
     assert.ok(result.stateObservationCount >= 140);
     assert.equal(result.falseStateCount, 0);
+    assert.equal(
+      result.results.some((r) => r.scenario === "reordered-get"),
+      false,
+    );
+    for (const provider of ["drive", "webdav"]) {
+      const delayed = result.results.find(
+        (r) => r.provider === provider && r.scenario === "delayed-get",
+      );
+      assert.ok(
+        delayed.boundaries.some(
+          (b) =>
+            b.kind === "delayed-response" &&
+            b.used &&
+            b.matched.method === "GET",
+        ),
+      );
+      assert.ok(
+        delayed.requests.some(
+          (r) => r.method === "GET" && r.duration_ms >= 200,
+        ),
+      );
+    }
   },
 );
 test("schema, causal completeness, namespace and transport fail closed", async () => {

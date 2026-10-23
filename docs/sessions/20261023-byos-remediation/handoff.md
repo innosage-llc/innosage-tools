@@ -1,17 +1,19 @@
 # Foundation engineering handoff
 
+Latest checkpoint: [independent-review repair and current source validation](review-repair.md). Both P2 findings are repaired; 18 tests passed on source `c48dcb6cfeae3e91cd08177d20b5c075e4820b3689fef65018bdd356b2837f76`. The original evidence below remains preserved.
+
 Executor writes stopped after this record. The requested first increment is ready for independent Astra HIGH review; this is not full Master acceptance. No commit, push, PR, merge, issue update or deployment was performed by this executor.
 
-Final runtime/test/source archive digest: `fe2de6ec35f7e4c702acd9efdfe7e5a4bc6d2490ba7faa3d5c8adad3b175cb9b`.
+Initial foundation runtime/test/source archive digest (preserved): `fe2de6ec35f7e4c702acd9efdfe7e5a4bc6d2490ba7faa3d5c8adad3b175cb9b`.
 [Manifest](../../../spikes/byos-remediation/evidence/foundation-final-source.json) records each source and lock hash, baseline mock dependency hash, Node v22.22.3 and actual installed RxDB 17.6.0 / Dexie 4.4.2 / fake-indexeddb 6.2.4 / esbuild 0.25.12 / Playwright 1.62.1.
 
-| Stored artifact under spikes/byos-remediation/evidence | Container/file SHA-256                                                            |
-| --------------------------------------------------- | ------------------------------------------------------------------ |
-| `a1-initial-console.json`                           | `c5a09031ee4f8e3685a292818ac84e1695a1d585da13b8a0c7864f1340dc153b` |
-| `a2-initial-console.json`                           | `9136ea9918f01cbc7b8d2ffff1e3bc4b8f09dcabb180c0a0f73a31e767a2359d` |
-| `a3-2026-10-23T10-10-44-672Z.json`                  | `76a2f9de25f1bc2dfbe909654eca3164216dba56d3e6cd8bcb99e4aa9a737622` |
+| Stored artifact under spikes/byos-remediation/evidence | Container/file SHA-256                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------ |
+| `a1-initial-console.json`                              | `c5a09031ee4f8e3685a292818ac84e1695a1d585da13b8a0c7864f1340dc153b` |
+| `a2-initial-console.json`                              | `9136ea9918f01cbc7b8d2ffff1e3bc4b8f09dcabb180c0a0f73a31e767a2359d` |
+| `a3-2026-10-23T10-10-44-672Z.json`                     | `76a2f9de25f1bc2dfbe909654eca3164216dba56d3e6cd8bcb99e4aa9a737622` |
 | `foundation-tests.txt.gz`                              | `37e46f4242c6b6895596e283bee3a7bc2d0a17322fb2ec56c27d1ac23df30bc3` |
-| `foundation-final-source.json`                      | `2a4ee8b7de1453abdb215314d28b397081ed3d28bed888a8629b7f54ae622ad5` |
+| `foundation-final-source.json`                         | `2a4ee8b7de1453abdb215314d28b397081ed3d28bed888a8629b7f54ae622ad5` |
 
 The [test log](../../../spikes/byos-remediation/evidence/foundation-tests.txt.gz) is a deterministic gzip container (mtime 0, no original filename). Its decompressed bytes retain the original raw-log SHA-256 `a3348fcb606d583fed833c0654ff53da105f3326f9977d270d3831802dae8b17`; the table above records the **compressed container** hash. [Packaging receipt](../../../spikes/byos-remediation/evidence/foundation-tests-packaging.json) records both hashes and byte counts. Verify with `gzip -dc spikes/byos-remediation/evidence/foundation-tests.txt.gz | shasum -a 256`. This lossless packaging addresses the pre-commit trailing-whitespace rejection without changing historical execution source or raw JSON, rerunning tests, or counting another hypothesis. The lead reports the native gate passed before this packaging; commit/review/integration remain pending.
 
