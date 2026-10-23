@@ -35,7 +35,9 @@
     "deploy:verify:staging": "node scripts/deploy-pages.mjs verify-staging",
     "test:spec": "mkdir -p test-results && pytest tests/e2e/test_image_joiner_ssot.py --json-report --json-report-file=test-results/report.json -s && python3 scripts/extract_spec.py",
     "prepare": "bash scripts/install-git-hooks.sh",
-    "test:visual-remix-scene-auth": "npm --prefix workers/video-scissors-mcp run test:scene-auth"
+    "test:visual-remix-scene-auth": "npm --prefix workers/video-scissors-mcp run test:scene-auth",
+    "test:visual-remix-transport": "node --test scripts/visual-remix-transport.test.mjs",
+    "test:visual-remix-scene-browser": "npm --prefix workers/video-scissors-mcp run test:scene-browser"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",

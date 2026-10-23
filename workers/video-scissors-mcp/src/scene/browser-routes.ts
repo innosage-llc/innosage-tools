@@ -20,6 +20,6 @@ export async function sceneBrowserRoute(request: Request, store: SceneMailbox): 
   if (path === '/scene/browser/revoke') return result({ ok: await store.revoke(auth) });
   if (!await store.owner(auth)) return reply({ error: 'OWNER_EXPIRED_OR_REVOKED' }, 401);
   if (path === '/scene/browser/sync') return result({ ok: await store.sync(auth, body.snapshot) });
-  if (path === '/scene/browser/poll') return result({ command: await store.claim(auth), cancellations: await store.cancellations(auth) });
+  if (path === '/scene/browser/poll') return result({ command: await store.claim(auth), cancellations: await store.cancellations(auth), connected: !!await store.lease({purpose:auth.purpose,shareId:auth.shareId,projectId:auth.projectId,generation:auth.generation,epoch:auth.epoch}) });
   return result({ ok: await store.report(auth, sceneId(body.requestId), body.state as SceneState) });
 }

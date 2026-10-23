@@ -17,7 +17,7 @@ belong to the shared Scene; the agent cannot acquire unused local assets.
 A fresh share fixes project, generation and epoch for at most fifteen minutes.
 Browser owner credentials and one-use consent proofs are distinct random values;
 only hashes persist. Proof expiry is five minutes. Scene proof/handle tombstones,
-shares and requests use separate tables. Video tables/counters are untouched.
+shares and requests use separate tables. Video table/counter definitions are unchanged; the enabled composition still charges existing cumulative protocol budgets.
 
 `candidate-migrations/scene.sql` is deliberately outside `migrations/`. Nothing
 applies this SQL automatically. Admission and claim have SQL authorization fences;
@@ -30,7 +30,7 @@ Cancel cannot undo applied work. Imports/generation changes need fresh sharing.
 Get requires a browser-acknowledged snapshot no older than ten seconds. A suspended
 browser yields unavailable, never fabricated current state. Snapshot revisions
 cannot move backwards or change content at the same revision. Network transport,
-OAuth verification and browser-controller integration are separate next slices.
+OAuth verification and browser-controller integration are implemented as the inactive slices described below.
 
 ## Limits and retention requiring activation review
 
@@ -46,7 +46,7 @@ consume a live budget. An approved live run must set a smaller exact call budget
 
 Explicit owner revocation immediately removes current snapshot/proposal content
 and disables pending work, retaining bounded replay tombstones/hashes/counters.
-Every future candidate request will run lazy expired-share cleanup. Access expiry
+Scene protocol requests run lazy expired-share cleanup. Static/video/OAuth-only requests do not guarantee cleanup. Access expiry
 is not physical TTL deletion: if no cleanup request arrives, expired content can
 remain stored. No cron/DO/new service is introduced. Any activation packet must
 explicitly approve this retention/cleanup policy or require a reviewed stronger
@@ -65,7 +65,7 @@ fixture). These tests do not prove remote auth, a real browser or ChatGPT host.
 Next: purpose-isolated authorization composition and consent, bounded MCP/browser
 transport, exact security review and offline integrated proof. Current existing
 video grants do not authorize Scene. Do not deploy the checked-in local-only
-Worker template or apply candidate SQL. No live target/usage readback has occurred.
+Worker template or apply candidate SQL. Read-only administrative target and cumulative-budget readbacks are retained locally; no live MCP request or activation has occurred. Recent rolling account usage and reporting lag remain UNKNOWN.
 
 ## Inactive shared-issuer composition
 
@@ -97,7 +97,7 @@ ids are checked before admission (safe integer or 1–96 ASCII letters/digits/un
 unauthorized host; authenticated GET is 405, not an indefinite event stream.
 Browser endpoints require same-origin JSON, exact fields and owner credentials.
 Only an explicitly confirmed creation uploads descriptor data. The browser adapter
-and connected product UI are a later increment and are not claimed ready here.
+and connected product UI are the default-off increment described below; no live host readiness is claimed.
 
 The exact canonical Antigravity HIGH consent output is integrated with only its
 contract import path changed. Prior controlled UI browser evidence and independent
@@ -108,3 +108,69 @@ pre-resource video grants/refresh, and same-client/same-user grant coexistence.
 These are disconnected tests, not live host acceptance. The first fixture run
 exposed missing await inside a catch boundary and an empty-401 test-parser bug;
 both were repaired before the passing run. No failed run is relabeled.
+
+## Default-off browser adapter
+
+The product panel is included only when built with
+`NEXT_PUBLIC_SCENE_REMOTE=true`; ordinary builds default off and perform no
+capability probe or remote fetch on mount. A connected build is for the same
+existing Worker origin as its assets. There is no destination URL input or CORS
+expansion. The exact reviewed generated panel is integrated by import mapping;
+business logic lives in `lib/visual-remix-transport.ts`.
+
+Two explicit field/retention confirmations precede create. Proof and owner
+credential remain in browser memory. The adapter wraps the actual offline bridge,
+uses serial snapshot/status frames, and reports manual Apply at its captured
+revision before later edits/Undo. Remote rendering runs separately from three
+second heartbeat/poll so cancellation continues. Queue/claim is never replayed;
+create is not retried; known idempotent calls get at most one transport/5xx retry,
+not a repeated4xx denial. A malformed or oversize response fails closed.
+
+Imports/generation changes, disconnect and expiry stop pending work. A late create
+after Cancel is revoked rather than adopted, and a late claim after acknowledged
+disconnect is ignored. Lost revoke acknowledgement retains the owner for explicit
+Disconnect retry and blocks reconnect; no revocation success is fabricated.
+Current local PNG, edits and exports survive network failure. Reload has no
+credential or automatic reconnect; reopening an editable project requires fresh
+manual consent. Freshness and finite leases still apply if a browser disappears.
+
+Five actual-controller/mocked-HTTP lifecycle tests and an actual local
+provider/SDK/D1/controller integration pass. The latter uses an explicit renderer
+stub and is not PNG visual evidence. The connected browser/Konva check is separate.
+All local fixtures use synthetic data and denied/count-checked external egress;
+none constitute real ChatGPT-host or live MCP acceptance.
+
+The actual Chromium consent form exposed a header interaction omitted by the
+Node fixture: `no-referrer` made its same-origin form POST send `Origin:null`,
+which correctly failed the strict origin check403 despite a valid cookie. The
+inactive candidate now uses `Referrer-Policy:same-origin`: same-origin POST keeps
+its Origin, cross-origin redirects receive no referrer. The origin check, cookie,
+CSP and proof protections remain. The real browser rerun confirmed this repair.
+
+A second actual-browser failure recorded enforced `form-action` violation and no
+callback delivery. One bounded read-only Astra principal consultation identified
+both the leading CSP hypothesis and a confirmed fixture limitation: Playwright
+may skip user routing after redirect, so page interception did not prove no
+browser egress. No earlier failed receipt is promoted to PASS. The repaired
+fixture uses a real loopback callback and a deny-by-default local proxy; only that
+exact callback can be forwarded, with no external target. The unchanged CSP
+baseline failed with the recorded violation. Removing only the added form-action
+directive delivered the callback and redeemed the code with no CSP violation.
+Default-src/script blocking, anti-framing/base-uri, strict Origin, cookie/CSRF,
+proof, same-origin referrer and official canonical redirect validation remain.
+No new redirect allowlist or parser is introduced.
+
+The final actual Next/React/Konva + local provider/SDK/D1 browser journey passes:
+explicit field/retention consent, actual browser cookie/PKCE/proof approval,
+queue->preview with no automatic Apply, manual Apply/status, inspected actual PNG,
+portable Scene, revoke/payload purge/token401, browser reload/reopen and identical
+PNG without an original reference or automatic reconnection. Desktop/mobile
+controls were inspected. Scene Deny and candidate plus disabled-candidate video
+approvals also pass through real browser callback delivery. The main fixture
+retains two failed redirected root HEAD probes (initial/reload, blocked by the local proxy); do not
+claim zero failed requests or confuse Worker outbound counters with browser
+network isolation. All fixture browser/Worker/proxy/callback resources closed.
+These synthetic local results remain separate from actual-image staging evidence
+and from gated live-host acceptance.
+
+Revoked/expired D1 bindings are rejected by the Scene resource-server validator so the official provider emits its standard Bearer invalid_token challenge with canonical resource_metadata and exact Scene scopes. Actual-provider regressions assert those headers after revocation, expiry and wrong audience; fresh Scene and existing video access remain covered. Data operations still enforce their independent D1 authorization fences.
