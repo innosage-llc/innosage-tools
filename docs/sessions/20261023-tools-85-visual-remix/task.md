@@ -1,9 +1,11 @@
-# Tools #85 — local editor ready for independent review
+# Tools #85 — local motion ready for independent review
 
 - #86 ADR passed independent architecture review and merged via PR #90.
 - Core PR #91 merged as c02e2b00e6bab11886357adf43b09983a53afcde after independent
-  review and native/GitHub gates. Current bounded increment adds the local editor.
-  Actual vision reconstruction, motion and live ChatGPT/MCP acceptance remain unproven.
+  review and native/GitHub gates. Editor PR #92 merged as
+  adae10d1de135df52daf6d5bacee638dd6af00b9 after repair and independent rereview.
+  Current bounded increment adds local motion; actual vision reconstruction and
+  live ChatGPT/MCP acceptance remain unproven.
 - User-assigned Astra MEDIUM executor / Astra HIGH lead override default V1/UI
   implementation routing only. Independent Sol HIGH review remains mandatory.
 - Founder original reference is available locally outside the repo at
@@ -66,7 +68,7 @@
 - Requested/routed Astra MEDIUM; provider observation, usage and cost UNKNOWN.
   No additional scope, commits, external transport or publication action.
 
-## Local editor increment — frozen for independent review
+## Local editor increment — integrated through PR #92
 
 - Branch `codex/tools-87-visual-remix-editor`, base `c02e2b00e6bab11886357adf43b09983a53afcde`.
   Unrelated BYOS #89 changes on main are preserved.
@@ -94,7 +96,7 @@
   Original geometric art/event copy; public-safe, no external logos/portraits. Only
   pixels/path/provenance were supplied to lead, not construction coordinates.
 - Requested/routed Astra MEDIUM; provider observation, usage and cost UNKNOWN.
-  Independent Sol HIGH review, native full submit gate and lead publication pending.
+  Editor independent Sol HIGH rereview and native full gate passed; lead merged #92.
   No commits/push/PR, live transport, motion, deployment or closure in this increment.
 
 ### Pre-review packaging correction
@@ -104,7 +106,7 @@
 - Targeted production export verifies notice presence and byte parity against
   `node_modules/konva/LICENSE`; scoped lint and whitespace checks pass.
 
-### Editor independent review repair cycle 1 — frozen for rereview
+### Editor independent review repair cycle 1 — rereview passed, integrated
 
 - Review VR-EDITOR-1 (P2) reproduced in actual exported route before repair:
   remove crop → Preview edits → Apply → Save left the JPEG descriptor and bytes.
@@ -120,4 +122,33 @@
   referenced asset, including pixels outside any crop; docs aligned.
 - PASS: 12/12 units, TypeScript, scoped ESLint, production build, actual Chromium
   route regression (77 requests, zero external), whitespace and license export parity.
-  No native full gate rerun; exact-source independent rereview remains required.
+  Exact-source rereview subsequently passed; lead ran native gate and merged #92.
+
+## Local motion increment — frozen for independent review
+
+- Native start created `codex/tools-87-visual-remix-motion` from clean main
+  `adae10d1de135df52daf6d5bacee638dd6af00b9`.
+- Exact applied PNG feeds existing FFmpeg-WASM: 24fps, 5s, 1080×1440 H.264,
+  0.5s fade from scene background then stable hold. Lazy explicit export, progress,
+  cancellation, revision/authority invalidation, nonempty metadata-verified output.
+- Shared runtime helper extracted from Video Scissors with abort checks after
+  module load/decompression. No codecs/packages/Workers/scopes added. Full GPLv2
+  and upstream wrapper MIT notices plus exact available source/build provenance
+  are public; installed packages omit license files, upstream wrapper blob recorded.
+- Transparent background has explicit MP4 limitation message and PNG fallback;
+  opaque eight-digit alpha normalizes. PNG10MiB/output32MiB/encoding120s bounds.
+  Existing binary32,129,114 bytes, gzip10,228,358 bytes; peak memory not measured.
+- Actual Chromium151.0.7922.34 WASM proof PASS: 2,835ms warm local control render,
+  217,181-byte MP4, verified play/seek/5s1080×1440; decoded first/final pixels inspected.
+  Final RGB MAE2.36185/255 vs PNG, stable hold MAE0.000173/255; zero external requests.
+- Checks PASS: motion3/3 units (added to native gate), TypeScript, lint (baseline
+  warnings only), build, actual motion+editor route tests, SEO, Video Scissors16/16
+  executed tests (1 optional nativeFFmpeg test skipped: binary unavailable).
+- Initial browser assertion needed waiting one effect frame for video URL removal;
+  corrected asynchronous test assertion, then PASS. Read-only npm sandbox EPERM
+  retried with approved network; wrapper guessed tag URL404 resolved by upstream
+  file listing, exact blob recorded. No auto-review denial or permission blocker.
+- Artifact/receipt: `.deploy/visual-remix-motion/`. Requested/routed Astra MEDIUM;
+  provider-observed identity/effort/usage/cost UNKNOWN. No original vision acceptance,
+  live MCP, staging, commit/push/PR or production action. Independent review and
+  native full submit gate remain pending with lead.

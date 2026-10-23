@@ -22,6 +22,7 @@ import {
   type LayoutDiagnostic,
 } from "@/lib/visual-remix-controller";
 import { renderScene } from "@/lib/visual-remix-renderer";
+import { RemixMotion } from "@/lib/visual-remix-motion";
 import { agentBrief, proposalSchema } from "@/lib/visual-remix-agent";
 
 type Snapshot = ReturnType<VisualRemixController["snapshot"]>;
@@ -101,6 +102,13 @@ function Preview({
 export default function VisualRemixApp() {
   const controller = useRef<VisualRemixController | null>(null);
   const assets = useRef(new LocalAssets());
+  const motion = useRef(new RemixMotion());
+  const motionTicket = useRef(0);
+  const [motionBusy, setMotionBusy] = useState(false);
+  const [motionProgress, setMotionProgress] = useState(0);
+  const [motionBlob, setMotionBlob] = useState<Blob | null>(null);
+  const [motionMessage, setMotionMessage] = useState("");
+  const motionURL = useBlobURL(motionBlob);
   const pending = useRef<AbortController | null>(null);
   const epoch = useRef(0);
   const downloadURLs = useRef(new Map<string, ReturnType<typeof setTimeout>>());
@@ -127,6 +135,16 @@ export default function VisualRemixApp() {
   function sync(resetDraft = false) {
     const state = controller.current?.snapshot();
     if (!state) return;
+    if (
+      motion.current.bind(
+        JSON.stringify([state.projectId, state.generation, state.revision]),
+      )
+    ) {
+      motionTicket.current++;
+      setMotionBusy(false);
+      setMotionBlob(null);
+      setMotionMessage("");
+    }
     setSnapshot(state);
     if (resetDraft && state.scene) {
       setDraft(structuredClone(state.scene));
@@ -207,11 +225,13 @@ export default function VisualRemixApp() {
         }
       });
     const urls = downloadURLs.current;
+    const video = motion.current;
     // Invalidate the latest async ticket, not the ticket captured at mount.
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       epoch.current++;
       pending.current?.abort();
+      video.cancel();
       c.dispose();
       for (const [url, timer] of urls) {
         clearTimeout(timer);
@@ -220,6 +240,56 @@ export default function VisualRemixApp() {
       urls.clear();
     };
   }, []);
+
+  async function exportMotion() {
+    const c = controller.current;
+    if (!c || motionBusy) return;
+    const state = c.snapshot();
+    motion.current.bind(
+      JSON.stringify([state.projectId, state.generation, state.revision]),
+    );
+    const ticket = ++motionTicket.current;
+    setMotionBusy(true);
+    setMotionProgress(0);
+    setMotionMessage("Loading the local video processor…");
+    try {
+      const png = c.exportPNG();
+      const completed = await motion.current.render(
+        png,
+        state.scene!.background,
+        async (...args) => {
+          const { renderRemixMotion } =
+            await import("@/lib/visual-remix-motion-browser");
+          args[2].throwIfAborted();
+          return renderRemixMotion(...args);
+        },
+        (percent) => {
+          setMotionProgress(percent);
+          setMotionMessage("Encoding and verifying your five-second MP4…");
+        },
+      );
+      if (ticket !== motionTicket.current) return;
+      if (completed) {
+        setMotionBlob(motion.current.output);
+        setMotionMessage(
+          "MP4 ready: 1080 × 1440, 5 seconds. Preview before downloading.",
+        );
+      }
+    } catch (cause) {
+      if (ticket === motionTicket.current)
+        setMotionMessage(
+          `${cause instanceof Error ? cause.message : "Video export failed."} Your applied PNG is preserved.`,
+        );
+    } finally {
+      if (ticket === motionTicket.current) setMotionBusy(false);
+    }
+  }
+  function cancelMotion() {
+    motionTicket.current++;
+    motion.current.cancel();
+    setMotionBusy(false);
+    setMotionMessage("Motion export cancelled. Your applied PNG is preserved.");
+  }
 
   function download(blob: Blob, name: string) {
     const url = URL.createObjectURL(blob),
@@ -1211,6 +1281,66 @@ export default function VisualRemixApp() {
               >
                 Download captions
               </button>
+            </div>
+            <div className="mt-5 border-t border-zinc-100 pt-4">
+              <h3 className="text-sm font-semibold">A little motion</h3>
+              <p className="my-2 text-xs leading-5 text-zinc-600">
+                Fade in from your background, then hold the applied image. Five
+                seconds, 1080 × 1440. Processing stays on this device and may
+                take up to two minutes. Current desktop Chrome is recommended.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className={button}
+                  disabled={!exportable || motionBusy}
+                  onClick={() => void exportMotion()}
+                >
+                  Export MP4
+                </button>
+                {motionBusy && (
+                  <button className={button} onClick={cancelMotion}>
+                    Cancel motion export
+                  </button>
+                )}
+                {motionBlob && (
+                  <button
+                    className={button}
+                    onClick={() => download(motionBlob, "visual-remix.mp4")}
+                  >
+                    Download MP4
+                  </button>
+                )}
+              </div>
+              {motionBusy && (
+                <progress
+                  className="mt-3 w-full"
+                  aria-label="Motion export progress"
+                  max={100}
+                  value={motionProgress}
+                />
+              )}
+              <p
+                role="status"
+                data-testid="motion-status"
+                className="mt-2 text-xs"
+              >
+                {motionMessage}
+              </p>
+              {motionURL && (
+                <video
+                  aria-label="Applied scene motion preview"
+                  className="mt-3 max-h-96 w-full"
+                  controls
+                  playsInline
+                  src={motionURL}
+                />
+              )}
+              <a
+                className="mt-2 inline-block text-xs underline"
+                href="/tools/third-party-notices/ffmpeg-runtime.txt"
+              >
+                Video processor licenses and source
+              </a>
             </div>
             <details className="mt-4">
               <summary className="cursor-pointer text-sm font-medium">

@@ -1,0 +1,28 @@
+Visual Remix and Video Scissors local video runtime
+
+@ffmpeg/ffmpeg JavaScript wrapper: MIT, https://github.com/ffmpegwasm/ffmpeg.wasm
+Upstream wrapper LICENSE blob 3032c67441859d69c3b02d150c5abdfbdef2a919 (retrieved 2026-10-23):
+https://github.com/ffmpegwasm/ffmpeg.wasm/blob/main/LICENSE
+Wrapper MIT license: ffmpeg-wrapper-LICENSE.txt beside this notice.
+The @ffmpeg/core 0.12.6 WASM binary is GPL-enabled, including libx264,
+libx265 and libzimg. The wrapper's MIT metadata does not license this binary
+as MIT. FFmpeg GPLv2 terms are reproduced in ffmpeg-COPYING.GPLv2.txt beside
+this notice. Upstream distinction:
+https://ffmpegwasm.netlify.app/docs/faq/#what-is-the-license-of-ffmpegwasm
+
+Installed core package integrity:
+sha512-PrjWBTfGn2WVn9T7wGnzfFwChbqWeZc7tM9vvJZVRadYFUDakfzy7W0LpYC0cvvK0xT82qlBsk38lQhJ/Hps5A==
+
+npm-reported gitHead and corresponding source/build recipe:
+https://github.com/ffmpegwasm/ffmpeg.wasm/tree/e0d4c62a229ba58ea0c6e6b881e289f2fefe97c4
+https://github.com/ffmpegwasm/ffmpeg.wasm/blob/e0d4c62a229ba58ea0c6e6b881e289f2fefe97c4/Dockerfile
+This recipe selects FFmpeg n5.1.4, emsdk 3.1.40, x264 branch 4-cores,
+x265 3.4, zimg 3.0.5. Source pointers:
+https://github.com/FFmpeg/FFmpeg/tree/n5.1.4
+https://github.com/ffmpegwasm/x264/tree/4-cores
+https://github.com/ffmpegwasm/x265/tree/3.4
+https://github.com/sekrit-twc/zimg/tree/release-3.0.5
+
+The npm-reported gitHead's package source still says 0.12.5. These are recorded
+provenance/source pointers, not verification of a byte-reproducible build.
+No new codec binary is introduced by Visual Remix.
