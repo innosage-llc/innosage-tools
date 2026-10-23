@@ -51,7 +51,8 @@ The route test uses a preauthored control scene. It proves UI workflow, not actu
 vision reconstruction or timed first-use/reuse acceptance. Original reference
 bytes stay outside the repository. A distinct original flattened geometric poster
 was supplied to the lead for subsequent independent vision work. No live MCP,
-motion export, remote model integration or deployment is part of this increment.
+remote model integration or deployment is part of the editor increment. Local
+motion was added subsequently; see [visual-remix-motion.md](visual-remix-motion.md).
 
 ## Bundle measurement
 
