@@ -1,0 +1,17 @@
+{
+  "name": "byos-remediation-offline-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "focused": "node src/experiments.mjs",
+    "report": "node src/report.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "fake-indexeddb": "6.2.4",
+    "playwright": "1.62.1",
+    "rxdb": "17.6.0"
+  }
+}

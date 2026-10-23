@@ -55,6 +55,69 @@
       "evidence": "spikes/byos-remediation/evidence/a3-2026-10-23T10-10-44-672Z.json",
       "evidenceSha256": "76a2f9de25f1bc2dfbe909654eca3164216dba56d3e6cd8bcb99e4aa9a737622",
       "sourceDigest": "64cc9a4c775de4ebd755692a4c9e522f7ee041e2875342ce61020890ad52a41c"
+    },
+    {
+      "attempt": "A4",
+      "result": "FAIL",
+      "evidence": "spikes/byos-remediation/evidence/a4-2026-10-23T10-37-48-288Z.json",
+      "evidenceSha256": "28aaa11812c0927a4c6cf5cace41383e28f1dad323639632b70f1d0bcceef0fb",
+      "sourceDigest": "d3ab886f09a71fa2a115a3ef1d4adfb1faed2378dad9995af07c9175d3cc3dce"
+    },
+    {
+      "attempt": "A4",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a4-2026-10-23T10-38-08-430Z.json",
+      "evidenceSha256": "65ef2552d2c08f938d706b912bf6935b9b91e13a3920013a5c154251511fbdbf",
+      "sourceDigest": "290ff3da1c60dab5fabcb058c8e30192527cf1fa1d13ca22a153fd5015ef00c1"
+    },
+    {
+      "attempt": "A5",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T10-46-32-367Z.json",
+      "evidenceSha256": "e64336fa09d9e257e1f18ca598be72aadbba1b1e6eafa2413576c0f6e5034218",
+      "sourceDigest": "381fdbbbaa8a2ac4ab8452e4a2e2ea04eed600cd02901cace5a383bddac9bf8f"
+    },
+    {
+      "attempt": "REPORT_COVERAGE_GUARD",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/local-report-schedule-validation.json",
+      "evidenceSha256": "213a8a4e524af70a45e4dab0520c0d3b71d39e02bdcf5a5b93e8cf5ebaee33dd",
+      "sourceDigest": "6181db9c571b8f524243d7e350cfb242e6fa7d4abc9937500fd94034d60b46f5"
+    },
+    {
+      "attempt": "REPORT_COVERAGE_GUARD",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/local-report-schedule-validation-r2.json",
+      "evidenceSha256": "a7e0cf930f0f65f5b19743c441d73fc054653ac85d340b7b2018e4bfb2c77ced",
+      "sourceDigest": "691a6335c96eaa48cf052b000eb614ef0b17fefb074d8a1e5c99ff58b2d8fdcd"
+    },
+    {
+      "attempt": "A5",
+      "result": "FAIL",
+      "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T22-25-10-173Z.json",
+      "evidenceSha256": "d5aadd991a7f5a1b6323dfed1b2316a152203550b6e5a51153af87cf842416c2",
+      "sourceDigest": "437233a75cef788fd044680cb4690acdc9667acf4f7e7ca91a659fc587d174fe"
+    },
+    {
+      "attempt": "A5",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T22-32-03-178Z.json",
+      "evidenceSha256": "84207cd41038dbb7bf7d32dc3b583088dbbaa976d666833c638044633589a892",
+      "sourceDigest": "158784b816540b68e004e149e8039aba59d21db2e9ad6340a7dd0a4a13eb91e6"
+    },
+    {
+      "attempt": "A6",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a6-2026-10-23T22-32-35-463Z.json",
+      "evidenceSha256": "110b77da17b84503c6d7fba10885127178c63abefde2c7d12029a6799b10cc29",
+      "sourceDigest": "5935dec913229978fcc662dd9d3e3497b7378617772430c1c1329b86084441d5"
+    },
+    {
+      "attempt": "A7",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a7-2026-10-23T22-38-13-191Z.json",
+      "evidenceSha256": "f5da6a388a013e37197c5c028eca175fb3aa511f23a32bac409adcbad862213d",
+      "sourceDigest": "5935dec913229978fcc662dd9d3e3497b7378617772430c1c1329b86084441d5"
     }
   ],
   "a3": {
@@ -73,12 +136,35 @@
     "quotaWeights": "UNKNOWN",
     "providerCost": "UNKNOWN"
   },
-  "fullSafety": "NOT_RUN",
-  "rendererCrashes": "NOT_RUN",
-  "responseOrderInversion": "NOT_RUN",
-  "normalDiagnostics": "NOT_RUN",
-  "latencyPercentiles": "INELIGIBLE_UNTIL_HARD_GATES",
+  "safetyCoverage": {
+    "status": "SEED_COVERAGE_MET_BROWSER_AND_OTHER_R5_GATES_SEPARATE",
+    "seedCoverageMet": true,
+    "trialCount": 100,
+    "passedTrials": 100,
+    "nonPassingTrials": 0,
+    "invalidTrialIdentities": 0,
+    "distinctCombinations": 100,
+    "distinctSeeds": 100,
+    "minimumDistinctSeeds": 100,
+    "cells": {
+      "drive:10": 25,
+      "drive:1000": 25,
+      "webdav:10": 25,
+      "webdav:1000": 25
+    },
+    "inversionVerified": true,
+    "fullR5Acceptance": false,
+    "recordedResult": "PASS",
+    "evidence": "spikes/byos-remediation/evidence/a5-2026-10-23T22-32-03-178Z.json",
+    "evidenceHashVerified": true
+  },
+  "fullSafety": "PASS_OFFLINE",
+  "rendererCrashes": "PASS_12_NATIVE_INDEXEDDB_RENDERER_CASES",
+  "responseOrderInversion": "MOCK_TESTED_TWO_PROVIDERS_APPLICATION_DELIVERY",
+  "normalDiagnostics": "PASS_120_PAIRED_TRIALS",
+  "latencyPercentiles": "ELIGIBLE_SYNTHETIC_ONLY",
   "independentReview": "PENDING",
   "nativeGates": "LEAD_OWNED",
-  "deployment": "NOT_AUTHORIZED"
+  "deployment": "NOT_AUTHORIZED",
+  "scope": "A1–A3 foundation lineage; current acceptance in decision-summary.json"
 }

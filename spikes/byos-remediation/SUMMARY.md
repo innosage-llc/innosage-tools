@@ -1,11 +1,9 @@
-# Remediation foundation result
+# Offline remediation result
 
-Latest hash-verified evidence passes all required focused A1–A3 witnesses. Full R1–R7 acceptance remains pending.
+**OFFLINE_CANDIDATE_PASSES_ENGINEERING_EVIDENCE**
 
-Latest valid A3 evidence sampled 152 states across 38 provider/scenario cases, with 0 false local/remote/pending observations under the documented exact-set contract. Requests: 270. These A3 observations do not override other required witness results.
+A bounded custom immutable-revision/CAS prototype resolves the three original blockers under the documented offline transport contract. RECOMMEND FOR REAL-PROVIDER VALIDATION after Founder offline acceptance and separate live-test authority. The next separately authorized smoke must verify coherent complete GET/strongETag/atomicIf-Match, competing412/full-body recovery, browserCORS and scoped authentication in a disposable namespace. Real-provider feasibility remains UNKNOWN; this is not production adoption or deployment approval. Snapshot amplification makes this a correctness reference, not an efficiency winner or a scalable production architecture.
 
-Historical A3 raw/source labels `reordered-get` and mock `reorder` exercised only a single sequential GET delayed 250 ms. Current source calls this `delayed-get` / `delayed-response`. Actual response-order inversion is NOT RUN and remains R5 work; historical bytes are preserved.
+100 safety trials / 100 distinct seeds: 700/700 acknowledged complete edits preserved, 0 lost, 0/915 false sampled states. Recovery after stable transport: p50/p95 37.6 / 1013.3 ms, maximum 1095.1 ms (declared bound16000ms). Actual response delivery inversion and lifecycle/manual resolution pass on both providers. Real Chromium native IndexedDB renderer crashes: 12/12, 24/24 edits recovered, 0/84 false sampled states.
 
-See [scorecard](SCORECARD.md), [contract and replay](README.md), and [attempt ledger](../../docs/sessions/20261023-byos-remediation/attempts.md).
-
-Full 10/1,000-page/100-seed safety and real renderer crashes: NOT RUN. Normal repeated diagnostics: NOT RUN; percentile comparison INELIGIBLE until hard gates pass. Quota weights and provider cost are UNKNOWN. Custom transport requires complete coherent GET/strong ETag/If-Match semantics; live providers were not tested. Independent review, native gates and integration remain required. No deployment or Master closure.
+See the [numeric scorecard](SCORECARD.md), [replay/contract](README.md), [machine evidence](evidence/decision-summary.json), and [delivery packet](../../docs/sessions/20261023-byos-remediation/task.md). The original study remains unchanged. Master stays OPEN; no real provider or deployment activity.

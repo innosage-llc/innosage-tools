@@ -1,0 +1,32 @@
+{
+  "kind": "independent-local-report-and-input-validation",
+  "command": "node --test spikes/byos-remediation/test/report.test.mjs spikes/byos-remediation/test/coverage.test.mjs spikes/byos-remediation/test/trial-schedule.test.mjs",
+  "exitCode": 0,
+  "tests": 19,
+  "passed": 19,
+  "failed": 0,
+  "networkOrReplicaExecution": false,
+  "manifest": {
+    "src/report.mjs": "ae0450d84f7b4fa7653b69e478816b08ac94b51a40f9840e74c0ed71ed24c63f",
+    "src/trial-schedule.mjs": "6c81a747594d2eac9531d532eee0f23348a38f7e5116bb64f58aeba0fee408a7",
+    "src/safety.mjs": "f332850ea861932a5ca0cdf622dc13aa9956776e0b4f21bfbc5ad9c00158cb17",
+    "test/report.test.mjs": "9bd476f46d8232d93773822a476f6d68454e9c92067175bb2186f9f6a48c3b3b",
+    "test/coverage.test.mjs": "f5fe44271db145bd66a2d0d678a18e2bcc5a6e1bccd430fd97bdd4dc3ffbbb5e",
+    "test/trial-schedule.test.mjs": "895fb2c20fd13765375e980cf8cdf96c9b42f27e814ee00c4cc4366f3a97c7cd"
+  },
+  "sourceDigest": "6181db9c571b8f524243d7e350cfb242e6fa7d4abc9937500fd94034d60b46f5",
+  "sourceDigestAlgorithm": "SHA256 of sorted compact Python JSON manifest",
+  "log": {
+    "path": "spikes/byos-remediation/evidence/local-report-schedule-tests.txt.gz",
+    "rawSha256": "015430209b99d8446b4e4f552f28c10602690ea273e40eeb017a3a50a0ed1147",
+    "gzipSha256": "ad03faf0594d9e7b2c1e38b4b3f7febb4e4776d072fe5eee5488ea24cc66b50c"
+  },
+  "preservedA5": {
+    "sha256": "e64336fa09d9e257e1f18ca598be72aadbba1b1e6eafa2413576c0f6e5034218",
+    "trialCount": 100,
+    "distinctSeeds": 25
+  },
+  "scope": "Report arithmetic, fixture-input planning and in-memory report regressions only. No retry of the platform-flagged continuation, no new sync/browser test; platform clearance unconfirmed.",
+  "lint": "PASS; no errors",
+  "newRuntimeSafetyAcceptance": false
+}
