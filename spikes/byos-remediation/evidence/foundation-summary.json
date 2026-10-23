@@ -1,0 +1,50 @@
+{
+  "status": "FOUNDATION_ONLY_FULL_ACCEPTANCE_PENDING",
+  "baselineCommit": "496e9a8a1b605c81e71026d0ab217e6ccb9f41a4",
+  "attempts": [
+    {
+      "attempt": "A1",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a1-initial-console.json",
+      "evidenceSha256": "c5a09031ee4f8e3685a292818ac84e1695a1d585da13b8a0c7864f1340dc153b",
+      "sourceDigest": "abb9baba1f0fd4fcfca5fa555d0e8cc4d01cea1cda964a6595979ac3a83d545f"
+    },
+    {
+      "attempt": "A2",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a2-initial-console.json",
+      "evidenceSha256": "9136ea9918f01cbc7b8d2ffff1e3bc4b8f09dcabb180c0a0f73a31e767a2359d",
+      "sourceDigest": "da02ed0ad96e153e470f30439c96a36c9db352d5a71f056f5613790a8d23e98f"
+    },
+    {
+      "attempt": "A3",
+      "result": "PASS",
+      "evidence": "spikes/byos-remediation/evidence/a3-2026-10-23T10-10-44-672Z.json",
+      "evidenceSha256": "76a2f9de25f1bc2dfbe909654eca3164216dba56d3e6cd8bcb99e4aa9a737622",
+      "sourceDigest": "64cc9a4c775de4ebd755692a4c9e522f7ee041e2875342ce61020890ad52a41c"
+    }
+  ],
+  "a3": {
+    "evidenceHashVerified": true,
+    "scenarios": 38,
+    "stateObservations": 152,
+    "falseStateCount": 0,
+    "requestCount": 270,
+    "methods": {
+      "GET /drive/v3/files/byos-remediation-v1": 113,
+      "PATCH /upload/drive/v3/files/byos-remediation-v1": 21,
+      "GET /drive/v3/files": 2,
+      "GET /dav/backup.zip": 113,
+      "PUT /dav/backup.zip": 21
+    },
+    "quotaWeights": "UNKNOWN",
+    "providerCost": "UNKNOWN"
+  },
+  "fullSafety": "NOT_RUN",
+  "rendererCrashes": "NOT_RUN",
+  "normalDiagnostics": "NOT_RUN",
+  "latencyPercentiles": "INELIGIBLE_UNTIL_HARD_GATES",
+  "independentReview": "PENDING",
+  "nativeGates": "LEAD_OWNED",
+  "deployment": "NOT_AUTHORIZED"
+}

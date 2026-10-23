@@ -1,0 +1,15 @@
+{
+  "package-lock.json": "7a83167782ded554ace6c36811c5e11c044f70f26f2cfeeb4c272c69eaff8693",
+  "package.json": "2a7a18a44ef275448854bbb0543a37a9d1c728e7ff008cb2ca0e760707eca3f5",
+  "src/evidence.mjs": "1facd69adb3e8fa67b199609fbc976938423730d1c16c3ac3c621cfdb4831927",
+  "src/experiments.mjs": "681dec275a29d67637e29f5c0d851e0cba57b35a47445b74ecbd95ca15317ab3",
+  "src/focused.mjs": "f9248c732b337c2c5633a24fce02a4fd6cc7701121d0b287306647b8ff1f5ec7",
+  "src/protocol.mjs": "b02a24f7edd8bcd6f9b66926cb1f8e9eb66c75ccf84311849613608c1112c823",
+  "src/report.mjs": "3ba5b0c128bbb5f42d07a1488117d1900e0280b935369e2990b705bb4ce0af0e",
+  "src/revisions.mjs": "baf5a3e42fd892d612b1e122e43187c8c4c60891cb5456c1fffc3f34f637d7d8",
+  "src/store.mjs": "b94609c6106f69d922b7c42c6418e0d116a8a781b2cb7bddda81e4d7608ea0fd",
+  "src/test-support.mjs": "070d4a44afa911db1fd05f91801dbd9bf521beebba76bfbc37f8360c5ad88e2e",
+  "test/foundation.test.mjs": "339124d43318580f3785427eec811442c9d638975959183182423cdf3c686470",
+  "../byos-sync/src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
+  "../byos-sync/package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23"
+}

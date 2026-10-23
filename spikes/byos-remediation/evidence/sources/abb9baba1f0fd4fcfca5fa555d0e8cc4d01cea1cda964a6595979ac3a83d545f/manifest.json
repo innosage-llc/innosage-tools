@@ -1,0 +1,10 @@
+{
+  "package-lock.json": "7a83167782ded554ace6c36811c5e11c044f70f26f2cfeeb4c272c69eaff8693",
+  "package.json": "d6c96401ac463f542ea7cb81b8f1338a78ab8ef6f8f4f7e7e19e91c3f2110718",
+  "src/focused.mjs": "bdb26e1998a22c936f00545fff8ff306237362ee96a058858d451bb1ec83393a",
+  "src/protocol.mjs": "b2ccc9595f5c1a05c3abad2dcc6ac16b657ea0f70656d7b8ecd07fa299ac9c07",
+  "src/revisions.mjs": "9b7f465bd3e1767b82269a7b86adab763d1c835902e4ff99ff0d137bf2869645",
+  "src/store.mjs": "312d2e62457f0654979a716390e07813da4539b0cb50c8f2371fdb4680965267",
+  "src/test-support.mjs": "86e85a63362bec8f1295ec92863dcec3cff362c31eb76181a09fcc3d6d8e3ff8",
+  "../byos-sync/src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b"
+}

@@ -1,0 +1,13 @@
+{
+  "package-lock.json": "7a83167782ded554ace6c36811c5e11c044f70f26f2cfeeb4c272c69eaff8693",
+  "package.json": "263ccefa5c224d5b56140247004e671648cb5267d6e26c5b6bba240494c452b7",
+  "src/evidence.mjs": "cccb7a8cba33d113b264ed932b180d2aaff5835cde17903ab22b706d13e6f123",
+  "src/experiments.mjs": "78413fa1d8b9bd24670019a48199723ba49a61de645f99987ec2c03776a0202e",
+  "src/focused.mjs": "a7faeb193f4159f3ccd0aa8fbd967c949dd09249535f5ce6999bca8d14f6ef16",
+  "src/protocol.mjs": "e782cfbb7d2a2a519999193b8efb2b6a4d41c00f8299fa2c5afdd8bf7c206b7a",
+  "src/revisions.mjs": "9b7f465bd3e1767b82269a7b86adab763d1c835902e4ff99ff0d137bf2869645",
+  "src/store.mjs": "312d2e62457f0654979a716390e07813da4539b0cb50c8f2371fdb4680965267",
+  "src/test-support.mjs": "86e85a63362bec8f1295ec92863dcec3cff362c31eb76181a09fcc3d6d8e3ff8",
+  "../byos-sync/src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
+  "../byos-sync/package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23"
+}

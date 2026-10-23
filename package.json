@@ -11,6 +11,7 @@
     "lint": "oxlint && eslint",
     "test:seo": "node scripts/verify-seo.mjs",
     "test:byos-sync": "npm --prefix spikes/byos-sync test",
+    "test:byos-remediation": "npm --prefix spikes/byos-remediation test",
     "test:deploy": "node --test scripts/deploy-*.test.mjs",
     "test:recorder": "node --experimental-strip-types --test scripts/recorder.test.ts",
     "test:visual-remix": "node --experimental-strip-types --test scripts/visual-remix.test.ts",
