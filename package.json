@@ -37,7 +37,8 @@
     "prepare": "bash scripts/install-git-hooks.sh",
     "test:visual-remix-scene-auth": "npm --prefix workers/video-scissors-mcp run test:scene-auth",
     "test:visual-remix-transport": "node --test scripts/visual-remix-transport.test.mjs",
-    "test:visual-remix-scene-browser": "npm --prefix workers/video-scissors-mcp run test:scene-browser"
+    "test:visual-remix-scene-browser": "npm --prefix workers/video-scissors-mcp run test:scene-browser",
+    "test:byos-native-overlay": "node spikes/byos-sync/native-overlay/check.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",
