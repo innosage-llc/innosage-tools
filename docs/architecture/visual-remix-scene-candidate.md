@@ -174,3 +174,12 @@ These synthetic local results remain separate from actual-image staging evidence
 and from gated live-host acceptance.
 
 Revoked/expired D1 bindings are rejected by the Scene resource-server validator so the official provider emits its standard Bearer invalid_token challenge with canonical resource_metadata and exact Scene scopes. Actual-provider regressions assert those headers after revocation, expiry and wrong audience; fresh Scene and existing video access remain covered. Data operations still enforce their independent D1 authorization fences.
+
+
+## Host authorization recovery evidence boundary
+
+See [host verification and recovery](../runbooks/visual-remix-host-verification.md). Founder verification2026-10-24 failed with an authorization report and standalone SVG fallback, no application preview/Apply. Its exact failed tool/status/token cause remains UNKNOWN. Existing deployed-version/counter metadata is separate from the recording: consent attempts were20/20, blocking the next consentGET at investigation time. The later Founder instruction below supersedes that artificial quota boundary.
+
+The recovery patch preserves official OAuth challenges,15minute leases,5minute proofs, exact scopes, no refresh and browser-onlyApply/export. It adds a post-validation lease-race tool auth hint, safe response-only correlation/build/tool headers, explicit storage-limit429, honest browser-consent labeling and bounded client failure/expiry details. No persistent log collection, new grant, schema or counter reset. Local repeat-grant/proposal/preview/Apply tests are engineering evidence; real ChatGPT host verification remains separately gated.
+
+Founder instruction1792828696.730639 removes purely self-imposed staging task quotas. The enabled Scene composition now records shared HTTP and Scene OAuth attempts without lifetime20/2000 admission caps; Scene HTTP accounting likewise remains without a2000cap. Default legacy entrypoint retains its limits. SQL20shares/16requests-per-share and DCR20 retain their bounded-retention/abuse role; no trigger/schema/credential/scope/lifetime change. Free-plan/provider errors stop/report; no paid resource, quota exhaustion test, unbounded retry or live grant is authorized.

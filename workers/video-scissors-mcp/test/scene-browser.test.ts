@@ -44,6 +44,14 @@ test(`inactive transport + actual provider/D1/controller: consent through revoke
     for(let i=0;i<30;i++) {status=JSON.parse((await f.rpc(token.access_token,'tools/call',{name:'proposal_status',arguments:{requestId:'actual-adapter'}})).data.result.content[0].text);if(status.applied)break;await new Promise(r=>setTimeout(r,10));}
     assert.equal(status.applied,true);assert.equal(status.terminal,true);
     assert.equal(controller.snapshot().revision,2);assert.equal(controller.snapshot().scene.nodes[0].text,'Before');
+    const reread=JSON.parse((await f.rpc(token.access_token,'tools/call',{name:'get_scene',arguments:{}})).data.result.content[0].text);
+    assert.equal(reread.revision,2);
+    const second={...proposal,baseRevision:reread.revision,requestId:'second-post',scene:{...reread.scene,nodes:reread.scene.nodes.map((n:{id:string})=>n.id==='headline'?{...n,text:'Second post',x:160,y:360}:n)}};
+    assert.equal(JSON.parse((await f.rpc(token.access_token,'tools/call',{name:'propose_scene',arguments:{proposal:second}})).data.result.content[0].text).state,'queued');
+    await waitFor(()=>controller.status('second-post')==='preview');assert.equal(controller.snapshot().scene.nodes[0].text,'Before');assert.equal(controller.apply('second-post'),'applied');transport.notifyLocalChange();
+    await waitFor(()=>requests.some(r=>r.path.endsWith('/sync')&&JSON.parse(r.body).snapshot.revision===3));
+    const final=JSON.parse((await f.rpc(token.access_token,'tools/call',{name:'get_scene',arguments:{}})).data.result.content[0].text);assert.equal(final.revision,3);assert.equal(final.scene.nodes[0].text,'Second post');assert.equal(final.scene.nodes[0].y,360);
+    const stale=await f.rpc(token.access_token,'tools/call',{name:'propose_scene',arguments:{proposal:{...proposal,requestId:'stale-repeat'}}});assert.equal(JSON.parse(stale.data.result.content[0].text).error,'STALE_OR_BROWSER_UNAVAILABLE');
     assert.ok(requests.every(r=>!r.body.includes('local-render')));
     const png=controller.exportPNG();await transport.disconnect();
     assert.equal(transport.snapshot().revocationConfirmed,true);assert.equal(controller.exportPNG().size,png.size);

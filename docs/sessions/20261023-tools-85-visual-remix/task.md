@@ -305,3 +305,12 @@ exact implementation review and native gate follow. No new service, credential,
 lease/scope expansion, production deployment, Master closure or live host run.
 
 Independent review identified a late-create cancellation edge: invalid confirmation metadata could prevent the previously requested revoke. The lead now honors cancellation/disposal immediately after validated bound ownership, before confirmation metadata checks. Added cancellation/disposal with invalid/elapsed confirmation and lost-revoke regressions; exact-head re-review required.
+
+
+## Failed Founder host verification —2026-10-24
+
+Recorded on Master85: https://github.com/innosage-llc/innosage-tools/issues/85#issuecomment-6381604683 . User recording shows authorization error, no application candidate/Apply and standaloneSVG fallback. Exact failed tool/status/token cause and recording-time deployment UNKNOWN; do not infer401/globaloutage/acceptedstaging. Read-only current control plane confirms Worker5009fa24/source43b0e018, loggingdisabled, OAuth20/20, no proposal rows. Current counters900HTTP/20OAuth/15DCR/16projects; Scene188HTTP/6shares. No secrets/proofs/content read. Root inspected existing task conversation read-only; no live MCP tool, grant, retry or cleanup.
+
+Canonical conditional Astra principal read-only consultation identified diagnostic/consent-label/lease-race recovery gaps, not a proven incident root cause. Lead owns small repair and local tests; independent Sol review and nativeCI before staging. New basec43f4cc incorporates already-merged unrelated BYOS104/105; preserve their work and do not touch84/102 worktrees. No budget reset/increase, persistent access expansion, production or Master closure. Host acceptance remains pending a correlated real run; new consent also requires a separately approved quota action at20/20.
+
+Latest trusted Founder instruction1792828696.730639 removes artificial task quotas while preserving security/abuse/provider limits and free-plan-only spending. Lead classified20OAuth/lifetimeHTTP counters as test admission caps and removed only those admission predicates while retaining monotonically increasing accounting. SQL20stored shares/16requests and DCR20 remain storage/abuse bounds; no mutation of deployed counters/triggers or new grant. The earlier statement requiring approval merely to remove20consent-attempt quota is superseded. Exact host cause remains unknown; live per-run/OAuth permissions remain separate.

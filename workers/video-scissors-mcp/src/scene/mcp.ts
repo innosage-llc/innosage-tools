@@ -4,20 +4,21 @@ import { z } from 'zod';
 import { SceneMailbox } from './mailbox';
 import { boundedBody, reply } from '../http';
 import { SCENE_SCOPES, SCENE_LIMITS, sceneJSON, sceneToolResult, type SceneAuth } from '../../../../lib/visual-remix-remote';
+import { SCENE_SERVICE_VERSION, sceneReauthorization } from './diagnostics';
 
-export function sceneMcpHandler(db: D1Database, auth: SceneAuth) {
+export function sceneMcpHandler(db: D1Database, auth: SceneAuth, resource: string) {
   return createMcpHandler(() => {
-    const server = new McpServer({ name: 'visual-remix-scene', version: '0.1.6' });
+    const server = new McpServer({ name: 'visual-remix-scene', version: SCENE_SERVICE_VERSION });
     const store = new SceneMailbox(db), id = z.string().regex(/^[a-zA-Z0-9_-]{1,96}$/);
     const meta = { securitySchemes: [{ type: 'oauth2', scopes: [...SCENE_SCOPES] }] };
     const invoke = async (action: () => Promise<unknown>) => {
-      if (!await store.lease(auth)) return { isError: true, content: [{ type: 'text' as const, text: 'SCENE_EXPIRED_OR_REVOKED' }] };
+      if (!await store.lease(auth)) return sceneReauthorization(resource);
       try { return sceneToolResult(await action()); }
       catch { return { isError: true, content: [{ type: 'text' as const, text: 'SCENE_COMMAND_REJECTED' }] }; }
     };
-    server.registerTool('get_scene', { description: 'Read explicitly shared editable Scene data. No raster bytes. A suspended browser is unavailable.', inputSchema: z.object({}).strict(), _meta: meta, annotations: { readOnlyHint: true } },
+    server.registerTool('get_scene', { description: 'Read the current shared Scene before proposing. No raster bytes. Keep the external Visual Remix browser open. On authorization failure stop and request fresh manual connection; no proposal or edit was completed. Never substitute an SVG download for the application preview.', inputSchema: z.object({}).strict(), _meta: meta, annotations: { readOnlyHint: true } },
       async () => invoke(async () => await store.snapshot(auth) ?? { error: 'BROWSER_UNAVAILABLE' }));
-    server.registerTool('propose_scene', { description: 'Queue one bounded Scene proposal for browser preview. Queued/rendering/preview are pending; Apply and all exports require browser interaction. Use get_scene project/generation/revision, a unique requestId, explanation and full descriptor-only scene.', inputSchema: z.object({ proposal: z.unknown() }).strict(), _meta: meta },
+    server.registerTool('propose_scene', { description: 'Queue one bounded Scene proposal for preview in the external Visual Remix browser, not a ChatGPT image viewer. Queued/rendering/preview are pending; only proposal_status applied confirms manual Apply. Use fresh get_scene project/generation/revision, a unique requestId, explanation and full descriptor-only scene. On authorization failure no preview was delivered; stop, preserve work and request manual reconnection, never claim completion or substitute SVG.', inputSchema: z.object({ proposal: z.unknown() }).strict(), _meta: meta },
       async input => invoke(async () => await store.propose(auth, input.proposal) ?? { error: 'STALE_OR_BROWSER_UNAVAILABLE' }));
     server.registerTool('proposal_status', { description: 'Read actual request state. Preview awaits manual Apply; queued is never completed.', inputSchema: z.object({ requestId: id }).strict(), _meta: meta, annotations: { readOnlyHint: true } },
       async input => invoke(async () => await store.status(auth, input.requestId) ?? { error: 'UNKNOWN_REQUEST' }));
