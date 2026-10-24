@@ -1,0 +1,61 @@
+{
+  "change": "console-only byte-preserving gzip packaging to satisfy standard git whitespace guard; no exemption or bypass",
+  "oldManifestSha256": "a27fe081abae8a049f9d40196d634855303d6b042144e2d05a8d28c50d387d0b",
+  "checkerBeforeSha256": "bb1b5195eba03100aebf6ff303539332d1ef7df29343a9671103e62994721a51",
+  "checkerAfterSha256": "b54e83abc01beb50a48a071b4f399b4ba966f570b2f760e3c31e6fd3fc3b2f2f",
+  "harnessSha256": "b9c7fa30bcdf2aa5c80ba4b846f1033ceb1951298c3269ed1bf8cbfec723c73b",
+  "oracleSha256": "d0348554dd3437a0837e576ac7b56f879ad1f9001347ee9791f8ae60e0ef45f5",
+  "criterionMapSha256": "e28c746d8f7e6edf173349f9c1b105ff27e68b8b53ad726a3e7c4256b840c1aa",
+  "protectedArtifactsUnchanged": 46,
+  "consoles": [
+    {
+      "case": "T10",
+      "path": "evidence/T10/console.txt.gz",
+      "encoding": "gzip",
+      "originalSha256": "6a50dae9f74cdc7208b595c235c37431859152018be78058d933adbf30474aae",
+      "originalBytes": 905,
+      "gzipSha256": "44e9591c54ad589f54857c14429e8cb4158f8b7a5264ad76c71cc391634143d8",
+      "gzipBytes": 502,
+      "preservation": "Exact original console bytes, including native SDK trailing whitespace; original retained in ignored .generated.",
+      "receiptBeforeSha256": "226ecda3846d5b2193a49a6733987bd9241382fcae8e2284a1c841619409ba53",
+      "receiptAfterSha256": "e4e6cb69b66fa7ca99fa8034d1baec8925cefa82ae70a63c5e21446c3f70f5a9"
+    },
+    {
+      "case": "T100",
+      "path": "evidence/T100/console.txt.gz",
+      "encoding": "gzip",
+      "originalSha256": "898553aa3adc2a949a597b43d31517d5c3c86c427d7329d572b74539af87f99a",
+      "originalBytes": 905,
+      "gzipSha256": "4e4fd66cbcb7b48e7af797ed25f1125ccdf4584aa470346b4d7549cce3101fa9",
+      "gzipBytes": 502,
+      "preservation": "Exact original console bytes, including native SDK trailing whitespace; original retained in ignored .generated.",
+      "receiptBeforeSha256": "90814e7cc2099e9ff6c3d201f4ffe53e8a170210fbe7a21c9844c32cdba00b93",
+      "receiptAfterSha256": "79f6f0257193b1a60664fe8f8b99f125092f5151a1a5a6740b1420c21256653d"
+    },
+    {
+      "case": "H100",
+      "path": "evidence/H100/console.txt.gz",
+      "encoding": "gzip",
+      "originalSha256": "1b94e31c7ea5eaa08b9a2895b831edc794c648efc0ce82dcea7e0577897b4c3f",
+      "originalBytes": 905,
+      "gzipSha256": "cdd9c68a2ff5bced79e1c63a171b01a38364c028c39e77d24dbca81d0b1f56f8",
+      "gzipBytes": 502,
+      "preservation": "Exact original console bytes, including native SDK trailing whitespace; original retained in ignored .generated.",
+      "receiptBeforeSha256": "9b4a67cc7e9c06c2bbff3ca51056fc19e88c81bcfb65887fed0f87ee3cccd7c1",
+      "receiptAfterSha256": "f00c4604204c4fd66d252817ec58332b2b5294df2169dc2e208a65759b6470e0"
+    },
+    {
+      "case": "setup-sandbox-denied-T10",
+      "path": "evidence/setup-sandbox-denied-T10/console.txt.gz",
+      "encoding": "gzip",
+      "originalSha256": "2a62b08afd73eb7698836683f83b4414a0e6e31ba41e7415888f4fa8a0be903c",
+      "originalBytes": 178,
+      "gzipSha256": "49042ff716dcdc2f544ddd1ff7cce1e0d78b96be9895187fcac1a783b21556f0",
+      "gzipBytes": 163,
+      "preservation": "Exact original console bytes, including native SDK trailing whitespace; original retained in ignored .generated.",
+      "receiptBeforeSha256": "78acfbddcd74001cc81383b3f331aad4d3edde8a84bb0288ef9dd129e6e391c7",
+      "receiptAfterSha256": "9156425b1ac88769b7e9cf8035a608c5649c86b45fff577f82a095ad6c33eae6"
+    }
+  ],
+  "scope": "No source/assertion/fixture/case-result/native-payload change; no research rerun. Checker adds console gzip/hash checks only."
+}
