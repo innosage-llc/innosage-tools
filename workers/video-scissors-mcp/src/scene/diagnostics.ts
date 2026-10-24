@@ -12,6 +12,8 @@ export function sceneReauthorization(resource: string) {
 
 // Response-only diagnostics: no persistence, request bodies, headers or user IDs.
 export function sceneDiagnostic(response: Response, requestId: string, revision: unknown, tool?: string): Response {
+  // A Workers upgrade carries a separate webSocket extension; return it intact.
+  if (response.status === 101) return response;
   const headers = new Headers(response.headers);
   headers.set('X-Visual-Remix-Request-Id', requestId);
   headers.set('X-Visual-Remix-Version', SCENE_SERVICE_VERSION);

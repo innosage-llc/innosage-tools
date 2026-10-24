@@ -9,11 +9,11 @@ import { SCENE_FIELDS } from '../../../../lib/visual-remix-remote.ts';
 export const origin = 'https://localhost', scene = origin + '/scene/mcp', video = origin + '/mcp';
 export const scopes = ['scene:read','scene:propose'];
 export const snapshot = () => ({ schemaVersion: 1, projectId: 'synthetic-project', generation: 'synthetic-generation', revision: 0, scene: emptyScene() });
-export async function fixture(assetsDirectory?: string) {
+export async function fixture(assetsDirectory?: string, withBridge = false) {
   const workerRoot = fileURLToPath(new URL('../../', import.meta.url));
   const bundle = await build({ absWorkingDir: workerRoot, entryPoints: ['test/fixtures/scene-auth.ts'], bundle: true, format: 'esm', platform: 'browser', conditions: ['workerd'], external: ['node:*','cloudflare:*'], write: false });
   let egress = 0;
-  const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], d1Databases: ['DB'], kvNamespaces: ['OAUTH_KV'], bindings: { EXPERIMENT_ENABLED: 'true' }, ...(assetsDirectory ? { assets: { directory: assetsDirectory, binding: 'ASSETS', run_worker_first: true, routerConfig: { has_user_worker: true } } } : {}), outboundService: () => { egress++; return new Response('Egress denied', { status: 403 }); } }));
+  const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], d1Databases: ['DB'], kvNamespaces: ['OAUTH_KV'], ...(withBridge ? {durableObjects:{VIDEO_BRIDGE:{className:'VideoScissorsBridgeDO',useSQLite:true}}} : {}), bindings: { EXPERIMENT_ENABLED: 'true' }, ...(assetsDirectory ? { assets: { directory: assetsDirectory, binding: 'ASSETS', run_worker_first: true, routerConfig: { has_user_worker: true } } } : {}), outboundService: () => { egress++; return new Response('Egress denied', { status: 403 }); } }));
   const db = await mf.getD1Database('DB');
   for (const file of ['migrations/0001.sql','candidate-migrations/scene.sql']) await db.exec(readFileSync(new URL('../../' + file, import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' '));
   const request = (path: string, options: RequestInit = {}) => mf.dispatchFetch(origin + path, { ...options, redirect: 'manual' });

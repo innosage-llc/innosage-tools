@@ -146,3 +146,15 @@ test('recovery: lease loss after outer validation returns an SDK auth hint and n
   assert.equal(body.result.isError,true);assert.match(body.result.content[0].text,/no proposal was delivered/);const challenge=body.result._meta['mcp/www_authenticate'][0];assert.ok(challenge.includes('error="invalid_token"'));assert.match(challenge,/error_description=/);assert.ok(challenge.includes('scope="scene:read scene:propose"'));assert.ok(challenge.includes(origin+'/.well-known/oauth-protected-resource/scene/mcp'));assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_requests').first('n'),0);f.noEgress();
  }finally{await f.mf.dispose();}
 });
+
+
+test('recovery diagnostics preserve the enabled candidate video WebSocket upgrade and one-use proof',async()=>{
+ const f=await fixture(undefined,true);
+ try{
+  const p=await (await f.json('/remote/projects',{})).json(),auth={project:p.project,epoch:p.epoch,credential:p.credential};
+  const ticket=await (await f.json('/remote/bridge/join',{auth})).json();
+  const connect=()=>f.request(`/remote/bridge/${p.project}/${p.epoch}`,{headers:{Origin:origin,Upgrade:'websocket','Sec-WebSocket-Protocol':`video-scissors-wakeup.v1, join.${ticket.proof}`}});
+  const response=await connect();assert.equal(response.status,101);assert.equal(response.headers.get('sec-websocket-protocol'),'video-scissors-wakeup.v1');assert.ok(response.webSocket);response.webSocket.accept();response.webSocket.close(1000,'local-review-regression');
+  assert.equal((await connect()).status,401,'diagnostics never permit reuse of the join proof');f.noEgress();
+ }finally{await f.mf.dispose();}
+});

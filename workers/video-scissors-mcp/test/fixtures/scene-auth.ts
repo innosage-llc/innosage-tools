@@ -7,3 +7,5 @@ export default { fetch(request: Request, env: Env, ctx: ExecutionContext) {
   if (request.headers.get('x-fixture-lease-race') === 'true') return sceneMcpHandler(env.DB,{purpose:'visual-remix',shareId:'expired-share',projectId:'race-project',generation:'race-generation',epoch:1},new URL('/scene/mcp',request.url).href).fetch(request);
   return candidate.fetch(request, { ...env, SCENE_BUILD_REVISION:'a'.repeat(40), SCENE_REMOTE_ENABLED: request.headers.get('x-fixture-disabled') === 'true' ? 'false' : 'true' }, ctx);
 } };
+
+export { VideoScissorsBridgeDO } from '../../src/VideoScissorsBridgeDO';
