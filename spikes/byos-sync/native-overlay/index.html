@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Native RxDB Overlay</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --danger-bg: #fef2f2;
+      --danger-text: #991b1b;
+      --danger-border: #fca5a5;
+      --warn-bg: #fffbeb;
+      --warn-text: #92400e;
+      --warn-border: #fcd34d;
+      --btn-bg: #e2e8f0;
+      --btn-hover: #cbd5e1;
+      --btn-primary: #0284c7;
+      --btn-primary-text: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+    h1 { font-size: 1.35rem; font-weight: 700; }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      border: 1px solid #f87171;
+      letter-spacing: 0.05em;
+    }
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    button {
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.45rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--btn-bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { background: var(--btn-hover); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary { background: var(--btn-primary); color: var(--btn-primary-text); border-color: #0369a1; }
+    .status-region {
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      margin-bottom: 0.75rem;
+    }
+    .status-region[data-error="true"] {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border-color: var(--danger-border);
+      font-weight: 600;
+    }
+    .warning-box {
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border: 1px solid var(--warn-border);
+      border-radius: 3px;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+    .notice-box {
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+      border-radius: 3px;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: #fff;
+      color: var(--text);
+      resize: vertical;
+    }
+    textarea:focus { outline: 2px solid var(--btn-primary); }
+    textarea:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+    .side-by-side {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 640px) {
+      .side-by-side { grid-template-columns: 1fr; }
+    }
+    .diff-pane {
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.5rem;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+    .diff-pane h3 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.25rem;
+    }
+    pre {
+      font-family: inherit;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 80px;
+      background: #ffffff;
+      padding: 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+    }
+    .manual-merge {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      border: 1px dashed var(--btn-primary);
+      background: #f0f9ff;
+      border-radius: 3px;
+    }
+    .draft-card {
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: #fff;
+    }
+    .draft-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Native RxDB Overlay</h1>
+    <span class="badge" id="spike-badge">OFFLINE SPIKE / NOT FOR PRODUCT</span>
+  </header>
+
+  <div id="writer-notice" role="alert" class="notice-box" hidden></div>
+  <div id="status" role="status" aria-live="polite" class="status-region"></div>
+  <div id="warning" role="alert" aria-live="assertive" class="warning-box" hidden></div>
+
+  <section class="panel">
+    <div class="actions">
+      <button id="save-btn" type="button" class="primary">Save locally</button>
+      <button id="sync-btn" type="button">Sync</button>
+      <button id="verify-btn" type="button">Verify remote</button>
+    </div>
+    <label for="editor">Markdown editor</label>
+    <textarea id="editor" aria-label="Markdown editor" rows="10"></textarea>
+  </section>
+
+  <section class="panel">
+    <h2>Conflict Resolution & Compare</h2>
+    <div class="actions" style="margin-top: 0.75rem;">
+      <button id="use-cloud-btn" type="button">Use cloud</button>
+      <button id="keep-local-btn" type="button">Keep local</button>
+      <button id="merge-manual-btn" type="button">Merge manually</button>
+    </div>
+
+    <div id="manual-merge-section" class="manual-merge" hidden>
+      <label for="merge-editor">Manual merge editor</label>
+      <textarea id="merge-editor" aria-label="Manual merge editor" rows="6"></textarea>
+      <div style="margin-top: 0.5rem;">
+        <button id="commit-merge-btn" type="button" class="primary">Commit manual merge</button>
+      </div>
+    </div>
+
+    <div class="side-by-side">
+      <div class="diff-pane">
+        <h3>Local</h3>
+        <pre id="local-body"></pre>
+      </div>
+      <div class="diff-pane">
+        <h3>Cloud</h3>
+        <pre id="cloud-body"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Recovery drafts</h2>
+    <div id="recovery-area" style="margin-top: 0.5rem;"></div>
+  </section>
+
+  <script type="module" src="/ui-bundle.js"></script>
+</body>
+</html>

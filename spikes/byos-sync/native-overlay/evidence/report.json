@@ -1,0 +1,295 @@
+{
+  "master": "https://github.com/innosage-llc/innosage-tools/issues/102",
+  "master_state": "OPEN",
+  "verdict": "NATIVE UX SPIKE PASS; HOLD FOR CHECKPOINT",
+  "source_sha": "1650aeef74a2ee0701c48a174ce5df16142fa207",
+  "source_hashes": {
+    "native-overlay/browser-entry.mjs": "8f8468969e40c14c45ce1421d355434d37bf5f109d828d168c7144201d726587",
+    "native-overlay/browser-runtime.mjs": "f10e90a714c9eced0568d48d1926fdc271a0fdab43e5f741a9f69e88f9506a43",
+    "native-overlay/browser.mjs": "2c545deb30acda3e625460744b074a8c1147b77bd9a1347989ad4f217127f769",
+    "native-overlay/check.mjs": "f6d67eead57e13a5d1622e63b2696bb1c28ba8000da746ba12ec35fd543b2781",
+    "native-overlay/checkpoint.mjs": "cc8020cd185df3326a6e79d4a3226b190d0a76e4e8e9528b97367e16b0e1fb7a",
+    "native-overlay/crash-browser.mjs": "2e2175492a5fa54201e5bff3ba10e3b7eede8b97671979bc244c9114019daafa",
+    "native-overlay/faults.mjs": "32bd0b8cc8e628e76fdd87317aec13223b01586f36be18594e0984fae4422188",
+    "native-overlay/fixtures.mjs": "27dbb6f62331fd5d6890117df9968612c37af66720c1f75699eaeba1b7d3ff02",
+    "native-overlay/index.html": "7eea9d31b5cbf9d78fddabd2d055a1c6aab5a9fd3bd8d7bd296fe8beb2e59e5e",
+    "native-overlay/leader-browser.mjs": "152c3d7054950c0ec779a6c4718ed2bc6829fcc7ac44db58caf3cca24a053185",
+    "native-overlay/measure-overlay.mjs": "c150712fedf96c692c4d8f3250a88f03c513954278b498be5839d8d542480384",
+    "native-overlay/measure.mjs": "e57592a1905f1bc56c7a83318ddb94bc560bf75f05e8a82c57a91a0e12ed399c",
+    "native-overlay/page-store.mjs": "562bafdaa34fce2f35db3d4b052fc849bed15034daa4c47e8258db0354b6ba05",
+    "native-overlay/report.mjs": "04e160e6d79e7a21ee206baf80e71b1077a6a520ba767fc4c8d4d9666dd73f70",
+    "native-overlay/run.mjs": "22fbf0c64aac3292a1c1fc4ccecbdd298518e68310468027b3ccfc2838603a4d",
+    "native-overlay/ui-browser.mjs": "723c32b316a52e28efb0aadb5204f76f208a83a69a9f5d97c8017c74fa62432b",
+    "native-overlay/ui-server.mjs": "488821d0b906a20d932b29a35fea84bd51ef0742542de11ed31bc7061f342968",
+    "native-overlay/ui.mjs": "0f6698117eb6d8cb386e9ec89e72e85bbc41b2ca05dbfd1872eaed25e5bc8f8a",
+    "package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23",
+    "src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
+    "node_modules/rxdb/src/replication-protocol/default-conflict-handler.ts": "68b39a886312a1ccfab383a407753055be5915ba47a1201f1aaf109ff6dcdfc6",
+    "node_modules/rxdb/src/plugins/replication-google-drive/downstream.ts": "982b3a7f5a6a5811be9d265408dbca998bc2981d4d123f2956e01d471efba8d0",
+    "node_modules/rxdb/src/plugins/replication-google-drive/upstream.ts": "58339944af6e3b9fcf4f838924d526fb86b61b7ea1ae953ad7a3ed1de90e4313"
+  },
+  "source_digest": "b192fb6c09f602d7725e136fae5ad9b02f8ce0a430c91cbcb819d19a12b74458",
+  "runtime": "v22.22.3",
+  "browser": "151.0.7922.34",
+  "rxdb": "17.6.0",
+  "label": "MOCK-TESTED",
+  "real_provider": "REAL-PROVIDER-NOT-RUN",
+  "counted_store_acknowledgements": 618,
+  "seed_summary": {
+    "requested": 100,
+    "executed": 100,
+    "passed": 100,
+    "scope": "Seeded native conflict edits, remote invalidations, same-process reopen and resolution races; real browser crashes/tabs separately bounded"
+  },
+  "numeric_safety_gates": {
+    "silent_lost_acknowledged_edits": 0,
+    "false_remote_synced": 0,
+    "irreversible_lost_conflict_versions": 0,
+    "journal_clobbers": 0,
+    "unauthorized_workspace_tab_effects": 0,
+    "applicability": "Zero violations of executed complete-body fixture assertions, not proof of all distributed schedules"
+  },
+  "matrix": [
+    {
+      "id": "F01",
+      "scenario": "journal-first ACK and durable reopen",
+      "status": "PASS",
+      "evidence": [
+        "results:F01",
+        "browser-results:F11/after-local-ack"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F01"
+    },
+    {
+      "id": "F02",
+      "scenario": "two-device different-page native propagation",
+      "status": "PASS",
+      "evidence": [
+        "results:F02"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F02"
+    },
+    {
+      "id": "F03",
+      "scenario": "same-page fork: Master Wins, complete local/cloud recovery",
+      "status": "PASS",
+      "evidence": [
+        "results:F03",
+        "ui-results:F03",
+        "crash-results:F11"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F03"
+    },
+    {
+      "id": "F04",
+      "scenario": "journal-only conflict editing while remote advances; other pages sync",
+      "status": "PASS",
+      "evidence": [
+        "results:F04",
+        "ui-results:F04"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F04"
+    },
+    {
+      "id": "F05",
+      "scenario": "duplicate/stale/self signals do not change intent",
+      "status": "PASS",
+      "evidence": [
+        "results:F05",
+        "ui-results:F05"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F05"
+    },
+    {
+      "id": "F06",
+      "scenario": "Use cloud retires only explicitly discarded session",
+      "status": "PASS",
+      "evidence": [
+        "results:F06",
+        "ui-results:F06"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F06"
+    },
+    {
+      "id": "F07",
+      "scenario": "Keep local normal native write and verified retirement",
+      "status": "PASS",
+      "evidence": [
+        "results:F07",
+        "ui-results:F07"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F07"
+    },
+    {
+      "id": "F08",
+      "scenario": "manual merge keeps conflict source bodies until verification",
+      "status": "PASS",
+      "evidence": [
+        "results:F08",
+        "ui-results:F08",
+        "crash-results:F11"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F08"
+    },
+    {
+      "id": "F09",
+      "scenario": "remote advance during resolution retains losing draft",
+      "status": "PASS",
+      "evidence": [
+        "results:F09",
+        "ui-results:F09"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F09"
+    },
+    {
+      "id": "F10",
+      "scenario": "network/access/fault schedules preserve durable intent",
+      "status": "PASS",
+      "evidence": [
+        "fault-results:F10"
+      ],
+      "replay": "node native-overlay/faults.mjs"
+    },
+    {
+      "id": "F11",
+      "scenario": "native IndexedDB renderer crash at durable/push/cleanup boundaries",
+      "status": "PASS",
+      "evidence": [
+        "browser-results:F11",
+        "crash-results:F11"
+      ],
+      "replay": "node native-overlay/browser.mjs && node native-overlay/crash-browser.mjs"
+    },
+    {
+      "id": "F12",
+      "scenario": "same-workspace clean tab refreshes",
+      "status": "PASS",
+      "evidence": [
+        "browser-results:F12",
+        "ui-results:F12"
+      ],
+      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs"
+    },
+    {
+      "id": "F13",
+      "scenario": "dirty tab retains editor body with warning",
+      "status": "PASS",
+      "evidence": [
+        "browser-results:F13",
+        "ui-results:F13"
+      ],
+      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs"
+    },
+    {
+      "id": "F14",
+      "scenario": "both-dirty race, leadership handoff and session recovery",
+      "status": "PASS",
+      "evidence": [
+        "browser-results:F14",
+        "ui-results:F14",
+        "leader-results:F14"
+      ],
+      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs"
+    },
+    {
+      "id": "F15",
+      "scenario": "workspace isolation, duplicates and unavailable BroadcastChannel",
+      "status": "PASS",
+      "evidence": [
+        "browser-results:F15"
+      ],
+      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs"
+    },
+    {
+      "id": "F16",
+      "scenario": "30 same-time and hidden-list checkpoint native blocker replay",
+      "status": "FAIL",
+      "evidence": [
+        "results:F16",
+        "hidden-checkpoint:F16"
+      ],
+      "replay": "node native-overlay/run.mjs --fixture=F16 && node native-overlay/checkpoint.mjs"
+    },
+    {
+      "id": "F17",
+      "scenario": "10/1000-page synthetic calls/bytes/latency and foreground cost",
+      "status": "PASS",
+      "evidence": [
+        "measurements:F17",
+        "overlay-measurements:F17"
+      ],
+      "replay": "node native-overlay/measure.mjs && node native-overlay/measure-overlay.mjs"
+    }
+  ],
+  "checkpoint": {
+    "same_time": {
+      "gate": "NATIVE CHECKPOINT BLOCKER / HOLD",
+      "remote_count": 30,
+      "cold_count": 16,
+      "undiscovered_ids": [
+        "page016",
+        "page017",
+        "page018",
+        "page019",
+        "page020",
+        "page021",
+        "page022",
+        "page023",
+        "page024",
+        "page025",
+        "page026",
+        "page027",
+        "page028",
+        "page029"
+      ],
+      "expected": 30,
+      "actual": 16,
+      "configuration": "stock17.6.0 batchSize10, same modifiedTime; live:false harness",
+      "hidden_listing": "NOT_RUN in this increment"
+    },
+    "hidden_listing": {
+      "gate": "NATIVE CHECKPOINT BLOCKER / HOLD",
+      "expected": "# Latest 0\n\nExact new intent.",
+      "actual": "# Original 0"
+    }
+  },
+  "measurements": {
+    "native_baseline": [
+      {
+        "scale": 10,
+        "n": 3,
+        "p50_ms": 317.59899999999993,
+        "p95_ms": 319.232792
+      },
+      {
+        "scale": 1000,
+        "n": 3,
+        "p50_ms": 1468.6039999999994,
+        "p95_ms": 1485.1880420000016
+      }
+    ],
+    "overlay": [
+      {
+        "scale": 10,
+        "n": 3,
+        "p50_settle_ms": 266.6465830000002,
+        "p95_settle_ms": 273.534041
+      },
+      {
+        "scale": 1000,
+        "n": 3,
+        "p50_settle_ms": 1435.2060839999976,
+        "p95_settle_ms": 1475.6447920000028
+      }
+    ],
+    "caveat": "n=3 per scale, synthetic loopback only. Local foreground projection precedes cloud settle; native network cursor order is unchanged. No provider performance winner."
+  },
+  "limitations": [
+    "Published native checkpoint discovery remains unsafe for shipping-quality Google Drive sync.",
+    "No real provider, OAuth, deployment, private content or Draft changes.",
+    "Stale duplicate success can leave native metadata ahead of remote; journal is retained instead of claiming convergence.",
+    "Graceful native cancellation can stall during active writes; actual tab closure/handoff is tested separately."
+  ],
+  "replay": "npm run test:byos-native-overlay:full",
+  "raw_evidence": "raw-evidence.json.gz"
+}

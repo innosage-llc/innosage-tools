@@ -16,3 +16,13 @@ gates and exact-head verification remain mandatory before merge.
 Next increment: canonical generated UI, native browser/crash/handoff coverage,
 100 recorded seeded schedules, checkpoint HOLD and full evidence/AC report.
 Master remains OPEN; Founder final acceptance is not substituted.
+
+S0/S1 integrated: PR #104, main `1650aeef`. Second increment adds the exact
+canonical Gemini output and lead repairs, native browser/crash/handoff fixtures,
+measurements, 100 seeded schedules and consolidated AC report. Full replay is
+in progress on the integrated backend; no Master-ready claim before final gates.
+
+Full integrated replay PASS: 100/100 seeded schedules; F01–F15 PASS, F16 native
+checkpoint FAIL/HOLD, F17 measured at 10/1,000 pages (n=3 each). Fresh outputs and
+source digest are checked in native-overlay/evidence/run-receipt.json. Verdict:
+NATIVE UX SPIKE PASS; HOLD FOR CHECKPOINT. This does not grant product adoption.

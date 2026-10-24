@@ -33,13 +33,17 @@ const remoteBodies=m=>Object.fromEntries([...m.files.values()].filter(f=>f.name.
  try {const d=JSON.parse(f.body.toString());return d.id?[[d.id,d.body]]:[];}catch{return [];}}));
 async function world(opts={}) {
  const m=await mock(opts);allowed.add(m.url);
- const clients=[];
+ const clients=[],acknowledged=[];
  const suffix=crypto.randomUUID().replaceAll('-','');
  const open=async(device,session=device,hook)=>{
   const s=await openPageStore({workspace:device+suffix,session,multiInstance:false,hook});
-  s.workspace='remote'+suffix;clients.push(s);return s;
+  s.workspace='remote'+suffix;
+  const save=s.save.bind(s);
+  s.save=async(page,body)=>{const view=await save(page,body);
+    acknowledged.push({device,session,page,body,editId:view.journal?.draft.editId});return view;};
+  clients.push(s);return s;
  };
- return {m,open,clients,async close(){for(const s of clients)if(!s.closed)await s.close();await m.close();allowed.delete(m.url);}};
+ return {m,open,clients,acknowledged,async close(){for(const s of clients)if(!s.closed)await s.close();await m.close();allowed.delete(m.url);}};
 }
 async function baseline(w) {
  const a=await w.open('a'),b=await w.open('b');
@@ -184,7 +188,7 @@ try {
    if(f.id==='F16'&&result.gate!=='PASS'){row.status='FAIL';row.expected_native_blocker=true;}
   }catch(e){Object.assign(row,{status:'FAIL',store_status:'FAIL',error:e.stack});}
   finally{
-   row.requests=w.m.requests;row.faults=w.m.faults;
+   row.requests=w.m.requests;row.faults=w.m.faults;row.acknowledged=w.acknowledged;
    row.methods=Object.fromEntries([...new Set(w.m.requests.map(r=>r.method))].map(method=>
     [method,w.m.requests.filter(r=>r.method===method).length]));
    row.bytes_up=w.m.requests.reduce((n,r)=>n+r.bytes_up,0);
@@ -227,7 +231,7 @@ try {
     assert.equal(remote.page,cloud);assert.equal(v.status,'needs-resolution');
     assert.equal(v.journal.sourceLocal.body,T.B);assert.equal(v.journal.sourceCloud.body,T.C);}
    else {assert.equal(v.body,expected);assert.equal(v.journal,null);assert.equal(remote.page,expected);}
-   seedResults.push({seed,action,raced,status:'PASS',schedule,view:v,remote,
+   seedResults.push({seed,action,raced,status:'PASS',schedule,acknowledged:w.acknowledged,view:v,remote,
     requests:w.m.requests.length,bytes_up:w.m.requests.reduce((n,r)=>n+r.bytes_up,0),
     bytes_down:w.m.requests.reduce((n,r)=>n+r.bytes_down,0)});
   }catch(error){seedResults.push({seed,status:'FAIL',schedule,error:String(error)});process.exitCode=1;}

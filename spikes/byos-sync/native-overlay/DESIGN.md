@@ -54,3 +54,15 @@ request/fault ledger. Synthetic timing must report actual n and distributions.
 F01–F15 plus real browser/crash coverage gate UX PASS. F16 checkpoint failure
 forces HOLD FOR CHECKPOINT; do not patch native downstream here. 100 seeds target.
 All provider evidence is MOCK-TESTED; REAL-PROVIDER-NOT-RUN.
+
+Implementation comparison (same pinned Draft SHA): `LocalMutationChannel` and
+`TabSyncRuntime` validate runtime scopes, suppress source-tab/self event IDs and
+seen duplicate IDs, then dispatch only to matching scoped subscribers.
+`CrossTabCoordinator` selects BroadcastChannel or localStorage transport. This
+spike reuses those invariants, not that implementation: database/workspace
+identity scopes native RxDB reactive delivery; RxDB/broadcast-channel owns its
+fallback and leader election. Web Locks only prevent duplicate edit-session
+ownership (including copied sessionStorage); they are not a second sync engine.
+If safe writer ownership is unavailable, writes are visibly disabled. Native
+fallback without window.BroadcastChannel is fixture-tested. Source-tab save ACK
+is the awaited journal/page operation, never a peer transport event.

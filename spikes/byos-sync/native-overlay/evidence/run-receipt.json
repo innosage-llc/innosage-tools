@@ -1,0 +1,14 @@
+{
+  "replay": "npm run test:byos-native-overlay:full",
+  "exit_code": 0,
+  "elapsed_seconds": 409.2,
+  "fresh_outputs_verified": true,
+  "source_digest": "b192fb6c09f602d7725e136fae5ad9b02f8ce0a430c91cbcb819d19a12b74458",
+  "source_base_sha": "1650aeef74a2ee0701c48a174ce5df16142fa207",
+  "counted_store_acknowledgements": 618,
+  "independent_review": "PASS: reviewed application source hashes preserved",
+  "native_gatekeeper": "PR#104 passed; final increment native gate runs via submission/merge scripts",
+  "hosted_ci": "Not substituted for required local native gate",
+  "full_run_source_digest": "5e7495c032ca2043291be7a329171f59a86d19bba27b96ada573b3bee13a353e",
+  "post_run_metadata_repair": "F16 and F17 replay commands corrected; application and assertion logic unchanged; report regenerated from retained raw outcomes"
+}

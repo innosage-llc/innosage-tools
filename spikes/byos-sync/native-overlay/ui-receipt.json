@@ -1,0 +1,40 @@
+{
+  "provider": "Google Antigravity CLI",
+  "cli_version": "1.4.6",
+  "requested_model": "gemini-3.8-flash-high",
+  "requested_effort": "high",
+  "catalog_admitted": true,
+  "provider_observed_model": "UNKNOWN",
+  "provider_observed_effort": "UNKNOWN",
+  "status": "SUCCESS",
+  "duration_seconds": 199.381291,
+  "usage": {
+    "input_tokens": 71509,
+    "output_tokens": 31553,
+    "thinking_tokens": 26445,
+    "cache_read_tokens": 75315,
+    "total_tokens": 103062
+  },
+  "cost": "UNKNOWN",
+  "mode": "accept-edits",
+  "sandbox": true,
+  "denied_actions": [],
+  "disclosure_scope": "Only approved synthetic issue UI requirements, PageStore API contract, DESIGN.md and fixtures.mjs; no credentials, private user content, unrelated source or Draft source",
+  "authorization": "Exact scoped Founder disclosure approval relayed 2026-10-24 after initial pre-execution platform rejection; one evidence-based retry executed",
+  "input_hashes": {
+    "prompt.txt": "789ae2afb900da815e685cfac626af7128dbbb74511299c663014fce3eaa8aa4",
+    "DESIGN.md": "72745490063fd5c9fa248ef315f87e679bc04df422dba5e3f7cec0c9890db272",
+    "fixtures.mjs": "7e0cea89de1bc4098e24208b9e86997f947060f74a01758e240ae33c727d6d60"
+  },
+  "output_hashes": {
+    "ui.mjs": "530b0fb539a74b874bfe5858d94a7387802c90a91e10d9adaf835039443947aa",
+    "index.html": "7eea9d31b5cbf9d78fddabd2d055a1c6aab5a9fd3bd8d7bd296fe8beb2e59e5e"
+  },
+  "review": "Independent read-only PASS for repaired output; see product session review record",
+  "binary_sha256": "cab004f3c5c6cb7dc8b8712d3bc30431bd4480b17ff38a07eb1865abeffd2f27",
+  "routed_model": "UNKNOWN (CLI requested route preserved)",
+  "reviewed_output_hashes": {
+    "ui.mjs": "0f6698117eb6d8cb386e9ec89e72e85bbc41b2ca05dbfd1872eaed25e5bc8f8a",
+    "index.html": "7eea9d31b5cbf9d78fddabd2d055a1c6aab5a9fd3bd8d7bd296fe8beb2e59e5e"
+  }
+}
