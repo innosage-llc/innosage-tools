@@ -1,0 +1,16 @@
+{
+  "id": "I1",
+  "status": "INCONCLUSIVE",
+  "phase": "same-receiver-incomplete-cleared",
+  "error": "Error: WAIT_TIMEOUT blocked status",
+  "stack": "Error: WAIT_TIMEOUT blocked status\n    at until (file://<byos>/changes-integration/execute.mjs:16:148)\n    at async file://<byos>/changes-integration/execute.mjs:59:85",
+  "classification": "Setup/runtime/capture failure",
+  "admittedOrReserved": 180,
+  "actualRequests": 180,
+  "mockRequests": 180,
+  "uiRequests": 0,
+  "nodeResponses": 180,
+  "snapshots": 4,
+  "explicitSyncOnly": true,
+  "noStorageReset": true
+}

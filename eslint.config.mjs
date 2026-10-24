@@ -17,6 +17,7 @@ const eslintConfig = defineConfig([
     "spikes/byos-sync/.browser-bundle.js",
     "spikes/byos-sync/native-overlay/.generated/**",
     "spikes/byos-sync/changes-feasibility/.generated/**",
+    "spikes/byos-sync/changes-integration/.generated/**",
     "spikes/byos-remediation/.browser-bundle.js",
     "next-env.d.ts",
   ]),

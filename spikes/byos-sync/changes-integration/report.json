@@ -1,0 +1,187 @@
+{
+  "protocol": "tools111-outcome-v1",
+  "issue": "https://github.com/innosage-llc/innosage-tools/issues/111",
+  "state": "INDEPENDENT_REVIEW_PASS_NATIVE_GATES_PENDING",
+  "scope": "Bounded offline explicit-sync integration; not deployed product or real Drive qualification",
+  "freeze": "freeze-v003.json",
+  "freezeSha256": "2e3f348c6d889684811bfe537e368baf64d9b3a6bc58c26094c35939ad3d0819",
+  "sourceArchiveSha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+  "oracleSha256": "8a18ea549ca412a303d3b0aee84aa7846bc0ee1107cd69328d7252c52f1b407c",
+  "currentSourceMatchesFreeze": true,
+  "attempts": {
+    "I1-a1": {
+      "status": "INCONCLUSIVE",
+      "freezeVersion": "001",
+      "elapsedMs": 270.886333,
+      "sourceUnchanged": true,
+      "timedOut": false,
+      "rawEventSha256": "5b116e64cd8ba0a70edb032949f0725725465026793137eea98950cd5208d18b",
+      "resultSha256": "24d9d3e2897fb01c76702798d957a3c1e015f3ed15b219103009ca20028be86a",
+      "receipt": "evidence/I1-a1/receipt.json",
+      "receiptSha256": "04ba42de6ac5d2ac899319e878ecc5ad280a4d964291c92c631267c378c87861",
+      "actualRequests": 0,
+      "reservedRequests": 0
+    },
+    "I1-a2": {
+      "status": "INCONCLUSIVE",
+      "freezeVersion": "001",
+      "elapsedMs": 179145.922125,
+      "sourceUnchanged": true,
+      "timedOut": true,
+      "rawEventSha256": "2823efa06708d1e5a3b92e52c7082fc2f054094cb4f6a3038a8a243ab931f6d8",
+      "resultSha256": null,
+      "receipt": "evidence/I1-a2/receipt.json",
+      "receiptSha256": "13038581c5233077fc828bf0e949486a8656eb5d1ffe53e2ec53930a5137fb34",
+      "actualRequests": null,
+      "reservedRequests": null
+    },
+    "I1-a3": {
+      "status": "INCONCLUSIVE",
+      "freezeVersion": "002",
+      "elapsedMs": 17139.061792,
+      "sourceUnchanged": true,
+      "timedOut": false,
+      "rawEventSha256": "2d2eec80971607be006bc042e20e6e4dde676f2783d35226d8a8b03311a2a044",
+      "resultSha256": "696cc9db2dd044fd91a47d896357de43c92769bb92b3f1d204d033a592ff8ada",
+      "receipt": "evidence/I1-a3/receipt.json",
+      "receiptSha256": "e396c63aeafe228fe3ab73a325d396a86f29fc6395712923108a2b1155a31163",
+      "actualRequests": 180,
+      "reservedRequests": 180
+    },
+    "I1-a4": {
+      "status": "PASS",
+      "freezeVersion": "003",
+      "elapsedMs": 7296.249291,
+      "sourceUnchanged": true,
+      "timedOut": false,
+      "rawEventSha256": "f4a932216fd90b0161e4833cafc8b5312e20fe45c98d701fcaf439e497b23db6",
+      "resultSha256": "ab0a654d9f54bdb62cd5dcf8a32ff53a0ae8ccff3fada48f3d80ed9a128efcf8",
+      "receipt": "evidence/I1-a4/receipt.json",
+      "receiptSha256": "1edd87f0cd2ada2cdb26811bdccd122eb29384d6bdc68428a82e4df8536bb031",
+      "actualRequests": 217,
+      "reservedRequests": 217
+    },
+    "I2-a1": {
+      "status": "PASS",
+      "freezeVersion": "003",
+      "elapsedMs": 2535.82575,
+      "sourceUnchanged": true,
+      "timedOut": false,
+      "rawEventSha256": "69007b8b7d5700a57a7d0b0a53742d2017e9fb24767cb33f30356fe5ba09d5dc",
+      "resultSha256": "66994453f824c68fdf8880e54471a8619465bd1ed6349146ecdc90fc86895aef",
+      "receipt": "evidence/I2-a1/receipt.json",
+      "receiptSha256": "abb389508a1346c50fbafd512b7d776d49cdaf6ea48ff2e4acbdefa13b517b16",
+      "actualRequests": 805,
+      "reservedRequests": 805
+    },
+    "I3_CRASH-a1": {
+      "status": "PASS",
+      "freezeVersion": "003",
+      "elapsedMs": 3309.388292,
+      "sourceUnchanged": true,
+      "timedOut": false,
+      "rawEventSha256": "70b6b811c63751611b2d2c8dfc14d4cf4684fa34c7f44794a9812c1445b1e2b7",
+      "resultSha256": "8c263c5f85f9ce5b5abff902e5fb639fa961899f410e9bf4544897a30a067703",
+      "receipt": "evidence/I3_CRASH-a1/receipt.json",
+      "receiptSha256": "4b3c70c5819752f028c2b414b29f81b1b1721474712437c3df8655ef4b224b29",
+      "actualRequests": 265,
+      "reservedRequests": 526
+    },
+    "I3_TABS-a1": {
+      "status": "PASS",
+      "freezeVersion": "003",
+      "elapsedMs": 2094.021042,
+      "sourceUnchanged": true,
+      "timedOut": false,
+      "rawEventSha256": "1d0d90d3a020aee0b979a48853f319a462e814a93ef154baf7a66bdcb06dc0a5",
+      "resultSha256": "4025e873a58831427cc1aed9480ee821f91b54e16433704835ffa18efe3d5453",
+      "receipt": "evidence/I3_TABS-a1/receipt.json",
+      "receiptSha256": "45cd64baf2ae4c675cc1c16a040aa0930588a0aa4d06d0cf31779811a5900694",
+      "actualRequests": 200,
+      "reservedRequests": 394
+    }
+  },
+  "unchangedProtectionSources": {
+    "native-overlay/page-store.mjs": "5b906e26c2cc979b494ef9a19d346bd5daefd13cc426f7e6d21ad089acb68490",
+    "native-overlay/ui.mjs": "2607c04c691d33fca650458dbd47c9cecd2db03e7969e2ce68af922f6aaef45c",
+    "native-overlay/fixtures.mjs": "8a370ba8eca9783ec9f7b2dedc6b9db193d47ca67f0af65a7718d4560f6ac14e"
+  },
+  "criteria": {
+    "I1": {
+      "status": "BOUNDED_PASS_PENDING_REVIEW",
+      "new": [
+        "I1-a4"
+      ],
+      "reuse": [
+        "S0_TRANSITION-a2",
+        "S1_PAGE_TRAVERSAL-a1",
+        "S2_BOOTSTRAP_PERSIST_BARRIER-a1",
+        "S3_READ_FAILURE_REPLAY-a1"
+      ],
+      "master": [
+        "A3",
+        "A4"
+      ],
+      "basis": "EXACT_SOURCE_AFFECTED_PATH_REUSE; see acceptance.md"
+    },
+    "I2": {
+      "status": "BOUNDED_PASS_PENDING_REVIEW",
+      "new": [
+        "I2-a1"
+      ],
+      "reuse": [
+        "S5_LOST_RESPONSE_INTENT-a3"
+      ],
+      "master": [
+        "A2",
+        "A3",
+        "A5"
+      ],
+      "basis": "Unchanged journal/resolution/verification and native upstream helper; successful startup now covered by I1/I2/I3, see acceptance.md"
+    },
+    "I3": {
+      "status": "BOUNDED_PASS_PENDING_REVIEW",
+      "new": [
+        "I3_CRASH-a1",
+        "I3_TABS-a1"
+      ],
+      "reuse": [
+        "F01",
+        "F05",
+        "F10",
+        "F11",
+        "F15"
+      ],
+      "master": [
+        "A1",
+        "A2",
+        "A5"
+      ],
+      "basis": "Actual persistent renderer crash and tab handoff; unchanged protection guards reused, see acceptance.md"
+    }
+  },
+  "negativeBoundaries": {
+    "S4_NO_EVENT": "Original boundary failure retained; actual-contract applicability unestablished, no automatic veto",
+    "F04": "Original unattended NOT_PROVEN retained; explicit-sync evidence does not change it",
+    "F16": "Original stock finite tie/hidden-list failures retained; changed adapter is a distinct hypothesis",
+    "I1-a2": "Actual premature status exposure before factory returned; assertion failed and teardown watchdog expired; not a PASS",
+    "I1-a3": "Native inner retries prevented intended observed failure boundary; INCONCLUSIVE preserved"
+  },
+  "publication": "publication/provenance.json supplies redacted copies of private-stack files; receipts continue to hash originals. duplicate-source-archives.json binds byte-identical decoded pre/post archives to retained frozen archives. All originals remain locally intact.",
+  "limitations": [
+    "Mock only, finite inventory and retained applicable changes; no arbitrary-concurrency snapshot or provider completeness proof",
+    "Explicit sync only; no unattended claim",
+    "Supported hypothesis: app-managed My Drive folder and stable access; Shared Drive and inherited permission changes not qualified. Existing allDrives flags alone do not prove support or enforce My Drive-only admission.",
+    "I1 incompleteSearch injection demonstrates safe response handling, not occurrence under this query",
+    "50ms transaction timeout / 1000ms retry are fixture overrides; no production timing/scale claim",
+    "No stock rollback, full-check, identity rotation or state deletion",
+    "No independent-review, required-gate, merge or Founder-acceptance claim until their separate receipts"
+  ],
+  "roles": {
+    "executionAtCapture": "Requested V4 Sol HIGH worker; historical receipt retained",
+    "continuation": "Founder selected V1, incumbent lead executes directly; independent Sol HIGH reviewer requested",
+    "routedProviderIdentity": "UNKNOWN",
+    "fullV4Admission": "NOT_PROVEN"
+  },
+  "independentReview": "../../../docs/sessions/20261025-tools-111-integration/review-v1.md"
+}

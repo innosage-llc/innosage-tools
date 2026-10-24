@@ -1,8 +1,6 @@
 // Approved changed adapter hypothesis. Public pinned native primitives only.
-import {createRequire} from 'node:module';
-const require=createRequire(import.meta.url);
-const {replicateRxCollection}=require('rxdb/plugins/replication');
-const {initDriveStructure,runInTransaction,handleUpstreamBatch,fetchDocumentContents}=require('rxdb/plugins/replication-google-drive');
+import {replicateRxCollection,startReplicationOnLeaderShip} from 'rxdb/plugins/replication';
+import {initDriveStructure,runInTransaction,handleUpstreamBatch,fetchDocumentContents} from 'rxdb/plugins/replication-google-drive';
 export const TAG='tools109-changes-v1';
 export async function createChangesReplication(options,{event=()=>{},batchSize=options.pull.batchSize,onCreated=()=>{}}={}){
  const googleDrive={apiEndpoint:'https://www.googleapis.com',transactionTimeout:60000,space:'drive',folderPath:'',...options.googleDrive};
@@ -18,7 +16,10 @@ export async function createChangesReplication(options,{event=()=>{},batchSize=o
     const remaining=capacity-documents.size;
     let files,terminal=false;
     if(cursor.phase==='inventory'){
-     const page=await get('/drive/v3/files',{q:`'${driveStructure.docsFolderId}' in parents and trashed = false`,pageSize:String(remaining),...(cursor.inventoryPageToken?{pageToken:cursor.inventoryPageToken}:{}),orderBy:'name',fields:'nextPageToken,files(id,name,mimeType,parents,modifiedTime,size)',spaces:googleDrive.space,supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+     const page=await get('/drive/v3/files',{q:`'${driveStructure.docsFolderId}' in parents and trashed = false`,pageSize:String(remaining),...(cursor.inventoryPageToken?{pageToken:cursor.inventoryPageToken}:{}),orderBy:'name',fields:'nextPageToken,incompleteSearch,files(id,name,mimeType,parents,modifiedTime,size)',spaces:googleDrive.space,supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+     // An explicit incomplete inventory is not a verified bootstrap. Fail before
+     // returning documents or a cursor; native retry retains its durable checkpoint.
+     if(page.incompleteSearch===true)throw new Error('INCOMPLETE_INVENTORY_SEARCH');
      files=page.files;cursor.inventoryPageToken=page.nextPageToken??null;
      if(!page.nextPageToken)cursor={tag:TAG,phase:'changes',token:cursor.startToken};
     }else{
@@ -55,5 +56,11 @@ export async function createChangesReplication(options,{event=()=>{},batchSize=o
  state.googleDrive=googleDrive;state.driveStructure=driveStructure;
  event({type:'adapter-created',replicationIdentifier:state.replicationIdentifier,deletedField:state.deletedField,metaInfo:await state.metaInfoPromise,autoStart:state.autoStart,config:{googleDrive,pullBatchSize:batchSize,pushBatchSize:options.push.batchSize,live:options.live,retryTime:options.retryTime,waitForLeadership:options.waitForLeadership}});
  state.error$.subscribe(error=>event({type:'native-adapter-error',error:String(error),parameters:error.parameters??null}));
- await onCreated(state);await state.start();return state;
+ await onCreated(state);
+ // Construction stays gated until metadata/instrumentation are ready. Match the
+ // native factory: expose state before non-live settlement so consumers can
+ // observe errors while initial replication is still retrying.
+ state.autoStart=true;
+ startReplicationOnLeaderShip(options.waitForLeadership,state);
+ return state;
 }

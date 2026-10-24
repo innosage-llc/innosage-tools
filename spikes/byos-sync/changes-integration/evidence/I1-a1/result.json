@@ -1,0 +1,16 @@
+{
+  "id": "I1",
+  "status": "INCONCLUSIVE",
+  "phase": "setup",
+  "error": "Error: listen EPERM: operation not permitted 127.0.0.1",
+  "stack": "Error: listen EPERM: operation not permitted 127.0.0.1\n    at Server.setupListenHandle [as _listen2] (node:net:1918:21)\n    at listenInCluster (node:net:1997:12)\n    at node:net:2206:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)",
+  "classification": "Setup/runtime/capture failure",
+  "admittedOrReserved": 0,
+  "actualRequests": 0,
+  "mockRequests": 0,
+  "uiRequests": 0,
+  "nodeResponses": 0,
+  "snapshots": 0,
+  "explicitSyncOnly": true,
+  "noStorageReset": true
+}

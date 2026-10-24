@@ -1,0 +1,219 @@
+{
+  "id": "I3_CRASH",
+  "status": "PASS",
+  "browser": "151.0.7922.34",
+  "method": "CDP Page.crash real Chromium renderer; retained persistent profile and native IndexedDB; same receiver and metadata",
+  "profile": "changes-integration/.generated/profiles/I3_CRASH-a1",
+  "identity": {
+    "databaseName": "overlay693636383561643838336532663432383239656637393865336331366538633635",
+    "collectionName": "pages",
+    "replicationIdentifier": "native-overlay",
+    "deletedField": "_deleted",
+    "metaCollection": "rx-replication-meta-cb06b1ba2f9bc44ba2707f5e71c584115d1a786e6dc5c796d919d68ebdd34167",
+    "metaSchema": {
+      "title": "RxReplicationProtocolMetaData",
+      "primaryKey": {
+        "key": "id",
+        "fields": [
+          "itemId",
+          "isCheckpoint"
+        ],
+        "separator": "|"
+      },
+      "type": "object",
+      "version": 0,
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 102
+        },
+        "isCheckpoint": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ],
+          "minLength": 1,
+          "maxLength": 1
+        },
+        "itemId": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "checkpointData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "docData": {
+          "type": "object",
+          "properties": {
+            "_attachments": {
+              "type": "object"
+            },
+            "_deleted": {
+              "type": "boolean"
+            },
+            "_meta": {
+              "additionalProperties": true,
+              "properties": {
+                "lwt": {
+                  "maximum": 1000000000000000,
+                  "minimum": 1,
+                  "multipleOf": 0.01,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lwt"
+              ],
+              "type": "object"
+            },
+            "_rev": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 262144,
+              "type": "string"
+            },
+            "editId": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        },
+        "isResolvedConflict": {
+          "type": "string"
+        },
+        "_rev": {
+          "type": "string",
+          "minLength": 1
+        },
+        "_attachments": {
+          "type": "object"
+        },
+        "_deleted": {
+          "type": "boolean"
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "lwt": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000000000000000,
+              "multipleOf": 0.01
+            }
+          },
+          "additionalProperties": true,
+          "required": [
+            "lwt"
+          ]
+        }
+      },
+      "keyCompression": false,
+      "required": [
+        "id",
+        "isCheckpoint",
+        "itemId",
+        "_deleted",
+        "_rev",
+        "_meta",
+        "_attachments"
+      ],
+      "indexes": [
+        [
+          "_deleted",
+          "id"
+        ],
+        [
+          "_meta.lwt",
+          "id"
+        ]
+      ],
+      "encrypted": []
+    },
+    "logicalIdentifier": "rxdbreplicationnative-overlay"
+  },
+  "targetPosition": 42,
+  "heldCheckpoint": {
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000029"
+    }
+  },
+  "returnedCheckpoint": {
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000047"
+    }
+  },
+  "afterCheckpoint": {
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000052"
+    }
+  },
+  "configuration": {
+    "live": false,
+    "multiInstance": true,
+    "transactionTimeout": 50,
+    "retryTime": 1000
+  },
+  "preCrashBodies": [
+    {
+      "id": "page:a",
+      "page": "page",
+      "session": "a",
+      "seq": 2,
+      "state": "needs-resolution",
+      "draft": {
+        "id": "page",
+        "body": "# Local continued\n\nD — B extended during review.",
+        "editId": "a/2/a1684dd4-5523-4fc5-ba01-5ce68e120ac9"
+      },
+      "base": {
+        "id": "page",
+        "body": "# Original\n\nA — baseline.",
+        "editId": "a/1/cddfd38c-2e24-484c-8835-355a19a1d376"
+      },
+      "remote": {
+        "id": "page",
+        "body": "# Cloud\n\nC — independent device B intent.",
+        "editId": "remote-C"
+      },
+      "sourceLocal": {
+        "id": "page",
+        "body": "# Local\n\nB — offline device A acknowledged intent.",
+        "editId": "a/1/c1303563-7816-4984-8561-86638acfad89"
+      },
+      "sourceCloud": {
+        "id": "page",
+        "body": "# Cloud\n\nC — independent device B intent.",
+        "editId": "remote-C"
+      },
+      "sourceExternal": {
+        "id": "page",
+        "body": "# Cloud\n\nC — independent device B intent.",
+        "editId": "remote-C"
+      }
+    }
+  ],
+  "admittedOrReserved": 526,
+  "actualRequests": 265,
+  "mockRequests": 261,
+  "uiRequests": 4,
+  "nodeResponses": 0,
+  "snapshots": 6,
+  "explicitSyncOnly": true,
+  "noStorageReset": true
+}

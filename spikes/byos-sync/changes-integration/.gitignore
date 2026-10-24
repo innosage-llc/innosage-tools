@@ -1,0 +1,11 @@
+.generated/
+evidence/**/events.jsonl
+evidence/**/console.txt
+# Original private-stack captures stay locally intact; separately hashed copies
+# under publication/ replace only the workspace prefix for publication.
+evidence/I1-a2/events.jsonl.gz
+evidence/I1-a2/phase-02.json.gz
+
+# Byte-identical decoded snapshots map to retained frozen source archives.
+evidence/**/sources-pre.json.gz
+evidence/**/sources-post.json.gz

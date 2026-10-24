@@ -1,3 +1,17 @@
+# Active task: Tools #111 — adapter core integration acceptance
+
+Parent #102 revision4; child #111 revision3; #109 accepted/closed.
+Founder resumed canonical deliver-master-issue-v1 with incumbent root lead as sole
+executor. Historical V4 worker remains stopped; independent Sol HIGH reviewer
+/root/review_111_v1 is read-only. Routed/provider identities and usage UNKNOWN.
+Session: docs/sessions/20261025-tools-111-integration/.
+Four focused source003 receipts PASS; evidence/reuse map ready for review.
+Native gates, draft PR, integration and Founder outcome acceptance remain.
+No full-check, GUI work, real Drive/OAuth, deployment, paid services, cleanup,
+issue closure or owner-controlled #84/#85 checkout/session access.
+
+## Preserved earlier task records (not current #111 assignments)
+
 # Active task: Tools #84 offline remediation
 
 Master: https://github.com/innosage-llc/innosage-tools/issues/84
