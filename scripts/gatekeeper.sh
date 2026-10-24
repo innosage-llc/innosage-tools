@@ -27,6 +27,8 @@ echo "🛡️  Gatekeeper: Starting Validation Phase..."
 echo "🧪 Checking the offline BYOS harness..."
 npm ci --prefix spikes/byos-sync --ignore-scripts --no-audit --no-fund
 npm run test:byos-sync
+echo "🧪 Checking the native RxDB journal and offline fault fixtures..."
+npm run test:byos-native-overlay
 echo "🧪 Checking the offline BYOS remediation contract..."
 npm ci --prefix spikes/byos-remediation --ignore-scripts --no-audit --no-fund
 npm run test:byos-remediation

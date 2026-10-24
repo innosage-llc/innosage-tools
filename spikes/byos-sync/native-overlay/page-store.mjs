@@ -1,0 +1,307 @@
+import { createRxDatabase, addRxPlugin } from 'rxdb';
+import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
+import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
+import { replicateGoogleDrive, runInTransaction, getDocumentFiles,
+  fetchDocumentContents } from 'rxdb/plugins/replication-google-drive';
+
+addRxPlugin(RxDBLeaderElectionPlugin);
+const LIMIT = 256 * 1024;
+const pageSchema = {version:0, primaryKey:'id', type:'object', properties:{
+  id:{type:'string',maxLength:100},body:{type:'string',maxLength:LIMIT},
+  editId:{type:'string',maxLength:200}},required:['id','body','editId']};
+const draftSchema = {version:0,primaryKey:'id',type:'object',properties:{
+  id:{type:'string',maxLength:300},page:{type:'string',maxLength:100},
+  session:{type:'string',maxLength:100},seq:{type:'integer',minimum:1,maximum:1e9,multipleOf:1},
+  state:{type:'string'},draft:{type:'object'},base:{type:['object','null']},
+  remote:{type:['object','null']},sourceLocal:{type:['object','null']},
+  sourceCloud:{type:['object','null']}},
+required:['id','page','session','seq','state','draft','base','remote','sourceLocal','sourceCloud']};
+const copy = value => value == null ? null : structuredClone(value);
+export const content = p => p ? {id:p.id,body:p.body,editId:p.editId} : null;
+export const same = (a,b) => JSON.stringify(content(a)) === JSON.stringify(content(b));
+const nodeOwners = new Set();
+const key = (page,session) => `${page}:${session}`;
+const valid = (v,name) => {
+  if (!/^[a-zA-Z0-9_-]{1,90}$/.test(v)) throw new Error(`Invalid ${name}`);
+  return v;
+};
+
+/** Two native collections only. No conflict handler or transport override. */
+export async function openPageStore({workspace,session,multiInstance=true,hook=async()=>{}}) {
+  valid(workspace,'workspace'); valid(session,'session');
+  const db = await createRxDatabase({name:'overlay'+Array.from(workspace)
+    .map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(''),
+    storage:getRxStorageDexie(),multiInstance});
+  await db.addCollections({pages:{schema:pageSchema},localDrafts:{schema:draftSchema}});
+  const store=new PageStore(db,workspace,session,hook);
+  // A duplicated browser tab may inherit sessionStorage. Refuse its shared
+  // writer identity instead of allowing a second owner to clobber that journal.
+  const ownerKey=`overlay:${workspace}:${session}`;
+  if(globalThis.navigator?.locks) {
+    let grant;
+    const granted=new Promise(r=>{grant=r;});
+    store.lockTask=navigator.locks.request(ownerKey,{ifAvailable:true},async lock=>{
+      store.writer=!!lock; grant();
+      if(lock) await new Promise(r=>{store.releaseOwner=r;});
+    });
+    await granted;
+  } else if(typeof window==='undefined') {
+    store.writer=!nodeOwners.has(ownerKey);
+    if(store.writer) {nodeOwners.add(ownerKey);store.releaseOwner=()=>nodeOwners.delete(ownerKey);}
+  } else store.writer=false;
+  return store;
+}
+
+export class PageStore {
+  constructor(db,workspace,session,hook) {
+    Object.assign(this,{db,workspace,session,hook});
+    this.queue = Promise.resolve(); this.replication = null; this.state = 'clean';
+    this.subs = []; this.listeners = new Map(); this.closed = false; this.verified = new Map(); this.notificationVersions = new Map();
+    // Reactive reads are RxDB-native and workspace-scoped by database identity.
+    for (const collection of [db.pages,db.localDrafts])
+      this.subs.push(collection.$.subscribe(() => this.notify()));
+  }
+  serial(fn) {
+    const task = this.queue.then(fn);
+    this.queue = task.catch(() => {});
+    return task;
+  }
+  async page(id) { return content((await this.db.pages.findOne(id).exec())?.toJSON()); }
+  async draft(id) { return (await this.db.localDrafts.findOne(key(id,this.session)).exec())?.toJSON() ?? null; }
+  async view(id) {
+    const [p,d,all] = await Promise.all([this.page(id),this.draft(id),
+      this.db.localDrafts.find({selector:{page:id}}).exec()]);
+    const competing = d && all.some(other=>other.session!==this.session && !same(other.draft,d.draft));
+    const diverged = d && (!same(p,d.draft) || competing);
+    return {body:d?.draft.body ?? p?.body ?? '',
+      status:d?.state==='needs-resolution'||diverged ? 'needs-resolution' : d ?
+        (['blocked','reauth-required'].includes(this.state)?this.state:'local-saved') : this.verified.has(id)&&same(p,this.verified.get(id))?'remote-verified':this.state,
+      warning:!this.writer||!!(d?.state==='needs-resolution'||diverged),
+      writer:this.writer,
+      local:d?.draft.body ?? null,cloud:d?.remote?.body ?? null,
+      drafts:all.map(x=>({session:x.session,body:x.draft.body,state:x.state,seq:x.seq})),
+      page:p,journal:copy(d)};
+  }
+  subscribe(id,callback) {
+    if (!this.listeners.has(id)) this.listeners.set(id,new Set());
+    this.listeners.get(id).add(callback);
+    this.notify();
+    return () => this.listeners.get(id)?.delete(callback);
+  }
+  notify() {
+    if(this.closed) return;
+    for(const [id,listeners] of this.listeners) {
+      const version=(this.notificationVersions.get(id)??0)+1;
+      this.notificationVersions.set(id,version);
+      this.view(id).then(v=>{
+        if(version!==this.notificationVersions.get(id)||this.closed)return;
+        for(const cb of listeners)cb(v);
+      }).catch(()=>{});
+    }
+  }
+  async save(id,body) {
+    valid(id,'page');
+    if(!this.writer) throw new Error('Writer disabled: session already owned or safe ownership unavailable');
+    if(typeof body!=='string'||body.length>LIMIT) throw new Error('Draft body limit exceeded');
+    return this.serial(async()=>{
+      const [old,p,peers] = await Promise.all([this.draft(id),this.page(id),
+        this.db.localDrafts.find({selector:{page:id}}).exec()]);
+      const conflict = old && (peers.some(peer=>peer.session!==this.session && !same(peer.draft,old.draft)) || old.state==='needs-resolution' ||
+        !same(p,old.draft));
+      const seq=(old?.seq ?? 0)+1;
+      const draft={id,body,editId:`${this.session}/${seq}/${crypto.randomUUID()}`};
+      const row={id:key(id,this.session),page:id,session:this.session,seq,
+        state:conflict?'needs-resolution':'pending',draft,base:old?old.base:p,
+        remote:old?.remote??null,sourceLocal:old?.sourceLocal??(conflict?old.draft:null),
+        sourceCloud:old?.sourceCloud??null};
+      await this.hook('before-journal-update',copy(row));
+      const journalDoc=await this.db.localDrafts.findOne(row.id).exec();
+      const committed=journalDoc ? await journalDoc.incrementalModify(current=>{
+        const protectedConflict=current.state==='needs-resolution';
+        return {...row,seq:current.seq+1,state:protectedConflict?'needs-resolution':row.state,
+          remote:current.remote,sourceLocal:current.sourceLocal??row.sourceLocal,
+          sourceCloud:current.sourceCloud??row.sourceCloud};
+      }) : await this.db.localDrafts.insert(row);
+      const saved=committed.toJSON();
+      await this.hook('journal-committed',copy(saved));
+      // Never write an unresolved branch back into the replicated collection.
+      if(saved.state!=='needs-resolution') {
+        const pageDoc=await this.db.pages.findOne(id).exec();
+        let advanced=false;
+        if(pageDoc) await pageDoc.incrementalModify(current=>{
+          // RxDB retries this callback on a storage revision conflict. Do not
+          // rebase an unresolved branch implicitly onto a newly received page.
+          if(!same(current,p)){advanced=true;return current;}
+          return {...current,...draft};
+        });
+        else {
+          try {await this.db.pages.insert(draft);}
+          catch(error){if(error.code==='CONFLICT')advanced=true;else throw error;}
+        }
+        if(advanced) await committed.incrementalModify(current=>({...current,
+          state:'needs-resolution',sourceLocal:current.sourceLocal??copy(current.draft)}));
+        await this.hook('page-written',copy(saved));
+      }
+      this.state='local-saved'; this.notify();
+      return this.view(id);
+    });
+  }
+  async captureMaster(master) {
+    // Signals are intentionally ignored as authority. Call only with independently
+    // read remote data or current local collection state, never event arrival order.
+    const rows=await this.db.localDrafts.find({selector:{page:master.id}}).exec();
+    for(const row of rows) await row.incrementalModify(d=>{
+      if(same(master,d.draft)) return d;
+      return {...d,state:'needs-resolution',remote:copy(master),
+        sourceLocal:d.sourceLocal??copy(d.draft),sourceCloud:d.sourceCloud??copy(master)};
+    });
+  }
+  async connect(endpoint,options={}) {
+    if(this.connecting) return this.connecting;
+    this.connecting=this._connect(endpoint,options);
+    try{return await this.connecting;}catch(error){this.failure(error);throw error;}finally{this.connecting=null;}
+  }
+  async _connect(endpoint,{live=true,transactionTimeout=60000,retryTime=5000}={}) {
+    const url=new URL(endpoint);
+    if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.username||url.password)
+      throw new Error('Offline spike permits only HTTP 127.0.0.1 mock transport');
+    if(this.replication) return;
+    this.connection={endpoint,options:{live,transactionTimeout,retryTime}};
+    // Plugin initializes Drive folders BEFORE its own leadership gate.
+    // Wait here so only the native elected owner initializes/replicates.
+    await this.db.waitForLeadership();
+    if(this.closed) return;
+    this.replication=await replicateGoogleDrive({collection:this.db.pages,
+      replicationIdentifier:'native-overlay',googleDrive:{apiEndpoint:url.origin,
+        authToken:'synthetic',oauthClientId:'synthetic',folderPath:this.workspace,transactionTimeout},
+      pull:{batchSize:10},push:{batchSize:100},live,waitForLeadership:true,retryTime,
+      signalingOptions:{config:{iceServers:[]}}});
+    await this.hook('native-created',{workspace:this.workspace});
+    this.subs.push(this.replication.error$.subscribe(error=>{
+      const status=error.parameters?.status ?? error.parameters?.response?.status;
+      this.state=status===401?'reauth-required':'blocked'; this.notify();
+    }));
+    if(!live) await this.replication.awaitInitialReplication();
+    // Event streams invalidate UI only. They never retire or create draft copies.
+    for(const signal of ['conflict$','received$','sent$'])
+      this.subs.push(this.replication[signal].subscribe(()=>this.notify()));
+  }
+  failure(error) {
+    const status=error.parameters?.status;
+    if(status||error instanceof TypeError) {this.state=status===401?'reauth-required':'blocked';this.notify();}
+  }
+  async disconnect() {
+    if(this.replication)await this.replication.cancel();
+    this.replication=null;
+  }
+  async sync() {
+    if(this.syncing)return this.syncing;
+    this.syncing=this._sync().catch(error=>{this.failure(error);throw error;});
+    try{return await this.syncing;}finally{this.syncing=null;}
+  }
+  async _sync() {
+    if(!this.replication) throw new Error('No native sync owner in this tab');
+    if(this.replication.isStopped()) {
+      this.replication=null;
+      await this.connect(this.connection.endpoint,this.connection.options);
+    }
+    this.state='syncing'; this.notify();
+    this.replication.reSync();
+    await this.replication.awaitInitialReplication();
+    await this.replication.awaitInSync();
+    // Materialization/verification is separate; in-sync is not remote-verified.
+    const ids=new Set((await this.db.localDrafts.find().exec()).map(d=>d.page));
+    for(const id of ids) await this.captureMaster(await this.remote(id));
+    this.state='pending'; this.notify();
+  }
+  async remote(id) { return this.withRemote(id,remote=>copy(remote)); }
+  async withRemote(id,fn) {
+    const r=this.replication;
+    if(!r) throw new Error('Remote verification requires native sync owner');
+    // Published native transaction first drains WAL. This is verification only:
+    // no custom replication, direct document writes, or assumed-master mutation.
+    return runInTransaction(r.googleDrive,r.driveStructure,'id',async()=>{
+      const files=await getDocumentFiles(r.googleDrive,r.driveStructure,[id]);
+      if(files.files.length!==1) throw new Error('Remote document missing or ambiguous');
+      const docs=await fetchDocumentContents(r.googleDrive,[files.files[0].id]);
+      const remote=content(docs.ordered[0]);
+      if(remote?.id!==id) throw new Error('Remote document identity mismatch');
+      return fn(remote);
+    }).catch(error=>{this.failure(error);throw error;});
+  }
+  async verify(id) {
+    if(!this.writer) throw new Error('Writer disabled: verification retirement requires session ownership');
+    await this.sync();
+    await this.withRemote(id,remote=>this.serial(async()=>{
+      await this.hook('remote-read',copy(remote));
+      const d=await this.draft(id);
+      if(d && same(remote,d.draft)) {
+        await this.hook('before-cleanup',copy(d));
+        // Same-session mutations are serialized. Other tab sessions use other keys.
+        const current=await this.db.localDrafts.findOne(d.id).exec();
+        if(!current||current.seq!==d.seq||!same(current.draft,d.draft))
+          throw new Error('Draft advanced; verification cannot retire it');
+        await current.remove();
+        await this.hook('after-cleanup',copy(d));
+        this.verified.set(id,copy(remote)); this.state='clean';
+      } else if(d) await this.captureMaster(remote);
+      else this.state='clean';
+      this.notify();
+    }));
+    return this.view(id);
+  }
+  async resolve(id,action,mergedBody) {
+    if(!this.writer) throw new Error('Writer disabled: session ownership required');
+    if(!['cloud','local','merge'].includes(action)) throw new Error('Unknown resolution');
+    if(action==='merge'&&(typeof mergedBody!=='string'||mergedBody.length>LIMIT))
+      throw new Error('Invalid merged body');
+    const initial=await this.draft(id);
+    if(!initial)throw new Error('No protected draft for this session');
+    await this.sync();
+    const remote=await this.remote(id);
+    await this.sync();
+    if(action==='cloud') {
+      await this.withRemote(id,newest=>this.serial(async()=>{
+        if(!same(newest,remote)||!same(await this.page(id),newest))
+          throw new Error('Master advanced; draft retained for review');
+        const current=await this.db.localDrafts.findOne(initial.id).exec();
+        if(!current||current.seq!==initial.seq||!same(current.draft,initial.draft))
+          throw new Error('Draft advanced; discard requires review');
+        await this.hook('before-cloud-discard',copy(initial));
+        await current.remove();
+      }));
+      this.state='clean';this.notify();return this.view(id);
+    }
+    return this.serial(async()=>{
+      const old=await this.draft(id);
+      if(!old||old.seq!==initial.seq||!same(old.draft,initial.draft))
+        throw new Error('Draft advanced; resolution requires review');
+      if(!same(await this.page(id),remote))throw new Error('Master not yet pulled; draft retained');
+      const draft={id,body:action==='merge'?mergedBody:old.draft.body,
+        editId:`${this.session}/${old.seq+1}/${crypto.randomUUID()}`};
+      const row={...old,seq:old.seq+1,state:'pending',draft,base:remote,remote,
+        sourceLocal:old.sourceLocal??old.draft,sourceCloud:old.sourceCloud??remote};
+      await this.db.localDrafts.upsert(row);
+      await this.hook('resolution-journal',copy(row));
+      const pageDoc=await this.db.pages.findOne(id).exec();
+      let masterAdvanced=false;
+      if(!pageDoc)masterAdvanced=true;
+      else await pageDoc.incrementalModify(current=>{
+        if(!same(current,remote)){masterAdvanced=true;return current;}
+        return {...current,...draft};
+      });
+      if(masterAdvanced) await (await this.db.localDrafts.findOne(row.id).exec())
+        .incrementalModify(current=>({...current,state:'needs-resolution'}));
+      await this.hook('resolution-written',copy(row));
+      this.state='pending'; this.notify(); return this.view(id);
+    });
+  }
+  async close() {
+    this.closed=true;
+    for(const s of this.subs)s.unsubscribe();
+    if(this.replication) await this.replication.cancel();
+    await this.db.close();
+    this.releaseOwner?.();
+    await this.lockTask;
+  }
+}
