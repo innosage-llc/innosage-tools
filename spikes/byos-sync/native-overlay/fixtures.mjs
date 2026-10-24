@@ -18,7 +18,16 @@ export const fixtures = [
   ['F16', '30 same-time and hidden-list checkpoint native blocker replay'],
   ['F17', '10/1000-page synthetic calls/bytes/latency and foreground cost'],
 ].map(([id, scenario]) => ({ id, scenario, status: 'NOT_RUN',
-  replay: `node native-overlay/run.mjs --fixture=${id}` }));
+  replay: id==='F04'?'node native-overlay/run.mjs --fixture=F04 && node native-overlay/ui-browser.mjs && node native-overlay/ui-browser.mjs --no-wake':
+    id==='F10'?'node native-overlay/faults.mjs':
+    id==='F11'?'node native-overlay/browser.mjs && node native-overlay/crash-browser.mjs':
+    id==='F14'?'node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs':
+    id==='F15'?'node native-overlay/browser.mjs':
+    ['F12','F13'].includes(id)?'node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs':
+    id==='F16'?'node native-overlay/run.mjs --fixture=F16 && node native-overlay/checkpoint.mjs':
+    id==='F17'?'node native-overlay/measure.mjs && node native-overlay/measure-overlay.mjs':
+    `node native-overlay/run.mjs --fixture=${id}`
+ }));
 export const bodies = Object.freeze({
   A: '# Original\n\nA — baseline.',
   B: '# Local\n\nB — offline device A acknowledged intent.',

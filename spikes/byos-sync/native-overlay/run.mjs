@@ -33,13 +33,17 @@ const remoteBodies=m=>Object.fromEntries([...m.files.values()].filter(f=>f.name.
  try {const d=JSON.parse(f.body.toString());return d.id?[[d.id,d.body]]:[];}catch{return [];}}));
 async function world(opts={}) {
  const m=await mock(opts);allowed.add(m.url);
- const clients=[];
+ const clients=[],acknowledged=[];
  const suffix=crypto.randomUUID().replaceAll('-','');
  const open=async(device,session=device,hook)=>{
   const s=await openPageStore({workspace:device+suffix,session,multiInstance:false,hook});
-  s.workspace='remote'+suffix;clients.push(s);return s;
+  s.workspace='remote'+suffix;
+  const save=s.save.bind(s);
+  s.save=async(page,body,options)=>{const view=await save(page,body,options);
+    acknowledged.push({device,session,page,body,editId:view.journal?.draft.editId});return view;};
+  clients.push(s);return s;
  };
- return {m,open,clients,async close(){for(const s of clients)if(!s.closed)await s.close();await m.close();allowed.delete(m.url);}};
+ return {m,open,clients,acknowledged,async close(){for(const s of clients)if(!s.closed)await s.close();await m.close();allowed.delete(m.url);}};
 }
 async function baseline(w) {
  const a=await w.open('a'),b=await w.open('b');
@@ -69,7 +73,34 @@ const cases={
   }};
   const v=await s.save('page',T.B);assert.equal(v.status,'local-saved');
   await s.close();s=await w.open('a');assert.equal((await s.view('page')).body,T.B);
-  assert.notEqual((await s.view('page')).status,'remote-verified');return {recovered:await s.view('page')};
+  assert.notEqual((await s.view('page')).status,'remote-verified');
+  const clean=await w.open('baseline');
+  const base={id:'page',body:T.A,editId:'baseline'};
+  await clean.db.pages.upsert(base);
+  await clean.db.pages.upsert({id:'page',body:T.C,editId:'newer-other-tab'});
+  const guarded=await clean.save('page',T.D,{base});
+  assert.equal(guarded.page.body,T.C);assert.equal(guarded.status,'needs-resolution');
+  assert.equal(guarded.journal.sourceExternal.body,T.C);
+  let late=await w.open('late');await late.db.pages.upsert(base);
+  late.hook=async boundary=>{if(boundary==='journal-committed')
+    await late.db.pages.upsert({id:'page',body:T.C,editId:'late-external'});};
+  const raced=await late.save('page',T.D,{base});
+  assert.equal(raced.page.body,T.C);assert.equal(raced.journal.sourceExternal.body,T.C);
+  await late.db.pages.upsert({id:'page',body:T.E,editId:'later-external'});
+  await late.close();late=await w.open('late');
+  const recoveredExternal=await late.view('page');
+  assert.equal(recoveredExternal.body,T.D);assert.equal(recoveredExternal.journal.sourceExternal.body,T.C);
+  let unchanged=await w.open('unchanged');
+  await unchanged.save('page',T.A);await unchanged.connect(w.m.url,config);await unchanged.verify('page');
+  unchanged.hook=async boundary=>{if(boundary==='journal-committed')throw new Error('journal-before-pages crash');};
+  await assert.rejects(()=>unchanged.save('page',T.B),/journal-before-pages/);
+  await unchanged.close();unchanged=await w.open('unchanged');
+  await unchanged.connect(w.m.url,config);unchanged.refreshConflict('page');
+  await unchanged.remoteRefreshes.get('page')?.promise;
+  const noConflict=await unchanged.view('page');
+  assert.equal(noConflict.body,T.B);assert.equal(noConflict.warning,false);
+  assert.equal(noConflict.journal.state,'pending');assert.equal(noConflict.journal.remote,null);
+  return {recovered:await s.view('page'),unchanged_master_recovery:noConflict};
  },
  async F02(w){const {a,b}=await baseline(w);
   await a.save('first',T.B);await b.save('second',T.C);
@@ -103,10 +134,18 @@ const cases={
   assert.equal(captured.sourceCloud.body,T.C);assert.equal(captured.state,'needs-resolution');
   assert.equal((await a.page('page')).body,T.C);
   a.hook=async()=>{};
+  await a.withRemote('page',master=>a.captureMaster(master));
 const before=await a.draft('page');
   for(let i=0;i<5;i++)for(const name of ['sent','received','conflict'])
    a.replication.subjects[name].next({input:{realMasterState:{id:'page',body:T.A,editId:'stale'}},body:T.A});
-  assert.deepEqual(await a.draft('page'),before);return {journal:before,signals:15};
+  await a.remoteRefreshes.get('page')?.promise;
+  assert.deepEqual(await a.draft('page'),before);
+  await a.save('normal',T.A);
+  const pending=await a.draft('normal');
+  a.replication.subjects.received.next({id:'normal',body:T.A,editId:'reflection'});
+  await a.remoteRefreshes.get('normal')?.promise;
+  assert.deepEqual(await a.draft('normal'),pending);
+  return {journal:before,signals:15,pending_reflection_unchanged:true};
  },
  async F06(w){const {a,b}=await fork(w);await b.save('page',T.E);await b.sync();
   await a.resolve('page','cloud');const v=await a.view('page');
@@ -184,7 +223,7 @@ try {
    if(f.id==='F16'&&result.gate!=='PASS'){row.status='FAIL';row.expected_native_blocker=true;}
   }catch(e){Object.assign(row,{status:'FAIL',store_status:'FAIL',error:e.stack});}
   finally{
-   row.requests=w.m.requests;row.faults=w.m.faults;
+   row.requests=w.m.requests;row.faults=w.m.faults;row.acknowledged=w.acknowledged;
    row.methods=Object.fromEntries([...new Set(w.m.requests.map(r=>r.method))].map(method=>
     [method,w.m.requests.filter(r=>r.method===method).length]));
    row.bytes_up=w.m.requests.reduce((n,r)=>n+r.bytes_up,0);
@@ -227,7 +266,7 @@ try {
     assert.equal(remote.page,cloud);assert.equal(v.status,'needs-resolution');
     assert.equal(v.journal.sourceLocal.body,T.B);assert.equal(v.journal.sourceCloud.body,T.C);}
    else {assert.equal(v.body,expected);assert.equal(v.journal,null);assert.equal(remote.page,expected);}
-   seedResults.push({seed,action,raced,status:'PASS',schedule,view:v,remote,
+   seedResults.push({seed,action,raced,status:'PASS',schedule,acknowledged:w.acknowledged,request_ledger:w.m.requests,fault_ledger:w.m.faults,view:v,remote,
     requests:w.m.requests.length,bytes_up:w.m.requests.reduce((n,r)=>n+r.bytes_up,0),
     bytes_down:w.m.requests.reduce((n,r)=>n+r.bytes_down,0)});
   }catch(error){seedResults.push({seed,status:'FAIL',schedule,error:String(error)});process.exitCode=1;}

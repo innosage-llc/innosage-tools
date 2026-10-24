@@ -252,7 +252,8 @@ export async function mock({
           order.includes("modifiedTime")
             ? a.modifiedTime.localeCompare(b.modifiedTime) ||
               a.name.localeCompare(b.name)
-            : a.createdTime.localeCompare(b.createdTime),
+            : (/^createdTime\s+desc/i.test(order) ? -1 : 1) *
+              a.createdTime.localeCompare(b.createdTime),
         );
         const page = Number(u.searchParams.get("pageToken") ?? 0),
           size = Math.min(1000, Number(u.searchParams.get("pageSize") ?? 100));

@@ -54,3 +54,36 @@ request/fault ledger. Synthetic timing must report actual n and distributions.
 F01–F15 plus real browser/crash coverage gate UX PASS. F16 checkpoint failure
 forces HOLD FOR CHECKPOINT; do not patch native downstream here. 100 seeds target.
 All provider evidence is MOCK-TESTED; REAL-PROVIDER-NOT-RUN.
+
+Implementation comparison (same pinned Draft SHA): `LocalMutationChannel` and
+`TabSyncRuntime` validate runtime scopes, suppress source-tab/self event IDs and
+seen duplicate IDs, then dispatch only to matching scoped subscribers.
+`CrossTabCoordinator` selects BroadcastChannel or localStorage transport. This
+spike reuses those invariants, not that implementation: database/workspace
+identity scopes native RxDB reactive delivery; RxDB/broadcast-channel owns its
+fallback and leader election. Web Locks only prevent duplicate edit-session
+ownership (including copied sessionStorage); they are not a second sync engine.
+If safe writer ownership is unavailable, writes are visibly disabled. Native
+fallback without window.BroadcastChannel is fixture-tested. Source-tab save ACK
+is the awaited journal/page operation, never a peer transport event.
+
+A first dirty-tab save carries the full page/version captured when editing
+began. It cannot adopt a newer peer commit as its base implicitly. Initial and
+late-CAS divergence retain a bounded `sourceExternal` copy, distinctly from a
+verified cloud receipt. This protects C even if its originating tab already
+retired a remotely verified journal and a later E replaces the native page.
+Each local body is capped at262,144 UTF-16 code units; each independent session
+holds latest draft plus at most five baseline/conflict snapshots, not history.
+Unresolved independent sessions are retained rather than pruned by age.
+
+Native received/conflict signals invalidate page IDs only. In-flight reads and
+one trailing dirty bit coalesce transient work. Initial conflict classification
+awaits native settlement outside the local queue/remote lock, then requires the
+latest native page to equal confirmed Master and differ from draft AND captured
+base. Existing conflict baselines refresh under the native lock; captured bodies
+and editor text remain protected. Neither refresh path retires a journal.
+
+The offline live harness injects published native reSync wake-ups for later
+remote changes and awaits real received$ data. Unattended WebRTC notification
+delivery is NOT_PROVEN; the no-wake diagnostic is retained. This is fixture
+control, not a runtime fallback, custom replication engine or provider proof.

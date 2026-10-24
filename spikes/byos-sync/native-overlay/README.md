@@ -33,3 +33,39 @@ never sufficient. Cleanup requires the owned unchanged sequence/edit identity.
 Network waits run outside the local journal queue so offline editing continues.
 Resolution writes use native page revision CAS against the confirmed baseline;
 Master advancement retains the local branch instead of implicitly rebasing it.
+
+## Complete matrix and minimal UI
+
+```sh
+npm run test:byos-native-overlay:full
+npm run spike:byos-native-overlay
+```
+
+Full replay includes 100 recorded seeded schedules, real Chromium two-tab/live
+Drive journeys, native IndexedDB renderer crashes, fault schedules, both native
+checkpoint replays and 10/1,000-page measurements (n=3 per scale). Chromium must
+already be installed for the pinned Playwright runtime; the runner never logs
+into a provider or auto-installs a browser. All HTTP fixture traffic is loopback;
+external ICE servers are disabled for native live signaling. This is a harness
+configuration, not evidence of real provider/WebRTC behavior.
+
+The server prints session a/b URLs for one mock workspace. Unsaved text keeps an
+unsaved status; acknowledged unresolved edits remain in their own journal.
+Local/Cloud panes use complete text, and explicit resolution actions preserve
+captured source bodies until native remote verification. See `ACCEPTANCE.md`
+for the short Founder journey, `UPSTREAM-HOLD.md` for the separate repair proposal,
+and committed `evidence/` for the reviewed snapshot. Regeneration writes only to
+ignored `.generated/`; it does not change the historical #84 evidence.
+
+The full matrix currently exits nonzero and emits **HOLD — NATIVE UX NOT
+QUALIFIED**. F04 separates deterministic injected native `reSync` event handling
+from unattended updates, which remain **NOT_PROVEN**. The original no-wake
+failure is retained. Correcting the mock's requested createdTime DESC ordering
+allows E to arrive in the no-wake replay, but does not make the other-page
+notification journey pass. No native WebRTC or replication code was changed.
+F16 independently reproduces the native checkpoint blocker. See the criterion
+map for individual outcomes; passing storage assertions cannot qualify all P0.
+
+The final replay also times out at native E receipt. A prior corrected-mock
+replay reached E and failed later on other-page progress; notification-history.json
+preserves its bounded log excerpt. Neither replay qualifies unattended F04.

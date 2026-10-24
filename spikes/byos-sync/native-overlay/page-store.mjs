@@ -14,7 +14,7 @@ const draftSchema = {version:0,primaryKey:'id',type:'object',properties:{
   session:{type:'string',maxLength:100},seq:{type:'integer',minimum:1,maximum:1e9,multipleOf:1},
   state:{type:'string'},draft:{type:'object'},base:{type:['object','null']},
   remote:{type:['object','null']},sourceLocal:{type:['object','null']},
-  sourceCloud:{type:['object','null']}},
+  sourceCloud:{type:['object','null']},sourceExternal:{type:['object','null']}},
 required:['id','page','session','seq','state','draft','base','remote','sourceLocal','sourceCloud']};
 const copy = value => value == null ? null : structuredClone(value);
 export const content = p => p ? {id:p.id,body:p.body,editId:p.editId} : null;
@@ -56,7 +56,7 @@ export class PageStore {
   constructor(db,workspace,session,hook) {
     Object.assign(this,{db,workspace,session,hook});
     this.queue = Promise.resolve(); this.replication = null; this.state = 'clean';
-    this.subs = []; this.listeners = new Map(); this.closed = false; this.verified = new Map(); this.notificationVersions = new Map();
+    this.subs = []; this.listeners = new Map(); this.closed = false; this.verified = new Map(); this.notificationVersions = new Map(); this.remoteRefreshes = new Map();
     // Reactive reads are RxDB-native and workspace-scoped by database identity.
     for (const collection of [db.pages,db.localDrafts])
       this.subs.push(collection.$.subscribe(() => this.notify()));
@@ -72,14 +72,14 @@ export class PageStore {
     const [p,d,all] = await Promise.all([this.page(id),this.draft(id),
       this.db.localDrafts.find({selector:{page:id}}).exec()]);
     const competing = d && all.some(other=>other.session!==this.session && !same(other.draft,d.draft));
-    const diverged = d && (!same(p,d.draft) || competing);
+    const diverged = d && ((!same(p,d.draft)&&!same(p,d.base)) || competing);
     return {body:d?.draft.body ?? p?.body ?? '',
-      status:d?.state==='needs-resolution'||diverged ? 'needs-resolution' : d ?
+      status:['blocked','reauth-required'].includes(this.state)?this.state:d?.state==='needs-resolution'||diverged ? 'needs-resolution' : d ?
         (['blocked','reauth-required'].includes(this.state)?this.state:'local-saved') : this.verified.has(id)&&same(p,this.verified.get(id))?'remote-verified':this.state,
       warning:!this.writer||!!(d?.state==='needs-resolution'||diverged),
       writer:this.writer,
       local:d?.draft.body ?? null,cloud:d?.remote?.body ?? null,
-      drafts:all.map(x=>({session:x.session,body:x.draft.body,state:x.state,seq:x.seq})),
+      drafts:all.map(x=>({session:x.session,body:x.draft.body,state:x.state,seq:x.seq,external:x.sourceExternal?.body??null})),
       page:p,journal:copy(d)};
   }
   subscribe(id,callback) {
@@ -99,59 +99,66 @@ export class PageStore {
       }).catch(()=>{});
     }
   }
-  async save(id,body) {
+  async save(id,body,options={}) {
     valid(id,'page');
     if(!this.writer) throw new Error('Writer disabled: session already owned or safe ownership unavailable');
     if(typeof body!=='string'||body.length>LIMIT) throw new Error('Draft body limit exceeded');
     return this.serial(async()=>{
       const [old,p,peers] = await Promise.all([this.draft(id),this.page(id),
         this.db.localDrafts.find({selector:{page:id}}).exec()]);
-      const conflict = old && (peers.some(peer=>peer.session!==this.session && !same(peer.draft,old.draft)) || old.state==='needs-resolution' ||
-        !same(p,old.draft));
+      const expected=Object.hasOwn(options,'base')?content(options.base):p;
+      if(expected&&expected.id!==id)throw new Error('Edit baseline page mismatch');
+      const conflict = old ? (peers.some(peer=>peer.session!==this.session && !same(peer.draft,old.draft)) || old.state==='needs-resolution' ||
+        (!same(p,old.draft)&&!same(p,old.base))) : !same(p,expected);
       const seq=(old?.seq ?? 0)+1;
       const draft={id,body,editId:`${this.session}/${seq}/${crypto.randomUUID()}`};
       const row={id:key(id,this.session),page:id,session:this.session,seq,
-        state:conflict?'needs-resolution':'pending',draft,base:old?old.base:p,
-        remote:old?.remote??null,sourceLocal:old?.sourceLocal??(conflict?old.draft:null),
-        sourceCloud:old?.sourceCloud??null};
+        state:conflict?'needs-resolution':'pending',draft,base:old?old.base:expected,
+        remote:old?.remote??null,sourceLocal:old?.sourceLocal??(conflict?(old?.draft??draft):null),
+        sourceCloud:old?.sourceCloud??null,
+        sourceExternal:old?.sourceExternal??(conflict?copy(p):null)};
       await this.hook('before-journal-update',copy(row));
       const journalDoc=await this.db.localDrafts.findOne(row.id).exec();
       const committed=journalDoc ? await journalDoc.incrementalModify(current=>{
         const protectedConflict=current.state==='needs-resolution';
         return {...row,seq:current.seq+1,state:protectedConflict?'needs-resolution':row.state,
           remote:current.remote,sourceLocal:current.sourceLocal??row.sourceLocal,
-          sourceCloud:current.sourceCloud??row.sourceCloud};
+          sourceCloud:current.sourceCloud??row.sourceCloud,sourceExternal:current.sourceExternal??row.sourceExternal};
       }) : await this.db.localDrafts.insert(row);
       const saved=committed.toJSON();
       await this.hook('journal-committed',copy(saved));
       // Never write an unresolved branch back into the replicated collection.
       if(saved.state!=='needs-resolution') {
         const pageDoc=await this.db.pages.findOne(id).exec();
-        let advanced=false;
+        let advanced=false,capturedExternal=null;
         if(pageDoc) await pageDoc.incrementalModify(current=>{
           // RxDB retries this callback on a storage revision conflict. Do not
           // rebase an unresolved branch implicitly onto a newly received page.
-          if(!same(current,p)){advanced=true;return current;}
+          if(!same(current,p)){advanced=true;capturedExternal??=content(current);return current;}
           return {...current,...draft};
         });
         else {
           try {await this.db.pages.insert(draft);}
-          catch(error){if(error.code==='CONFLICT')advanced=true;else throw error;}
+          catch(error){if(error.code==='CONFLICT'){advanced=true;
+            capturedExternal=content(error.parameters?.writeError?.documentInDb)??await this.page(id);
+          }else throw error;}
         }
         if(advanced) await committed.incrementalModify(current=>({...current,
-          state:'needs-resolution',sourceLocal:current.sourceLocal??copy(current.draft)}));
+          state:'needs-resolution',sourceLocal:current.sourceLocal??copy(current.draft),
+          sourceExternal:current.sourceExternal??copy(capturedExternal)}));
         await this.hook('page-written',copy(saved));
       }
-      this.state='local-saved'; this.notify();
+      if(!['blocked','reauth-required'].includes(this.state))this.state='local-saved'; this.notify();
       return this.view(id);
     });
   }
   async captureMaster(master) {
+    const page=await this.page(master.id);
     // Signals are intentionally ignored as authority. Call only with independently
     // read remote data or current local collection state, never event arrival order.
     const rows=await this.db.localDrafts.find({selector:{page:master.id}}).exec();
     for(const row of rows) await row.incrementalModify(d=>{
-      if(same(master,d.draft)) return d;
+      if(same(master,d.draft)||(d.state==='pending'&&same(master,d.base)&&same(page,master))) return d;
       return {...d,state:'needs-resolution',remote:copy(master),
         sourceLocal:d.sourceLocal??copy(d.draft),sourceCloud:d.sourceCloud??copy(master)};
     });
@@ -183,8 +190,53 @@ export class PageStore {
     }));
     if(!live) await this.replication.awaitInitialReplication();
     // Event streams invalidate UI only. They never retire or create draft copies.
-    for(const signal of ['conflict$','received$','sent$'])
-      this.subs.push(this.replication[signal].subscribe(()=>this.notify()));
+    this.subs.push(this.replication.sent$.subscribe(()=>this.notify()));
+    for(const signal of ['conflict$','received$'])
+      this.subs.push(this.replication[signal].subscribe(event=>{
+        this.notify();
+        const id=event.id??event.input?.realMasterState?.id;
+        if(typeof id==='string')this.refreshConflict(id);
+      }));
+  }
+  refreshConflict(id) {
+    // Native events are invalidations only. One in-flight read and trailing bit
+    // per page; no history, retry timer or cleanup. Pending classification requires
+    // native settlement and page=Master distinct from both draft and captured base.
+    if(this.closed)return;
+    const active=this.remoteRefreshes.get(id);
+    if(active){active.dirty=true;return;}
+    const ticket={dirty:true};this.remoteRefreshes.set(id,ticket);
+    ticket.promise=(async()=>{
+      while(ticket.dirty&&!this.closed){
+        ticket.dirty=false;
+        let rows=await this.db.localDrafts.find({selector:{page:id}}).exec();
+        if(!rows.length)continue;
+        if(rows.some(row=>row.state==='pending'))await this.replication.awaitInSync();
+        rows=await this.serial(async()=>{
+          const page=await this.page(id);
+          return (await this.db.localDrafts.find({selector:{page:id}}).exec())
+            .filter(row=>row.state==='needs-resolution'||(row.state==='pending'&&!same(page,row.draft)));
+        });
+        if(!rows.length)continue;
+        await this.withRemote(id,master=>this.serial(async()=>{
+          const page=await this.page(id);
+          for(const row of rows)await row.incrementalModify(current=>{
+            const initial=current.state==='pending'&&same(page,master)&&
+              !same(master,current.draft)&&!same(master,current.base);
+            if((current.state!=='needs-resolution'&&!initial)||same(current.remote,master))return current;
+            return {...current,state:'needs-resolution',remote:copy(master),
+              sourceLocal:current.sourceLocal??copy(current.draft),sourceCloud:current.sourceCloud??copy(master)};
+          });
+        }));
+        if(['blocked','reauth-required'].includes(this.state))this.state='pending';
+        this.notify();
+      }
+    })().catch(error=>{
+      this.failure(error);if(this.state!=='reauth-required')this.state='blocked';this.notify();
+    }).finally(()=>{
+      this.remoteRefreshes.delete(id);
+      if(ticket.dirty&&!this.closed)this.refreshConflict(id);
+    });
   }
   failure(error) {
     const status=error.parameters?.status;
@@ -211,7 +263,7 @@ export class PageStore {
     await this.replication.awaitInSync();
     // Materialization/verification is separate; in-sync is not remote-verified.
     const ids=new Set((await this.db.localDrafts.find().exec()).map(d=>d.page));
-    for(const id of ids) await this.captureMaster(await this.remote(id));
+    for(const id of ids) await this.withRemote(id,master=>this.captureMaster(master));
     this.state='pending'; this.notify();
   }
   async remote(id) { return this.withRemote(id,remote=>copy(remote)); }
