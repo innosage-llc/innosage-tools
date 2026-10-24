@@ -1,0 +1,45 @@
+{
+  "id": "S4_RETAINED_EVENT",
+  "status": "PASS",
+  "actual": {
+    "id": "discovery-old",
+    "body": "# Cloud\n\nC — independent remote intent.",
+    "editId": "old-latest"
+  },
+  "newActual": {
+    "id": "discovery-new",
+    "body": "# Cloud continued\n\nE — newer remote intent.",
+    "editId": "new-latest"
+  },
+  "preUpdateCheckpoint": {
+    "docIdsWithSameModifiedTime": [
+      "discovery-old.json"
+    ],
+    "modifiedTime": "2026-10-24T11:47:20.221Z",
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000043"
+    }
+  },
+  "feedStart": 43,
+  "retainedOld": 54,
+  "retainedNew": 67,
+  "oldModifiedTime": "2026-10-24T11:47:20.244Z",
+  "newModifiedTime": "2026-10-24T11:47:20.257Z",
+  "sourceAssumption": "Both ordered relevant changed-file events retained after actual pre-update durable token; no restoration event added",
+  "admitted": 330,
+  "dispatched": 330,
+  "observed": 330,
+  "snapshots": 7,
+  "explicitSyncOnly": true,
+  "changedAdapterHypothesis": true,
+  "sourceAssumptions": [
+    "Changes tokens opaque; follow nextPageToken irrespective of returned or relevant count; newStartPageToken only terminal; no timestamp ordering inferred.",
+    "Positive cases retain relevant changes after captured start token. A change may expose current metadata/current content, not immutable historical bodies. Duplicate/coalesced events allowed; latest full state oracle is authoritative.",
+    "Inventory is finite, paginated and quiescent except explicitly scheduled writes represented in retained feed; no general consistent-snapshot claim.",
+    "No-event negative deliberately violates retained discoverability and does not gain an invented event on visibility restoration.",
+    "removed means deletion OR access loss; neither absence nor removed alone authorizes local/remote deletion.",
+    "Provider pageSize is a maximum. Fixtures must not return more than requested; adapter may prevent overflow through request sizing. No special privileges to access independent ground truth from adapter."
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "sourcePageStoreSha256": "5b906e26c2cc979b494ef9a19d346bd5daefd13cc426f7e6d21ad089acb68490",
+  "sourceTextUnchanged": true,
+  "binding": "Only module import resolution changes replicateGoogleDrive to fixture registry; journal/save/resolve/verify methods untouched; stock mode uses original published factory",
+  "entry": "native-overlay/page-store.mjs",
+  "wrapperSha256": "bede12ba85c9756b840c95d09618fb3bb2cbe686fa3e933fc1061d9fcee37cb1",
+  "generatedStoreSha256": "c7444ed69b16ce011aded1fd074f3d4b7e32edfc6c43766442075d3e4659db16",
+  "mockBaselineSha256": "368d1da212507e3262ba4e8fb91d7945d95f8eb7ec3a30eff43d246a58a4af89",
+  "mockExtendedSha256": "81686be2ee6f9117b48759751d60da426516cf4e68da533b9c4d5c7c7f4623c0",
+  "mockDivergences": [
+    "optional fixture-owned extension parameter",
+    "single awaited extension route before base Drive dispatch; existing fault/WAL/CAS/server behavior unchanged"
+  ],
+  "metafile": {
+    "inputs": {
+      "changes-feasibility/.generated/factory-binding.cjs": {
+        "bytes": 300,
+        "imports": [
+          {
+            "path": "rxdb/plugins/replication-google-drive",
+            "kind": "require-call",
+            "external": true
+          }
+        ],
+        "format": "cjs"
+      },
+      "native-overlay/page-store.mjs": {
+        "bytes": 19438,
+        "imports": [
+          {
+            "path": "rxdb",
+            "kind": "import-statement",
+            "external": true
+          },
+          {
+            "path": "rxdb/plugins/storage-dexie",
+            "kind": "import-statement",
+            "external": true
+          },
+          {
+            "path": "rxdb/plugins/leader-election",
+            "kind": "import-statement",
+            "external": true
+          },
+          {
+            "path": "changes-feasibility/.generated/factory-binding.cjs",
+            "kind": "import-statement",
+            "original": "rxdb/plugins/replication-google-drive"
+          }
+        ],
+        "format": "esm"
+      }
+    },
+    "outputs": {
+      "changes-feasibility/.generated/store.cjs": {
+        "imports": [
+          {
+            "path": "rxdb/plugins/replication-google-drive",
+            "kind": "require-call",
+            "external": true
+          },
+          {
+            "path": "rxdb",
+            "kind": "require-call",
+            "external": true
+          },
+          {
+            "path": "rxdb/plugins/storage-dexie",
+            "kind": "require-call",
+            "external": true
+          },
+          {
+            "path": "rxdb/plugins/leader-election",
+            "kind": "require-call",
+            "external": true
+          }
+        ],
+        "exports": [],
+        "entryPoint": "native-overlay/page-store.mjs",
+        "inputs": {
+          "changes-feasibility/.generated/factory-binding.cjs": {
+            "bytesInOutput": 454
+          },
+          "native-overlay/page-store.mjs": {
+            "bytesInOutput": 20369
+          }
+        },
+        "bytes": 22611
+      }
+    }
+  }
+}

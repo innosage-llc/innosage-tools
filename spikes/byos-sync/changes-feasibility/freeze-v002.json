@@ -1,0 +1,244 @@
+{
+  "version": "002",
+  "oracleSha256": "e82d62f45c2aa04d9c751508168b3bb6f4c531e083bd292daa07446d6771e9b2",
+  "fixtureSha256": "83718e37f19530c009955e9aff75224fb907fc285016f7ae07a2ca15c6af447d",
+  "sourceHashes": [
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/plugins/replication/index.ts",
+      "path": "node_modules/rxdb/src/plugins/replication/index.ts",
+      "sha256": "04d0815045957ed53f4af931014280a0a8b406646c631d07fe23130570fb46b6"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/plugins/replication/index.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication/index.js",
+      "sha256": "116d026505fb3708d2a4e410470dc82fbad492fa22882fe573f8a3d70151ba17"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/plugins/replication-google-drive/index.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/index.ts",
+      "sha256": "44aea08488c713a76aa44226a665684be4299046656eb3f9b9e634a02488aff7"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+      "sha256": "2a5c7fac32a3e5cbd6fb293fe5817786a6db9d9dbc69b9e5ac5b9f2580e4a7a4"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/plugins/replication-google-drive/transaction.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/transaction.ts",
+      "sha256": "000d744e8af3933b246b2b299a580d2ddcb03c00190a9f7df848b652e6e73d2e"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/transaction.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/transaction.js",
+      "sha256": "b02ab62c406ebf081bbc62d232a5c151903e2eae6fccbd55048775252ecded6a"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/plugins/replication-google-drive/upstream.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/upstream.ts",
+      "sha256": "58339944af6e3b9fcf4f838924d526fb86b61b7ea1ae953ad7a3ed1de90e4313"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/upstream.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/upstream.js",
+      "sha256": "27dbe2e53c03618c340d255e2a339ae0dc55a97a20a8f57cc808fec9f5c7d78d"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/plugins/replication-google-drive/document-handling.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/document-handling.ts",
+      "sha256": "d15dc954bdfd0cd7fa31de93b20d7d246b573dc245d3d830b0337f96aec36232"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/document-handling.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/document-handling.js",
+      "sha256": "8c33b439b523726976befa53a760c4e8f8cfc125cf70ef5badbd792ba61f5f9f"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/plugins/replication-google-drive/init.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/init.ts",
+      "sha256": "f5020f2471a19f243697e94bae643c5cac18dcfba81a72c3733486f69ad46e27"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/init.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/init.js",
+      "sha256": "7ea0f75581ec26a1f8e8f59482d18cc64dfa163f4da19494b4c5e8a7b65795c5"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/plugins/replication-google-drive/downstream.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/downstream.ts",
+      "sha256": "982b3a7f5a6a5811be9d265408dbca998bc2981d4d123f2956e01d471efba8d0"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/downstream.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/downstream.js",
+      "sha256": "02498b9945c5e219a1415d479881b280a50514490947acb18186f209eea5d629"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/replication-protocol/downstream.ts",
+      "path": "node_modules/rxdb/src/replication-protocol/downstream.ts",
+      "sha256": "6bd52dbc67336e5e71f9997127382f83162bf502d68215ae64635e305b515eca"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/replication-protocol/downstream.js",
+      "path": "node_modules/rxdb/dist/cjs/replication-protocol/downstream.js",
+      "sha256": "3c0846b34b9b459a233b8edef756a301acc9e87408d82b2bafa2af35f947a5c7"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/replication-protocol/checkpoint.ts",
+      "path": "node_modules/rxdb/src/replication-protocol/checkpoint.ts",
+      "sha256": "5e0c8d835589c3a2ed0c1c624faf0534bf4e75fa85c3c013defff1870f953ea8"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/replication-protocol/checkpoint.js",
+      "path": "node_modules/rxdb/dist/cjs/replication-protocol/checkpoint.js",
+      "sha256": "0a6971af11cd5e5e01eea53053bd8765cf758ee8dbf47462eb41a524ded604ce"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/replication-protocol/meta-instance.ts",
+      "path": "node_modules/rxdb/src/replication-protocol/meta-instance.ts",
+      "sha256": "1506151ce8c378be94fd24627f4343ca009d877900e6827bb73f3228dce8a318"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/replication-protocol/meta-instance.js",
+      "path": "node_modules/rxdb/dist/cjs/replication-protocol/meta-instance.js",
+      "sha256": "f41d17c1eabf00d2419247665d5074589c53ee8a392ffba6bf71f461854f48da"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/replication-protocol/default-conflict-handler.ts",
+      "path": "node_modules/rxdb/src/replication-protocol/default-conflict-handler.ts",
+      "sha256": "68b39a886312a1ccfab383a407753055be5915ba47a1201f1aaf109ff6dcdfc6"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/replication-protocol/default-conflict-handler.js",
+      "path": "node_modules/rxdb/dist/cjs/replication-protocol/default-conflict-handler.js",
+      "sha256": "a66a67c320631ca4323d6c4baf0a8287405bc1798958151fbbd5ea380e48af79"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/src/rx-storage-helper.ts",
+      "path": "node_modules/rxdb/src/rx-storage-helper.ts",
+      "sha256": "9e3b4c41b7d9fd2dfdda5c12e0ab0718e7ec22c62d5d0fa0b03c70155112e799"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/dist/cjs/rx-storage-helper.js",
+      "path": "node_modules/rxdb/dist/cjs/rx-storage-helper.js",
+      "sha256": "912c44b3436cbc6e90996fd154f0006570130ffaea3c66acd429b9dd8d86fc68"
+    },
+    {
+      "label": "spikes/byos-sync/package-lock.json",
+      "path": "package-lock.json",
+      "sha256": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23"
+    },
+    {
+      "label": "spikes/byos-sync/package.json",
+      "path": "package.json",
+      "sha256": "9d32fe8fd586cbdf8c7e33c9c2bf7a1103d32ed9b0d021e24eebc91d4e91ad0c"
+    },
+    {
+      "label": "spikes/byos-sync/node_modules/rxdb/package.json",
+      "path": "node_modules/rxdb/package.json",
+      "sha256": "0c213e51eba89afdc23f10eeb708f3555c99b23a6cf0e91e10518c48902677df"
+    },
+    {
+      "label": "spikes/byos-sync/src/mock.mjs",
+      "path": "src/mock.mjs",
+      "sha256": "368d1da212507e3262ba4e8fb91d7945d95f8eb7ec3a30eff43d246a58a4af89"
+    },
+    {
+      "label": "spikes/byos-sync/src/candidates.mjs",
+      "path": "src/candidates.mjs",
+      "sha256": "d13c84f9379a4153aae874c01422b58737a0919b50a0a0f89de503d0ed49e14b"
+    },
+    {
+      "label": "spikes/byos-sync/native-overlay/page-store.mjs",
+      "path": "native-overlay/page-store.mjs",
+      "sha256": "5b906e26c2cc979b494ef9a19d346bd5daefd13cc426f7e6d21ad089acb68490"
+    },
+    {
+      "label": "spikes/byos-sync/native-overlay/fixtures.mjs",
+      "path": "native-overlay/fixtures.mjs",
+      "sha256": "8a370ba8eca9783ec9f7b2dedc6b9db193d47ca67f0af65a7718d4560f6ac14e"
+    },
+    {
+      "label": "changes-feasibility/run.mjs",
+      "path": "changes-feasibility/run.mjs",
+      "sha256": "998b143742c19b2cd7a8eb4930ddd44f21453ec8fcd2ac6d9e3f1dded402299d"
+    },
+    {
+      "label": "changes-feasibility/adapter.mjs",
+      "path": "changes-feasibility/adapter.mjs",
+      "sha256": "e3586ec961b49ba3c50a61954a579e14d3d9ce9c8ea076f46b7f4cf6e2e7b4fb"
+    },
+    {
+      "label": "changes-feasibility/provider.mjs",
+      "path": "changes-feasibility/provider.mjs",
+      "sha256": "de3225c0d0d7170191e3f65757c774e152be56e64e6c7e6d6d11fca1ff4f6b3e"
+    },
+    {
+      "label": "changes-feasibility/cases.mjs",
+      "path": "changes-feasibility/cases.mjs",
+      "sha256": "6defdc58e7c087d8d6440aa00594ff532c799a5c1cc5850c45b9429cdbee66e0"
+    },
+    {
+      "label": "changes-feasibility/oracle.json",
+      "path": "changes-feasibility/oracle.json",
+      "sha256": "e82d62f45c2aa04d9c751508168b3bb6f4c531e083bd292daa07446d6771e9b2"
+    },
+    {
+      "label": "changes-feasibility/fixture.json",
+      "path": "changes-feasibility/fixture.json",
+      "sha256": "83718e37f19530c009955e9aff75224fb907fc285016f7ae07a2ca15c6af447d"
+    },
+    {
+      "label": "changes-feasibility/binding.json",
+      "path": "changes-feasibility/binding.json",
+      "sha256": "576e7ac6d75654f4cbc35c5bb3dcd92d693858841ea052ff095641a22b05bd14"
+    },
+    {
+      "label": "changes-feasibility/.generated/mock-extended.mjs",
+      "path": "changes-feasibility/.generated/mock-extended.mjs",
+      "sha256": "81686be2ee6f9117b48759751d60da426516cf4e68da533b9c4d5c7c7f4623c0"
+    },
+    {
+      "label": "changes-feasibility/.generated/store.cjs",
+      "path": "changes-feasibility/.generated/store.cjs",
+      "sha256": "c7444ed69b16ce011aded1fd074f3d4b7e32edfc6c43766442075d3e4659db16"
+    },
+    {
+      "label": "changes-feasibility/.generated/factory-binding.cjs",
+      "path": "changes-feasibility/.generated/factory-binding.cjs",
+      "sha256": "bede12ba85c9756b840c95d09618fb3bb2cbe686fa3e933fc1061d9fcee37cb1"
+    },
+    {
+      "label": "lead/design-v1.md",
+      "path": "../../../../docs/sessions/20261024-tools-102-native-overlay/master-team-v4/research-changes/design-v1.md",
+      "sha256": "53652de3a2f9b6bde5f0a778906d1b0ef64d1e0d494557a3e2d2a0835a776b12"
+    },
+    {
+      "label": "lead/oracle-v2.json",
+      "path": "../../../../docs/sessions/20261024-tools-102-native-overlay/master-team-v4/research-changes/oracle-v2.json",
+      "sha256": "e82d62f45c2aa04d9c751508168b3bb6f4c531e083bd292daa07446d6771e9b2"
+    },
+    {
+      "label": "lead/revision-v2.md",
+      "path": "../../../../docs/sessions/20261024-tools-102-native-overlay/master-team-v4/research-changes/revision-v2.md",
+      "sha256": "b7cb10c76aa2b208b78f5fb834facc9e5d23d73f3a0acaf85193795ad3570e5b"
+    },
+    {
+      "label": "lead/ledger-v2.json",
+      "path": "../../../../docs/sessions/20261024-tools-102-native-overlay/master-team-v4/research-changes/ledger-v2.json",
+      "sha256": "1a67a6d42f9ae1564061bc7f1903c171de7e77e6d6f6ef3d3a68aec230e5289b"
+    },
+    {
+      "label": "lead/source-bindings-v1.json",
+      "path": "../../../../docs/sessions/20261024-tools-102-native-overlay/master-team-v4/research-changes/source-bindings-v1.json",
+      "sha256": "2e82fc3d39920cb9c8b642d7a19001aed68a44bef19a7528f1d85690f0bca4fb"
+    }
+  ],
+  "sourceArchive": "sources-v002.json.gz",
+  "sourceArchiveSha256": "113ce6473addb65137fa48a17dd05324d2ac79e69e3e0b64c6da36032d4e5d47",
+  "at": "2026-10-24T11:37:45.970Z",
+  "requested": "gpt-6.1-sol/high",
+  "hostRouted": "UNKNOWN",
+  "providerObserved": "UNKNOWN",
+  "usageCost": "UNKNOWN"
+}

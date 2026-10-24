@@ -16,6 +16,7 @@ const eslintConfig = defineConfig([
     "public/video-scissors/ffmpeg/**",
     "spikes/byos-sync/.browser-bundle.js",
     "spikes/byos-sync/native-overlay/.generated/**",
+    "spikes/byos-sync/changes-feasibility/.generated/**",
     "spikes/byos-remediation/.browser-bundle.js",
     "next-env.d.ts",
   ]),

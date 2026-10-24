@@ -1,0 +1,153 @@
+{
+  "id": "S5_LOST_RESPONSE_INTENT",
+  "status": "PASS",
+  "uncertainPhase": "successful-wal-mutation-response-lost",
+  "fault": {
+    "method": "PUT",
+    "fileId": "f6",
+    "kind": "unknown-success",
+    "bodyContains": "a/3/c08f8c9b-695f-4abc-bfa9-1d5d8371cdb2",
+    "used": true,
+    "matched": {
+      "file_id": "f6",
+      "file_name": "rxdb-wal.json",
+      "method": "PUT",
+      "path": "/upload/drive/v2/files/f6",
+      "operation": "payload-update",
+      "version_before": 7,
+      "mutation_applied": true,
+      "response_delivered": false,
+      "request_body_bytes": 318,
+      "version_after": 8,
+      "stored_body_matches_request": true
+    }
+  },
+  "chosen": {
+    "id": "page:a",
+    "page": "page",
+    "session": "a",
+    "seq": 3,
+    "state": "pending",
+    "draft": {
+      "id": "page",
+      "body": "# Merge\n\nM — explicitly chosen resolution.",
+      "editId": "a/3/c08f8c9b-695f-4abc-bfa9-1d5d8371cdb2"
+    },
+    "base": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+    },
+    "remote": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+    },
+    "sourceLocal": {
+      "id": "page",
+      "body": "# Local\n\nB — acknowledged offline intent.",
+      "editId": "a/1/aa6eb6d3-9854-4817-a1ec-84bbfbf451c1"
+    },
+    "sourceCloud": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+    },
+    "sourceExternal": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+    }
+  },
+  "newer": {
+    "body": "# Local continued\n\nD — unresolved newer intent.\n\nNew generation during uncertainty.",
+    "status": "local-saved",
+    "warning": false,
+    "writer": true,
+    "local": "# Local continued\n\nD — unresolved newer intent.\n\nNew generation during uncertainty.",
+    "cloud": "# Cloud\n\nC — independent remote intent.",
+    "drafts": [
+      {
+        "session": "a",
+        "body": "# Local continued\n\nD — unresolved newer intent.\n\nNew generation during uncertainty.",
+        "state": "pending",
+        "seq": 4,
+        "external": "# Cloud\n\nC — independent remote intent."
+      }
+    ],
+    "page": {
+      "id": "page",
+      "body": "# Local continued\n\nD — unresolved newer intent.\n\nNew generation during uncertainty.",
+      "editId": "a/4/7a34b070-9bcb-4509-8285-c7c3b84c65fb"
+    },
+    "journal": {
+      "id": "page:a",
+      "page": "page",
+      "session": "a",
+      "seq": 4,
+      "state": "pending",
+      "draft": {
+        "id": "page",
+        "body": "# Local continued\n\nD — unresolved newer intent.\n\nNew generation during uncertainty.",
+        "editId": "a/4/7a34b070-9bcb-4509-8285-c7c3b84c65fb"
+      },
+      "base": {
+        "id": "page",
+        "body": "# Cloud\n\nC — independent remote intent.",
+        "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+      },
+      "remote": {
+        "id": "page",
+        "body": "# Cloud\n\nC — independent remote intent.",
+        "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+      },
+      "sourceLocal": {
+        "id": "page",
+        "body": "# Local\n\nB — acknowledged offline intent.",
+        "editId": "a/1/aa6eb6d3-9854-4817-a1ec-84bbfbf451c1"
+      },
+      "sourceCloud": {
+        "id": "page",
+        "body": "# Cloud\n\nC — independent remote intent.",
+        "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+      },
+      "sourceExternal": {
+        "id": "page",
+        "body": "# Cloud\n\nC — independent remote intent.",
+        "editId": "b/1/353e2d58-0f62-4f32-a2c4-e367b3a1a454"
+      }
+    }
+  },
+  "hookFired": true,
+  "unrelated": {
+    "id": "unrelated:a",
+    "page": "unrelated",
+    "session": "a",
+    "seq": 1,
+    "state": "pending",
+    "draft": {
+      "id": "unrelated",
+      "body": "# Unrelated acknowledged intent.",
+      "editId": "a/1/1c843fc2-98de-4dfc-a1f8-4faadb8b4f65"
+    },
+    "base": null,
+    "remote": null,
+    "sourceLocal": null,
+    "sourceCloud": null,
+    "sourceExternal": null
+  },
+  "admitted": 878,
+  "dispatched": 878,
+  "observed": 877,
+  "snapshots": 9,
+  "explicitSyncOnly": true,
+  "changedAdapterHypothesis": true,
+  "sourceAssumptions": [
+    "Changes tokens opaque; follow nextPageToken irrespective of returned or relevant count; newStartPageToken only terminal; no timestamp ordering inferred.",
+    "Positive cases retain relevant changes after captured start token. A change may expose current metadata/current content, not immutable historical bodies. Duplicate/coalesced events allowed; latest full state oracle is authoritative.",
+    "Inventory is finite, paginated and quiescent except explicitly scheduled writes represented in retained feed; no general consistent-snapshot claim.",
+    "No-event negative deliberately violates retained discoverability and does not gain an invented event on visibility restoration.",
+    "removed means deletion OR access loss; neither absence nor removed alone authorizes local/remote deletion.",
+    "Provider pageSize is a maximum. Fixtures must not return more than requested; adapter may prevent overflow through request sizing. No special privileges to access independent ground truth from adapter."
+  ]
+}

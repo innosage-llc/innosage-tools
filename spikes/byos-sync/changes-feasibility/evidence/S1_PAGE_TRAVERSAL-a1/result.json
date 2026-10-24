@@ -1,0 +1,35 @@
+{
+  "id": "S1_PAGE_TRAVERSAL",
+  "status": "PASS",
+  "emptyTailCheckpointBefore": {
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000051"
+    }
+  },
+  "emptyTailCheckpointAfter": {
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000051"
+    }
+  },
+  "emptyTailDurableAdvanced": false,
+  "limitation": "Zero-relevant terminal progress may replay old durable token; no checkpoint-only persistence claim",
+  "changedFile": "f21",
+  "admitted": 358,
+  "dispatched": 358,
+  "observed": 358,
+  "snapshots": 7,
+  "explicitSyncOnly": true,
+  "changedAdapterHypothesis": true,
+  "sourceAssumptions": [
+    "Changes tokens opaque; follow nextPageToken irrespective of returned or relevant count; newStartPageToken only terminal; no timestamp ordering inferred.",
+    "Positive cases retain relevant changes after captured start token. A change may expose current metadata/current content, not immutable historical bodies. Duplicate/coalesced events allowed; latest full state oracle is authoritative.",
+    "Inventory is finite, paginated and quiescent except explicitly scheduled writes represented in retained feed; no general consistent-snapshot claim.",
+    "No-event negative deliberately violates retained discoverability and does not gain an invented event on visibility restoration.",
+    "removed means deletion OR access loss; neither absence nor removed alone authorizes local/remote deletion.",
+    "Provider pageSize is a maximum. Fixtures must not return more than requested; adapter may prevent overflow through request sizing. No special privileges to access independent ground truth from adapter."
+  ]
+}

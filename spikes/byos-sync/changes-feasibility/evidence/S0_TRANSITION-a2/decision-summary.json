@@ -1,0 +1,123 @@
+{
+  "status": "PASS",
+  "admitted": 832,
+  "observed": 832,
+  "elapsedMs": 2695.005958,
+  "sourceUnchanged": true,
+  "oldModifiedTime": "2026-10-24T11:40:10.207Z",
+  "newModifiedTime": "2026-10-24T11:40:10.220Z",
+  "legacyCheckpoint": {
+    "docIdsWithSameModifiedTime": [
+      "discovery-new.json"
+    ],
+    "modifiedTime": "2026-10-24T11:40:10.220Z"
+  },
+  "oldBelowLegacy": true,
+  "sourceOldBody": "# Cloud\n\nC — independent remote intent.",
+  "beforeOldBody": "# Original\n\nA — baseline.",
+  "afterOldBody": "# Cloud\n\nC — independent remote intent.",
+  "afterNewBody": "# Cloud continued\n\nE — newer remote intent.",
+  "tieCountAfter": 30,
+  "identityUnchanged": true,
+  "oldAssumedRows": [
+    "discovery-new|0",
+    "discovery-old|0",
+    "other|0",
+    "page|0"
+  ],
+  "missingAssumedRowsAfter": [],
+  "journal": {
+    "id": "page:a",
+    "page": "page",
+    "session": "a",
+    "seq": 2,
+    "state": "needs-resolution",
+    "draft": {
+      "id": "page",
+      "body": "# Local continued\n\nD — unresolved newer intent.",
+      "editId": "a/2/55462fec-28c6-4966-a086-3130747f5a81"
+    },
+    "base": {
+      "id": "page",
+      "body": "# Original\n\nA — baseline.",
+      "editId": "baseline-A"
+    },
+    "remote": {
+      "id": "page",
+      "body": "# Cloud continued\n\nE — newer remote intent.",
+      "editId": "b/1/fcc7d04d-ac56-4092-90dc-1448acfd4e32"
+    },
+    "sourceLocal": {
+      "id": "page",
+      "body": "# Local\n\nB — acknowledged offline intent.",
+      "editId": "a/1/efaa80ff-a327-4239-b6c6-9fa63a4743f6"
+    },
+    "sourceCloud": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/915045a5-befd-4d46-8ff5-1b9bb44be4c2"
+    },
+    "sourceExternal": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/915045a5-befd-4d46-8ff5-1b9bb44be4c2"
+    }
+  },
+  "bootstrap": {
+    "at": "2026-10-24T11:40:12.193Z",
+    "phase": "before-old-owner-cancel",
+    "role": "a",
+    "type": "bootstrap-start-token",
+    "token": "opaque-000179",
+    "legacyCheckpoint": {
+      "docIdsWithSameModifiedTime": [
+        "discovery-new.json"
+      ],
+      "modifiedTime": "2026-10-24T11:40:10.220Z"
+    }
+  },
+  "inventoryOldAdmission": true,
+  "oldOwnerStopped": {
+    "at": "2026-10-24T11:40:12.151Z",
+    "phase": "before-old-owner-cancel",
+    "type": "old-owner-canceled",
+    "role": "a",
+    "isStopped": true
+  },
+  "nativeErrors": [],
+  "non200": [
+    {
+      "n": 102,
+      "status": 412,
+      "url": "http://127.0.0.1:59137/upload/drive/v2/files/f5?uploadType=media"
+    },
+    {
+      "n": 163,
+      "status": 412,
+      "url": "http://127.0.0.1:59137/upload/drive/v2/files/f5?uploadType=media"
+    },
+    {
+      "n": 216,
+      "status": 412,
+      "url": "http://127.0.0.1:59137/upload/drive/v2/files/f5?uploadType=media"
+    },
+    {
+      "n": 548,
+      "status": 412,
+      "url": "http://127.0.0.1:59137/upload/drive/v2/files/f5?uploadType=media"
+    }
+  ],
+  "sourceEntryCount": 46,
+  "sourceHashMismatch": [],
+  "receiptSha256": "ff6684cc4cd29511547775cc003fbabdbdb4f0afa74f464c42a503768a99766f",
+  "eventsGzipSha256": "2dc536976aeeb122b5e31ad929bcd0efb8faacb4637235a10e1d25db2a2e6094",
+  "resultSha256": "5d3fcd257694f0004560e707f0d4cb5b4ce2525031b760f40f7a012ffdd07b6d",
+  "remoteProtectedPage": {
+    "id": "page",
+    "body": "# Cloud continued\n\nE — newer remote intent.",
+    "editId": "b/1/fcc7d04d-ac56-4092-90dc-1448acfd4e32",
+    "_deleted": false
+  },
+  "unresolvedDraftNeverInUpload": true,
+  "remoteEqualsFullTieOracle": true
+}
