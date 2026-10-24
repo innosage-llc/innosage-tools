@@ -1,0 +1,9 @@
+{
+  "id": "S0_TRANSITION",
+  "status": "INCONCLUSIVE",
+  "phase": "before-old-owner-cancel",
+  "error": "Error: REQUEST_CAP_BEFORE_DISPATCH",
+  "admitted": 1000,
+  "dispatched": 1000,
+  "observed": 1000
+}

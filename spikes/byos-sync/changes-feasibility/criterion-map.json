@@ -1,0 +1,265 @@
+{
+  "protocol": "tools109-changes-oracle-v2",
+  "issue": "https://github.com/innosage-llc/innosage-tools/issues/109",
+  "state": "BOUNDED_EVIDENCE_READY_FOR_LEAD_AND_INDEPENDENT_REVIEW",
+  "hypothesis": "CHANGED_ADAPTER / supported generic RxDB17.6 native admission/default Master Wins + published native Drive push/WAL/CAS + unchanged PageStore source",
+  "oracleSha256": "e82d62f45c2aa04d9c751508168b3bb6f4c531e083bd292daa07446d6771e9b2",
+  "fixtureSha256": "83718e37f19530c009955e9aff75224fb907fc285016f7ae07a2ca15c6af447d",
+  "currentSourceHashes": {
+    "run.mjs": "998b143742c19b2cd7a8eb4930ddd44f21453ec8fcd2ac6d9e3f1dded402299d",
+    "adapter.mjs": "e3586ec961b49ba3c50a61954a579e14d3d9ce9c8ea076f46b7f4cf6e2e7b4fb",
+    "provider.mjs": "de3225c0d0d7170191e3f65757c774e152be56e64e6c7e6d6d11fca1ff4f6b3e",
+    "cases.mjs": "d5b3bbb0c0bf1fabb34f03b6c11961b4c37c151ccffea2cf1bd9c113daa0a566",
+    "check.mjs": "6b8a89cf54ba048b8affa45dc57decd33c7df7ba564531968733c09b8327b59e",
+    "binding.json": "576e7ac6d75654f4cbc35c5bb3dcd92d693858841ea052ff095641a22b05bd14"
+  },
+  "runtimeRole": {
+    "requested": "gpt-6.1-sol/high",
+    "hostRouted": "UNKNOWN",
+    "providerObserved": "UNKNOWN",
+    "usageCost": "UNKNOWN"
+  },
+  "criteria": {
+    "P1": {
+      "status": "BOUNDED_PASS",
+      "cases": [
+        "S1_PAGE_TRAVERSAL-a1",
+        "S3_READ_FAILURE_REPLAY-a1"
+      ],
+      "claim": "Full body traversal across empty/short/internal/duplicate pages, provider sizing prevents overflow, content failure retains cursor until readable replay."
+    },
+    "P2": {
+      "status": "BOUNDED_PASS_UNDER_EXPLICIT_SOURCE_ASSUMPTIONS",
+      "cases": [
+        "S0_TRANSITION-a2",
+        "S2_BOOTSTRAP_PERSIST_BARRIER-a1",
+        "S3_READ_FAILURE_REPLAY-a1",
+        "S4_RETAINED_EVENT-a1"
+      ],
+      "claim": "Legacy-old bootstrap recovery, token-before-inventory race replay, real native persistence barrier, failed-read interval and ordered retained feed proven in bounded fixtures.",
+      "negativeBoundary": {
+        "case": "S4_NO_EVENT-a1",
+        "status": "RECOVERY_FAIL_NOT_PROVEN",
+        "claim": "Visible sourceC remains receiverA when omitted from bootstrap inventory and retained feed; terminal feed exhaustion is not global completeness."
+      },
+      "emptyTail": "No native durable checkpoint-only progress; S1 actual durable token unchanged with safe replay and later real change recovered.",
+      "coverageLimit": "S2 pre-write down checkpoint null; legacy timestamp transition is separately established in S0. No real crash or arbitrary-concurrency snapshot proof."
+    },
+    "P3": {
+      "status": "BOUNDED_PASS",
+      "cases": [
+        "S0_TRANSITION-a2",
+        "S2_BOOTSTRAP_PERSIST_BARRIER-a1",
+        "S5_LOST_RESPONSE_INTENT-a3"
+      ],
+      "claim": "Same native identity/schema/metadata assumed rows preserved; old owner canceled; default Master Wins E coexists with journal D or M and B/C baselines. No native metadata or receiver import shortcut."
+    },
+    "P4": {
+      "status": "BOUNDED_PASS",
+      "cases": [
+        "S5_LOST_RESPONSE_INTENT-a3"
+      ],
+      "claim": "Successful native WAL mutation/lost response captured before verification; full M journal remains unverified, newerACKseq4 during blocked network survives olderM settlement; actual remote verification cannot retire before-cleanup newer generation; E-race M+B/C archived; owned discard preserves unrelated journal.",
+      "partialPriorEvidence": "S5a1 has positive uncertainty/generation observations but aggregate INCONCLUSIVE due stale E writer. S5a2 runtime PASS lacks post-E-race raw journal; use a3 for complete decisive capture."
+    }
+  },
+  "sourceAssumptions": [
+    "Changes tokens opaque; follow nextPageToken irrespective of returned or relevant count; newStartPageToken only terminal; no timestamp ordering inferred.",
+    "Positive cases retain relevant changes after captured start token. A change may expose current metadata/current content, not immutable historical bodies. Duplicate/coalesced events allowed; latest full state oracle is authoritative.",
+    "Inventory is finite, paginated and quiescent except explicitly scheduled writes represented in retained feed; no general consistent-snapshot claim.",
+    "No-event negative deliberately violates retained discoverability and does not gain an invented event on visibility restoration.",
+    "removed means deletion OR access loss; neither absence nor removed alone authorizes local/remote deletion.",
+    "Provider pageSize is a maximum. Fixtures must not return more than requested; adapter may prevent overflow through request sizing. No special privileges to access independent ground truth from adapter."
+  ],
+  "acceptedInvocations": {
+    "S0_TRANSITION-a2": {
+      "status": "PASS",
+      "admitted": 832,
+      "observed": 832,
+      "fetchErrors": 0,
+      "elapsedMs": 2695.005958,
+      "freeze": "002",
+      "command": "node changes-feasibility/run.mjs S0_TRANSITION a2",
+      "receipt": "evidence/S0_TRANSITION-a2/receipt.json",
+      "receiptSha256": "ff6684cc4cd29511547775cc003fbabdbdb4f0afa74f464c42a503768a99766f",
+      "resultSha256": "5d3fcd257694f0004560e707f0d4cb5b4ce2525031b760f40f7a012ffdd07b6d",
+      "rawEventSha256": "61e6ea2b2e48ba479f739b1f4502429bb662483d3093fd41887f1e8ab3424681",
+      "sourceUnchanged": true,
+      "phases": {
+        "stock-baseline": "evidence/S0_TRANSITION-a2/phase-01.json.gz",
+        "before-transition": "evidence/S0_TRANSITION-a2/phase-02.json.gz",
+        "before-old-owner-cancel": "evidence/S0_TRANSITION-a2/phase-03.json.gz",
+        "after-adapter-start": "evidence/S0_TRANSITION-a2/phase-04.json.gz",
+        "transition-restarted": "evidence/S0_TRANSITION-a2/phase-05.json.gz",
+        "final-before-cleanup": "evidence/S0_TRANSITION-a2/phase-06.json.gz"
+      }
+    },
+    "S1_PAGE_TRAVERSAL-a1": {
+      "status": "PASS",
+      "admitted": 358,
+      "observed": 358,
+      "fetchErrors": 0,
+      "elapsedMs": 1219.5606249999998,
+      "freeze": "003",
+      "command": "node changes-feasibility/run.mjs S1_PAGE_TRAVERSAL a1",
+      "receipt": "evidence/S1_PAGE_TRAVERSAL-a1/receipt.json",
+      "receiptSha256": "1ea79ce622fde084e828aeb3d63e5ec00c5a89c1770e7543fdd46a1d05ace750",
+      "resultSha256": "ef612442f4bd968b874305f5878d0f8a8d840bc373033b50029763fa2f61c328",
+      "rawEventSha256": "6eeefcf494e63ac26b3d337d805b64febc81a583718e811f8729014c1be4cd79",
+      "sourceUnchanged": true,
+      "phases": {
+        "stock-baseline": "evidence/S1_PAGE_TRAVERSAL-a1/phase-01.json.gz",
+        "before-old-owner-cancel": "evidence/S1_PAGE_TRAVERSAL-a1/phase-02.json.gz",
+        "after-adapter-start": "evidence/S1_PAGE_TRAVERSAL-a1/phase-03.json.gz",
+        "traversal-script-settled": "evidence/S1_PAGE_TRAVERSAL-a1/phase-04.json.gz",
+        "empty-terminal-replay": "evidence/S1_PAGE_TRAVERSAL-a1/phase-05.json.gz",
+        "after-empty-real-change": "evidence/S1_PAGE_TRAVERSAL-a1/phase-06.json.gz",
+        "final-before-cleanup": "evidence/S1_PAGE_TRAVERSAL-a1/phase-07.json.gz"
+      }
+    },
+    "S2_BOOTSTRAP_PERSIST_BARRIER-a1": {
+      "status": "PASS",
+      "admitted": 242,
+      "observed": 242,
+      "fetchErrors": 0,
+      "elapsedMs": 997.9352500000001,
+      "freeze": "003",
+      "command": "node changes-feasibility/run.mjs S2_BOOTSTRAP_PERSIST_BARRIER a1",
+      "receipt": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/receipt.json",
+      "receiptSha256": "69dec110efac23263a6b30f09ca331952ccdcf850a54bc10f5bdd7f7bb74369d",
+      "resultSha256": "fcbca4699abd3e841817ab518c6edb5e7d957c1c533aaa5ed42d6030858a40d7",
+      "rawEventSha256": "1a63784d58b8e134b6d43a4ffe2a36561c54ef0f64fdbb9d6b9bf4356ebfde1e",
+      "sourceUnchanged": true,
+      "phases": {
+        "stock-baseline": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/phase-01.json.gz",
+        "before-old-owner-cancel": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/phase-02.json.gz",
+        "actual-native-persistence-paused": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/phase-03.json.gz",
+        "after-adapter-start": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/phase-04.json.gz",
+        "native-persistence-released": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/phase-05.json.gz",
+        "barrier-restarted": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/phase-06.json.gz",
+        "final-before-cleanup": "evidence/S2_BOOTSTRAP_PERSIST_BARRIER-a1/phase-07.json.gz"
+      }
+    },
+    "S3_READ_FAILURE_REPLAY-a1": {
+      "status": "PASS",
+      "admitted": 235,
+      "observed": 235,
+      "fetchErrors": 0,
+      "elapsedMs": 1244.64425,
+      "freeze": "003",
+      "command": "node changes-feasibility/run.mjs S3_READ_FAILURE_REPLAY a1",
+      "receipt": "evidence/S3_READ_FAILURE_REPLAY-a1/receipt.json",
+      "receiptSha256": "e9199d8cf7dbcdb9c6023ca044ccf2c4b1d28bb2d42f3470a1a5766cd7cd3b0e",
+      "resultSha256": "6d549212838ec10faf661c5b30c54fe7f017a99b8e98eb25883ab548baadc02d",
+      "rawEventSha256": "7896d74517fb3e30e0b938f743d7ddddb6f84b87cbc772183c40a078c744e8f5",
+      "sourceUnchanged": true,
+      "phases": {
+        "stock-baseline": "evidence/S3_READ_FAILURE_REPLAY-a1/phase-01.json.gz",
+        "before-old-owner-cancel": "evidence/S3_READ_FAILURE_REPLAY-a1/phase-02.json.gz",
+        "after-adapter-start": "evidence/S3_READ_FAILURE_REPLAY-a1/phase-03.json.gz",
+        "content-failure-before-retry": "evidence/S3_READ_FAILURE_REPLAY-a1/phase-04.json.gz",
+        "content-failure-replayed": "evidence/S3_READ_FAILURE_REPLAY-a1/phase-05.json.gz",
+        "final-before-cleanup": "evidence/S3_READ_FAILURE_REPLAY-a1/phase-06.json.gz"
+      }
+    },
+    "S4_RETAINED_EVENT-a1": {
+      "status": "PASS",
+      "admitted": 330,
+      "observed": 330,
+      "fetchErrors": 0,
+      "elapsedMs": 1409.0491659999998,
+      "freeze": "003",
+      "command": "node changes-feasibility/run.mjs S4_RETAINED_EVENT a1",
+      "receipt": "evidence/S4_RETAINED_EVENT-a1/receipt.json",
+      "receiptSha256": "69876615f39b432312b601dabdd5d59ce076f61f98a72a8df770959723bee4a5",
+      "resultSha256": "8131fe6ae2a739eb9f480ff962a07149a6f36c00b470ddd1147c6ce844669422",
+      "rawEventSha256": "962610fc0961b1d3cdd7f49eaa7eb743f9c2627078504ed898e9739f5fd3cf69",
+      "sourceUnchanged": true,
+      "phases": {
+        "stock-baseline": "evidence/S4_RETAINED_EVENT-a1/phase-01.json.gz",
+        "before-old-owner-cancel": "evidence/S4_RETAINED_EVENT-a1/phase-02.json.gz",
+        "after-adapter-start": "evidence/S4_RETAINED_EVENT-a1/phase-03.json.gz",
+        "pre-update-durable-token": "evidence/S4_RETAINED_EVENT-a1/phase-04.json.gz",
+        "old-restored-no-new-event": "evidence/S4_RETAINED_EVENT-a1/phase-05.json.gz",
+        "retention-final": "evidence/S4_RETAINED_EVENT-a1/phase-06.json.gz",
+        "final-before-cleanup": "evidence/S4_RETAINED_EVENT-a1/phase-07.json.gz"
+      }
+    },
+    "S4_NO_EVENT-a1": {
+      "status": "BOUNDARY_FAIL_RECOVERY_NOT_PROVEN",
+      "admitted": 240,
+      "observed": 240,
+      "fetchErrors": 0,
+      "elapsedMs": 1006.4512500000001,
+      "freeze": "003",
+      "command": "node changes-feasibility/run.mjs S4_NO_EVENT a1",
+      "receipt": "evidence/S4_NO_EVENT-a1/receipt.json",
+      "receiptSha256": "bf545dfeaf7ed1d91f298aa4c3cbdcf257f1173fb61124447b9c2c82337055f1",
+      "resultSha256": "0b126c59d15bb2c407f13c7feab628dccd82b426dc91fbb250bdc378f17f4d99",
+      "rawEventSha256": "8bba42702535b4ee28f309d3163e55e7667ab13812d150b47f4fac812bbdf7ef",
+      "sourceUnchanged": true,
+      "phases": {
+        "stock-baseline": "evidence/S4_NO_EVENT-a1/phase-01.json.gz",
+        "before-old-owner-cancel": "evidence/S4_NO_EVENT-a1/phase-02.json.gz",
+        "after-adapter-start": "evidence/S4_NO_EVENT-a1/phase-03.json.gz",
+        "old-restored-no-new-event": "evidence/S4_NO_EVENT-a1/phase-04.json.gz",
+        "retention-final": "evidence/S4_NO_EVENT-a1/phase-05.json.gz",
+        "final-before-cleanup": "evidence/S4_NO_EVENT-a1/phase-06.json.gz"
+      }
+    },
+    "S5_LOST_RESPONSE_INTENT-a3": {
+      "status": "PASS",
+      "admitted": 880,
+      "observed": 879,
+      "fetchErrors": 1,
+      "elapsedMs": 4224.243874999999,
+      "freeze": "005",
+      "command": "node changes-feasibility/run.mjs S5_LOST_RESPONSE_INTENT a3",
+      "receipt": "evidence/S5_LOST_RESPONSE_INTENT-a3/receipt.json",
+      "receiptSha256": "080dd12423af098da7447ebcc071cce25b413611974aa03b81ef669f5b294e08",
+      "resultSha256": "dbd53817088b609884f7d7d967df91952bbf5126ee2700ffb40ed686c8b6654a",
+      "rawEventSha256": "368e18056168262131aab9461db9ab4ee6d41e8e7e6be694e3423b756a38e815",
+      "sourceUnchanged": true,
+      "phases": {
+        "stock-baseline": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-01.json.gz",
+        "before-old-owner-cancel": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-02.json.gz",
+        "after-adapter-start": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-03.json.gz",
+        "successful-wal-mutation-response-lost": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-04.json.gz",
+        "newer-generation-ack-during-network-wait": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-05.json.gz",
+        "older-generation-cannot-retire": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-06.json.gz",
+        "newer-before-cleanup-retained": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-07.json.gz",
+        "e-race-master-wins-protected": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-08.json.gz",
+        "owned-discard-unrelated-retained": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-09.json.gz",
+        "final-before-cleanup": "evidence/S5_LOST_RESPONSE_INTENT-a3/phase-10.json.gz"
+      }
+    }
+  },
+  "preservedAttempts": {
+    "S0_TRANSITION-a1": {
+      "status": "INCONCLUSIVE",
+      "reason": "1000 cap;979setup+21initialization; no pull returned; request1001blocked",
+      "receipt": "evidence/S0_TRANSITION-a1/receipt.json"
+    },
+    "S5_LOST_RESPONSE_INTENT-a1": {
+      "status": "INCONCLUSIVE",
+      "reason": "E control writer basedonC lost to newerremoteD; earlier uncertain interval positive separately",
+      "receipt": "evidence/S5_LOST_RESPONSE_INTENT-a1/receipt.json"
+    },
+    "S5_LOST_RESPONSE_INTENT-a2": {
+      "status": "RUNTIME_PASS_CAPTURE_GAP",
+      "reason": "Post-E-race M+B/C journal asserted but missing raw phase before later discard; capture-only a3 closesgap",
+      "receipt": "evidence/S5_LOST_RESPONSE_INTENT-a2/receipt.json"
+    }
+  },
+  "originalStock107": "Unchanged C1 boundedpositive/C2INCONCLUSIVE/C3FAIL and historical artifacts; new adapter evidence does not relabel stocknative pass",
+  "reviewAndRelease": "Final lead verdict, independent exact-artifact review, full native gates and initiallydraft PR pending; no worker commit/push/gate/PR/merge",
+  "limitations": [
+    "Mock/provider assumptions, no actual Google/OAuth/retention guarantee",
+    "Explicit sync only; no unattended proof",
+    "fake-indexeddb process-local; no browser/process crash durability claim",
+    "No safe rollback to timestamp plugin after token transition proven",
+    "No removal/access-loss deletion inference; folder moves/invalid tokens/exhaustive faults not qualified",
+    "50ms transaction and1000ms retry reuse fast-harness overrides, not productdefaults/performance evidence",
+    "Actual cap boundary observed in S0a1; watchdog timeout termination not fault-tested; all observed runs under180s"
+  ]
+}

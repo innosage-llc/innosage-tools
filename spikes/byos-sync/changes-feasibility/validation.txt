@@ -1,0 +1,5 @@
+PASS syntax: run.mjs adapter.mjs provider.mjs cases.mjs check.mjs
+PASS synchronous origin/admission self-check; actualS0a1 rejectsrequest1001 at1000dispatches
+PASS offlinearchiveaudit all10attempts: source/hash/console/request accounting and decisivepayload/cursor/journal checks
+PASS acceptedcasebranch/sharedhelpers byteidentity against currentcasefile; otherimplementationbytes unchanged
+Researchcases completed only as listed; firstfailures/capturegap preserved. No repositorygate/commit/push/PR/merge.

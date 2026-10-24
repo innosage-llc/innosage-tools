@@ -1,0 +1,209 @@
+{
+  "id": "S0_TRANSITION",
+  "status": "PASS",
+  "identity": {
+    "databaseName": "overlay613338623365306530383062353464376139383061613433633534623139393030",
+    "collectionName": "pages",
+    "replicationIdentifier": "native-overlay",
+    "deletedField": "_deleted",
+    "metaCollection": "rx-replication-meta-cb06b1ba2f9bc44ba2707f5e71c584115d1a786e6dc5c796d919d68ebdd34167",
+    "metaSchema": {
+      "title": "RxReplicationProtocolMetaData",
+      "primaryKey": {
+        "key": "id",
+        "fields": [
+          "itemId",
+          "isCheckpoint"
+        ],
+        "separator": "|"
+      },
+      "type": "object",
+      "version": 0,
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 102
+        },
+        "isCheckpoint": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ],
+          "minLength": 1,
+          "maxLength": 1
+        },
+        "itemId": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "checkpointData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "docData": {
+          "type": "object",
+          "properties": {
+            "_attachments": {
+              "type": "object"
+            },
+            "_deleted": {
+              "type": "boolean"
+            },
+            "_meta": {
+              "additionalProperties": true,
+              "properties": {
+                "lwt": {
+                  "maximum": 1000000000000000,
+                  "minimum": 1,
+                  "multipleOf": 0.01,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lwt"
+              ],
+              "type": "object"
+            },
+            "_rev": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 262144,
+              "type": "string"
+            },
+            "editId": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        },
+        "isResolvedConflict": {
+          "type": "string"
+        },
+        "_rev": {
+          "type": "string",
+          "minLength": 1
+        },
+        "_attachments": {
+          "type": "object"
+        },
+        "_deleted": {
+          "type": "boolean"
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "lwt": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000000000000000,
+              "multipleOf": 0.01
+            }
+          },
+          "additionalProperties": true,
+          "required": [
+            "lwt"
+          ]
+        }
+      },
+      "keyCompression": false,
+      "required": [
+        "id",
+        "isCheckpoint",
+        "itemId",
+        "_deleted",
+        "_rev",
+        "_meta",
+        "_attachments"
+      ],
+      "indexes": [
+        [
+          "_deleted",
+          "id"
+        ],
+        [
+          "_meta.lwt",
+          "id"
+        ]
+      ],
+      "encrypted": []
+    },
+    "logicalIdentifier": "rxdbreplicationnative-overlay"
+  },
+  "checkpoint": {
+    "docIdsWithSameModifiedTime": [
+      "discovery-new.json"
+    ],
+    "modifiedTime": "2026-10-24T11:40:10.220Z",
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000185"
+    }
+  },
+  "journal": {
+    "id": "page:a",
+    "page": "page",
+    "session": "a",
+    "seq": 2,
+    "state": "needs-resolution",
+    "draft": {
+      "id": "page",
+      "body": "# Local continued\n\nD — unresolved newer intent.",
+      "editId": "a/2/55462fec-28c6-4966-a086-3130747f5a81"
+    },
+    "base": {
+      "id": "page",
+      "body": "# Original\n\nA — baseline.",
+      "editId": "baseline-A"
+    },
+    "remote": {
+      "id": "page",
+      "body": "# Cloud continued\n\nE — newer remote intent.",
+      "editId": "b/1/fcc7d04d-ac56-4092-90dc-1448acfd4e32"
+    },
+    "sourceLocal": {
+      "id": "page",
+      "body": "# Local\n\nB — acknowledged offline intent.",
+      "editId": "a/1/efaa80ff-a327-4239-b6c6-9fa63a4743f6"
+    },
+    "sourceCloud": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/915045a5-befd-4d46-8ff5-1b9bb44be4c2"
+    },
+    "sourceExternal": {
+      "id": "page",
+      "body": "# Cloud\n\nC — independent remote intent.",
+      "editId": "b/1/915045a5-befd-4d46-8ff5-1b9bb44be4c2"
+    }
+  },
+  "legacyBefore": {
+    "docIdsWithSameModifiedTime": [
+      "discovery-new.json"
+    ],
+    "modifiedTime": "2026-10-24T11:40:10.220Z"
+  },
+  "admitted": 832,
+  "dispatched": 832,
+  "observed": 832,
+  "snapshots": 6,
+  "explicitSyncOnly": true,
+  "changedAdapterHypothesis": true,
+  "sourceAssumptions": [
+    "Changes tokens opaque; follow nextPageToken irrespective of returned or relevant count; newStartPageToken only terminal; no timestamp ordering inferred.",
+    "Positive cases retain relevant changes after captured start token. A change may expose current metadata/current content, not immutable historical bodies. Duplicate/coalesced events allowed; latest full state oracle is authoritative.",
+    "Inventory is finite, paginated and quiescent except explicitly scheduled writes represented in retained feed; no general consistent-snapshot claim.",
+    "No-event negative deliberately violates retained discoverability and does not gain an invented event on visibility restoration.",
+    "removed means deletion OR access loss; neither absence nor removed alone authorizes local/remote deletion.",
+    "Provider pageSize is a maximum. Fixtures must not return more than requested; adapter may prevent overflow through request sizing. No special privileges to access independent ground truth from adapter."
+  ]
+}

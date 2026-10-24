@@ -1,0 +1,46 @@
+{
+  "id": "S3_READ_FAILURE_REPLAY",
+  "status": "PASS",
+  "beforeCheckpoint": {
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000025"
+    }
+  },
+  "faults": [
+    {
+      "method": "GET",
+      "fileId": "f18",
+      "path": "/drive/v3/files/",
+      "status": 503,
+      "used": true,
+      "matched": {
+        "file_id": "f18",
+        "file_name": "read1.json",
+        "method": "GET",
+        "path": "/drive/v3/files/f18",
+        "operation": "get",
+        "version_before": 1,
+        "mutation_applied": false,
+        "response_delivered": true,
+        "request_body_bytes": 0
+      }
+    }
+  ],
+  "limitation": "Native callback failure retains lock until unchanged timeout/CAS protocol recovers; errors archived",
+  "admitted": 235,
+  "dispatched": 235,
+  "observed": 235,
+  "snapshots": 6,
+  "explicitSyncOnly": true,
+  "changedAdapterHypothesis": true,
+  "sourceAssumptions": [
+    "Changes tokens opaque; follow nextPageToken irrespective of returned or relevant count; newStartPageToken only terminal; no timestamp ordering inferred.",
+    "Positive cases retain relevant changes after captured start token. A change may expose current metadata/current content, not immutable historical bodies. Duplicate/coalesced events allowed; latest full state oracle is authoritative.",
+    "Inventory is finite, paginated and quiescent except explicitly scheduled writes represented in retained feed; no general consistent-snapshot claim.",
+    "No-event negative deliberately violates retained discoverability and does not gain an invented event on visibility restoration.",
+    "removed means deletion OR access loss; neither absence nor removed alone authorizes local/remote deletion.",
+    "Provider pageSize is a maximum. Fixtures must not return more than requested; adapter may prevent overflow through request sizing. No special privileges to access independent ground truth from adapter."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "changes": [
+    {
+      "attempt": "S5_LOST_RESPONSE_INTENT-a1",
+      "receiptBeforeSha256": "8536b3586a4157fe1f940fcb564c67b35571a393784fbe5d178a3db18375a975",
+      "receiptAfterSha256": "e6056a0509ddc4732332cbff805c85393867cc4dae1f41247a1672a3faeeee23",
+      "originalRawEventSha256": "f490f60ff578350b8eee9286654fce2235c5b48b17e7431fc2e90537e2f9c2a4",
+      "originalGzipSha256": "80932d1c790b273dd25423b10c4e260468f6b3a71e12b63022d50af49655f02f",
+      "packagedRawEventSha256": "c777937da2e57985a739b58c66c2bf20bfe89e40799b783128c63a8f5704e6a1",
+      "packagedGzipSha256": "0f4a73fa8a879b3cac7a2dd4ad5f523bc3174d18c82f175cc5f156b3cd857eab",
+      "changedErrorRows": 1,
+      "allOtherEventLinesByteIdentical": true,
+      "preservedNonErrorEventBytesSha256": "0ba0c1d994fc20f980649ed13efc8aaec1b62f74e6690abda6027da61553cbac",
+      "transformation": "Replace absolute local checkout prefix with <byos> inside native-adapter-error stack/error text only. HTTP/payload/journal/config/source content untouched. Original preserved in ignored .generated."
+    },
+    {
+      "attempt": "S5_LOST_RESPONSE_INTENT-a2",
+      "receiptBeforeSha256": "865a7d4450d1d2fd1ef5a832a23011cb2b55925a93a17c0decf3550f98dae65e",
+      "receiptAfterSha256": "beb3ea56c0a2076deee9f98577f31bcff3f08ce02599b1c54b95e1db9ce8442e",
+      "originalRawEventSha256": "551b3f291880bac4bba0ba35e2da34974a5ba82b7667eec7e591973accd4e362",
+      "originalGzipSha256": "f85bffc7fbb24ff338d8bace3587a5ee04e7e2ed9f26fe7a271fd2037da5db4d",
+      "packagedRawEventSha256": "707ee7acdfc2f1789a4101d9603f08bb376c55199265af6946062d83382f8b89",
+      "packagedGzipSha256": "9997cd0844b477c4e91912e1885474130f92a326382317dcab674954df20ead9",
+      "changedErrorRows": 1,
+      "allOtherEventLinesByteIdentical": true,
+      "preservedNonErrorEventBytesSha256": "0eb32be500fda260c1a053cd1958506498cbc2b4d24cc430444f9d3e6c76d227",
+      "transformation": "Replace absolute local checkout prefix with <byos> inside native-adapter-error stack/error text only. HTTP/payload/journal/config/source content untouched. Original preserved in ignored .generated."
+    },
+    {
+      "attempt": "S5_LOST_RESPONSE_INTENT-a3",
+      "receiptBeforeSha256": "696cf48ef2689e305c38b2fa8a4a61aa79eb955494251330eeb2699c6f26dde5",
+      "receiptAfterSha256": "080dd12423af098da7447ebcc071cce25b413611974aa03b81ef669f5b294e08",
+      "originalRawEventSha256": "30b7e9420cdefe3dc38adfb251ead54a0f44e897bffdc8a14e7a752222427d11",
+      "originalGzipSha256": "3547da01b6a8190a57cef0f084be040a1fccb32919a6160ee987acbcc7a4d13e",
+      "packagedRawEventSha256": "368e18056168262131aab9461db9ab4ee6d41e8e7e6be694e3423b756a38e815",
+      "packagedGzipSha256": "089dca43d29e6d42e331dd947ecd48a82616a4fdebdb726ef82d53553106286f",
+      "changedErrorRows": 1,
+      "allOtherEventLinesByteIdentical": true,
+      "preservedNonErrorEventBytesSha256": "5d436f76de91c5e231dd79786b715fc72599979754422f972a3b5d3bc4d34d7d",
+      "transformation": "Replace absolute local checkout prefix with <byos> inside native-adapter-error stack/error text only. HTTP/payload/journal/config/source content untouched. Original preserved in ignored .generated."
+    }
+  ],
+  "noExecutedSourceChange": true,
+  "noResearchRerun": true
+}

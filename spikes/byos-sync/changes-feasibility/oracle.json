@@ -1,0 +1,338 @@
+{
+  "protocol": "tools109-changes-oracle-v2",
+  "issue": "https://github.com/innosage-llc/innosage-tools/issues/109",
+  "locked_body_sha256": "4b531826ab127bb41ce7a43c72b73c8f8ae3d18433ca056f50e2a152fc4e1688",
+  "product_base": "ddc382abf91606fca57932f2e14295e7eea6f8bb",
+  "hub_base": "7192f94a9a16ac0024727a3cb24e9a3baa06552f",
+  "scope": "MOCK_ONLY_EXPLICIT_SYNC_CHANGED_ADAPTER_NATIVE_17_6_DEFAULT_MASTER_WINS",
+  "limits": {
+    "max_admitted_loopback_requests_per_invocation": 1000,
+    "max_wall_ms_per_invocation": 180000,
+    "cap_outcome": "INCONCLUSIVE; preserve partial evidence; no automatic retry"
+  },
+  "bodies": {
+    "A": "# Original\n\nA — baseline.",
+    "B": "# Local\n\nB — acknowledged offline intent.",
+    "C": "# Cloud\n\nC — independent remote intent.",
+    "D": "# Local continued\n\nD — unresolved newer intent.",
+    "E": "# Cloud continued\n\nE — newer remote intent.",
+    "M": "# Merge\n\nM — explicitly chosen resolution."
+  },
+  "body_encoding": "UTF-8 strings with actual newline characters; complete bodies/edit identities compared, never substring or length-only",
+  "document_contract": {
+    "page_schema": "reuse native-overlay id/body/editId for protection cases; immutable IDs and unique editIds; no new schema or synthetic anchor docs",
+    "ties": [
+      {
+        "id": "tie000",
+        "body": "# Tie 000\n\nFull body 000.",
+        "editId": "tie-000"
+      },
+      {
+        "id": "tie001",
+        "body": "# Tie 001\n\nFull body 001.",
+        "editId": "tie-001"
+      },
+      {
+        "id": "tie002",
+        "body": "# Tie 002\n\nFull body 002.",
+        "editId": "tie-002"
+      },
+      {
+        "id": "tie003",
+        "body": "# Tie 003\n\nFull body 003.",
+        "editId": "tie-003"
+      },
+      {
+        "id": "tie004",
+        "body": "# Tie 004\n\nFull body 004.",
+        "editId": "tie-004"
+      },
+      {
+        "id": "tie005",
+        "body": "# Tie 005\n\nFull body 005.",
+        "editId": "tie-005"
+      },
+      {
+        "id": "tie006",
+        "body": "# Tie 006\n\nFull body 006.",
+        "editId": "tie-006"
+      },
+      {
+        "id": "tie007",
+        "body": "# Tie 007\n\nFull body 007.",
+        "editId": "tie-007"
+      },
+      {
+        "id": "tie008",
+        "body": "# Tie 008\n\nFull body 008.",
+        "editId": "tie-008"
+      },
+      {
+        "id": "tie009",
+        "body": "# Tie 009\n\nFull body 009.",
+        "editId": "tie-009"
+      },
+      {
+        "id": "tie010",
+        "body": "# Tie 010\n\nFull body 010.",
+        "editId": "tie-010"
+      },
+      {
+        "id": "tie011",
+        "body": "# Tie 011\n\nFull body 011.",
+        "editId": "tie-011"
+      },
+      {
+        "id": "tie012",
+        "body": "# Tie 012\n\nFull body 012.",
+        "editId": "tie-012"
+      },
+      {
+        "id": "tie013",
+        "body": "# Tie 013\n\nFull body 013.",
+        "editId": "tie-013"
+      },
+      {
+        "id": "tie014",
+        "body": "# Tie 014\n\nFull body 014.",
+        "editId": "tie-014"
+      },
+      {
+        "id": "tie015",
+        "body": "# Tie 015\n\nFull body 015.",
+        "editId": "tie-015"
+      },
+      {
+        "id": "tie016",
+        "body": "# Tie 016\n\nFull body 016.",
+        "editId": "tie-016"
+      },
+      {
+        "id": "tie017",
+        "body": "# Tie 017\n\nFull body 017.",
+        "editId": "tie-017"
+      },
+      {
+        "id": "tie018",
+        "body": "# Tie 018\n\nFull body 018.",
+        "editId": "tie-018"
+      },
+      {
+        "id": "tie019",
+        "body": "# Tie 019\n\nFull body 019.",
+        "editId": "tie-019"
+      },
+      {
+        "id": "tie020",
+        "body": "# Tie 020\n\nFull body 020.",
+        "editId": "tie-020"
+      },
+      {
+        "id": "tie021",
+        "body": "# Tie 021\n\nFull body 021.",
+        "editId": "tie-021"
+      },
+      {
+        "id": "tie022",
+        "body": "# Tie 022\n\nFull body 022.",
+        "editId": "tie-022"
+      },
+      {
+        "id": "tie023",
+        "body": "# Tie 023\n\nFull body 023.",
+        "editId": "tie-023"
+      },
+      {
+        "id": "tie024",
+        "body": "# Tie 024\n\nFull body 024.",
+        "editId": "tie-024"
+      },
+      {
+        "id": "tie025",
+        "body": "# Tie 025\n\nFull body 025.",
+        "editId": "tie-025"
+      },
+      {
+        "id": "tie026",
+        "body": "# Tie 026\n\nFull body 026.",
+        "editId": "tie-026"
+      },
+      {
+        "id": "tie027",
+        "body": "# Tie 027\n\nFull body 027.",
+        "editId": "tie-027"
+      },
+      {
+        "id": "tie028",
+        "body": "# Tie 028\n\nFull body 028.",
+        "editId": "tie-028"
+      },
+      {
+        "id": "tie029",
+        "body": "# Tie 029\n\nFull body 029.",
+        "editId": "tie-029"
+      }
+    ]
+  },
+  "source_assumptions": [
+    "Changes tokens opaque; follow nextPageToken irrespective of returned or relevant count; newStartPageToken only terminal; no timestamp ordering inferred.",
+    "Positive cases retain relevant changes after captured start token. A change may expose current metadata/current content, not immutable historical bodies. Duplicate/coalesced events allowed; latest full state oracle is authoritative.",
+    "Inventory is finite, paginated and quiescent except explicitly scheduled writes represented in retained feed; no general consistent-snapshot claim.",
+    "No-event negative deliberately violates retained discoverability and does not gain an invented event on visibility restoration.",
+    "removed means deletion OR access loss; neither absence nor removed alone authorizes local/remote deletion.",
+    "Provider pageSize is a maximum. Fixtures must not return more than requested; adapter may prevent overflow through request sizing. No special privileges to access independent ground truth from adapter."
+  ],
+  "invariants": [
+    "Same database/collection/schema/replication identifier/deleted field and native default conflict handler throughout transition; old owner stopped before new starts.",
+    "Existing per-document assumed-master metadata preserved across owner replacement; expected subsequent native changes distinguished from erasure. No direct metadata/checkpoint mutations, reset, removal or identifier rotation.",
+    "Complete source-reported page bodies admitted only by native replication; no upsert/import fallback posing as remote reception.",
+    "No durable cursor past a required body that is missing or not natively persisted; no handler-local cursor presented as persisted progress.",
+    "No unacknowledged retirement or journal clobber; complete B/C baselines and D protected when native E wins. Only explicit discard or matching-generation actual remote verification retires intent.",
+    "No false complete status on intermediate short/empty/filtered page, failed read, unresolved source guarantee or request/time cap.",
+    "Terminal zero-relevant results may retain older durable cursor and replay safely; report this limitation. No claim of persisted token advancement without actual metadata proof.",
+    "No synthetic page solely to force checkpoint persistence; no extra durable sync queue/store, native patches, custom conflict policy, external calls or broad fixture campaign."
+  ],
+  "cases": [
+    {
+      "id": "S0_TRANSITION",
+      "gates": [
+        "P2",
+        "P3"
+      ],
+      "setup": "Create existing stock owner with legacy down checkpoint and nonempty assumed-master rows. Establish A/B/C conflict then unresolved D and remote E using existing journal fixtures; add30tie docs to remote. Capture complete journals, metadata, identities and remote inventory. Additionally seed independent discovery-old and discovery-new pages in both devices with original body A and unique original editIds, separate from the protected conflict page. With receiver idle, writer natively updates/materializes discovery-old to body C, then discovery-new to body E, producing actual old.modifiedTime < new.modifiedTime. Hide only discovery-old from listing; explicitly sync the existing stock receiver until it receives complete discovery-new E and persists a legacy timestamp strictly above discovery-old. Restore old visibility without content, version or timestamp mutation and without creating a new feed event; one further stock explicit sync must leave discovery-old at A. Archive complete remote C, receiver A and actual query/checkpoint inequality before cancellation.",
+      "action": "Await old owner cancellation only after the existing old-below-cursor counterexample is established. Compose public primitives+native Drive helpers under identical identity. With old visible and unchanged, bootstrap by token-before-paginated-inventory then retained replay; the new start token is captured AFTER both discovery edits. Do not synthesize a post-token discovery-old event. Restart same adapter once after settlement.",
+      "required_observations": [
+        "Metadata storage name/schema and logical identity identical; no old/new owner overlap.",
+        "Preexisting assumed-master records survive replacement; native changed records have attributable admissions.",
+        "Native page E; local chosen D and captured B/C retained; D not silently uploaded.",
+        "All30 tie docs reach existing receiver with full bodies/editIds; unrelated page progresses.",
+        "Tagged token/phase checkpoint persists through native pathway without deleting legacy metadata; restart interprets tag correctly even if legacy fields coexist.",
+        "Before migration: full remote discovery-old C exists with timestamp strictly below actual persisted legacy receiver checkpoint; receiver remains A after restored-visibility stock sync. Independent discovery-new is E.",
+        "After migration: same receiver contains discovery-old C and discovery-new E. Trace must attribute recovery of pre-token discovery-old to the permitted bootstrap inventory/content/native-admission path, not retained feed history that predates its start token.",
+        "This bootstrap recovery is the literal old-below-legacy-cursor proof; it does not establish continuous token recovery when both inventory and retained feed omit old content."
+      ],
+      "negative_control": "Legacy/source107 baseline remains retained; sameTime30 and hidden-old stock failures not overwritten.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S1_PAGE_TRAVERSAL",
+      "gates": [
+        "P1"
+      ],
+      "setup": "Fixture feed begins with internal-only page, empty intermediate page with nextPageToken, short relevant page, duplicate relevant ID, remaining relevant docs, then terminal token. All expected body IDs known independently. Configure RxDB batch2 and provider pages up to5 but honor each actual requested maximum.",
+      "action": "Explicit sync and reopen. Then supply a terminal all-irrelevant/empty tail, reopen again, append one real page change, and sync.",
+      "required_observations": [
+        "Every relevant complete current body reaches receiver; no tail dropped when provider page exceeds remaining/native batch, or recorded request sizing demonstrably prevents overflow.",
+        "Follow every intermediate next token; neither short nor empty relevant batch prematurely reports caught up.",
+        "Duplicate replay is idempotent; filtered lock/WAL files never become page docs.",
+        "Record actual persisted cursor after empty terminal tail. If unchanged, explicitly record replay limitation, then show subsequent real change is discovered within bounds.",
+        "No checkpoint-only mutation or synthetic anchor doc."
+      ],
+      "negative_control": "No-next-token terminal is distinguishable from empty-with-next-token intermediate; payload oracle, not request count, determines correctness.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S2_BOOTSTRAP_PERSIST_BARRIER",
+      "gates": [
+        "P2",
+        "P3"
+      ],
+      "setup": "Existing receiver migrates. Capture token before inventory; one remote update occurs after its inventory page is read and is retained by the feed. Inventory has multiple pages. Fixture-only storage wrapper can pause one native fork persistence write without replacing algorithm.",
+      "action": "Replay feed. Pause targeted native persistence AFTER pull returns complete changed body but BEFORE storage write resolves. Capture on-disk fork/meta/checkpoint and journal. Release write and settle; cancel/reopen same owner.",
+      "required_observations": [
+        "Captured start token precedes scheduled update; replay yields latest full body.",
+        "While persistence paused, durable checkpoint does not cover unpersisted body; in-memory handler progress separately labeled.",
+        "After release, body and native assumed state precede eligible durable progress; same-identity restart recovers full expected state.",
+        "Any concurrent native CAS409 or persistence error retained and explained; no false success from emitted events alone."
+      ],
+      "negative_control": "Storage barrier is real observed write interception, not only a pause before pull return. If unavailable via fixture instrumentation, mark persistence-window coverage INCONCLUSIVE rather than simulate a pass.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S3_READ_FAILURE_REPLAY",
+      "gates": [
+        "P1",
+        "P2"
+      ],
+      "setup": "Retained feed includes two relevant file IDs after durable token; first fetched, second content GET fails once. A duplicate event is present. Independent inventory contains both complete latest bodies.",
+      "action": "Capture during failed content read before success/retry can mask state. Restore readable response and restart/resume same owner without metadata mutation; replay.",
+      "required_observations": [
+        "No durable cursor passes unread second body.",
+        "Incomplete/error state recorded at failure; no remote-verified/complete claim.",
+        "Native transaction/WAL/CAS timeout/retry behavior unmodified and visible.",
+        "Both full latest bodies eventually admitted, duplicates harmless, journal preserved."
+      ],
+      "negative_control": "If response stays unavailable, bounded run must remain incomplete/INCONCLUSIVE rather than skip file.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S4_RETAINED_EVENT",
+      "gates": [
+        "P2"
+      ],
+      "setup": "Complete migration/bootstrap and retain the actual persisted token checkpoint. While receiver performs no sync, writer natively updates/materializes discovery-old to C, then discovery-new to E; retain both relevant changed-file events after that token. Hide only discovery-old from files.list. Assert actual old.modifiedTime < new.modifiedTime; do NOT assert old.modifiedTime < pre-bootstrap legacy timestamp. No timestamp rewrite, fake restoration event or source cursor manipulation.",
+      "action": "After both source updates are materialized, restore old listing visibility without content/version/timestamp mutation, then explicitly sync the existing token adapter from its prior durable token. The preexisting retained events, not restoration, supply discovery. No intermediate receiver-newer-first state is required, and source feed ordering is not rearranged to create one.",
+      "required_observations": [
+        "Complete discovery-old C and discovery-new E recovered via their retained changed-file events and native admission; old.modifiedTime < new.modifiedTime is archived. This case tests post-bootstrap feed coverage, not the migrated legacy-cursor inequality.",
+        "Source independent full inventory, actual pre-update token, feed pages containing both retained events, content responses and final durable checkpoint archived.",
+        "No implicit inventory rescan/recreated receiver, fabricated restoration event, timestamp mutation or feed reordering to force newer-before-old reception.",
+        "Literal old-below-existing-legacy-cursor recovery must separately pass S0_TRANSITION; S4 PASS cannot substitute for a failed or absent S0 observation."
+      ],
+      "negative_control": "Compare S4_NO_EVENT separately; do not universalize retained-event result.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S4_NO_EVENT",
+      "gates": [
+        "P2_BOUNDARY"
+      ],
+      "setup": "Same older/newer remote body schedule; omit old from inventory while hidden and provide no recoverable old change event after consumed cursor. Setup receiver with initial old body. Restore list visibility without adding event.",
+      "action": "Run only normal explicit token sync; retain old source107 hidden-old counterexample as historical reference.",
+      "required_observations": [
+        "Archive source latest old body and absent old event; receiver may remain stale.",
+        "Label recovery NOT_PROVEN/FAIL under omission model, even if protocol iteration reaches feed end.",
+        "No claim that feed-end establishes whole-inventory completeness under this assumption.",
+        "No automatic scan/backfill, invented event, deletion or user-intent retirement."
+      ],
+      "negative_control": "This deliberately missing-source-guarantee case is not converted into affirmative P2 recovery; distinguishes feasibility assumption from universal guarantee.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S5_LOST_RESPONSE_INTENT",
+      "gates": [
+        "P4",
+        "P3"
+      ],
+      "setup": "Reuse existing PageStore explicit discard/local-recommit setup and full B/C conflict bodies. Prepare acknowledged chosen M. Inject successful native WAL mutation with dropped response, and gate subsequent verification/retry reads so interval is observable.",
+      "action": "Before any successful remote verification, archive actual mutation receipt plus journal/view; save a newer local generation while network work remains pending. Release fault. Explicitly verify matching current remote body; inject another newer generation at existing before-cleanup hook.",
+      "required_observations": [
+        "Mutation applied and response lost is directly evidenced, with intermediate full journal still present and view unverified.",
+        "New acknowledged generation succeeds despite network wait and cannot be retired by earlier generation verification.",
+        "Native WAL/CAS and normal resolution path used; E-race retains captured conflict bodies.",
+        "Actual remote full body+editId match required before retirement. before-cleanup newer sequence is retained/rejected, not clobbered.",
+        "Explicit cloud discard only affects owned chosen session; unrelated journal remains."
+      ],
+      "negative_control": "Terminal remote-verified snapshot alone does not satisfy missing uncertain interval. No fake sent$ or status override as proof.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "outcomes": {
+    "GO": "P1-P4 bounded positive evidence, explicit source assumptions and S4 negative boundary disclosed; independent review pending",
+    "INCONCLUSIVE": "required capture/source guarantee/API compatibility missing or cap",
+    "NEGATIVE": "source-backed bounded candidate fails invariant; no universal impossibility"
+  },
+  "worker": {
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "host_routed": "UNKNOWN",
+    "provider_observed": "UNKNOWN",
+    "scope": "new product changes-feasibility fixture/adapter only; exact write paths granted in parent handoff",
+    "first_action": "archive pinned sources and actual API/identity binding; do not broaden policy to bypass empty-checkpoint limitation"
+  },
+  "records": "Archive exact request/response bodies and token sequence, independent inventory, native durable checkpoint/assumed-master/journal snapshots at every decisive barrier, expected versus observed, before/after source hashes, runtime identity and limits; immutable per-attempt output.",
+  "supersedes": {
+    "oracle": "oracle-v1.json",
+    "sha256": "75926edea681806c9dbc3f3464a6734db5250a3d238635c51f205c242f1ed2a9",
+    "reason": "S4 v1 required a post-bootstrap old edit to precede a pre-bootstrap legacy cursor, which its schedule could not establish without unauthorized timestamp manipulation. Move literal older-than-existing-cursor recovery to pre-migration S0; keep post-bootstrap retained-feed delivery in S4. No executed cases invalidated; worker reported none run or frozen."
+  }
+}
