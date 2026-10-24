@@ -70,6 +70,9 @@ export class VisualRemixTransport {
       if (auth.projectId !== snapshot.projectId || auth.generation !== snapshot.generation) throw new Error('SCENE_BINDING');
       // Retain validated ownership only for explicit Disconnect if confirmation fails.
       this.owner = { auth, proof:'', expiresAt, proofExpiresAt };
+      this.creating = false;
+      // Honor cancellation/disposal even when the rest of confirmation is invalid.
+      if (this.stopped || this.disposed || !this.bound()) { await this.disconnect(); return; }
       if (typeof value.proof !== 'string' || !/^[a-f0-9]{64}$/.test(value.proof) ||
         !Number.isSafeInteger(value.expiresAt) || Number(value.expiresAt) < SCENE_LIMITS.leaseMs ||
         !Number.isSafeInteger(value.proofExpiresAt) || Number(value.proofExpiresAt) < SCENE_LIMITS.proofMs ||

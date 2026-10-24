@@ -303,3 +303,5 @@ revoke and negative token readback. These are local tests, not real ChatGPT or
 live staging protocol evidence. Design review PASS is not changed-head approval;
 exact implementation review and native gate follow. No new service, credential,
 lease/scope expansion, production deployment, Master closure or live host run.
+
+Independent review identified a late-create cancellation edge: invalid confirmation metadata could prevent the previously requested revoke. The lead now honors cancellation/disposal immediately after validated bound ownership, before confirmation metadata checks. Added cancellation/disposal with invalid/elapsed confirmation and lost-revoke regressions; exact-head re-review required.

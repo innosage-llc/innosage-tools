@@ -160,6 +160,34 @@ test('inactive adapter: late create after Cancel is revoked without adopting, sy
  }finally{f.transport.dispose();f.controller.dispose();}
 });
 
+test('late invalid confirmation honors cancellation or disposal without proof or polling',async()=>{
+ for(const dispose of [false,true])for(const expired of [false,true]){
+  let now=Date.now();const f=await fixture({slowCreate:true,clientNow:()=>now});
+  try{
+   const pending=f.transport.connect(true);
+   if(dispose)f.transport.dispose();else await f.transport.disconnect();
+   if(expired)now+=300001;else f.share.proof='invalid';
+   f.gate.resolve();await pending;
+   assert.deepEqual(f.calls.map(c=>c.path),['/scene/browser/create','/scene/browser/revoke']);
+   assert.equal(f.transport.snapshot().revocationConfirmed,true);
+   assert.ok(!f.states.some(s=>s.proof));
+  }finally{f.transport.dispose();f.controller.dispose();}
+ }
+});
+
+test('late invalid confirmation keeps a lost requested revoke unconfirmed and explicitly retryable',async()=>{
+ const f=await fixture({slowCreate:true,failRevoke:true});
+ try{
+  const pending=f.transport.connect(true);await f.transport.disconnect();
+  f.share.proof='invalid';f.gate.resolve();await pending;
+  assert.equal(f.transport.snapshot().phase,'error');assert.equal(f.transport.snapshot().canDisconnect,true);
+  assert.notEqual(f.transport.snapshot().revocationConfirmed,true);
+  assert.deepEqual(f.calls.map(c=>c.path),['/scene/browser/create','/scene/browser/revoke','/scene/browser/revoke']);
+  assert.ok(!f.states.some(s=>s.proof));
+  await f.transport.disconnect();assert.equal(f.transport.snapshot().revocationConfirmed,true);
+ }finally{f.transport.dispose();f.controller.dispose();}
+});
+
 test('inactive adapter: lost revoke remains unconfirmed, blocks reconnect and preserves PNG until explicit retry',async()=>{
  const f=await fixture({failRevoke:true});try{
   await f.connect();const png=f.controller.exportPNG();await f.transport.disconnect();
