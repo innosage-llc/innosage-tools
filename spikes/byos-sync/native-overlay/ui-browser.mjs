@@ -48,16 +48,21 @@ try{
  evidence.push({id:'F12',status:'PASS',behavior:'visible clean editor refreshed'});
  await editor(clean).fill('## Unsaved B\n\nDirty tab content.');
  assert.equal(await clean.locator('#warning').isVisible(),false);
- await save(a,T.C);
+ await save(a,T.C);await verify(a);
  await clean.locator('#warning').waitFor({state:'visible'});
  assert.equal(await editor(clean).inputValue(),'## Unsaved B\n\nDirty tab content.');
  evidence.push({id:'F13',status:'PASS',behavior:'visible unsaved editor retained with warning'});
  // Recover acknowledged independent sessions across same-browser tab closure.
  await clean.getByRole('button',{name:'Save locally',exact:true}).click();
  await clean.waitForFunction(()=>window.spike.lastSaveAcknowledgement?.body==='## Unsaved B\n\nDirty tab content.');
- evidence.push({id:'F14-before-close',view:await clean.evaluate(()=>window.spike.store.view('page'))});
+ const guarded=await clean.evaluate(()=>window.spike.store.view('page'));
+ assert.equal(guarded.page.body,T.C);assert.equal(guarded.journal.state,'needs-resolution');
+ assert.equal(guarded.journal.sourceExternal.body,T.C);
+ evidence.push({id:'F14-before-close',view:guarded});
  await clean.close();const recovered=await open(ca,'clean');
  assert.equal(await editor(recovered).inputValue(),'## Unsaved B\n\nDirty tab content.');
+ const recoveredDraft=await recovered.evaluate(()=>window.spike.store.view('page'));
+ assert.equal(recoveredDraft.journal.sourceExternal.body,T.C);assert.equal(recoveredDraft.page.body,T.C);
  evidence.push({id:'F14',status:'PASS',behavior:'independent acknowledged draft recovered after tab close'});
  await recovered.close();await a.close();await ca.close();
  // Fresh local devices, same mock native Drive. Live mode + native leadership.

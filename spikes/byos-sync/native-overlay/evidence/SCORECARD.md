@@ -4,7 +4,7 @@
 
 MOCK-TESTED; REAL-PROVIDER-NOT-RUN. Master remains OPEN.
 
-Source: `1650aeef74a2ee0701c48a174ce5df16142fa207`; fixture/source digest `b192fb6c09f602d7725e136fae5ad9b02f8ce0a430c91cbcb819d19a12b74458`.
+Source: `90de7b8df847f6f5fc8b25a88f6da6af76155c8b`; fixture/source digest `fa3094ced9a645d134e6eb2b291fd163b7f9a4f1516158cbcc3726dc02497187`.
 Runtime v22.22.3; Chromium 151.0.7922.34; RxDB17.6.0.
 
 | AC | Result | Executable evidence |
@@ -37,7 +37,7 @@ Synthetic measurements (n=3 each scale):
 
 | Pages | Overlay p50 settle ms | Overlay p95 settle ms |
 | --- | --- | --- |
-| 10 | 266.6 | 273.5 |
-| 1000 | 1435.2 | 1475.6 |
+| 10 | 267.7 | 274.9 |
+| 1000 | 1425.7 | 1432.4 |
 
 Foreground local rendering is separate from cloud settle; native network checkpoint ordering is unchanged. These are not Google timings. Founder final acceptance, deployment and product adoption are not granted by this report.

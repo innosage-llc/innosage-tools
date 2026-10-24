@@ -39,7 +39,7 @@ async function world(opts={}) {
   const s=await openPageStore({workspace:device+suffix,session,multiInstance:false,hook});
   s.workspace='remote'+suffix;
   const save=s.save.bind(s);
-  s.save=async(page,body)=>{const view=await save(page,body);
+  s.save=async(page,body,options)=>{const view=await save(page,body,options);
     acknowledged.push({device,session,page,body,editId:view.journal?.draft.editId});return view;};
   clients.push(s);return s;
  };
@@ -73,7 +73,24 @@ const cases={
   }};
   const v=await s.save('page',T.B);assert.equal(v.status,'local-saved');
   await s.close();s=await w.open('a');assert.equal((await s.view('page')).body,T.B);
-  assert.notEqual((await s.view('page')).status,'remote-verified');return {recovered:await s.view('page')};
+  assert.notEqual((await s.view('page')).status,'remote-verified');
+  const clean=await w.open('baseline');
+  const base={id:'page',body:T.A,editId:'baseline'};
+  await clean.db.pages.upsert(base);
+  await clean.db.pages.upsert({id:'page',body:T.C,editId:'newer-other-tab'});
+  const guarded=await clean.save('page',T.D,{base});
+  assert.equal(guarded.page.body,T.C);assert.equal(guarded.status,'needs-resolution');
+  assert.equal(guarded.journal.sourceExternal.body,T.C);
+  let late=await w.open('late');await late.db.pages.upsert(base);
+  late.hook=async boundary=>{if(boundary==='journal-committed')
+    await late.db.pages.upsert({id:'page',body:T.C,editId:'late-external'});};
+  const raced=await late.save('page',T.D,{base});
+  assert.equal(raced.page.body,T.C);assert.equal(raced.journal.sourceExternal.body,T.C);
+  await late.db.pages.upsert({id:'page',body:T.E,editId:'later-external'});
+  await late.close();late=await w.open('late');
+  const recoveredExternal=await late.view('page');
+  assert.equal(recoveredExternal.body,T.D);assert.equal(recoveredExternal.journal.sourceExternal.body,T.C);
+  return {recovered:await s.view('page')};
  },
  async F02(w){const {a,b}=await baseline(w);
   await a.save('first',T.B);await b.save('second',T.C);

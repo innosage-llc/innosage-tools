@@ -2,7 +2,7 @@
   "master": "https://github.com/innosage-llc/innosage-tools/issues/102",
   "master_state": "OPEN",
   "verdict": "NATIVE UX SPIKE PASS; HOLD FOR CHECKPOINT",
-  "source_sha": "1650aeef74a2ee0701c48a174ce5df16142fa207",
+  "source_sha": "90de7b8df847f6f5fc8b25a88f6da6af76155c8b",
   "source_hashes": {
     "native-overlay/browser-entry.mjs": "8f8468969e40c14c45ce1421d355434d37bf5f109d828d168c7144201d726587",
     "native-overlay/browser-runtime.mjs": "f10e90a714c9eced0568d48d1926fdc271a0fdab43e5f741a9f69e88f9506a43",
@@ -11,30 +11,30 @@
     "native-overlay/checkpoint.mjs": "cc8020cd185df3326a6e79d4a3226b190d0a76e4e8e9528b97367e16b0e1fb7a",
     "native-overlay/crash-browser.mjs": "2e2175492a5fa54201e5bff3ba10e3b7eede8b97671979bc244c9114019daafa",
     "native-overlay/faults.mjs": "32bd0b8cc8e628e76fdd87317aec13223b01586f36be18594e0984fae4422188",
-    "native-overlay/fixtures.mjs": "27dbb6f62331fd5d6890117df9968612c37af66720c1f75699eaeba1b7d3ff02",
+    "native-overlay/fixtures.mjs": "1ac8e01b3673f114228f337c9f79af8bbe31b61f322562b0b890b51b196f5ce9",
     "native-overlay/index.html": "7eea9d31b5cbf9d78fddabd2d055a1c6aab5a9fd3bd8d7bd296fe8beb2e59e5e",
     "native-overlay/leader-browser.mjs": "152c3d7054950c0ec779a6c4718ed2bc6829fcc7ac44db58caf3cca24a053185",
     "native-overlay/measure-overlay.mjs": "c150712fedf96c692c4d8f3250a88f03c513954278b498be5839d8d542480384",
     "native-overlay/measure.mjs": "e57592a1905f1bc56c7a83318ddb94bc560bf75f05e8a82c57a91a0e12ed399c",
-    "native-overlay/page-store.mjs": "562bafdaa34fce2f35db3d4b052fc849bed15034daa4c47e8258db0354b6ba05",
-    "native-overlay/report.mjs": "04e160e6d79e7a21ee206baf80e71b1077a6a520ba767fc4c8d4d9666dd73f70",
-    "native-overlay/run.mjs": "22fbf0c64aac3292a1c1fc4ccecbdd298518e68310468027b3ccfc2838603a4d",
-    "native-overlay/ui-browser.mjs": "723c32b316a52e28efb0aadb5204f76f208a83a69a9f5d97c8017c74fa62432b",
+    "native-overlay/page-store.mjs": "65dbc194875e6734549f469003c29c07a47416e9e13e62dbb4374a0684270709",
+    "native-overlay/report.mjs": "c5d458118e229c7c873771409ddd39316e1b4f28e059d7d59492676d7a36ec3a",
+    "native-overlay/run.mjs": "9c22d049d8ac1399bb46ab97242b936fda11cc2a312e754ba975969eeacd1614",
+    "native-overlay/ui-browser.mjs": "e7c2b891779f4b287a2c8e2578dfdd70de0d5271b62902c1b01dfd8a01829428",
     "native-overlay/ui-server.mjs": "488821d0b906a20d932b29a35fea84bd51ef0742542de11ed31bc7061f342968",
-    "native-overlay/ui.mjs": "0f6698117eb6d8cb386e9ec89e72e85bbc41b2ca05dbfd1872eaed25e5bc8f8a",
+    "native-overlay/ui.mjs": "2607c04c691d33fca650458dbd47c9cecd2db03e7969e2ce68af922f6aaef45c",
     "package-lock.json": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23",
     "src/mock.mjs": "a49dd3cfd361d4d376adf49bee7d33f99be012e8279160ca55849191496fa79b",
     "node_modules/rxdb/src/replication-protocol/default-conflict-handler.ts": "68b39a886312a1ccfab383a407753055be5915ba47a1201f1aaf109ff6dcdfc6",
     "node_modules/rxdb/src/plugins/replication-google-drive/downstream.ts": "982b3a7f5a6a5811be9d265408dbca998bc2981d4d123f2956e01d471efba8d0",
     "node_modules/rxdb/src/plugins/replication-google-drive/upstream.ts": "58339944af6e3b9fcf4f838924d526fb86b61b7ea1ae953ad7a3ed1de90e4313"
   },
-  "source_digest": "b192fb6c09f602d7725e136fae5ad9b02f8ce0a430c91cbcb819d19a12b74458",
+  "source_digest": "fa3094ced9a645d134e6eb2b291fd163b7f9a4f1516158cbcc3726dc02497187",
   "runtime": "v22.22.3",
   "browser": "151.0.7922.34",
   "rxdb": "17.6.0",
   "label": "MOCK-TESTED",
   "real_provider": "REAL-PROVIDER-NOT-RUN",
-  "counted_store_acknowledgements": 618,
+  "counted_store_acknowledgements": 620,
   "seed_summary": {
     "requested": 100,
     "executed": 100,
@@ -168,7 +168,7 @@
         "browser-results:F12",
         "ui-results:F12"
       ],
-      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs"
+      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs"
     },
     {
       "id": "F13",
@@ -178,7 +178,7 @@
         "browser-results:F13",
         "ui-results:F13"
       ],
-      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs"
+      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs"
     },
     {
       "id": "F14",
@@ -198,7 +198,7 @@
       "evidence": [
         "browser-results:F15"
       ],
-      "replay": "node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs"
+      "replay": "node native-overlay/browser.mjs"
     },
     {
       "id": "F16",
@@ -258,28 +258,28 @@
       {
         "scale": 10,
         "n": 3,
-        "p50_ms": 317.59899999999993,
-        "p95_ms": 319.232792
+        "p50_ms": 304.676333,
+        "p95_ms": 308.954792
       },
       {
         "scale": 1000,
         "n": 3,
-        "p50_ms": 1468.6039999999994,
-        "p95_ms": 1485.1880420000016
+        "p50_ms": 1480.6155830000025,
+        "p95_ms": 1525.8846669999984
       }
     ],
     "overlay": [
       {
         "scale": 10,
         "n": 3,
-        "p50_settle_ms": 266.6465830000002,
-        "p95_settle_ms": 273.534041
+        "p50_settle_ms": 267.6979160000001,
+        "p95_settle_ms": 274.91550000000007
       },
       {
         "scale": 1000,
         "n": 3,
-        "p50_settle_ms": 1435.2060839999976,
-        "p95_settle_ms": 1475.6447920000028
+        "p50_settle_ms": 1425.7097910000011,
+        "p95_settle_ms": 1432.359749999996
       }
     ],
     "caveat": "n=3 per scale, synthetic loopback only. Local foreground projection precedes cloud settle; native network cursor order is unchanged. No provider performance winner."

@@ -66,3 +66,12 @@ ownership (including copied sessionStorage); they are not a second sync engine.
 If safe writer ownership is unavailable, writes are visibly disabled. Native
 fallback without window.BroadcastChannel is fixture-tested. Source-tab save ACK
 is the awaited journal/page operation, never a peer transport event.
+
+A first dirty-tab save carries the full page/version captured when editing
+began. It cannot adopt a newer peer commit as its base implicitly. Initial and
+late-CAS divergence retain a bounded `sourceExternal` copy, distinctly from a
+verified cloud receipt. This protects C even if its originating tab already
+retired a remotely verified journal and a later E replaces the native page.
+Each local body is capped at262,144 UTF-16 code units; each independent session
+holds latest draft plus at most five baseline/conflict snapshots, not history.
+Unresolved independent sessions are retained rather than pruned by age.

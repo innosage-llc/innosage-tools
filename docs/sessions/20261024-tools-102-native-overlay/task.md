@@ -26,3 +26,11 @@ Full integrated replay PASS: 100/100 seeded schedules; F01–F15 PASS, F16 nativ
 checkpoint FAIL/HOLD, F17 measured at 10/1,000 pages (n=3 each). Fresh outputs and
 source digest are checked in native-overlay/evidence/run-receipt.json. Verdict:
 NATIVE UX SPIKE PASS; HOLD FOR CHECKPOINT. This does not grant product adoption.
+
+Latest source supersedes the initial PR105 candidate. Dirty first-save and late
+native-CAS baselines now preserve the full external C, including after E/reopen.
+Refreshed full replay: exit0,402.5s,100/100 seeds,620 counted ACKs; F01–F15 PASS,
+F16 native FAIL/HOLD,F17 measured. Final source/evidence independent PASS binds
+`fa3094ced9a645d134e6eb2b291fd163b7f9a4f1516158cbcc3726dc02497187`.
+The next commit refreshes the existing draft PR105 through the native helper;
+its final gate/exact-head agreement is required before merge.

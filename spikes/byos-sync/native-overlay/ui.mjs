@@ -37,6 +37,7 @@ const recoveryArea = document.getElementById('recovery-area');
 
 let dirty = false;
 let dirtyBaseline = null;
+let dirtyBaselinePage = null;
 let inputGeneration = 0;
 let currentView = null;
 let manualWarning = null;
@@ -108,6 +109,11 @@ function renderDrafts(drafts) {
       pre.textContent = d.body ?? '';
       card.appendChild(meta);
       card.appendChild(pre);
+      if (d.external) {
+        const captured = document.createElement('pre');
+        captured.textContent = 'Captured other-tab version\n' + d.external;
+        card.appendChild(captured);
+      }
       recoveryArea.appendChild(card);
     }
   } else {
@@ -116,7 +122,8 @@ function renderDrafts(drafts) {
 }
 
 editor.addEventListener('input', () => {
-  if (!dirty) dirtyBaseline = currentView?.body ?? '';
+  if (!dirty) {dirtyBaseline = currentView?.body ?? '';
+    dirtyBaselinePage = structuredClone(currentView?.page ?? null);}
   dirty = true;
   inputGeneration++;
   statusEl.textContent = 'Edited — not saved locally';
@@ -127,7 +134,7 @@ saveBtn.addEventListener('click', async () => {
   const generation = inputGeneration;
   try {
     statusEl.dataset.error = 'false';
-    const v = await store.save(page, savedText);
+    const v = await store.save(page, savedText, {base:dirty ? dirtyBaselinePage : (currentView?.page ?? null)});
     window.spike.lastSaveAcknowledgement = {page, body:savedText};
     if (inputGeneration === generation) {
       dirty = false;
@@ -165,7 +172,7 @@ async function resolveWith(type, body) {
   const localText = editor.value;
   try {
     statusEl.dataset.error = 'false';
-    if (type === 'local' && dirty) await store.save(page, localText);
+    if (type === 'local' && dirty) await store.save(page, localText, {base:dirtyBaselinePage});
     const v = await store.resolve(page, type, body);
     if (inputGeneration === generation) {
       dirty = false;

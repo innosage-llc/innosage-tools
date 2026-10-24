@@ -36,9 +36,7 @@ const matrix=fixtures.map(f=>{
  if(f.id==='F16')pass=own?.evidence?.actual===30&&raw['hidden-checkpoint'].gate==='PASS';
  if(f.id==='F17')pass=allPass(raw.measurements.results)&&allPass(raw['overlay-measurements'].evidence);
  return {id:f.id,scenario:f.scenario,status:pass?'PASS':'FAIL',evidence:references[f.id],
-  replay:f.id==='F16'?'node native-overlay/run.mjs --fixture=F16 && node native-overlay/checkpoint.mjs':
-  f.id==='F17'?'node native-overlay/measure.mjs && node native-overlay/measure-overlay.mjs':f.id==='F10'?'node native-overlay/faults.mjs':f.id==='F11'?'node native-overlay/browser.mjs && node native-overlay/crash-browser.mjs':
-  ['F12','F13','F14','F15'].includes(f.id)?'node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs':f.replay};
+  replay:f.replay};
 });
 const seeds=store.seedResults??[];
 const appPass=matrix.filter(x=>Number(x.id.slice(1))<=15).every(x=>x.status==='PASS')&&

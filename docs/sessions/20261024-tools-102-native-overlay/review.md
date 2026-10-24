@@ -41,3 +41,20 @@ report. Regenerated evidence explicitly preserves the original full-run digest
 and409.2s timing. No application/assertion logic changed in this correction.
 No remaining material finding; final native gates/exact-head agreement still
 required. Founder acceptance and product adoption remain separate.
+
+Pre-integration dirty-tab baseline repair supersedes earlier application hashes.
+The first save now uses the version captured when UI editing began, retains a
+full sourceExternal snapshot on initial or late-CAS divergence, and does not
+implicitly rebase unsaved text onto a newer peer commit. A remotely verified C
+survives B's save and reopen; late C followed by E remains durably recoverable.
+Independent reviewer PASS:
+- PageStore: `65dbc194875e6734549f469003c29c07a47416e9e13e62dbb4374a0684270709`
+- UI: `2607c04c691d33fca650458dbd47c9cecd2db03e7969e2ce68af922f6aaef45c`
+Meaningful source change: full evidence and native gates must be refreshed.
+PR #105 remains draft until those gates and new-head review are complete.
+
+Refreshed complete evidence independent review **PASS**:
+`fa3094ced9a645d134e6eb2b291fd163b7f9a4f1516158cbcc3726dc02497187`.
+Raw outcomes support100/100 seeds,620 ACKs,F01–F15 PASS,F17 measured and native
+F16 HOLD. Full run402.5s and metadata-only replay normalization are distinguished.
+No remaining material finding. Final native gates and exact PR head remain.
