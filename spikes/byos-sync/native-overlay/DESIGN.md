@@ -75,3 +75,15 @@ retired a remotely verified journal and a later E replaces the native page.
 Each local body is capped at262,144 UTF-16 code units; each independent session
 holds latest draft plus at most five baseline/conflict snapshots, not history.
 Unresolved independent sessions are retained rather than pruned by age.
+
+Native received/conflict signals invalidate page IDs only. In-flight reads and
+one trailing dirty bit coalesce transient work. Initial conflict classification
+awaits native settlement outside the local queue/remote lock, then requires the
+latest native page to equal confirmed Master and differ from draft AND captured
+base. Existing conflict baselines refresh under the native lock; captured bodies
+and editor text remain protected. Neither refresh path retires a journal.
+
+The offline live harness injects published native reSync wake-ups for later
+remote changes and awaits real received$ data. Unattended WebRTC notification
+delivery is NOT_PROVEN; the no-wake diagnostic is retained. This is fixture
+control, not a runtime fallback, custom replication engine or provider proof.

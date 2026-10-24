@@ -56,3 +56,16 @@ captured source bodies until native remote verification. See `ACCEPTANCE.md`
 for the short Founder journey, `UPSTREAM-HOLD.md` for the separate repair proposal,
 and committed `evidence/` for the reviewed snapshot. Regeneration writes only to
 ignored `.generated/`; it does not change the historical #84 evidence.
+
+The full matrix currently exits nonzero and emits **HOLD — NATIVE UX NOT
+QUALIFIED**. F04 separates deterministic injected native `reSync` event handling
+from unattended updates, which remain **NOT_PROVEN**. The original no-wake
+failure is retained. Correcting the mock's requested createdTime DESC ordering
+allows E to arrive in the no-wake replay, but does not make the other-page
+notification journey pass. No native WebRTC or replication code was changed.
+F16 independently reproduces the native checkpoint blocker. See the criterion
+map for individual outcomes; passing storage assertions cannot qualify all P0.
+
+The final replay also times out at native E receipt. A prior corrected-mock
+replay reached E and failed later on other-page progress; notification-history.json
+preserves its bounded log excerpt. Neither replay qualifies unattended F04.

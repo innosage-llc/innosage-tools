@@ -18,7 +18,8 @@ export const fixtures = [
   ['F16', '30 same-time and hidden-list checkpoint native blocker replay'],
   ['F17', '10/1000-page synthetic calls/bytes/latency and foreground cost'],
 ].map(([id, scenario]) => ({ id, scenario, status: 'NOT_RUN',
-  replay: id==='F10'?'node native-overlay/faults.mjs':
+  replay: id==='F04'?'node native-overlay/run.mjs --fixture=F04 && node native-overlay/ui-browser.mjs && node native-overlay/ui-browser.mjs --no-wake':
+    id==='F10'?'node native-overlay/faults.mjs':
     id==='F11'?'node native-overlay/browser.mjs && node native-overlay/crash-browser.mjs':
     id==='F14'?'node native-overlay/browser.mjs && node native-overlay/ui-browser.mjs && node native-overlay/leader-browser.mjs':
     id==='F15'?'node native-overlay/browser.mjs':

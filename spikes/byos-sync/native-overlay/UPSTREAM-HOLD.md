@@ -29,3 +29,18 @@ consistency guarantees from this mock.
 No native fork, downstream patch, hidden fallback or production adoption is
 included in #102. The explicit engineering recommendation is HOLD FOR CHECKPOINT
 / NOT SAFE FOR PRODUCT while these replays fail.
+
+## Separate unattended-notification limitation
+
+F04 aggregate is BLOCKED. The injected published native reSync component tests
+app event handling only. The original no-wake UI failure remains retained.
+After fixing the mock's requested createdTime DESC order, a no-wake replay
+receives E but still times out waiting for the other page; peer snapshots remain
+unconnected in the offline ICE=[] configuration. This is NOT_PROVEN unattended
+progress, not proof of a real-provider defect. Do not change external ICE,
+permissions or native WebRTC/replication here to force a green result. A separately
+scoped transport investigation must preserve the original F04 assertions.
+
+The final replay also times out at native E receipt. A prior corrected-mock
+replay reached E and failed later on other-page progress; notification-history.json
+preserves its bounded log excerpt. Neither replay qualifies unattended F04.

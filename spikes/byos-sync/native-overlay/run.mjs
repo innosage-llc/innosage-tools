@@ -90,7 +90,17 @@ const cases={
   await late.close();late=await w.open('late');
   const recoveredExternal=await late.view('page');
   assert.equal(recoveredExternal.body,T.D);assert.equal(recoveredExternal.journal.sourceExternal.body,T.C);
-  return {recovered:await s.view('page')};
+  let unchanged=await w.open('unchanged');
+  await unchanged.save('page',T.A);await unchanged.connect(w.m.url,config);await unchanged.verify('page');
+  unchanged.hook=async boundary=>{if(boundary==='journal-committed')throw new Error('journal-before-pages crash');};
+  await assert.rejects(()=>unchanged.save('page',T.B),/journal-before-pages/);
+  await unchanged.close();unchanged=await w.open('unchanged');
+  await unchanged.connect(w.m.url,config);unchanged.refreshConflict('page');
+  await unchanged.remoteRefreshes.get('page')?.promise;
+  const noConflict=await unchanged.view('page');
+  assert.equal(noConflict.body,T.B);assert.equal(noConflict.warning,false);
+  assert.equal(noConflict.journal.state,'pending');assert.equal(noConflict.journal.remote,null);
+  return {recovered:await s.view('page'),unchanged_master_recovery:noConflict};
  },
  async F02(w){const {a,b}=await baseline(w);
   await a.save('first',T.B);await b.save('second',T.C);
@@ -124,10 +134,18 @@ const cases={
   assert.equal(captured.sourceCloud.body,T.C);assert.equal(captured.state,'needs-resolution');
   assert.equal((await a.page('page')).body,T.C);
   a.hook=async()=>{};
+  await a.withRemote('page',master=>a.captureMaster(master));
 const before=await a.draft('page');
   for(let i=0;i<5;i++)for(const name of ['sent','received','conflict'])
    a.replication.subjects[name].next({input:{realMasterState:{id:'page',body:T.A,editId:'stale'}},body:T.A});
-  assert.deepEqual(await a.draft('page'),before);return {journal:before,signals:15};
+  await a.remoteRefreshes.get('page')?.promise;
+  assert.deepEqual(await a.draft('page'),before);
+  await a.save('normal',T.A);
+  const pending=await a.draft('normal');
+  a.replication.subjects.received.next({id:'normal',body:T.A,editId:'reflection'});
+  await a.remoteRefreshes.get('normal')?.promise;
+  assert.deepEqual(await a.draft('normal'),pending);
+  return {journal:before,signals:15,pending_reflection_unchanged:true};
  },
  async F06(w){const {a,b}=await fork(w);await b.save('page',T.E);await b.sync();
   await a.resolve('page','cloud');const v=await a.view('page');
@@ -248,7 +266,7 @@ try {
     assert.equal(remote.page,cloud);assert.equal(v.status,'needs-resolution');
     assert.equal(v.journal.sourceLocal.body,T.B);assert.equal(v.journal.sourceCloud.body,T.C);}
    else {assert.equal(v.body,expected);assert.equal(v.journal,null);assert.equal(remote.page,expected);}
-   seedResults.push({seed,action,raced,status:'PASS',schedule,acknowledged:w.acknowledged,view:v,remote,
+   seedResults.push({seed,action,raced,status:'PASS',schedule,acknowledged:w.acknowledged,request_ledger:w.m.requests,fault_ledger:w.m.faults,view:v,remote,
     requests:w.m.requests.length,bytes_up:w.m.requests.reduce((n,r)=>n+r.bytes_up,0),
     bytes_down:w.m.requests.reduce((n,r)=>n+r.bytes_down,0)});
   }catch(error){seedResults.push({seed,status:'FAIL',schedule,error:String(error)});process.exitCode=1;}

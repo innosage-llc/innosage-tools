@@ -56,7 +56,7 @@ export class PageStore {
   constructor(db,workspace,session,hook) {
     Object.assign(this,{db,workspace,session,hook});
     this.queue = Promise.resolve(); this.replication = null; this.state = 'clean';
-    this.subs = []; this.listeners = new Map(); this.closed = false; this.verified = new Map(); this.notificationVersions = new Map();
+    this.subs = []; this.listeners = new Map(); this.closed = false; this.verified = new Map(); this.notificationVersions = new Map(); this.remoteRefreshes = new Map();
     // Reactive reads are RxDB-native and workspace-scoped by database identity.
     for (const collection of [db.pages,db.localDrafts])
       this.subs.push(collection.$.subscribe(() => this.notify()));
@@ -72,9 +72,9 @@ export class PageStore {
     const [p,d,all] = await Promise.all([this.page(id),this.draft(id),
       this.db.localDrafts.find({selector:{page:id}}).exec()]);
     const competing = d && all.some(other=>other.session!==this.session && !same(other.draft,d.draft));
-    const diverged = d && (!same(p,d.draft) || competing);
+    const diverged = d && ((!same(p,d.draft)&&!same(p,d.base)) || competing);
     return {body:d?.draft.body ?? p?.body ?? '',
-      status:d?.state==='needs-resolution'||diverged ? 'needs-resolution' : d ?
+      status:['blocked','reauth-required'].includes(this.state)?this.state:d?.state==='needs-resolution'||diverged ? 'needs-resolution' : d ?
         (['blocked','reauth-required'].includes(this.state)?this.state:'local-saved') : this.verified.has(id)&&same(p,this.verified.get(id))?'remote-verified':this.state,
       warning:!this.writer||!!(d?.state==='needs-resolution'||diverged),
       writer:this.writer,
@@ -109,7 +109,7 @@ export class PageStore {
       const expected=Object.hasOwn(options,'base')?content(options.base):p;
       if(expected&&expected.id!==id)throw new Error('Edit baseline page mismatch');
       const conflict = old ? (peers.some(peer=>peer.session!==this.session && !same(peer.draft,old.draft)) || old.state==='needs-resolution' ||
-        !same(p,old.draft)) : !same(p,expected);
+        (!same(p,old.draft)&&!same(p,old.base))) : !same(p,expected);
       const seq=(old?.seq ?? 0)+1;
       const draft={id,body,editId:`${this.session}/${seq}/${crypto.randomUUID()}`};
       const row={id:key(id,this.session),page:id,session:this.session,seq,
@@ -148,16 +148,17 @@ export class PageStore {
           sourceExternal:current.sourceExternal??copy(capturedExternal)}));
         await this.hook('page-written',copy(saved));
       }
-      this.state='local-saved'; this.notify();
+      if(!['blocked','reauth-required'].includes(this.state))this.state='local-saved'; this.notify();
       return this.view(id);
     });
   }
   async captureMaster(master) {
+    const page=await this.page(master.id);
     // Signals are intentionally ignored as authority. Call only with independently
     // read remote data or current local collection state, never event arrival order.
     const rows=await this.db.localDrafts.find({selector:{page:master.id}}).exec();
     for(const row of rows) await row.incrementalModify(d=>{
-      if(same(master,d.draft)) return d;
+      if(same(master,d.draft)||(d.state==='pending'&&same(master,d.base)&&same(page,master))) return d;
       return {...d,state:'needs-resolution',remote:copy(master),
         sourceLocal:d.sourceLocal??copy(d.draft),sourceCloud:d.sourceCloud??copy(master)};
     });
@@ -189,8 +190,53 @@ export class PageStore {
     }));
     if(!live) await this.replication.awaitInitialReplication();
     // Event streams invalidate UI only. They never retire or create draft copies.
-    for(const signal of ['conflict$','received$','sent$'])
-      this.subs.push(this.replication[signal].subscribe(()=>this.notify()));
+    this.subs.push(this.replication.sent$.subscribe(()=>this.notify()));
+    for(const signal of ['conflict$','received$'])
+      this.subs.push(this.replication[signal].subscribe(event=>{
+        this.notify();
+        const id=event.id??event.input?.realMasterState?.id;
+        if(typeof id==='string')this.refreshConflict(id);
+      }));
+  }
+  refreshConflict(id) {
+    // Native events are invalidations only. One in-flight read and trailing bit
+    // per page; no history, retry timer or cleanup. Pending classification requires
+    // native settlement and page=Master distinct from both draft and captured base.
+    if(this.closed)return;
+    const active=this.remoteRefreshes.get(id);
+    if(active){active.dirty=true;return;}
+    const ticket={dirty:true};this.remoteRefreshes.set(id,ticket);
+    ticket.promise=(async()=>{
+      while(ticket.dirty&&!this.closed){
+        ticket.dirty=false;
+        let rows=await this.db.localDrafts.find({selector:{page:id}}).exec();
+        if(!rows.length)continue;
+        if(rows.some(row=>row.state==='pending'))await this.replication.awaitInSync();
+        rows=await this.serial(async()=>{
+          const page=await this.page(id);
+          return (await this.db.localDrafts.find({selector:{page:id}}).exec())
+            .filter(row=>row.state==='needs-resolution'||(row.state==='pending'&&!same(page,row.draft)));
+        });
+        if(!rows.length)continue;
+        await this.withRemote(id,master=>this.serial(async()=>{
+          const page=await this.page(id);
+          for(const row of rows)await row.incrementalModify(current=>{
+            const initial=current.state==='pending'&&same(page,master)&&
+              !same(master,current.draft)&&!same(master,current.base);
+            if((current.state!=='needs-resolution'&&!initial)||same(current.remote,master))return current;
+            return {...current,state:'needs-resolution',remote:copy(master),
+              sourceLocal:current.sourceLocal??copy(current.draft),sourceCloud:current.sourceCloud??copy(master)};
+          });
+        }));
+        if(['blocked','reauth-required'].includes(this.state))this.state='pending';
+        this.notify();
+      }
+    })().catch(error=>{
+      this.failure(error);if(this.state!=='reauth-required')this.state='blocked';this.notify();
+    }).finally(()=>{
+      this.remoteRefreshes.delete(id);
+      if(ticket.dirty&&!this.closed)this.refreshConflict(id);
+    });
   }
   failure(error) {
     const status=error.parameters?.status;
@@ -217,7 +263,7 @@ export class PageStore {
     await this.replication.awaitInSync();
     // Materialization/verification is separate; in-sync is not remote-verified.
     const ids=new Set((await this.db.localDrafts.find().exec()).map(d=>d.page));
-    for(const id of ids) await this.captureMaster(await this.remote(id));
+    for(const id of ids) await this.withRemote(id,master=>this.captureMaster(master));
     this.state='pending'; this.notify();
   }
   async remote(id) { return this.withRemote(id,remote=>copy(remote)); }

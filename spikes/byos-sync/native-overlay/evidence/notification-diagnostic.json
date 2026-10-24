@@ -1,0 +1,95 @@
+{
+  "status": "NOT_PROVEN",
+  "scenario": "Unattended native live notification in offline ICE=[] harness",
+  "timeout_ms": 20000,
+  "error": "Error: Awaited condition timed out: automatic C-to-E refresh",
+  "snapshots": [
+    {
+      "view": {
+        "body": "# Local continued\n\nD \u2014 B extended during review.",
+        "status": "needs-resolution",
+        "warning": true,
+        "writer": true,
+        "local": "# Local continued\n\nD \u2014 B extended during review.",
+        "cloud": "# Cloud\n\nC \u2014 independent device B intent.",
+        "drafts": [
+          {
+            "session": "x",
+            "body": "# Local continued\n\nD \u2014 B extended during review.",
+            "state": "needs-resolution",
+            "seq": 2,
+            "external": "# Cloud\n\nC \u2014 independent device B intent."
+          }
+        ],
+        "page": {
+          "id": "page",
+          "body": "# Cloud\n\nC \u2014 independent device B intent.",
+          "editId": "y/1/4864144a-eb73-49de-b813-14e4dffd4ddc"
+        },
+        "journal": {
+          "id": "page:x",
+          "page": "page",
+          "session": "x",
+          "seq": 2,
+          "state": "needs-resolution",
+          "draft": {
+            "id": "page",
+            "body": "# Local continued\n\nD \u2014 B extended during review.",
+            "editId": "x/2/8a235930-1e11-4a9f-95df-7fb69eaccb40"
+          },
+          "base": {
+            "id": "page",
+            "body": "# Original\n\nA \u2014 baseline.",
+            "editId": "x/1/697c825e-ac8c-457c-9399-dfed83dc1b57"
+          },
+          "remote": {
+            "id": "page",
+            "body": "# Cloud\n\nC \u2014 independent device B intent.",
+            "editId": "y/1/4864144a-eb73-49de-b813-14e4dffd4ddc"
+          },
+          "sourceLocal": {
+            "id": "page",
+            "body": "# Local\n\nB \u2014 offline device A acknowledged intent.",
+            "editId": "x/1/30724042-5798-496c-8e28-aa3cdeeb3ae5"
+          },
+          "sourceCloud": {
+            "id": "page",
+            "body": "# Cloud\n\nC \u2014 independent device B intent.",
+            "editId": "y/1/4864144a-eb73-49de-b813-14e4dffd4ddc"
+          },
+          "sourceExternal": {
+            "id": "page",
+            "body": "# Cloud\n\nC \u2014 independent device B intent.",
+            "editId": "y/1/4864144a-eb73-49de-b813-14e4dffd4ddc"
+          }
+        }
+      },
+      "editor": "# Local continued\n\nD \u2014 B extended during review.",
+      "status": "needs-resolution",
+      "cloud": "# Cloud\n\nC \u2014 independent device B intent."
+    },
+    {
+      "view": {
+        "body": "# Cloud continued\n\nE \u2014 C extended during review.",
+        "status": "remote-verified",
+        "warning": false,
+        "writer": true,
+        "local": null,
+        "cloud": null,
+        "drafts": [],
+        "page": {
+          "id": "page",
+          "body": "# Cloud continued\n\nE \u2014 C extended during review.",
+          "editId": "y/1/cb444578-8be6-4ce9-b1aa-110b89a5b923"
+        },
+        "journal": null
+      },
+      "editor": "# Cloud continued\n\nE \u2014 C extended during review.",
+      "status": "remote-verified",
+      "cloud": ""
+    }
+  ],
+  "request_count": 663,
+  "source_hash": "5b906e26c2cc979b494ef9a19d346bd5daefd13cc426f7e6d21ad089acb68490",
+  "interpretation": "X native page remained C while Y verified E. This is a no-wake diagnostic, not proof of a real-provider defect. Subsequent app-layer F04 injects published native reSync wake explicitly."
+}

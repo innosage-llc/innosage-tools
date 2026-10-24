@@ -1,10 +1,10 @@
 # Native RxDB overlay scorecard
 
-**NATIVE UX SPIKE PASS; HOLD FOR CHECKPOINT**
+**HOLD — NATIVE UX NOT QUALIFIED; UNATTENDED UPDATE NOT_PROVEN; NATIVE CHECKPOINT BLOCKER**
 
-MOCK-TESTED; REAL-PROVIDER-NOT-RUN. Master remains OPEN.
+MOCK-TESTED; REAL-PROVIDER-NOT-RUN. Master remains OPEN. Native wake injection is explicit; unattended WebRTC notifications NOT_PROVEN.
 
-Source: `90de7b8df847f6f5fc8b25a88f6da6af76155c8b`; fixture/source digest `fa3094ced9a645d134e6eb2b291fd163b7f9a4f1516158cbcc3726dc02497187`.
+Source: `85467936bcdf2794d41efda138f07cbae72d884b`; fixture/source digest `e108b0a050ceabd3b45a4a959fef15fdadf15ae6233c3a1286eae2d02f7de98b`.
 Runtime v22.22.3; Chromium 151.0.7922.34; RxDB17.6.0.
 
 | AC | Result | Executable evidence |
@@ -12,7 +12,7 @@ Runtime v22.22.3; Chromium 151.0.7922.34; RxDB17.6.0.
 | F01 | PASS | results:F01; browser-results:F11/after-local-ack |
 | F02 | PASS | results:F02 |
 | F03 | PASS | results:F03; ui-results:F03; crash-results:F11 |
-| F04 | PASS | results:F04; ui-results:F04 |
+| F04 | BLOCKED | results:F04; ui-results:F04; notification-results; notification-diagnostic |
 | F05 | PASS | results:F05; ui-results:F05 |
 | F06 | PASS | results:F06; ui-results:F06 |
 | F07 | PASS | results:F07; ui-results:F07 |
@@ -27,6 +27,8 @@ Runtime v22.22.3; Chromium 151.0.7922.34; RxDB17.6.0.
 | F16 | FAIL | results:F16; hidden-checkpoint:F16 |
 | F17 | PASS | measurements:F17; overlay-measurements:F17 |
 
+F04 remains BLOCKED: deterministic injected-wake downstream handling passes; unattended updates are NOT_PROVEN and are not upgraded to PASS.
+
 Seeds: 100/100 passed. Complete bodies are checked in journal, chosen view, native pages, mock remote and recovery.
 
 Checkpoint: 30 remote documents; cold replica 16/30. Hidden older edit remains undiscovered after visibility returns. No native patch/fallback.
@@ -37,7 +39,7 @@ Synthetic measurements (n=3 each scale):
 
 | Pages | Overlay p50 settle ms | Overlay p95 settle ms |
 | --- | --- | --- |
-| 10 | 267.7 | 274.9 |
-| 1000 | 1425.7 | 1432.4 |
+| 10 | 254.7 | 259.7 |
+| 1000 | 1429.9 | 1442.1 |
 
 Foreground local rendering is separate from cloud settle; native network checkpoint ordering is unchanged. These are not Google timings. Founder final acceptance, deployment and product adoption are not granted by this report.

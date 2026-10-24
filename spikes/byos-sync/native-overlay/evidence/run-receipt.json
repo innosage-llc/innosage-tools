@@ -1,13 +1,19 @@
 {
   "replay": "npm run test:byos-native-overlay:full",
-  "exit_code": 0,
-  "elapsed_seconds": 402.5,
+  "exit_code": 1,
+  "exit_meaning": "Required F04 unattended-update criterion NOT_PROVEN; explicit diagnostic HOLD, not UX PASS",
+  "elapsed_seconds": 439.9,
   "fresh_outputs_verified": true,
-  "full_run_source_digest": "89d1d2090ec427184c6672ae85cf1ecabc0bcbadd44639ee0c9a14ffa52ed856",
-  "source_digest": "fa3094ced9a645d134e6eb2b291fd163b7f9a4f1516158cbcc3726dc02497187",
-  "source_base_sha": "90de7b8df847f6f5fc8b25a88f6da6af76155c8b",
-  "counted_store_acknowledgements": 620,
-  "post_run_metadata_repair": "Unified manifest/report replay routing for separate F10\u2013F17 runners; application and assertion logic unchanged",
-  "independent_review": "PASS: final source/evidence digest fa3094ced9a645d134e6eb2b291fd163b7f9a4f1516158cbcc3726dc02497187",
-  "native_gatekeeper": "Final repair gate follows before merge"
+  "source_digest": "e108b0a050ceabd3b45a4a959fef15fdadf15ae6233c3a1286eae2d02f7de98b",
+  "metadata_note": "F04 replay route expanded during the run to include both UI modes; bodies, runtime and assertion logic unchanged. Final digest hashes the corrected route.",
+  "source_base_sha": "85467936bcdf2794d41efda138f07cbae72d884b",
+  "counted_store_acknowledgements": 622,
+  "independent_review": "PASS: negative/HOLD artifacts/source digest e108b0a050ceabd3b45a4a959fef15fdadf15ae6233c3a1286eae2d02f7de98b; final exact-head binding remains required",
+  "native_gatekeeper": "Required native submit/merge flows; actual head results recorded on PR105",
+  "application_footprint": {
+    "page_store_lines": 359,
+    "ui_controller_lines": 218,
+    "native_rxdb_source_modified_lines": 0,
+    "draft_product_changes": 0
+  }
 }

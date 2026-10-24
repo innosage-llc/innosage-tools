@@ -1,0 +1,18 @@
+{
+  "qualification": "NOT_PROVEN; observed replay history does not upgrade F04 to PASS",
+  "prior_corrected_mock_replay": {
+    "mock_sha256": "368d1da212507e3262ba4e8fb91d7945d95f8eb7ec3a30eff43d246a58a4af89",
+    "log_sha256": "ab150b4b4b0e775f4892b6e636b5f68e6a1b90a6d044b581d2f797215733ad25",
+    "bounded_log_excerpt": [
+      "F05 PASS ",
+      "F12 PASS ",
+      "F13 PASS ",
+      "F14-before-close undefined ",
+      "F14 PASS ",
+      "F03 PASS ",
+      "ERROR FAIL Error: Awaited condition timed out: other page continues"
+    ],
+    "interpretation": "Reached the other-page wait after E receipt, then timed out; no full unattended F04 PASS"
+  },
+  "final_replay": "notification-results.json; later exact fixture run failed E native receipt; preserve this outcome alongside original notification-diagnostic.json"
+}

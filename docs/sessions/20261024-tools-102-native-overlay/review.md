@@ -58,3 +58,41 @@ Refreshed complete evidence independent review **PASS**:
 Raw outcomes support100/100 seeds,620 ACKs,F01–F15 PASS,F17 measured and native
 F16 HOLD. Full run402.5s and metadata-only replay normalization are distinguished.
 No remaining material finding. Final native gates and exact PR head remain.
+
+Live-refresh review supersedes earlier application hashes. Native page-ID events
+coalesce into confirmed reads; initial classification requires settled native
+state, page=Master and Master distinct from draft AND base. Unchanged-base crash
+recovery and earlier-own reflections do not invent conflicts. Existing conflict
+refresh preserves D/cursor/captured versions and never cleans up/claims Sync.
+Independent source PASS binds PageStore
+`5b906e26c2cc979b494ef9a19d346bd5daefd13cc426f7e6d21ad089acb68490`
+and UI fixture
+`853b07885264f33863d27f96375f4bf025afc54d5d11b461e20f9a25dfd367e2`.
+Native WebRTC wake delivery is NOT_PROVEN in the offline ICE=[] harness. F04
+records an injected published reSync wake, awaits actual native received E and
+then tests app refresh without PageStore Sync/Verify. No-wake diagnostic retained.
+
+## Final diagnostic qualification supersedes prior all-P0 claims
+
+Independent read-only reviewer confirms the negative/HOLD interpretation is
+faithful to #102. F04 aggregate remains BLOCKED; deterministic injected native
+reSync handling does not prove unattended updates. F16 remains FAIL/HOLD; full
+replay exits nonzero. No NATIVE UX SPIKE PASS or Founder acceptance is claimed.
+Mock createdTime DESC correction and restrictive newest-page regression are
+bounded and preserve the modifiedTime comparator.
+
+Review caught broad timeout tolerance and a misleading no-wake mode string.
+Lead corrected both: only F04 receipt/other-page waits may emit the retained
+diagnostic; unrelated timeouts fail normally, and mode identifies no injection.
+Independent correction review PASS binds check04fbc560... and UI fixture
+a598f106... . A metadata-only F04 replay route now includes Node, injected UI
+and no-wake UI; bodies/runtime assertions unchanged. Final artifact/head
+approval is recorded separately after replay.
+
+Final diagnostic artifact review **PASS** binds digest
+`e108b0a050ceabd3b45a4a959fef15fdadf15ae6233c3a1286eae2d02f7de98b`.
+All listed source hashes match;100/100 seeds and622 ACKs reconcile. F04 BLOCKED
+separates injected PASS from final no-wake F04-unattended-receipt timeout; F16
+retains16/30 and hidden-edit failure. Metadata note and replay commands verified.
+Approved for diagnostic HOLD integration only; native gates and exact-head
+binding remain mandatory, and UX qualification/Founder acceptance are not granted.
