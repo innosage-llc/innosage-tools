@@ -28,6 +28,9 @@ test('downloadable agent handoff includes exact current authority and descriptor
   assert.deepEqual(brief.proposalSchema,proposalSchema);
   assert.doesNotMatch(output,/PRIVATE_|blob:private/);
   assert.match(brief.instructions.join(' '),/actually inspect/);
+  assert.match(brief.instructions.join(' '),/Never substitute a standalone SVG/);
+  assert.match(brief.instructions.join(' '),/first call get_scene/);
+  assert.match(brief.instructions.join(' '),/only actual applied status/);
 });
 
 test('strict schema rejects executable, unknown, inherited, invalid geometry and reference data', () => {

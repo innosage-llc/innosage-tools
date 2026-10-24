@@ -21,6 +21,12 @@ export class Mailbox {
     const r = await this.db.prepare(`UPDATE experiment SET ${kind}=${kind}+1 WHERE singleton=1 AND ${kind}<? RETURNING singleton`).bind(limit).first();
     if (!r) throw new Error('BUDGET');
   }
+  // Cumulative measurement only: the Scene owner removed lifetime test quotas.
+  // Legacy entrypoints retain spend() and their existing limits.
+  async recordActivity(kind: 'http' | 'oauth'): Promise<void> {
+    const row = await this.db.prepare(`UPDATE experiment SET ${kind}=${kind}+1 WHERE singleton=1 RETURNING singleton`).first();
+    if (!row) throw new Error('COUNTER_UNAVAILABLE');
+  }
   async create(): Promise<{ project: string; epoch: number; credential: string; proof: string }> {
     const project = crypto.randomUUID(), credential = secret(), proof = secret(), now = Date.now();
     await this.db.prepare('INSERT INTO projects(id,credential_hash,proof_hash,proof_expires,expires) VALUES(?,?,?,?,?)')

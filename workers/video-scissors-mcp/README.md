@@ -139,3 +139,7 @@ fresh `/remote/projects`, browser poll and old-token `/mcp` requests must return
 Record those exact responses and identity, not merely deploy exit0. Disabling
 server routes cannot reverse a browser operation already claimed; stop the owned
 test connection locally too, with no claim of guaranteed reversal.
+
+### Scene staging quota amendment (2026-10-24)
+
+The Founder removed artificial lifetime task quotas for the activated Scene candidate: shared protocol HTTP/Scene consent attempts and Scene HTTP remain counted without20/2000admission caps. The default legacy entrypoint and video-specific consent behavior remain unchanged. SQL20shares/16requests and DCR20 retain the reviewed stored-content/client abuse bounds; no automatic reset, schema/trigger/grant change or unlimited retry is introduced. See `docs/runbooks/visual-remix-host-verification.md` at repository root. Cloudflarefree-plan errors stop/report; no paid-resource expansion is authorized.

@@ -13,6 +13,8 @@ export type SceneSharingState = {
   proof?: string;
   expiresAt?: number;
   error?: string;
+  notice?: string;
+  diagnostic?: { status: number; requestId?: string; version?: string; revision?: string };
   revocationConfirmed?: boolean;
 };
 export type SceneSharingProps = {

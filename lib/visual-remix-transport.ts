@@ -5,6 +5,19 @@ import type { SceneSharingState } from './visual-remix-sharing-view.ts';
 
 type Frame = { snapshot: SceneSnapshot; states: [string, SceneState][] };
 type Share = { auth: SceneOwner; proof: string; expiresAt: number; proofExpiresAt: number };
+class SceneHttpError extends Error {
+  readonly diagnostic: NonNullable<SceneSharingState['diagnostic']>;
+  constructor(response: Response) {
+    super('SCENE_HTTP_' + response.status);
+    const safe = (name: string, pattern: RegExp) => { const value = response.headers.get(name); return value && pattern.test(value) ? value : undefined; };
+    this.diagnostic = { status:response.status, requestId:safe('X-Visual-Remix-Request-Id',/^[a-f0-9-]{36}$/), version:safe('X-Visual-Remix-Version',/^\d{1,3}\.\d{1,3}\.\d{1,3}$/), revision:safe('X-Visual-Remix-Revision',/^[a-f0-9]{40}$/) };
+  }
+}
+const recovery = (error?: unknown) => error instanceof SceneHttpError && error.diagnostic.status === 401
+  ? 'Browser ownership expired or was revoked. Disconnect, create a fresh share and manually reconnect the host.'
+  : error instanceof SceneHttpError && error.diagnostic.status === 429
+  ? 'A service or storage limit was reached. Stop retrying and report the connection diagnostic.'
+  : 'Disconnect to confirm service revocation; a new share requires fresh manual host authorization.';
 type Sender = (path: string, init: RequestInit) => Promise<Response>;
 
 // Only instantiated behind the product build gate and explicit user consent.
@@ -39,7 +52,7 @@ export class VisualRemixTransport {
       let retryable = true;
       try {
         const response = await this.send('/scene/browser/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: abort.signal, cache: 'no-store', credentials: 'omit', redirect: 'error' });
-        if (!response.ok) { retryable = response.status >= 500; throw new Error('SCENE_HTTP_' + response.status); }
+        if (!response.ok) { retryable = response.status >= 500; throw new SceneHttpError(response); }
         if (response.headers.get('content-type')?.split(';')[0] !== 'application/json') { retryable = false; throw new Error('SCENE_TRANSPORT'); }
         const reader = response.body?.getReader();
         if (!reader) throw new Error('SCENE_RESPONSE');
@@ -88,7 +101,7 @@ export class VisualRemixTransport {
     } catch (error) {
       this.creating = false; this.stopped = true; bridge.revoke();
       const detail = error instanceof Error && /^SCENE_HTTP_\d{3}$/.test(error.message) ? ` (service returned HTTP ${error.message.slice(-3)})` : error instanceof Error && error.name === 'AbortError' ? ' (request timed out)' : '';
-      this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, error:`Sharing could not be confirmed${detail}. A share may exist; access is lease-limited but stored content can remain until cleanup. Use Disconnect when available. No automatic reconnect or revocation claim.` });
+      this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, diagnostic:error instanceof SceneHttpError ? error.diagnostic : undefined, error:`Sharing could not be confirmed${detail}. ${recovery(error)} A share may exist; access is lease-limited but stored content can remain until cleanup. Use Disconnect when available. No automatic reconnect or revocation claim.` });
     }
   }
   private bound(): boolean {
@@ -97,7 +110,7 @@ export class VisualRemixTransport {
   }
   notifyLocalChange(): void {
     if (this.stopped || !this.bridge || !this.owner) return;
-    if (!this.bound()) { void this.disconnect(); return; }
+    if (!this.bound()) { void this.disconnect(this.expirationNotice()); return; }
     let frame: Frame;
     try { frame = { snapshot:parseSceneSnapshot(this.bridge.getScene()), states:[] }; } catch { this.fail(); return; }
     for (const id of this.issued) {
@@ -113,12 +126,17 @@ export class VisualRemixTransport {
   private schedule(): void {
     if (this.timer) clearTimeout(this.timer);
     if (this.stopped) return;
-    this.timer = setTimeout(() => { this.timer = null; if (this.owner && this.state.phase === 'awaiting-consent' && this.now() >= this.owner.proofExpiresAt) { void this.disconnect(); return; } this.fingerprint = ''; this.notifyLocalChange(); this.schedule(); }, 3000);
+    this.timer = setTimeout(() => { this.timer = null; if (this.owner && this.state.phase === 'awaiting-consent' && this.now() >= this.owner.proofExpiresAt) { void this.disconnect('Pairing proof expired. Create a fresh share and manually reconnect the host; no automatic reconnection.'); return; } this.fingerprint = ''; this.notifyLocalChange(); this.schedule(); }, 3000);
   }
-  private fail(): void {
+  private expirationNotice(): string {
+    return this.owner && this.now() >= this.owner.expiresAt
+      ? 'Sharing lease expired. Create a fresh share and manually reconnect the host; saved local work is preserved.'
+      : 'The local project changed. Create a fresh share and manually reconnect the host.';
+  }
+  private fail(error?: unknown): void {
     this.stopped = true; if (this.timer) clearTimeout(this.timer); this.timer = null; this.frames = [];
     this.bridge?.revoke(); this.renderChanged();
-    this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, error:'Connection stopped. Local edits and exports are preserved. Disconnect to confirm service revocation; expiration alone does not guarantee physical deletion.' });
+    this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, diagnostic:error instanceof SceneHttpError ? error.diagnostic : undefined, error:`Connection stopped. Local edits and exports are preserved. ${recovery(error)} Expiration alone does not guarantee physical deletion.` });
   }
   private async pump(): Promise<void> {
     if (this.pumping || this.stopped || !this.owner) return;
@@ -126,7 +144,7 @@ export class VisualRemixTransport {
     try {
       while (!this.stopped && this.frames.length) {
         const owner: Share = this.owner, frame: Frame = this.frames.shift()!;
-        if (!this.bound()) { await this.disconnect(); break; }
+        if (!this.bound()) { await this.disconnect(this.expirationNotice()); break; }
         const synced = sceneObject(await this.call('sync', { auth:owner.auth, snapshot:frame.snapshot },true), ['ok']);
         if (this.stopped || this.owner !== owner) return;
         if (synced.ok !== true) throw new Error('SCENE_SYNC');
@@ -154,21 +172,22 @@ export class VisualRemixTransport {
         }
         this.notifyLocalChange();
       }
-    } catch { if (!this.stopped && this.owner === startedOwner) this.fail(); }
+    } catch (error) { if (!this.stopped && this.owner === startedOwner) this.fail(error); }
     finally { this.pumping = false; if (!this.stopped && this.frames.length) void this.pump(); }
   }
-  async disconnect(): Promise<void> {
+  async disconnect(reason?: string): Promise<void> {
+    const notice = reason ?? this.state.notice;
     this.stopped = true; if (this.timer) clearTimeout(this.timer); this.timer = null; this.frames = []; this.bridge?.revoke();
     this.publish({ phase:'revoking',canConnect:false,canDisconnect:false });
     if (this.creating) return; // Late create response owns cleanup; never adopt it.
-    if (!this.owner) { this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:false}); return; }
+    if (!this.owner) { this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:false,notice}); return; }
     try {
       const result = sceneObject(await this.call('revoke', { auth:this.owner.auth },true), ['ok']);
       if (result.ok !== true) throw new Error('SCENE_REVOKE');
       this.owner = null; this.bridge = null; this.issued.clear(); this.acknowledged.clear(); this.fingerprint = '';
-      this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:true});
+      this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:true,notice});
     } catch {
-      this.publish({phase:'error',canConnect:false,canDisconnect:true,error:'Revocation is unconfirmed. Retry Disconnect. Existing service content may remain until a successful revoke or later cleanup.'});
+      this.publish({phase:'error',canConnect:false,canDisconnect:true,notice,error:'Revocation is unconfirmed. Retry Disconnect. Existing service content may remain until a successful revoke or later cleanup.'});
     }
   }
   dispose(): void { this.disposed = true; void this.disconnect(); }

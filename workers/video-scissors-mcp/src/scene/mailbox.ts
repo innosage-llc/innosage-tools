@@ -12,7 +12,7 @@ export class SceneMailbox {
   private readonly db: D1DatabaseSession;
   constructor(db: D1Database, private readonly now: () => number = Date.now) { this.db = db.withSession('first-primary'); }
   async spend(): Promise<void> {
-    const row = await this.db.prepare('UPDATE scene_budget SET http=http+1 WHERE singleton=1 AND http<2000 RETURNING singleton').first();
+    const row = await this.db.prepare('UPDATE scene_budget SET http=http+1 WHERE singleton=1 RETURNING singleton').first();
     if (!row) throw new Error('SCENE_HTTP_BUDGET');
   }
   async sweepExpired(): Promise<void> {

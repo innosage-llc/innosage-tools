@@ -11,6 +11,8 @@ import { SceneMailbox } from './mailbox';
 import { renderSceneConsentView } from './SceneConsentView';
 import { boundedSceneRpc, sceneMcpHandler } from './mcp';
 import { sceneBrowserRoute } from './browser-routes';
+import { sceneDiagnostic } from './diagnostics';
+type SceneEnv = Env & { SCENE_BUILD_REVISION?: string };
 import { SCENE_SCOPES, parseSceneAuth, sceneObject, type SceneAuth } from '../../../../lib/visual-remix-remote';
 const videoScopes = ['video:read','video:edit'];
 const scopesEqual = (value: string[], expected: readonly string[]) => value.length === expected.length && new Set(value).size === expected.length && expected.every(scope => value.includes(scope));
@@ -26,7 +28,7 @@ const consentHeaders = (headers: Headers) => {
   headers.set('Referrer-Policy','same-origin');
   return headers;
 };
-export function sceneCandidateFor(env: Env, origin: string, enabled = false, bridge?: BridgeNamespace) {
+export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false, bridge?: BridgeNamespace) {
   const videoResource = origin + '/mcp', sceneResource = origin + '/scene/mcp';
   const options = videoOAuthOptionsFor(env, origin, bridge);
   const store = new SceneMailbox(env.DB);
@@ -62,14 +64,15 @@ export function sceneCandidateFor(env: Env, origin: string, enabled = false, bri
       if (!verified.auth?.clientId) return reply({ error: 'AUTH_CONTEXT' }, 401);
       if (!scopesEqual(verified.auth.scope, SCENE_SCOPES)) return insufficientScope(verified.auth, [...SCENE_SCOPES]);
       const auth = sceneProps(verified.props), clientId = verified.auth.clientId;
-      return boundedSceneRpc(request, bounded => sceneMcpHandler(current.DB, auth).fetch(bounded, { authInfo: { token: verified.auth.token, clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt, resource: new URL(sceneResource) } }));
+      return boundedSceneRpc(request, bounded => sceneMcpHandler(current.DB, auth, sceneResource).fetch(bounded, { authInfo: { token: verified.auth.token, clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt, resource: new URL(sceneResource) } }));
     } },
   });
   async function consent(request: Request, oauth: OAuthHelpers): Promise<Response> {
     if (request.method === 'GET') {
       const auth = await oauth.parseAuthRequest(request), isScene = auth.resource === sceneResource;
       if (auth.resource !== videoResource && !isScene || !scopesEqual(auth.scope, isScene ? SCENE_SCOPES : videoScopes)) return reply({ error: 'RESOURCE_OR_SCOPE' }, 400);
-      await new Mailbox(env.DB).spend('oauth');
+      if (isScene) await new Mailbox(env.DB).recordActivity('oauth');
+      else await new Mailbox(env.DB).spend('oauth');
       const details = await oauth.describeConsent(auth), transaction = await oauth.beginConsent(auth);
       const html = isScene ? renderSceneConsentView({ handle: transaction.handle, clientName: details.clientName, clientId: details.clientId, redirectHost: details.redirectHost, isLoopback: details.redirectIsLoopback }) : renderConsentView({ details, handle: transaction.handle, errorCode: 'NONE' });
       return new Response(html, { headers: consentHeaders(transaction.headers) });
@@ -102,28 +105,39 @@ export function sceneCandidateFor(env: Env, origin: string, enabled = false, bri
     approved.headers.set('Location',result.redirectTo);approved.headers.set('Cache-Control','no-store');
     return new Response(null,{status:302,headers:approved.headers});
   }
-  return { async fetch(request: Request, current: Env, ctx: ExecutionContext): Promise<Response> {
+  return { async fetch(request: Request, current: SceneEnv, ctx: ExecutionContext): Promise<Response> {
     const path = new URL(request.url).pathname;
     const isScene = path.startsWith('/scene/') || path === '/.well-known/oauth-protected-resource/scene/mcp';
-    if (!enabled) return isScene ? reply({error:'SCENE_NOT_ENABLED'},503) : legacyEntrypoint.fetch(request,current,ctx);
+    const requestId = crypto.randomUUID(); let tool: string | undefined;
+    const finish = (response: Response) => sceneDiagnostic(response,requestId,current.SCENE_BUILD_REVISION,tool);
+    if (!enabled) return isScene ? finish(reply({error:'SCENE_NOT_ENABLED'},503)) : legacyEntrypoint.fetch(request,current,ctx);
     if (path.startsWith('/mcp') && path !== '/mcp') return reply({error:'RESOURCE_NOT_FOUND'},404);
     const protocol = isScene || path === '/mcp' || path.startsWith('/oauth') || path === '/authorize' || path.startsWith('/remote') || path.startsWith('/.well-known/');
     if (!protocol) return current.ASSETS.fetch(request);
-    if (String(current.EXPERIMENT_ENABLED) !== 'true') return reply({error:'NOT_ENABLED'},503);
+    if (String(current.EXPERIMENT_ENABLED) !== 'true') return finish(reply({error:'NOT_ENABLED'},503));
     try {
       const videoStore = new Mailbox(current.DB);
-      await videoStore.initialize(); await videoStore.spend('http');
+      await videoStore.initialize(); await videoStore.recordActivity('http');
       if (path === '/oauth/register' && request.method === 'POST') await videoStore.spend('dcr');
-      if (request.body) request = new Request(request,{body:await boundedBody(request)});
+      if (request.body) {
+        const text = await boundedBody(request);
+        if (path === '/scene/mcp') {
+          try { const rpc = JSON.parse(text); if (rpc?.method === 'tools/call' && ['get_scene','propose_scene','proposal_status','cancel_proposal'].includes(rpc.params?.name)) tool = rpc.params.name; } catch { /* Protocol parser returns the safe rejection. */ }
+        }
+        request = new Request(request,{body:text});
+      }
       if (isScene) { await store.spend(); await store.sweepExpired(); }
-      if (path.startsWith('/scene/browser/')) return await sceneBrowserRoute(request,store);
-      if (path.startsWith('/remote/')) return await browserRoute(request,videoStore,bridge);
-      if (path === '/authorize') return await consent(request,authorization.getOAuthApi(current));
-      if (path === '/mcp' || path === '/.well-known/oauth-protected-resource/mcp') return await video.fetch(request,current,ctx);
-      if (path === '/scene/mcp' || path === '/.well-known/oauth-protected-resource/scene/mcp') return await scene.fetch(request,current,ctx);
-      if (isScene) return reply({error:'RESOURCE_NOT_FOUND'},404);
-      if (path.startsWith('/oauth/') || path === '/.well-known/oauth-authorization-server') return await authorization.fetch(request,current,ctx);
+      if (path.startsWith('/scene/browser/')) return finish(await sceneBrowserRoute(request,store));
+      if (path.startsWith('/remote/')) return finish(await browserRoute(request,videoStore,bridge));
+      if (path === '/authorize') return finish(await consent(request,authorization.getOAuthApi(current)));
+      if (path === '/mcp' || path === '/.well-known/oauth-protected-resource/mcp') return finish(await video.fetch(request,current,ctx));
+      if (path === '/scene/mcp' || path === '/.well-known/oauth-protected-resource/scene/mcp') return finish(await scene.fetch(request,current,ctx));
+      if (isScene) return finish(reply({error:'RESOURCE_NOT_FOUND'},404));
+      if (path.startsWith('/oauth/') || path === '/.well-known/oauth-authorization-server') return finish(await authorization.fetch(request,current,ctx));
       return reply({error:'RESOURCE_NOT_FOUND'},404);
-    } catch { return reply({error:'CANDIDATE_REQUEST_REJECTED'},400); }
+    } catch (error) {
+      if (isScene && error instanceof Error && error.message.includes('SCENE_SHARE_BUDGET')) return finish(reply({error:'SCENE_STORAGE_LIMIT',recovery:'The bounded stored-share limit was reached. Stop retrying; changing this security/storage bound requires review.'},429));
+      return finish(reply({error:'CANDIDATE_REQUEST_REJECTED'},400));
+    }
   } };
 }

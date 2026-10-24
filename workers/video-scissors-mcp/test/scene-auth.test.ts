@@ -109,3 +109,52 @@ test('inactive candidate: existing single-resource video access and refresh rema
     f.noEgress();
   } finally { await f.mf.dispose(); }
 });
+
+
+test('recovery: same client can manually authorize a new share while the expired grant stays rejected',async()=>{
+ const f=await fixture();
+ try{
+  const first=await f.link();assert.equal((await f.rpc(first.t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);
+  await f.db.prepare('UPDATE scene_shares SET expires=? WHERE id=?').bind(Date.now()-1,first.p.auth.shareId).run();
+  const expired=await f.rpc(first.t.access_token,'tools/call',{name:'get_scene',arguments:{}});assertSceneReauthorization(expired.r);
+  assert.match(expired.r.headers.get('x-visual-remix-request-id')!,/^[a-f0-9-]{36}$/);
+  assert.equal(expired.r.headers.get('x-visual-remix-version'),'0.1.6');assert.equal(expired.r.headers.get('x-visual-remix-revision'),'a'.repeat(40));assert.equal(expired.r.headers.get('x-visual-remix-tool'),'get_scene');
+  const next=await f.create(),a=await f.authorize(first.c),tr=await f.token(first.c,await f.approve(a,next.proof));assert.equal(tr.status,200);const token=await tr.json();assert.equal(token.refresh_token,undefined);assert.ok(token.expires_in<=900);
+  const read=await f.rpc(token.access_token,'tools/call',{name:'get_scene',arguments:{}});assert.equal(read.r.status,200);assert.equal(JSON.parse(read.data.result.content[0].text).revision,0);
+  assertSceneReauthorization((await f.rpc(first.t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r);
+  assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_requests').first('n'),0);f.noEgress();
+ }finally{await f.mf.dispose();}
+});
+
+test('recovery: removed lifetime test quotas retain accounting and all consent and token checks',async()=>{
+ const f=await fixture();
+ try{
+  const p=await f.create(),c=await f.client();await f.db.prepare('UPDATE experiment SET oauth=20,http=2000 WHERE singleton=1').run();await f.db.prepare('UPDATE scene_budget SET http=2000 WHERE singleton=1').run();
+  const a=await f.authorize(c);assert.equal(a.r.status,200);assert.ok(a.handle);assert.equal(await f.db.prepare('SELECT oauth FROM experiment WHERE singleton=1').first('oauth'),21);assert.equal(await f.db.prepare('SELECT consent_hash FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('consent_hash'),null,'rendering consent is not a grant');
+  const tr=await f.token(c,await f.approve(a,p.proof));assert.equal(tr.status,200);const token=await tr.json();assert.equal(token.refresh_token,undefined);assert.ok(token.expires_in<=900);
+  assert.equal((await f.rpc(token.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);assert.ok(Number(await f.db.prepare('SELECT http FROM scene_budget WHERE singleton=1').first('http'))>2000);
+  assert.equal((await f.rpc(token.access_token,'tools/list',{},'/mcp')).r.status,401,'audience fences survive quota removal');f.noEgress();
+ }finally{await f.mf.dispose();}
+});
+
+test('recovery: lease loss after outer validation returns an SDK auth hint and never a completed edit',async()=>{
+ const f=await fixture();
+ try{
+  // Fixture dispatches directly to the actual SDK handler with an expired/missing
+  // binding, deterministically modeling the post-validation lease race.
+  const r=await f.json('/scene/mcp',{jsonrpc:'2.0',id:'race',method:'tools/call',params:{name:'get_scene',arguments:{}}},{'x-fixture-lease-race':'true',Accept:'application/json, text/event-stream'});assert.equal(r.status,200);const raw=await r.text(),body=r.headers.get('content-type')?.includes('text/event-stream')?JSON.parse(raw.split('\n').find(l=>l.startsWith('data: '))!.slice(6)):JSON.parse(raw);
+  assert.equal(body.result.isError,true);assert.match(body.result.content[0].text,/no proposal was delivered/);const challenge=body.result._meta['mcp/www_authenticate'][0];assert.ok(challenge.includes('error="invalid_token"'));assert.match(challenge,/error_description=/);assert.ok(challenge.includes('scope="scene:read scene:propose"'));assert.ok(challenge.includes(origin+'/.well-known/oauth-protected-resource/scene/mcp'));assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_requests').first('n'),0);f.noEgress();
+ }finally{await f.mf.dispose();}
+});
+
+
+test('recovery diagnostics preserve the enabled candidate video WebSocket upgrade and one-use proof',async()=>{
+ const f=await fixture(undefined,true);
+ try{
+  const p=await (await f.json('/remote/projects',{})).json(),auth={project:p.project,epoch:p.epoch,credential:p.credential};
+  const ticket=await (await f.json('/remote/bridge/join',{auth})).json();
+  const connect=()=>f.request(`/remote/bridge/${p.project}/${p.epoch}`,{headers:{Origin:origin,Upgrade:'websocket','Sec-WebSocket-Protocol':`video-scissors-wakeup.v1, join.${ticket.proof}`}});
+  const response=await connect();assert.equal(response.status,101);assert.equal(response.headers.get('sec-websocket-protocol'),'video-scissors-wakeup.v1');assert.ok(response.webSocket);response.webSocket.accept();response.webSocket.close(1000,'local-review-regression');
+  assert.equal((await connect()).status,401,'diagnostics never permit reuse of the join proof');f.noEgress();
+ }finally{await f.mf.dispose();}
+});

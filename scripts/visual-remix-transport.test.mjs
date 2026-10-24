@@ -15,8 +15,8 @@ const {VisualRemixTransport,VisualRemixController,LocalAssets,emptyScene}=await 
 const waitFor=async(check)=>{for(let i=0;i<150;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}assert.ok(check(),'condition did not complete');};
 const response=x=>Response.json(x);
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
-async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now}={}){
- let renders=0,renderGate=null,command=null,cancel=[],connected=false,revokeFailures=failRevoke?2:0;
+async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false}={}){
+ let renders=0,renderGate=null,command=null,cancel=[],connected=paired,revokeFailures=failRevoke?2:0;
  const calls=[],states=[];
  const controller=new VisualRemixController(async()=>{renders++;if(renderGate)await renderGate.promise;return{png:new Blob(['local-png']),diagnostics:[]};});
  await controller.open('fixture',0,emptyScene(),new LocalAssets());
@@ -31,7 +31,7 @@ async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respect
    return response(share);
   }
   if(path.endsWith('/sync'))return response({ok:true});
-  if(path.endsWith('/poll')){const result={command,cancellations:cancel,connected};command=null;if(slowPoll)await pollGate.promise;return response(result);}
+  if(path.endsWith('/poll')){if(pollStatus)return new Response('private token must never be reflected',{status:pollStatus,headers:{'X-Visual-Remix-Request-Id':'12345678-1234-1234-1234-123456789abc','X-Visual-Remix-Version':'0.1.6','X-Visual-Remix-Revision':'a'.repeat(40)}});const result={command,cancellations:cancel,connected};command=null;if(slowPoll)await pollGate.promise;return response(result);}
   if(path.endsWith('/report'))return response({ok:true});
   if(path.endsWith('/revoke')){if(revokeFailures-->0)return new Response('Uncertain',{status:503});return response({ok:true});}
   throw new Error('Unknown path');
@@ -206,4 +206,30 @@ test('inactive adapter: a claim delivered after acknowledged Disconnect cannot r
   assert.equal(f.controller.status('request'),null);assert.equal(f.renders,1);
   assert.equal(f.transport.snapshot().phase,'disconnected');assert.equal(f.transport.snapshot().revocationConfirmed,true);
  }finally{f.pollGate.resolve();f.transport.dispose();f.controller.dispose();}
+});
+
+
+test('recovery: owner HTTP failures preserve safe diagnostics and local work, with no automatic reconnection',async()=>{
+ for(const status of [401,429]){
+  const f=await fixture({pollStatus:status});
+  try{
+   await f.transport.connect(true);await waitFor(()=>f.transport.snapshot().phase==='error');const state=f.transport.snapshot();
+   assert.equal(state.diagnostic.status,status);assert.equal(state.diagnostic.version,'0.1.6');assert.equal(state.diagnostic.revision,'a'.repeat(40));assert.equal(state.canConnect,false);assert.equal(state.canDisconnect,true);assert.ok(!JSON.stringify(state).includes('private token'));assert.match(state.error,status===401?/manually reconnect/:/Stop retrying/);assert.equal(f.controller.exportPNG().size,9);
+   assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);await f.transport.disconnect();assert.equal(f.transport.snapshot().revocationConfirmed,true);
+  }finally{f.transport.dispose();f.controller.dispose();}
+ }
+});
+
+test('recovery: proof and lease expiry explain fresh manual authorization without losing local work',async(t)=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ for(const paired of [false,true]){
+  let now=Date.now();const f=await fixture({paired,clientNow:()=>now});
+  try{
+   await f.transport.connect(true);for(let i=0;i<30;i++)await new Promise(setImmediate);
+   if(paired)assert.equal(f.transport.snapshot().phase,'connected');
+   now+=paired?900001:300001;t.mock.timers.tick(3001);for(let i=0;i<30;i++)await new Promise(setImmediate);
+   assert.equal(f.transport.snapshot().revocationConfirmed,true);
+   assert.match(f.transport.snapshot().notice,paired?/lease expired/:/proof expired/);assert.equal(f.controller.exportPNG().size,9);assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);
+  }finally{f.transport.dispose();f.controller.dispose();}
+ }
 });
