@@ -35,11 +35,11 @@ export class VisualRemixTransport {
   private async call(path: string, data: unknown, retry = false): Promise<unknown> {
     const body = sceneJSON(data, SCENE_LIMITS.wireBytes);
     for (let attempt = 0; ; attempt++) {
-      const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), 5000);
+      const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), path === 'create' ? 15000 : 5000);
       let retryable = true;
       try {
         const response = await this.send('/scene/browser/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: abort.signal, cache: 'no-store', credentials: 'omit', redirect: 'error' });
-        if (!response.ok) { retryable = response.status >= 500; throw new Error('SCENE_TRANSPORT'); }
+        if (!response.ok) { retryable = response.status >= 500; throw new Error('SCENE_HTTP_' + response.status); }
         if (response.headers.get('content-type')?.split(';')[0] !== 'application/json') { retryable = false; throw new Error('SCENE_TRANSPORT'); }
         const reader = response.body?.getReader();
         if (!reader) throw new Error('SCENE_RESPONSE');
@@ -56,7 +56,8 @@ export class VisualRemixTransport {
   }
   async connect(confirmed: boolean): Promise<void> {
     if (!confirmed || !this.available || !this.state.canConnect || this.disposed) throw new Error('SCENE_SHARE_NOT_CONFIRMED');
-    const local = this.controller.snapshot(), expiresAt = this.now() + SCENE_LIMITS.leaseMs;
+    const local = this.controller.snapshot(), startedAt = this.now(), expiresAt = startedAt + SCENE_LIMITS.leaseMs;
+    const proofExpiresAt = startedAt + SCENE_LIMITS.proofMs;
     const bridge = new VisualRemixOfflineBridge(this.controller, { purpose:'visual-remix', confirmed:true, projectId:local.projectId, generation:local.generation, expiresAt, fields:SCENE_SHARE_FIELDS }, this.now);
     let snapshot: SceneSnapshot;
     try { snapshot = parseSceneSnapshot(bridge.getScene()); } catch (error) { bridge.revoke(); throw error; }
@@ -66,17 +67,25 @@ export class VisualRemixTransport {
       // Never retry creation: a lost response can conceal a committed share.
       const value = sceneObject(await this.call('create', { snapshot, fields:SCENE_SHARE_FIELDS, confirmed:true }), ['auth','proof','expiresAt','proofExpiresAt']);
       const auth = parseSceneAuth(value.auth,true) as SceneOwner;
-      if (auth.projectId !== snapshot.projectId || auth.generation !== snapshot.generation || typeof value.proof !== 'string' || !/^[a-f0-9]{64}$/.test(value.proof) ||
-        typeof value.expiresAt !== 'number' || value.expiresAt <= this.now() || value.expiresAt > this.now() + SCENE_LIMITS.leaseMs ||
-        typeof value.proofExpiresAt !== 'number' || value.proofExpiresAt > value.expiresAt) throw new Error('SCENE_BINDING');
-      this.owner = { auth, proof:value.proof, expiresAt:Math.min(expiresAt,value.expiresAt), proofExpiresAt:value.proofExpiresAt };
+      if (auth.projectId !== snapshot.projectId || auth.generation !== snapshot.generation) throw new Error('SCENE_BINDING');
+      // Retain validated ownership only for explicit Disconnect if confirmation fails.
+      this.owner = { auth, proof:'', expiresAt, proofExpiresAt };
+      if (typeof value.proof !== 'string' || !/^[a-f0-9]{64}$/.test(value.proof) ||
+        !Number.isSafeInteger(value.expiresAt) || Number(value.expiresAt) < SCENE_LIMITS.leaseMs ||
+        !Number.isSafeInteger(value.proofExpiresAt) || Number(value.proofExpiresAt) < SCENE_LIMITS.proofMs ||
+        Number(value.expiresAt) - Number(value.proofExpiresAt) !== SCENE_LIMITS.leaseMs - SCENE_LIMITS.proofMs ||
+        this.now() >= proofExpiresAt) throw new Error('SCENE_BINDING');
+      // The server enforces its own fixed-duration leases. Starting this browser's
+      // deadlines before create is conservative without assuming clock agreement.
+      this.owner.proof = value.proof;
       this.creating = false;
       if (this.stopped || this.disposed || !this.bound()) { await this.disconnect(); return; }
       this.publish({ phase:'awaiting-consent', proof:value.proof, expiresAt:this.owner.expiresAt, canConnect:false, canDisconnect:true });
       this.notifyLocalChange(); this.schedule();
-    } catch {
+    } catch (error) {
       this.creating = false; this.stopped = true; bridge.revoke();
-      this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, error:'Sharing could not be confirmed. A share may exist; access is lease-limited but stored content can remain until cleanup. No automatic reconnect or revocation claim.' });
+      const detail = error instanceof Error && /^SCENE_HTTP_\d{3}$/.test(error.message) ? ` (service returned HTTP ${error.message.slice(-3)})` : error instanceof Error && error.name === 'AbortError' ? ' (request timed out)' : '';
+      this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, error:`Sharing could not be confirmed${detail}. A share may exist; access is lease-limited but stored content can remain until cleanup. Use Disconnect when available. No automatic reconnect or revocation claim.` });
     }
   }
   private bound(): boolean {
