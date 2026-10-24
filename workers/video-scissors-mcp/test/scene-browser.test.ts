@@ -8,7 +8,8 @@ import { build } from 'esbuild';
 import { fixture, origin } from './fixtures/scene-client.ts';
 
 const waitFor = async (check: () => boolean) => { for (let i=0;i<500;i++) { if(check())return; await new Promise(r=>setTimeout(r,10)); } assert.ok(check(),'local lifecycle did not complete'); };
-test('inactive transport + actual provider/D1/controller: fresh consent, preview, explicit Apply/Undo and revoked negative readback',async()=>{
+for (const clientClockOffset of [0,-120000,600000]) {
+test(`inactive transport + actual provider/D1/controller: consent through revoke with client clock offset ${clientClockOffset}`,async()=>{
   const f = await fixture(), directory = await mkdtemp(join(tmpdir(),'tools85-scene-controller-'));
   let controller, transport;
   try {
@@ -22,7 +23,7 @@ test('inactive transport + actual provider/D1/controller: fresh consent, preview
     transport = new VisualRemixTransport(controller,true,()=>{},()=>{},async(path: string, init: RequestInit)=>{
       requests.push({path,body:String(init.body)});
       return f.request(path,{...init,headers:{...init.headers,Origin:origin}});
-    });
+    },()=>Date.now()+clientClockOffset);
     await transport.connect(true);
     assert.equal(transport.snapshot().phase,'awaiting-consent');
     const c=await f.client(),a=await f.authorize(c),tokenResponse=await f.token(c,await f.approve(a,transport.snapshot().proof));
@@ -52,3 +53,4 @@ test('inactive transport + actual provider/D1/controller: fresh consent, preview
     f.noEgress();
   } finally { if(transport){await transport.disconnect();transport.dispose();}controller?.dispose();await f.mf.dispose();await rm(directory,{recursive:true,force:true}); }
 });
+}

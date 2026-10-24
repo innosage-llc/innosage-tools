@@ -272,3 +272,36 @@ Independent Sol review/native PR follows; Master85/87/88 remainopen. Original
 reference28m04.708s and reuse34.426s findings unchanged, no freshvisionbenchmark.
 
 Independent browser review found P2 VR-SCENE-BROWSER-1: revoked/expired Scene bindings returned a bare 401. Repaired using the official resource-server validator: reject a non-live D1 binding before handler dispatch, preserving the canonical Bearer invalid_token, resource_metadata and exact Scene scope challenge. Added actual provider revoked/expired and wrong-audience challenge assertions; data operations retain their D1 fences. Rereview and the repaired native gate remain pending at this checkpoint. Native submit previously passed its full gate but the commit hook rejected a new helper blank EOF; no commit/push/PR occurred, and the whitespace was repaired.
+
+
+## Connect repair — 2026-10-24 continuation
+
+Canonical V1 lead executes directly; independent Sol HIGH review; no Astra routine
+review or executor. Earlier custom model/role notes above are historical.
+
+Founder reported Connect's uncertain-share error after staging activation of
+source803a00b / Worker d9784ade. Read-only aggregate D1 evidence found one
+331-byte/zero-node unconsented share, no OAuth grant, and three Scene requests.
+The screenshot alone does not establish the exact request failure. No create was
+repeated and no cleanup is assumed. Mac Studio disconnected during preparation;
+resumed the same native-started fix/tools-85-scene-connect branch at0ecda45.
+Unrelated offline BYOS work is preserved and no other worktree/session is touched.
+
+New tests first reproduced three client defects (7PASS/3FAIL): a valid creation
+response can fail the cross-clock absolute-expiry comparison; a response delayed
+past5seconds is aborted; invalid confirmation discards known bound owner auth
+and prevents explicit Disconnect. The repair derives conservative local deadlines
+from one pre-request timestamp using the fixed trusted server duration contract,
+checks safe integer server deadlines and their interval, retains verified bound
+auth for explicit revoke without exposing an unvalidated proof or polling, and
+allows15seconds for create only. Other timeouts and retry boundaries are unchanged.
+Safe HTTP status/timeout diagnostics help distinguish future failures.
+
+PASS:12transport cases and3disconnected actual-provider/D1/controller flows with
+client clock offsets0/-120000/+600000ms, including consent, manual Apply/Undo,
+revoke and negative token readback. These are local tests, not real ChatGPT or
+live staging protocol evidence. Design review PASS is not changed-head approval;
+exact implementation review and native gate follow. No new service, credential,
+lease/scope expansion, production deployment, Master closure or live host run.
+
+Independent review identified a late-create cancellation edge: invalid confirmation metadata could prevent the previously requested revoke. The lead now honors cancellation/disposal immediately after validated bound ownership, before confirmation metadata checks. Added cancellation/disposal with invalid/elapsed confirmation and lost-revoke regressions; exact-head re-review required.
