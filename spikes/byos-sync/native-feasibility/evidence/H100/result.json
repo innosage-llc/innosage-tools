@@ -1,0 +1,85 @@
+{
+  "caseId": "H100",
+  "status": "FAIL",
+  "criterion": "C3",
+  "restartComparison": {
+    "expectedCount": 2,
+    "actualCount": 2,
+    "missingIds": [],
+    "mismatchedIds": [
+      "visibility0"
+    ],
+    "unexpectedIds": []
+  },
+  "initialCheckpointComparison": {
+    "expectedCount": 2,
+    "actualCount": 2,
+    "missingIds": [],
+    "mismatchedIds": [
+      "visibility0"
+    ],
+    "unexpectedIds": []
+  },
+  "freshComparison": {
+    "expectedCount": 2,
+    "actualCount": 2,
+    "missingIds": [],
+    "mismatchedIds": [],
+    "unexpectedIds": []
+  },
+  "oldRemote": {
+    "id": "f10",
+    "modifiedTime": "2026-10-24T09:19:55.994Z"
+  },
+  "newerRemote": {
+    "id": "f11",
+    "modifiedTime": "2026-10-24T09:19:56.009Z"
+  },
+  "hiddenCheckpoint": {
+    "docIdsWithSameModifiedTime": [
+      "visibility1.json"
+    ],
+    "modifiedTime": "2026-10-24T09:19:56.009Z"
+  },
+  "hiddenLowerBounds": [
+    "2026-10-24T09:19:55.969Z",
+    "2026-10-24T09:19:56.009Z"
+  ],
+  "prediction": {
+    "existingOldStale": true,
+    "initialCheckpointOldStale": true,
+    "freshLatestBoth": true
+  },
+  "positiveControls": "latest remote restored old full body unchanged; fresh separate DB retrieves both latest bodies; no metadata removal or substitute recovery",
+  "errors": [],
+  "admitted": 458,
+  "observed": 458,
+  "phases": [
+    "setup-inventory",
+    "writer-baseline-round1",
+    "writer-baseline-round2",
+    "receiver-baseline-round1",
+    "receiver-baseline-round2",
+    "writer-update0-round1",
+    "writer-update0-round2",
+    "writer-update1-round1",
+    "writer-update1-round2",
+    "hidden-old-round1",
+    "hidden-old-round2",
+    "restored-before-restart",
+    "same-id-restart-round1",
+    "same-id-restart-round2",
+    "same-id-initialCheckpoint-round1",
+    "same-id-initialCheckpoint-round2",
+    "fresh-diagnostic-round1",
+    "fresh-diagnostic-round2",
+    "final-before-cleanup"
+  ],
+  "package": {
+    "version": "17.6.0",
+    "rxdb": "<byos>/node_modules/rxdb/dist/cjs/index.js",
+    "drive": "<byos>/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+    "storage": "<byos>/node_modules/rxdb/dist/cjs/plugins/storage-dexie/index.js"
+  },
+  "explicitSyncOnly": true
+}

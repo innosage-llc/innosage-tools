@@ -1,0 +1,50 @@
+{
+  "caseId": "T10",
+  "status": "FAIL",
+  "criterion": "C3",
+  "comparison": {
+    "expectedCount": 30,
+    "actualCount": 16,
+    "missingIds": [
+      "page016",
+      "page017",
+      "page018",
+      "page019",
+      "page020",
+      "page021",
+      "page022",
+      "page023",
+      "page024",
+      "page025",
+      "page026",
+      "page027",
+      "page028",
+      "page029"
+    ],
+    "mismatchedIds": [],
+    "unexpectedIds": []
+  },
+  "prediction": {
+    "received": 16,
+    "criterion": "FAIL"
+  },
+  "positiveControl": "all 30 native materialized remote documents equal complete oracle; equal timestamp asserted",
+  "errors": [],
+  "admitted": 193,
+  "observed": 193,
+  "phases": [
+    "setup-inventory",
+    "writer-materialize-round1",
+    "writer-materialize-round2",
+    "cold-receiver-round1",
+    "cold-receiver-round2",
+    "final-before-cleanup"
+  ],
+  "package": {
+    "version": "17.6.0",
+    "rxdb": "<byos>/node_modules/rxdb/dist/cjs/index.js",
+    "drive": "<byos>/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+    "storage": "<byos>/node_modules/rxdb/dist/cjs/plugins/storage-dexie/index.js"
+  },
+  "explicitSyncOnly": true
+}

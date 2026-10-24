@@ -1,0 +1,168 @@
+{
+  "protocol": "tools107-candidate-oracle-v1",
+  "caseId": "H100",
+  "command": "node native-feasibility/run.mjs H100",
+  "startedAt": "2026-10-24T09:19:55.780Z",
+  "elapsedMs": 1560.554,
+  "code": 0,
+  "signal": null,
+  "timedOut": false,
+  "watchdog": "parent SIGKILL to its own direct child only; no Promise.race, no retries",
+  "maxInvocationMs": 180000,
+  "maxAdmittedFetches": 1000,
+  "admitted": 458,
+  "observed": 458,
+  "sourceUnchanged": true,
+  "sourceHashes": [
+    {
+      "label": "harness",
+      "path": "native-feasibility/run.mjs",
+      "sha256": "b9c7fa30bcdf2aa5c80ba4b846f1033ceb1951298c3269ed1bf8cbfec723c73b"
+    },
+    {
+      "label": "expanded-oracle",
+      "path": "native-feasibility/oracle.json",
+      "sha256": "d0348554dd3437a0837e576ac7b56f879ad1f9001347ee9791f8ae60e0ef45f5"
+    },
+    {
+      "label": "locked-spec",
+      "path": "native-feasibility/locked-spec.json",
+      "sha256": "cf0e734db07c9085757eddce3a2786504f2f7fa72c1e3b30884034c3bb07fd68"
+    },
+    {
+      "label": "src/mock.mjs",
+      "path": "src/mock.mjs",
+      "sha256": "368d1da212507e3262ba4e8fb91d7945d95f8eb7ec3a30eff43d246a58a4af89"
+    },
+    {
+      "label": "src/candidates.mjs",
+      "path": "src/candidates.mjs",
+      "sha256": "d13c84f9379a4153aae874c01422b58737a0919b50a0a0f89de503d0ed49e14b"
+    },
+    {
+      "label": "package.json",
+      "path": "package.json",
+      "sha256": "9d32fe8fd586cbdf8c7e33c9c2bf7a1103d32ed9b0d021e24eebc91d4e91ad0c"
+    },
+    {
+      "label": "package-lock.json",
+      "path": "package-lock.json",
+      "sha256": "990e2c058e18e9397547f9b77887e9eea1d2726f5a9c71e7f1c8baa27da88a23"
+    },
+    {
+      "label": "rxdb/package.json",
+      "path": "node_modules/rxdb/package.json",
+      "sha256": "0c213e51eba89afdc23f10eeb708f3555c99b23a6cf0e91e10518c48902677df"
+    },
+    {
+      "label": "rxdb/dist/cjs/plugins/replication-google-drive/downstream.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/downstream.js",
+      "sha256": "02498b9945c5e219a1415d479881b280a50514490947acb18186f209eea5d629"
+    },
+    {
+      "label": "rxdb/src/plugins/replication-google-drive/downstream.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/downstream.ts",
+      "sha256": "982b3a7f5a6a5811be9d265408dbca998bc2981d4d123f2956e01d471efba8d0"
+    },
+    {
+      "label": "rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+      "sha256": "2a5c7fac32a3e5cbd6fb293fe5817786a6db9d9dbc69b9e5ac5b9f2580e4a7a4"
+    },
+    {
+      "label": "rxdb/src/plugins/replication-google-drive/index.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/index.ts",
+      "sha256": "44aea08488c713a76aa44226a665684be4299046656eb3f9b9e634a02488aff7"
+    },
+    {
+      "label": "rxdb/dist/cjs/plugins/replication-google-drive/init.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/init.js",
+      "sha256": "7ea0f75581ec26a1f8e8f59482d18cc64dfa163f4da19494b4c5e8a7b65795c5"
+    },
+    {
+      "label": "rxdb/src/plugins/replication-google-drive/init.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/init.ts",
+      "sha256": "f5020f2471a19f243697e94bae643c5cac18dcfba81a72c3733486f69ad46e27"
+    },
+    {
+      "label": "rxdb/dist/cjs/plugins/replication-google-drive/document-handling.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication-google-drive/document-handling.js",
+      "sha256": "8c33b439b523726976befa53a760c4e8f8cfc125cf70ef5badbd792ba61f5f9f"
+    },
+    {
+      "label": "rxdb/src/plugins/replication-google-drive/document-handling.ts",
+      "path": "node_modules/rxdb/src/plugins/replication-google-drive/document-handling.ts",
+      "sha256": "d15dc954bdfd0cd7fa31de93b20d7d246b573dc245d3d830b0337f96aec36232"
+    },
+    {
+      "label": "rxdb/dist/cjs/plugins/replication/index.js",
+      "path": "node_modules/rxdb/dist/cjs/plugins/replication/index.js",
+      "sha256": "116d026505fb3708d2a4e410470dc82fbad492fa22882fe573f8a3d70151ba17"
+    },
+    {
+      "label": "rxdb/src/plugins/replication/index.ts",
+      "path": "node_modules/rxdb/src/plugins/replication/index.ts",
+      "sha256": "04d0815045957ed53f4af931014280a0a8b406646c631d07fe23130570fb46b6"
+    },
+    {
+      "label": "rxdb/dist/cjs/replication-protocol/downstream.js",
+      "path": "node_modules/rxdb/dist/cjs/replication-protocol/downstream.js",
+      "sha256": "3c0846b34b9b459a233b8edef756a301acc9e87408d82b2bafa2af35f947a5c7"
+    },
+    {
+      "label": "rxdb/src/replication-protocol/downstream.ts",
+      "path": "node_modules/rxdb/src/replication-protocol/downstream.ts",
+      "sha256": "6bd52dbc67336e5e71f9997127382f83162bf502d68215ae64635e305b515eca"
+    },
+    {
+      "label": "rxdb/dist/cjs/replication-protocol/checkpoint.js",
+      "path": "node_modules/rxdb/dist/cjs/replication-protocol/checkpoint.js",
+      "sha256": "0a6971af11cd5e5e01eea53053bd8765cf758ee8dbf47462eb41a524ded604ce"
+    },
+    {
+      "label": "rxdb/src/replication-protocol/checkpoint.ts",
+      "path": "node_modules/rxdb/src/replication-protocol/checkpoint.ts",
+      "sha256": "5e0c8d835589c3a2ed0c1c624faf0534bf4e75fa85c3c013defff1870f953ea8"
+    },
+    {
+      "label": "rxdb/dist/cjs/replication-protocol/default-conflict-handler.js",
+      "path": "node_modules/rxdb/dist/cjs/replication-protocol/default-conflict-handler.js",
+      "sha256": "a66a67c320631ca4323d6c4baf0a8287405bc1798958151fbbd5ea380e48af79"
+    },
+    {
+      "label": "rxdb/src/replication-protocol/default-conflict-handler.ts",
+      "path": "node_modules/rxdb/src/replication-protocol/default-conflict-handler.ts",
+      "sha256": "68b39a886312a1ccfab383a407753055be5915ba47a1201f1aaf109ff6dcdfc6"
+    }
+  ],
+  "oracleSha256": "d0348554dd3437a0837e576ac7b56f879ad1f9001347ee9791f8ae60e0ef45f5",
+  "harnessSha256": "b9c7fa30bcdf2aa5c80ba4b846f1033ceb1951298c3269ed1bf8cbfec723c73b",
+  "baseHead": "77cf5fa0fdca73e9797d5e9cfd9e363daa7f9fc8",
+  "requested": {
+    "model": "gpt-6.1-sol",
+    "effort": "high"
+  },
+  "hostRouted": "UNKNOWN",
+  "providerObserved": "UNKNOWN",
+  "usageCost": "UNKNOWN",
+  "status": "FAIL",
+  "resultSha256": "b019e61e14bef941536faab174ff320bbef5e940a43efada0b437064a75166ab",
+  "rawEventSha256": "30247d106991aa499e8a763eda7842a723dbd3f1833d85c55b1138c7de6c8ca3",
+  "limitations": [
+    "supplemental source attestation; no retroattestation of historical evidence",
+    "mock-only synthetic listing assumption; no real Google/provider inference",
+    "fake-indexeddb process-local state; no crash persistence claim",
+    "fast harness timeout/retry overrides; no performance inference"
+  ],
+  "rawResultSha256BeforePathSanitization": "001a0e6e40d001b1ae45c474ca536e0072d82b7b0d14d17fb3aecce256e3d4dc",
+  "packaging": "Export-resolution absolute local prefix replaced with <byos>/; original result retained only in ignored .generated; package version/export identity preserved. Full fixture bodies untouched. Phase JSON gzip-compressed without content changes. Console log gzip-compressed without trimming or other byte changes; console.originalSha256 binds decompressed bytes.",
+  "console": {
+    "path": "evidence/H100/console.txt.gz",
+    "encoding": "gzip",
+    "originalSha256": "1b94e31c7ea5eaa08b9a2895b831edc794c648efc0ce82dcea7e0577897b4c3f",
+    "originalBytes": 905,
+    "gzipSha256": "cdd9c68a2ff5bced79e1c63a171b01a38364c028c39e77d24dbca81d0b1f56f8",
+    "gzipBytes": 502,
+    "preservation": "Exact original console bytes, including native SDK trailing whitespace; original retained in ignored .generated."
+  }
+}

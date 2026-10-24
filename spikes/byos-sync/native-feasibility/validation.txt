@@ -1,0 +1,9 @@
+node --check native-feasibility/run.mjs: PASS
+node --check native-feasibility/check.mjs: PASS
+node native-feasibility/run.mjs --self-check: PASS 1000 admitted/1001 rejected before dispatch; nonmock rejected;30unique oracle docs
+node native-feasibility/check.mjs: PASS T10/T100/H100 capture/source/caps/controls; criterion FAIL/PASS/FAIL separately
+Historical23listed source hashes: all match; no historical CJS/candidate retroattestation
+Broad root/native gates NOT_RUN by handoff instruction.
+
+Console packaging repair: all4 logs gzip-compressed byte-for-byte; native SDK whitespace preserved; originalSHA and compressedSHA in receipts/packaging-provenance.json. Harness/oracle/map/case payloads/source archives unchanged. Offline checker validates console restoration before existing checks. Scoped staged git diff --check required after restaging.
+Console repair validation: checker syntax PASS; offline check PASS all4console byte hashes and3case capture/source/caps/controls; synchronous admission self-check PASS; current disk24source bindings per invocation all unchanged. No research rerun.

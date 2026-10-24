@@ -1,0 +1,35 @@
+{
+  "caseId": "T100",
+  "status": "PASS",
+  "criterion": "C3",
+  "comparison": {
+    "expectedCount": 30,
+    "actualCount": 30,
+    "missingIds": [],
+    "mismatchedIds": [],
+    "unexpectedIds": []
+  },
+  "prediction": {
+    "received": 30,
+    "criterion": "PASS"
+  },
+  "positiveControl": "all 30 native materialized remote documents equal complete oracle; equal timestamp asserted",
+  "errors": [],
+  "admitted": 207,
+  "observed": 207,
+  "phases": [
+    "setup-inventory",
+    "writer-materialize-round1",
+    "writer-materialize-round2",
+    "cold-receiver-round1",
+    "cold-receiver-round2",
+    "final-before-cleanup"
+  ],
+  "package": {
+    "version": "17.6.0",
+    "rxdb": "<byos>/node_modules/rxdb/dist/cjs/index.js",
+    "drive": "<byos>/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+    "storage": "<byos>/node_modules/rxdb/dist/cjs/plugins/storage-dexie/index.js"
+  },
+  "explicitSyncOnly": true
+}

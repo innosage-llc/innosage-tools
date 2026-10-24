@@ -1,0 +1,9 @@
+{
+  "protocol": "tools107-candidate-oracle-v1",
+  "oracleSha256": "d0348554dd3437a0837e576ac7b56f879ad1f9001347ee9791f8ae60e0ef45f5",
+  "harnessSha256": "b9c7fa30bcdf2aa5c80ba4b846f1033ceb1951298c3269ed1bf8cbfec723c73b",
+  "lockedContainerSha256": "cf0e734db07c9085757eddce3a2786504f2f7fa72c1e3b30884034c3bb07fd68",
+  "lockedBodySha256": "9eccd0669600638b270768f9b400348a8ac1a07e1db8445b06484a83e8b8cf37",
+  "provenance": "Initial pre-execution freeze rejected container hash mismatch. Lead independently confirmed mandated hash is exact JSON.body UTF8; no cases ran before resolution, no semantic oracle change.",
+  "at": "2026-10-24T09:19:13.720Z"
+}

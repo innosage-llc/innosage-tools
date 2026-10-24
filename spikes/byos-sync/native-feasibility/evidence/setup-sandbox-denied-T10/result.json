@@ -1,0 +1,18 @@
+{
+  "caseId": "T10",
+  "status": "INCONCLUSIVE",
+  "phase": "setup",
+  "error": "Error: listen EPERM: operation not permitted 127.0.0.1",
+  "stack": "Error: listen EPERM: operation not permitted 127.0.0.1\n    at Server.setupListenHandle [as _listen2] (node:net:1918:21)\n    at listenInCluster (node:net:1997:12)\n    at node:net:2206:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)",
+  "errors": [],
+  "admitted": 0,
+  "observed": 0,
+  "phases": [],
+  "package": {
+    "version": "17.6.0",
+    "rxdb": "<byos>/node_modules/rxdb/dist/cjs/index.js",
+    "drive": "<byos>/node_modules/rxdb/dist/cjs/plugins/replication-google-drive/index.js",
+    "storage": "<byos>/node_modules/rxdb/dist/cjs/plugins/storage-dexie/index.js"
+  },
+  "explicitSyncOnly": true
+}

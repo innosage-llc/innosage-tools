@@ -1,0 +1,603 @@
+{
+  "protocol": "tools107-candidate-oracle-v1",
+  "designManifestSha256": "897ed936b9d764c0c613aff88e400de66887be112fd9aab4ca4a7ca24c8df0e3",
+  "lockedSpecSha256": "9eccd0669600638b270768f9b400348a8ac1a07e1db8445b06484a83e8b8cf37",
+  "correctness": "Full expected docs: id,parentId,body,editIds; native metadata retained in actual payloads.",
+  "rounds": 2,
+  "maxAdmittedFetches": 1000,
+  "maxInvocationMs": 180000,
+  "config": {
+    "replicationIdentifier": "byos",
+    "live": false,
+    "waitForLeadership": false,
+    "push": {
+      "batchSize": 100
+    },
+    "googleDrive": {
+      "folderPath": "workspace",
+      "transactionTimeout": 50
+    },
+    "retryTime": 20
+  },
+  "overrides": "transactionTimeout 50ms and retryTime 20ms reused from existing fast harness, not product defaults; no timing/product inference.",
+  "cases": {
+    "T10": {
+      "sameTime": true,
+      "pullBatchSize": 10,
+      "expected": [
+        {
+          "id": "page000",
+          "parentId": null,
+          "body": "# Tie 000\n\nComplete immutable body 000.",
+          "editIds": [
+            "tie-000"
+          ]
+        },
+        {
+          "id": "page001",
+          "parentId": null,
+          "body": "# Tie 001\n\nComplete immutable body 001.",
+          "editIds": [
+            "tie-001"
+          ]
+        },
+        {
+          "id": "page002",
+          "parentId": null,
+          "body": "# Tie 002\n\nComplete immutable body 002.",
+          "editIds": [
+            "tie-002"
+          ]
+        },
+        {
+          "id": "page003",
+          "parentId": null,
+          "body": "# Tie 003\n\nComplete immutable body 003.",
+          "editIds": [
+            "tie-003"
+          ]
+        },
+        {
+          "id": "page004",
+          "parentId": null,
+          "body": "# Tie 004\n\nComplete immutable body 004.",
+          "editIds": [
+            "tie-004"
+          ]
+        },
+        {
+          "id": "page005",
+          "parentId": null,
+          "body": "# Tie 005\n\nComplete immutable body 005.",
+          "editIds": [
+            "tie-005"
+          ]
+        },
+        {
+          "id": "page006",
+          "parentId": null,
+          "body": "# Tie 006\n\nComplete immutable body 006.",
+          "editIds": [
+            "tie-006"
+          ]
+        },
+        {
+          "id": "page007",
+          "parentId": null,
+          "body": "# Tie 007\n\nComplete immutable body 007.",
+          "editIds": [
+            "tie-007"
+          ]
+        },
+        {
+          "id": "page008",
+          "parentId": null,
+          "body": "# Tie 008\n\nComplete immutable body 008.",
+          "editIds": [
+            "tie-008"
+          ]
+        },
+        {
+          "id": "page009",
+          "parentId": null,
+          "body": "# Tie 009\n\nComplete immutable body 009.",
+          "editIds": [
+            "tie-009"
+          ]
+        },
+        {
+          "id": "page010",
+          "parentId": null,
+          "body": "# Tie 010\n\nComplete immutable body 010.",
+          "editIds": [
+            "tie-010"
+          ]
+        },
+        {
+          "id": "page011",
+          "parentId": null,
+          "body": "# Tie 011\n\nComplete immutable body 011.",
+          "editIds": [
+            "tie-011"
+          ]
+        },
+        {
+          "id": "page012",
+          "parentId": null,
+          "body": "# Tie 012\n\nComplete immutable body 012.",
+          "editIds": [
+            "tie-012"
+          ]
+        },
+        {
+          "id": "page013",
+          "parentId": null,
+          "body": "# Tie 013\n\nComplete immutable body 013.",
+          "editIds": [
+            "tie-013"
+          ]
+        },
+        {
+          "id": "page014",
+          "parentId": null,
+          "body": "# Tie 014\n\nComplete immutable body 014.",
+          "editIds": [
+            "tie-014"
+          ]
+        },
+        {
+          "id": "page015",
+          "parentId": null,
+          "body": "# Tie 015\n\nComplete immutable body 015.",
+          "editIds": [
+            "tie-015"
+          ]
+        },
+        {
+          "id": "page016",
+          "parentId": null,
+          "body": "# Tie 016\n\nComplete immutable body 016.",
+          "editIds": [
+            "tie-016"
+          ]
+        },
+        {
+          "id": "page017",
+          "parentId": null,
+          "body": "# Tie 017\n\nComplete immutable body 017.",
+          "editIds": [
+            "tie-017"
+          ]
+        },
+        {
+          "id": "page018",
+          "parentId": null,
+          "body": "# Tie 018\n\nComplete immutable body 018.",
+          "editIds": [
+            "tie-018"
+          ]
+        },
+        {
+          "id": "page019",
+          "parentId": null,
+          "body": "# Tie 019\n\nComplete immutable body 019.",
+          "editIds": [
+            "tie-019"
+          ]
+        },
+        {
+          "id": "page020",
+          "parentId": null,
+          "body": "# Tie 020\n\nComplete immutable body 020.",
+          "editIds": [
+            "tie-020"
+          ]
+        },
+        {
+          "id": "page021",
+          "parentId": null,
+          "body": "# Tie 021\n\nComplete immutable body 021.",
+          "editIds": [
+            "tie-021"
+          ]
+        },
+        {
+          "id": "page022",
+          "parentId": null,
+          "body": "# Tie 022\n\nComplete immutable body 022.",
+          "editIds": [
+            "tie-022"
+          ]
+        },
+        {
+          "id": "page023",
+          "parentId": null,
+          "body": "# Tie 023\n\nComplete immutable body 023.",
+          "editIds": [
+            "tie-023"
+          ]
+        },
+        {
+          "id": "page024",
+          "parentId": null,
+          "body": "# Tie 024\n\nComplete immutable body 024.",
+          "editIds": [
+            "tie-024"
+          ]
+        },
+        {
+          "id": "page025",
+          "parentId": null,
+          "body": "# Tie 025\n\nComplete immutable body 025.",
+          "editIds": [
+            "tie-025"
+          ]
+        },
+        {
+          "id": "page026",
+          "parentId": null,
+          "body": "# Tie 026\n\nComplete immutable body 026.",
+          "editIds": [
+            "tie-026"
+          ]
+        },
+        {
+          "id": "page027",
+          "parentId": null,
+          "body": "# Tie 027\n\nComplete immutable body 027.",
+          "editIds": [
+            "tie-027"
+          ]
+        },
+        {
+          "id": "page028",
+          "parentId": null,
+          "body": "# Tie 028\n\nComplete immutable body 028.",
+          "editIds": [
+            "tie-028"
+          ]
+        },
+        {
+          "id": "page029",
+          "parentId": null,
+          "body": "# Tie 029\n\nComplete immutable body 029.",
+          "editIds": [
+            "tie-029"
+          ]
+        }
+      ],
+      "prediction": {
+        "received": 16,
+        "criterion": "FAIL"
+      },
+      "schedule": [
+        "independent native writer bulkUpsert",
+        "writer 2 explicit sync rounds",
+        "cold receiver 2 explicit sync rounds"
+      ]
+    },
+    "T100": {
+      "sameTime": true,
+      "pullBatchSize": 100,
+      "expected": [
+        {
+          "id": "page000",
+          "parentId": null,
+          "body": "# Tie 000\n\nComplete immutable body 000.",
+          "editIds": [
+            "tie-000"
+          ]
+        },
+        {
+          "id": "page001",
+          "parentId": null,
+          "body": "# Tie 001\n\nComplete immutable body 001.",
+          "editIds": [
+            "tie-001"
+          ]
+        },
+        {
+          "id": "page002",
+          "parentId": null,
+          "body": "# Tie 002\n\nComplete immutable body 002.",
+          "editIds": [
+            "tie-002"
+          ]
+        },
+        {
+          "id": "page003",
+          "parentId": null,
+          "body": "# Tie 003\n\nComplete immutable body 003.",
+          "editIds": [
+            "tie-003"
+          ]
+        },
+        {
+          "id": "page004",
+          "parentId": null,
+          "body": "# Tie 004\n\nComplete immutable body 004.",
+          "editIds": [
+            "tie-004"
+          ]
+        },
+        {
+          "id": "page005",
+          "parentId": null,
+          "body": "# Tie 005\n\nComplete immutable body 005.",
+          "editIds": [
+            "tie-005"
+          ]
+        },
+        {
+          "id": "page006",
+          "parentId": null,
+          "body": "# Tie 006\n\nComplete immutable body 006.",
+          "editIds": [
+            "tie-006"
+          ]
+        },
+        {
+          "id": "page007",
+          "parentId": null,
+          "body": "# Tie 007\n\nComplete immutable body 007.",
+          "editIds": [
+            "tie-007"
+          ]
+        },
+        {
+          "id": "page008",
+          "parentId": null,
+          "body": "# Tie 008\n\nComplete immutable body 008.",
+          "editIds": [
+            "tie-008"
+          ]
+        },
+        {
+          "id": "page009",
+          "parentId": null,
+          "body": "# Tie 009\n\nComplete immutable body 009.",
+          "editIds": [
+            "tie-009"
+          ]
+        },
+        {
+          "id": "page010",
+          "parentId": null,
+          "body": "# Tie 010\n\nComplete immutable body 010.",
+          "editIds": [
+            "tie-010"
+          ]
+        },
+        {
+          "id": "page011",
+          "parentId": null,
+          "body": "# Tie 011\n\nComplete immutable body 011.",
+          "editIds": [
+            "tie-011"
+          ]
+        },
+        {
+          "id": "page012",
+          "parentId": null,
+          "body": "# Tie 012\n\nComplete immutable body 012.",
+          "editIds": [
+            "tie-012"
+          ]
+        },
+        {
+          "id": "page013",
+          "parentId": null,
+          "body": "# Tie 013\n\nComplete immutable body 013.",
+          "editIds": [
+            "tie-013"
+          ]
+        },
+        {
+          "id": "page014",
+          "parentId": null,
+          "body": "# Tie 014\n\nComplete immutable body 014.",
+          "editIds": [
+            "tie-014"
+          ]
+        },
+        {
+          "id": "page015",
+          "parentId": null,
+          "body": "# Tie 015\n\nComplete immutable body 015.",
+          "editIds": [
+            "tie-015"
+          ]
+        },
+        {
+          "id": "page016",
+          "parentId": null,
+          "body": "# Tie 016\n\nComplete immutable body 016.",
+          "editIds": [
+            "tie-016"
+          ]
+        },
+        {
+          "id": "page017",
+          "parentId": null,
+          "body": "# Tie 017\n\nComplete immutable body 017.",
+          "editIds": [
+            "tie-017"
+          ]
+        },
+        {
+          "id": "page018",
+          "parentId": null,
+          "body": "# Tie 018\n\nComplete immutable body 018.",
+          "editIds": [
+            "tie-018"
+          ]
+        },
+        {
+          "id": "page019",
+          "parentId": null,
+          "body": "# Tie 019\n\nComplete immutable body 019.",
+          "editIds": [
+            "tie-019"
+          ]
+        },
+        {
+          "id": "page020",
+          "parentId": null,
+          "body": "# Tie 020\n\nComplete immutable body 020.",
+          "editIds": [
+            "tie-020"
+          ]
+        },
+        {
+          "id": "page021",
+          "parentId": null,
+          "body": "# Tie 021\n\nComplete immutable body 021.",
+          "editIds": [
+            "tie-021"
+          ]
+        },
+        {
+          "id": "page022",
+          "parentId": null,
+          "body": "# Tie 022\n\nComplete immutable body 022.",
+          "editIds": [
+            "tie-022"
+          ]
+        },
+        {
+          "id": "page023",
+          "parentId": null,
+          "body": "# Tie 023\n\nComplete immutable body 023.",
+          "editIds": [
+            "tie-023"
+          ]
+        },
+        {
+          "id": "page024",
+          "parentId": null,
+          "body": "# Tie 024\n\nComplete immutable body 024.",
+          "editIds": [
+            "tie-024"
+          ]
+        },
+        {
+          "id": "page025",
+          "parentId": null,
+          "body": "# Tie 025\n\nComplete immutable body 025.",
+          "editIds": [
+            "tie-025"
+          ]
+        },
+        {
+          "id": "page026",
+          "parentId": null,
+          "body": "# Tie 026\n\nComplete immutable body 026.",
+          "editIds": [
+            "tie-026"
+          ]
+        },
+        {
+          "id": "page027",
+          "parentId": null,
+          "body": "# Tie 027\n\nComplete immutable body 027.",
+          "editIds": [
+            "tie-027"
+          ]
+        },
+        {
+          "id": "page028",
+          "parentId": null,
+          "body": "# Tie 028\n\nComplete immutable body 028.",
+          "editIds": [
+            "tie-028"
+          ]
+        },
+        {
+          "id": "page029",
+          "parentId": null,
+          "body": "# Tie 029\n\nComplete immutable body 029.",
+          "editIds": [
+            "tie-029"
+          ]
+        }
+      ],
+      "prediction": {
+        "received": 30,
+        "criterion": "PASS"
+      },
+      "schedule": [
+        "independent native writer bulkUpsert",
+        "writer 2 explicit sync rounds",
+        "cold receiver 2 explicit sync rounds"
+      ]
+    },
+    "H100": {
+      "sameTime": false,
+      "pullBatchSize": 100,
+      "initial": [
+        {
+          "id": "visibility0",
+          "parentId": null,
+          "body": "# Original 0",
+          "editIds": [
+            "initial-0"
+          ]
+        },
+        {
+          "id": "visibility1",
+          "parentId": null,
+          "body": "# Original 1",
+          "editIds": [
+            "initial-1"
+          ]
+        }
+      ],
+      "latest": [
+        {
+          "id": "visibility0",
+          "parentId": null,
+          "body": "# Latest 0\n\nExact new intent.",
+          "editIds": [
+            "latest-0"
+          ]
+        },
+        {
+          "id": "visibility1",
+          "parentId": null,
+          "body": "# Latest 1\n\nExact new intent.",
+          "editIds": [
+            "latest-1"
+          ]
+        }
+      ],
+      "prediction": {
+        "existingOldStale": true,
+        "initialCheckpointOldStale": true,
+        "freshLatestBoth": true
+      },
+      "schedule": [
+        "writer baseline 2 rounds",
+        "receiver baseline 2 rounds",
+        "writer update 0 then 2 rounds",
+        "writer update 1 then 2 rounds",
+        "assert old modifiedTime < new",
+        "hide only old ID",
+        "receiver 2 rounds; latest1 and cursor above old required",
+        "restore visibility without timestamp/body mutation",
+        "same DB/collection/identifier restart 2 rounds",
+        "same-ID restart initialCheckpoint epoch empty seen 2 rounds",
+        "separate fresh DB diagnostic 2 rounds; latest both required"
+      ]
+    }
+  },
+  "initialCheckpoint": {
+    "modifiedTime": "1970-01-01T00:00:00.000Z",
+    "docIdsWithSameModifiedTime": []
+  },
+  "verdictRules": {
+    "captureSetupControlSourceFailure": "INCONCLUSIVE",
+    "predictedDefect": "C3 FAIL (never diagnostic PASS)",
+    "unexpectedRestartRecovery": "STOP_FOR_LEAD_ANALYSIS",
+    "freshDatabase": "diagnostic positive control only, never remedy"
+  }
+}

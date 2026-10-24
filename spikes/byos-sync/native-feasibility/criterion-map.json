@@ -1,0 +1,78 @@
+{
+  "protocol": "tools107-candidate-oracle-v1",
+  "state": "EVIDENCE_READY_FOR_LEAD_AND_INDEPENDENT_REVIEW",
+  "baseHead": "77cf5fa0fdca73e9797d5e9cfd9e363daa7f9fc8",
+  "oracleSha256": "d0348554dd3437a0837e576ac7b56f879ad1f9001347ee9791f8ae60e0ef45f5",
+  "harnessSha256": "b9c7fa30bcdf2aa5c80ba4b846f1033ceb1951298c3269ed1bf8cbfec723c73b",
+  "scope": "MOCK_ONLY / EXPLICIT_SYNC_ONLY / unchanged published RxDB17.6.0 CJS/default conflict handler",
+  "criteria": {
+    "C1": {
+      "status": "PASS",
+      "qualification": "BOUNDED_REUSED_POSITIVE; no new C1 experiment",
+      "evidence": "../native-overlay/evidence/report.json and raw-evidence.json.gz; F01/F03/F04 explicit wake component/F11",
+      "historicalEvidenceDigest": "e108b0a050ceabd3b45a4a959fef15fdadf15ae6233c3a1286eae2d02f7de98b",
+      "historicalReportFileSha256": "f73904335dc427c84cf34a57d6f728bb6bf22fc79e598c24e33788d400cd2364",
+      "historicalRawFileSha256": "6ece34a63244f11b80ba8b347d6c14d61307463c227547748fbb3015e2553e61",
+      "sourceReconciliation": "23 historical listed source hashes independently match current files; no retroattestation of historical CJS/candidates; 100/100 seeded schedules,622 ACKs bounded only; F04 unattended remains BLOCKED/NOT_PROVEN"
+    },
+    "C2": {
+      "status": "INCONCLUSIVE",
+      "evidence": "existing F06/F07/F08/F09/F11 support bounded advance/verified cleanup; successful-mutation/lost-response interval not established",
+      "newExperiment": "NOT_RUN: no positive all-C3 route appeared; do not promote partial positives"
+    },
+    "C3": {
+      "status": "FAIL",
+      "cases": {
+        "T10": {
+          "criterionStatus": "FAIL",
+          "captureStatus": "COMPLETE_AUDITED",
+          "admitted": 193,
+          "observed": 193,
+          "elapsedMs": 578.377792,
+          "exit": 0,
+          "sourceUnchanged": true,
+          "receipt": "evidence/T10/receipt.json",
+          "result": "evidence/T10/result.json"
+        },
+        "T100": {
+          "criterionStatus": "PASS",
+          "captureStatus": "COMPLETE_AUDITED",
+          "admitted": 207,
+          "observed": 207,
+          "elapsedMs": 613.39625,
+          "exit": 0,
+          "sourceUnchanged": true,
+          "receipt": "evidence/T100/receipt.json",
+          "result": "evidence/T100/result.json"
+        },
+        "H100": {
+          "criterionStatus": "FAIL",
+          "captureStatus": "COMPLETE_AUDITED",
+          "admitted": 458,
+          "observed": 458,
+          "elapsedMs": 1560.554,
+          "exit": 0,
+          "sourceUnchanged": true,
+          "receipt": "evidence/H100/receipt.json",
+          "result": "evidence/H100/result.json"
+        }
+      },
+      "tie": "T10 16/30; T100 30/30; full remote bodies for30 verified independently",
+      "hidden": "Existing visibility0 stale after same-ID restart and epoch initialCheckpoint; persisted checkpoint/query above oldT; restored old remote unchanged; separate fresh DB retrieves both latest bodies",
+      "nativeHttpObservation": "H100 n214 native transaction.json CAS PUT v2 HTTP412, natively retried; no listing/content failure, no native error emitted; retained for review"
+    }
+  },
+  "candidateBoundary": "assessment.md; bounded mock negative evidence, no universal-impossibility/real-Google claim; final verdict pending lead and independent review",
+  "runtime": {
+    "requested": "gpt-6.1-sol/high",
+    "hostRouted": "UNKNOWN",
+    "providerObserved": "UNKNOWN",
+    "usageCost": "UNKNOWN"
+  },
+  "pending": [
+    "native lead convergence",
+    "independent exact-artifact review",
+    "required native full gates",
+    "initial draft PR; no commit/submission/merge in worker scope"
+  ]
+}
