@@ -20,3 +20,6 @@ Third attempt and fixed-origin correction: [read-drift.md](read-drift.md).
 
 Fixed-origin actual field evidence and guarded correction:
 [noncontent-version.md](noncontent-version.md).
+
+Current snapshot/OCC correction and retained actual result:
+[snapshot-read.md](snapshot-read.md).

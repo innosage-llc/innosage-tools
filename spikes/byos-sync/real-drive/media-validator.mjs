@@ -1,14 +1,15 @@
-// Drive's media representation need not expose the file-level CAS validator.
-// Correlate bytes to an explicit revision between two fresh metadata reads.
-// Never change a PUT/If-Match, retry a write, or invent a validator/body.
+// A File metadata snapshot binds a file CAS validator to a content revision.
+// Return that ORIGINAL validator with its pinned bytes. Subsequent changes are
+// handled by native If-Match/412, just as after an atomic body+ETag read.
+// No freshness reread, read retry, write or later-validator substitution.
 // Contract: https://developers.google.com/workspace/drive/api/reference/rest/v2/files
 // revisionId: https://developers.google.com/workspace/drive/api/reference/rest/v2/files/get
 const strongEtag=value=>typeof value==='string'&&/^"[\x21\x23-\x7e\x80-\xff]+"$/.test(value);
-function reject(code,parameters){const error=new Error(code);if(parameters)error.parameters=parameters;throw error;}
+function reject(code){throw new Error(code);}
 function checked(meta,id){
  if(meta.id!==id||!strongEtag(meta.etag)||typeof meta.version!=='string'||!/^\d+$/.test(meta.version)||
     typeof meta.fileSize!=='string'||!/^\d+$/.test(meta.fileSize)||meta.mimeType!=='application/json'||
-    (meta.fileSize!=='0'&&!(typeof meta.headRevisionId==='string'&&meta.headRevisionId)))reject('MEDIA_METADATA_UNSUPPORTED');
+    (BigInt(meta.fileSize)!==0n&&!(typeof meta.headRevisionId==='string'&&meta.headRevisionId)))reject('MEDIA_METADATA_UNSUPPORTED');
  return meta;
 }
 export async function readVersionedMedia(url,init,dispatch){
@@ -17,25 +18,15 @@ export async function readVersionedMedia(url,init,dispatch){
  const metadataUrl=new URL(url);metadataUrl.searchParams.delete('alt');metadataUrl.searchParams.delete('revisionId');metadataUrl.searchParams.delete('fields');
  const options={...init,cache:'no-store'};
  const first=await dispatch(metadataUrl,options);if(!first.ok)return first;
- const before=checked(await first.json(),id);
- if(url.searchParams.has('revisionId')&&url.searchParams.get('revisionId')!==before.headRevisionId)reject('MEDIA_REVISION_NOT_CURRENT');
+ const snapshot=checked(await first.json(),id);
+ if(url.searchParams.has('revisionId')&&url.searchParams.get('revisionId')!==snapshot.headRevisionId)reject('MEDIA_REVISION_NOT_CURRENT');
  const downloadUrl=new URL(url);
- if(before.headRevisionId)downloadUrl.searchParams.set('revisionId',before.headRevisionId);
+ if(snapshot.headRevisionId)downloadUrl.searchParams.set('revisionId',snapshot.headRevisionId);
  const media=await dispatch(downloadUrl,options);if(!media.ok)return media;
  const bytes=await media.arrayBuffer();
- if(BigInt(bytes.byteLength)!==BigInt(before.fileSize))reject('MEDIA_SIZE_MISMATCH');
- const final=await dispatch(metadataUrl,options);if(!final.ok)return final;
- const after=checked(await final.json(),id);
- const keys=['etag','version','headRevisionId','fileSize','mimeType'];
- const changed=Object.fromEntries(keys.map(key=>[key,before[key]!==after[key]]));
- // Drive version includes invisible server changes. An increase alone is not
- // a content change when the explicit nonempty revision and CAS identity agree.
- const decreasingVersion=BigInt(after.version)<BigInt(before.version);
- const contentDrift=['etag','headRevisionId','fileSize','mimeType'].some(key=>changed[key]);
- const unpinnedVersionDrift=bytes.byteLength===0&&changed.version;
- if(contentDrift||decreasingVersion||unpinnedVersionDrift)reject('MEDIA_VERSION_CHANGED',{mediaDrift:{...changed,
-  versionOrder:BigInt(after.version)>BigInt(before.version)?'greater':BigInt(after.version)<BigInt(before.version)?'less':'equal',
-  role:before.title==='transaction.json'?'transaction':before.title==='rxdb-wal.json'?'wal':'other'}});
- const headers=new Headers(media.headers);headers.set('ETag',before.etag);
+ // Without a revision, a zero-size snapshot still identifies exactly one body:
+ // empty bytes. A concurrent nonempty download fails this same size check.
+ if(BigInt(bytes.byteLength)!==BigInt(snapshot.fileSize))reject('MEDIA_SIZE_MISMATCH');
+ const headers=new Headers(media.headers);headers.set('ETag',snapshot.etag);
  return new Response(bytes,{status:media.status,statusText:media.statusText,headers});
 }
