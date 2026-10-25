@@ -1,11 +1,13 @@
 import {chromium} from 'playwright';
-import {mkdtemp,mkdir,writeFile} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import assert from 'node:assert/strict';
 import {serve} from './server.mjs';
 const server=await serve();const evidence=new URL('./evidence/',import.meta.url);await mkdir(evidence,{recursive:true});
-const results=[],errors=[],external=[];
+const results=[],errors=[],external=[],sourceHashes={};
+for(const file of ['app.mjs','model.mjs','storage.mjs','index.html','styles.css','server.mjs'])sourceHashes[file]=createHash('sha256').update(await readFile(new URL(file,import.meta.url))).digest('hex');
 const executablePath='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 async function open(profile){const context=await chromium.launchPersistentContext(profile,{executablePath,headless:true,viewport:{width:1440,height:1100}});await context.route('**/*',route=>{if(new URL(route.request().url()).origin===server.url)return route.continue();external.push(route.request().url());return route.abort();});context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));return context;}
 async function ready(page,url){await page.goto(url);await page.waitForFunction(()=>!!window.ux);}
@@ -57,6 +59,6 @@ try {
   row.typingP50Ms=[...row.samplesMs].sort((a,b)=>a-b)[10];row.typingMaxMs=Math.max(...row.samplesMs);results.push(row);await context.close();
  }));
  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
- await writeFile(new URL('browser.json',evidence),JSON.stringify({status:'PASS',source:'working candidate; exact hashes in acceptance manifest',fixtureSizes:[12,10000],results,externalRequests:external,pageErrors:errors,humanUsability:'NOT_RUN',satisfaction:'UNKNOWN',limits:'Concurrent local synthetic browsers, 20 automation samples each; no human comprehension or Drive performance claim. Real time waits only prove simulated timers.'},null,2));
+ await writeFile(new URL('browser.json',evidence),JSON.stringify({status:'PASS',sourceHashes,fixtureSizes:[12,10000],results,externalRequests:external,pageErrors:errors,humanUsability:'NOT_RUN',satisfaction:'UNKNOWN',limits:'Concurrent local synthetic browsers, 20 automation samples each; no human comprehension or Drive performance claim. Real time waits only prove simulated timers.'},null,2));
  console.log(JSON.stringify({status:'PASS',results:results.map(r=>({size:r.size,p50Ms:r.typingP50Ms,maxMs:r.typingMaxMs,realTimeOperations:r.realTimeOperations}))}));
 }finally{await server.close();}

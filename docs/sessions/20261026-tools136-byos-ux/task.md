@@ -15,3 +15,9 @@ replay final candidate browser evidence after repair. Independent review underwa
 Native full Gatekeeper precursor PASS (exit 0). Reviewer identified hidden archive
 presentation; moved archived full conflict history outside the active-conflict panel
 so explicit resolution does not make retained originals inaccessible.
+Independent review REQUEST_CHANGES: overlapping asynchronous catalog starts could
+release another start's writer lock and install stale catalog. Lead repair serializes
+catalog initialization and awaits prior lock disposal. Focused Chrome regression PASS
+with delayed IndexedDB reads and four overlapping size switches; a second tab is
+correctly refused. All three UI resolutions expose archived complete originals;
+1280px layout has no horizontal overflow. Final full browser replay pending.

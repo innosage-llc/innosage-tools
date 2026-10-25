@@ -5,22 +5,28 @@ let sim,storage,active='page-1',offset=0,items=[],rendering=false;
 const size=Number(new URLSearchParams(location.search).get('size'))===10000?10000:12;
 $('catalog').value=String(size);
 const workspace=new URLSearchParams(location.search).get('workspace')??'demo';
-let releaseOwner;
+let releaseOwner,ownerTask;
+let switchTail=Promise.resolve();
+function start(count){
+  const task=switchTail.then(()=>openCatalog(count));
+  switchTail=task.catch(()=>{});
+  return task;
+}
 // Single browser writer per fixture database. Separate tabs cannot overwrite it.
-async function start(count) {
-  $('editor').disabled=true;
-  sim?.close();storage?.close();releaseOwner?.();
+async function openCatalog(count) {
+  $('editor').disabled=true;$('catalog').disabled=true;
+  sim?.close();storage?.close();releaseOwner?.();await ownerTask;releaseOwner=null;
   let grant;const granted=new Promise(r=>grant=r);
   if(!navigator.locks) throw new Error('Browser writer locks unavailable; editing disabled');
-  navigator.locks.request(`byos-ux-136-${workspace}-${count}`,{ifAvailable:true},async lock=>{
+  ownerTask=navigator.locks.request(`byos-ux-136-${workspace}-${count}`,{ifAvailable:true},async lock=>{
     grant(!!lock);if(lock)await new Promise(r=>releaseOwner=r);
   });
   if(!await granted)throw new Error('Workspace already open in another tab; close that tab first');
   storage=await browserStorage(`${workspace}-${count}`);
   sim=new Simulation(storage,{changed:render});items=catalog(count);offset=0;active='page-1';
   await sim.open();sim.latency=$('latency').value==='never'?'never':Number($('latency').value);
-  sim.setFault($('fault').value);nav();load();$('editor').disabled=false;
-  window.ux={sim,storage,snapshot:()=>sim.view(active),active:()=>active};
+  sim.setFault($('fault').value);nav();load();$('editor').disabled=false;$('catalog').disabled=false;$('catalog').value=String(count);
+  window.ux={sim,storage,switchCatalog:start,snapshot:()=>sim.view(active),active:()=>active};
 }
 function nav(){
   $('catalogInfo').textContent=`${items.length.toLocaleString()} synthetic pages • metadata only; 20 navigation rows at a time`;
