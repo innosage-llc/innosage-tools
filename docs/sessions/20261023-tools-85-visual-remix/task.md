@@ -394,3 +394,12 @@ gated actual-source browser journey PASS. Existing public-route smoke assumed
 the first role=status was editor readiness; with remote panel enabled it selects
 connection status. Test now targets the exact editor readiness text; runtime
 source unchanged. Recheck that smoke and bind final review to repaired test head.
+
+PR122 finald8ac122 reviewPASS/fullnativeMergePASS, mergede316b465. Staging now
+83ebcaa8-8027-4f64-802b-87b7a5873f06 at100%, source/flags/bindings readbackPASS;
+additive reference schema applied,0image rows, no grants or liveMCP. Chrome task
+tab read still times out and ordinary staticHTTP403; rendered online notPASS.
+Final handoff audit found proposalSchema only available in downloaded brief:
+follow-up includes existing schema in native reference tool text and changes the
+gated brief from duplicateattachment/manualcrop instructions to the approved
+image/crop flow. Default offline brief remains supported, no new permissions.

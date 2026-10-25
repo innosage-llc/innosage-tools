@@ -31,6 +31,14 @@ test('downloadable agent handoff includes exact current authority and descriptor
   assert.match(brief.instructions.join(' '),/Never substitute a standalone SVG/);
   assert.match(brief.instructions.join(' '),/call get_scene immediately before submission/);
   assert.match(brief.instructions.join(' '),/only actual applied status/);
+  const connected = JSON.parse(agentBrief(context,assets,'Reconstruct and edit.',{referenceSharing:true}));
+  const instructions=connected.instructions.join(' ');
+  assert.match(instructions,/call read_shared_reference/);
+  assert.match(instructions,/Do not ask for a duplicate ChatGPT image attachment/);
+  assert.match(instructions,/one Apply approves their reuse/);
+  assert.doesNotMatch(instructions,/ask the user to Extract|inspect the separately attached/);
+  assert.deepEqual(connected.proposalSchema,proposalSchema);
+  assert.doesNotMatch(JSON.stringify(connected),/PRIVATE_|blob:private/);
 });
 
 test('strict schema rejects executable, unknown, inherited, invalid geometry and reference data', () => {
