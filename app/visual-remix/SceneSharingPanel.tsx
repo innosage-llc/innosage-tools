@@ -58,7 +58,7 @@ export function SceneSharingPanel({ state, onConnect, onDisconnect }: SceneShari
         </div>
       </div>
 
-      {state.phase === 'connected' && <p className="text-xs text-gray-600">Browser consent is confirmed. ChatGPT tool access is not verified by this status. Require a successful scene read and a candidate preview in this editor; a standalone SVG or Image viewer is not an application preview.</p>}
+      {state.phase === 'connected' && <p className="text-xs text-gray-600">Keep this editor visible in a separate window while the agent works; background tabs can be suspended. Returning to this window refreshes the existing heartbeat without extending the lease. Browser consent is confirmed. ChatGPT tool access is not verified by this status. Require a successful scene read and a candidate preview in this editor; a standalone SVG or Image viewer is not an application preview.</p>}
       {state.notice && <p role="status" className="text-xs text-gray-700">{state.notice}</p>}
       {state.diagnostic && <details className="text-xs text-gray-600"><summary>Connection diagnostic</summary><p>HTTP {state.diagnostic.status}; request {state.diagnostic.requestId ?? 'unavailable'}; version {state.diagnostic.version ?? 'unknown'}; revision {state.diagnostic.revision ?? 'unknown'}</p></details>}
 

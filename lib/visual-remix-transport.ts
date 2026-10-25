@@ -123,6 +123,12 @@ export class VisualRemixTransport {
     if (this.frames.length >= 64) { this.fail(); return; }
     this.frames.push(frame); void this.pump();
   }
+  refresh(): void {
+    // Wake an existing, unexpired consent session only. Never reconnect/create
+    // or extend its proof/lease when the browser regains foreground focus.
+    if (this.stopped || !this.owner) return;
+    this.fingerprint = ''; this.notifyLocalChange();
+  }
   private schedule(): void {
     if (this.timer) clearTimeout(this.timer);
     if (this.stopped) return;

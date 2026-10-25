@@ -14,6 +14,7 @@ import {
 } from "@/lib/visual-remix";
 import {
   LocalAssets,
+  type RasterCrop,
   loadPortableProject,
   savePortableProject,
 } from "@/lib/visual-remix-assets";
@@ -28,6 +29,7 @@ import { agentBrief, proposalSchema } from "@/lib/visual-remix-agent";
 import { VisualRemixTransport } from "@/lib/visual-remix-transport";
 import type { SceneSharingState } from "@/lib/visual-remix-sharing-view";
 import { SceneSharingPanel } from "./SceneSharingPanel";
+import { ReferenceCrop } from "./ReferenceCrop";
 
 const sceneRemoteEnabled = process.env.NEXT_PUBLIC_SCENE_REMOTE === "true";
 type Snapshot = ReturnType<VisualRemixController["snapshot"]>;
@@ -218,6 +220,8 @@ export default function VisualRemixApp() {
     // Default-off build gate. No capability probe, fetch or auto-connect at mount.
     const remote = sceneRemoteEnabled ? new VisualRemixTransport(c, true, setSharingState, () => sync()) : null;
     sharing.current = remote;
+    const wake = () => { if (document.visibilityState === "visible") remote?.refresh(); };
+    window.addEventListener("focus",wake);document.addEventListener("visibilitychange",wake);
     const ticket = ++epoch.current;
     void c
       .open(crypto.randomUUID(), 0, emptyScene(), store)
@@ -244,6 +248,7 @@ export default function VisualRemixApp() {
       epoch.current++;
       pending.current?.abort();
       video.cancel();
+      window.removeEventListener("focus",wake);document.removeEventListener("visibilitychange",wake);
       remote?.dispose();
       sharing.current = null;
       c.dispose();
@@ -364,6 +369,29 @@ export default function VisualRemixApp() {
     } finally {
       finish(ticket);
     }
+  }
+  async function approveCrop(blob: Blob, crop: RasterCrop, kind: string) {
+    if (!reference) return;
+    const { abort, ticket } = begin(true);
+    setMessage("Approving selected crop pixels and preparing a local placement preview…");
+    try {
+      const c = controller.current!, state = c.snapshot();
+      if (!state.scene || state.scene.nodes.length >= REMIX_LIMITS.nodes) throw new Error("ASSET_LIMIT");
+      const descriptor = await assets.current.add(`${kind}-${crypto.randomUUID()}`, blob, abort.signal);
+      abort.signal.throwIfAborted();
+      if (ticket !== epoch.current) return;
+      // Already-used descriptors cross MCP. Insert locally under explicit Apply
+      // rather than widening remote access to unused approved assets.
+      const scene = structuredClone(state.scene);
+      const scale = Math.min(1080/reference.descriptor.width, 1440/reference.descriptor.height);
+      const width = Math.max(1,crop.width*scale), height = Math.max(1,crop.height*scale);
+      scene.assets.push(descriptor);
+      scene.nodes.push({id:descriptor.id,type:"image",assetId:descriptor.id,x:Math.min(1080-width,crop.x*scale),y:Math.min(1440-height,crop.y*scale),width,height,rotation:0,opacity:1,crop:{x:0,y:0,width:descriptor.width,height:descriptor.height}});
+      const result = await c.propose({schemaVersion:1,requestId:`crop-${crypto.randomUUID()}`,projectId:state.projectId,generation:state.generation,baseRevision:state.revision,scene,explanation:`Explicitly approved ${kind} crop placement. Review and Apply before downloading a fresh brief or connecting. No full reference pixels are included.`});
+      if (ticket !== epoch.current) return;
+      sync();
+      setMessage(result === "preview" ? "Crop placement preview ready. Apply this candidate to make its asset available to the agent. Repeat for other identity assets, then download a fresh brief and connect." : `Crop placement ${result}; current Scene unchanged.`);
+    } catch(e) { report(e,ticket); } finally {finish(ticket);}
   }
   async function openProject(file: File) {
     const { abort, ticket } = begin(true);
@@ -761,6 +789,8 @@ export default function VisualRemixApp() {
                 pixels outside any crop. Asset bytes are never included in the
                 agent brief.
               </p>
+              {reference && referenceURL && <ReferenceCrop key={referenceURL} source={reference.blob} url={referenceURL} descriptor={reference.descriptor} disabled={!ready} approve={approveCrop} />}
+              <p className="my-2">Or approve a separate PNG/JPG you already cropped:</p>
               <input
                 aria-label="Approve local asset"
                 type="file"

@@ -473,6 +473,32 @@ test(
       await page
         .getByRole("button", { name: "Undo last apply", exact: true })
         .click();
+      // Tight crop approval is separate from selecting a reference and from Apply.
+      await page.getByRole("button",{name:"New blank project",exact:true}).click();
+      await page.getByText("New blank project ready.",{exact:true}).waitFor();
+      await page.getByLabel("Reference image",{exact:true}).setInputFiles({name:"private-reference-name.png",mimeType:"image/png",buffer:image});
+      await page.getByText("Reference ready locally.",{exact:false}).waitFor();
+      const cropDetails=page.locator("details").filter({has:page.getByText("Approve local raster assets (0/10)",{exact:true})});
+      if(!await cropDetails.evaluate(el=>el.open))await page.getByText("Approve local raster assets (0/10)",{exact:true}).click();
+      await page.getByLabel("Crop x",{exact:true}).fill("10");await page.getByLabel("Crop y",{exact:true}).fill("20");
+      await page.getByLabel("Crop width",{exact:true}).fill("30");await page.getByLabel("Crop height",{exact:true}).fill("40");
+      await page.getByRole("button",{name:"Preview crop",exact:true}).click();
+      await page.getByAltText("Crop pixels to approve",{exact:true}).waitFor();
+      assert.equal(JSON.parse((await download("Download agent brief")).bytes.toString()).approvedAssets.length,0,"preview is not approval");
+      await page.getByRole("button",{name:"Approve crop and preview placement",exact:true}).click();
+      await page.getByRole("button",{name:"Apply candidate",exact:true}).waitFor();
+      assert.equal(JSON.parse(await page.getByTestId("applied-scene").textContent()).nodes.length,0,"approval is not Apply");
+      await page.getByRole("button",{name:"Apply candidate",exact:true}).click();
+      const cropped=JSON.parse((await download("Save project")).bytes.toString());
+      assert.equal(cropped.assets.length,1);assert.equal(cropped.scene.assets[0].width,30);assert.equal(cropped.scene.assets[0].height,40);
+      const cropBytes=Buffer.from(cropped.assets[0].data.split(',')[1],'base64');assert.equal(cropBytes.readUInt32BE(16),30);assert.equal(cropBytes.readUInt32BE(20),40);
+      assert.equal(cropped.scene.nodes[0].type,"image");assert.equal(cropped.scene.nodes[0].assetId,cropped.scene.assets[0].id);
+      const cropPNG=await download("Download PNG");
+      await page.getByLabel("Open project",{exact:true}).setInputFiles({name:"cropped-project.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(cropped))});
+      await page.getByText("Project reopened with fresh approval identity.",{exact:false}).waitFor();
+      assert.equal(await page.getByAltText("Reference · local only").count(),0);
+      assert.deepEqual((await download("Download PNG")).bytes,cropPNG.bytes);
+      const cropReused=JSON.parse((await download("Save project")).bytes.toString());assert.deepEqual(cropReused.assets,cropped.assets);
       await page.setViewportSize({ width: 390, height: 844 });
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.evaluate(() => new Promise(requestAnimationFrame));
@@ -544,6 +570,7 @@ test(
           "Control-fixture UI workflow, NOT actual agent vision acceptance",
         checks: [
           "reference local preview",
+          "tight reference crop: preview/approval/Apply separate, embedded cropped pixels, reopen same PNG without reference",
           "approved asset descriptor-only brief",
           "separate candidate",
           "explicit apply",

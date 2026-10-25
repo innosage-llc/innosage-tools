@@ -13,15 +13,18 @@ export function sceneMcpHandler(db: D1Database, auth: SceneAuth, resource: strin
     const meta = { securitySchemes: [{ type: 'oauth2', scopes: [...SCENE_SCOPES] }] };
     const invoke = async (action: () => Promise<unknown>) => {
       if (!await store.lease(auth)) return sceneReauthorization(resource);
-      try { return sceneToolResult(await action()); }
+      try {
+        const value = await action(), result = sceneToolResult(value);
+        return value && typeof value === 'object' && 'error' in value ? {...result,isError:true} : result;
+      }
       catch { return { isError: true, content: [{ type: 'text' as const, text: 'SCENE_COMMAND_REJECTED' }] }; }
     };
     server.registerTool('get_scene', { description: 'Read the current shared Scene before proposing. No raster bytes. Keep the external Visual Remix browser open. On authorization failure stop and request fresh manual connection; no proposal or edit was completed. Never substitute an SVG download for the application preview.', inputSchema: z.object({}).strict(), _meta: meta, annotations: { readOnlyHint: true } },
-      async () => invoke(async () => await store.snapshot(auth) ?? { error: 'BROWSER_UNAVAILABLE' }));
-    server.registerTool('propose_scene', { description: 'Queue one bounded Scene proposal for preview in the external Visual Remix browser, not a ChatGPT image viewer. Queued/rendering/preview are pending; only proposal_status applied confirms manual Apply. Use fresh get_scene project/generation/revision, a unique requestId, explanation and full descriptor-only scene. On authorization failure no preview was delivered; stop, preserve work and request manual reconnection, never claim completion or substitute SVG.', inputSchema: z.object({ proposal: z.unknown() }).strict(), _meta: meta },
-      async input => invoke(async () => await store.propose(auth, input.proposal) ?? { error: 'STALE_OR_BROWSER_UNAVAILABLE' }));
-    server.registerTool('proposal_status', { description: 'Read actual request state. Preview awaits manual Apply; queued is never completed.', inputSchema: z.object({ requestId: id }).strict(), _meta: meta, annotations: { readOnlyHint: true } },
-      async input => invoke(async () => await store.status(auth, input.requestId) ?? { error: 'UNKNOWN_REQUEST' }));
+      async () => invoke(async () => await store.snapshot(auth) ?? { error: 'BROWSER_UNAVAILABLE', recovery: 'Bring the existing editor into a visible window and wait for its heartbeat, then read get_scene again. Do not create another share unless authorization expired.' }));
+    server.registerTool('propose_scene', { description: 'Queue one bounded Scene proposal for preview in the external Visual Remix browser, not a ChatGPT image viewer. Queued/rendering/preview are pending; only proposal_status applied confirms manual Apply. Read get_scene immediately before submitting, after preparing the Scene. Only poll a successfully admitted queued/rendering/preview request; a result with admitted:false was rejected and gives recovery steps. Keep the editor visible in a separate window to avoid background suspension. For uncertain delivery query the same requestId before any bounded retry. Use fresh get_scene project/generation/revision, a unique requestId, explanation and full descriptor-only scene. On authorization failure no preview was delivered; stop, preserve work and request manual reconnection, never claim completion or substitute SVG.', inputSchema: z.object({ proposal: z.unknown() }).strict(), _meta: meta },
+      async input => invoke(async () => await store.propose(auth, input.proposal) ?? await store.proposalRejection(auth,input.proposal)));
+    server.registerTool('proposal_status', { description: 'Read actual state only for an admitted or uncertain requestId. Do not poll an explicitly rejected proposal. Preview awaits manual Apply; queued is never completed.', inputSchema: z.object({ requestId: id }).strict(), _meta: meta, annotations: { readOnlyHint: true } },
+      async input => invoke(async () => await store.status(auth, input.requestId) ?? { error: 'REQUEST_NOT_FOUND', requestId:input.requestId, applied:false, recovery:'No request with this ID is recorded in the current share. If propose_scene explicitly rejected it, recover that rejection before resubmitting. For an uncertain submission, reconcile this same ID and current Scene before any retry; never invent a new ID to evade uncertainty.' }));
     server.registerTool('cancel_proposal', { description: 'Cancel a queued request or ask the browser to cancel a pending preview. Never undoes applied changes.', inputSchema: z.object({ requestId: id }).strict(), _meta: meta },
       async input => invoke(async () => ({ requested: await store.cancel(auth, input.requestId) })));
     return server;

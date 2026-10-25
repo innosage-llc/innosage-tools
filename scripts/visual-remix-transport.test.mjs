@@ -233,3 +233,18 @@ test('recovery: proof and lease expiry explain fresh manual authorization withou
   }finally{f.transport.dispose();f.controller.dispose();}
  }
 });
+
+
+test('foreground wake refreshes only existing consent and never creates, extends or revives expired sharing',async()=>{
+ let now=Date.now();const f=await fixture({clientNow:()=>now,paired:true});
+ try{
+  f.transport.refresh();assert.equal(f.calls.length,0);
+  await f.connect();await waitFor(()=>f.transport.snapshot().phase==='connected');
+  const deadline=f.transport.snapshot().expiresAt, syncs=f.calls.filter(c=>c.path.endsWith('/sync')).length;
+  f.transport.refresh();await waitFor(()=>f.calls.filter(c=>c.path.endsWith('/sync')).length>syncs);
+  assert.equal(f.transport.snapshot().expiresAt,deadline);
+  assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);
+  now=deadline+1;f.transport.refresh();await waitFor(()=>f.transport.snapshot().phase==='disconnected');
+  f.transport.refresh();assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);assert.ok(f.transport.snapshot().revocationConfirmed);
+ }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+});

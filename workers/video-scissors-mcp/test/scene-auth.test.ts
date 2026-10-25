@@ -158,3 +158,37 @@ test('recovery diagnostics preserve the enabled candidate video WebSocket upgrad
   assert.equal((await connect()).status,401,'diagnostics never permit reuse of the join proof');f.noEgress();
  }finally{await f.mf.dispose();}
 });
+
+
+test('known stale/browser rejection is not queued; same-ID recovery is idempotent and used crop descriptors survive',async()=>{
+ const f=await fixture();
+ try {
+  const {p,t}=await f.link();
+  const rpc=async(name:string,args:Record<string,unknown>)=>(await f.rpc(t.access_token,'tools/call',{name,arguments:args})).data.result;
+  const request={schemaVersion:1,projectId:snapshot().projectId,generation:snapshot().generation,baseRevision:0,requestId:'recover-same-id',explanation:'Local crop and layout',scene:{...emptyScene(),background:'#112233'}};
+  await f.db.prepare('UPDATE scene_shares SET seen=? WHERE id=?').bind(Date.now()-11000,p.auth.shareId).run();
+  const rejected=await rpc('propose_scene',{proposal:request}),detail=JSON.parse(rejected.content[0].text);
+  assert.equal(rejected.isError,true);assert.equal(detail.error,'BROWSER_UNAVAILABLE');assert.equal(detail.admitted,false);
+  assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_requests').first('n'),0);
+  assert.equal(JSON.parse((await rpc('proposal_status',{requestId:request.requestId})).content[0].text).error,'REQUEST_NOT_FOUND');
+  await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()});
+  assert.equal(JSON.parse((await rpc('propose_scene',{proposal:request})).content[0].text).state,'queued');
+  assert.equal(JSON.parse((await rpc('propose_scene',{proposal:request})).content[0].text).state,'queued');
+  assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_requests').first('n'),1);
+  await rpc('cancel_proposal',{requestId:request.requestId});
+  // A newer applied local Scene contains a crop image. The descriptor, not bytes,
+  // becomes available to the agent; unshared approved assets remain rejected.
+  const asset={id:'portrait',mime:'image/png' as const,width:16,height:16};
+  const withCrop={...snapshot(),revision:1,scene:{...emptyScene(),assets:[asset],nodes:[{id:'portrait',type:'image' as const,assetId:asset.id,x:80,y:80,width:40,height:40,rotation:0,opacity:1,crop:{x:0,y:0,width:16,height:16}}]}};
+  assert.equal((await (await f.json('/scene/browser/sync',{auth:p.auth,snapshot:withCrop})).json()).ok,true);
+  const stale=await rpc('propose_scene',{proposal:{...request,requestId:'old-revision'}});assert.equal(stale.isError,true);assert.equal(JSON.parse(stale.content[0].text).error,'STALE_REVISION');
+  const read=JSON.parse((await rpc('get_scene',{})).content[0].text);assert.deepEqual(read.scene.assets,[asset]);
+  const cropRequest={...request,requestId:'crop-content-layout',baseRevision:read.revision,scene:{...read.scene,nodes:read.scene.nodes.map((n:Record<string,unknown>)=>({...n,x:160,y:200}))}};
+  assert.equal(JSON.parse((await rpc('propose_scene',{proposal:cropRequest})).content[0].text).state,'queued');
+  assert.doesNotMatch(JSON.stringify(read),/data:image|base64|PRIVATE_SOURCE/);
+  assert.equal((await rpc('propose_scene',{proposal:{...cropRequest,requestId:'forged-asset',scene:{...cropRequest.scene,assets:[{...asset,width:17}]}}})).isError,true);
+  assert.equal((await (await f.json('/scene/browser/revoke',{auth:p.auth})).json()).ok,true);
+  assertSceneReauthorization((await f.rpc(t.access_token,'tools/call',{name:'propose_scene',arguments:{proposal:request}})).r);
+  f.noEgress();
+ }finally{await f.mf.dispose();}
+});

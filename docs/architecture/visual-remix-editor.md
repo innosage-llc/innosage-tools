@@ -70,3 +70,22 @@ is a byte-for-byte copy of the installed package license, including both origina
 and modified-work copyright notices and complete terms. The editor links to the
 exported `/tools/third-party-notices/konva-LICENSE.txt` notice. Preserve this file
 and verify it against the package license when updating Konva.
+
+
+### Consented reference detail extraction
+
+The local crop UI materializes a tight PNG from the selected reference rectangle.
+Preview is not approval; approval renders a placement candidate, and only explicit
+Apply inserts that image node into the current Scene. Its used descriptor can
+then cross MCP. This preserves the existing used-assets-only remote boundary;
+no raster bytes cross. Apply all needed crops before downloading a fresh brief
+and connecting. Identity portraits/logos should reuse original approved pixels,
+not generated faces/marks. Saved projects embed only the materialized crop for
+this flow; separately uploaded assets still embed their entire approved file.
+Image nodes retain editable geometry/crop, not vector editing of their pixels.
+
+Text collision diagnostics use per-line actual font glyph bounds with Konva's
+baseline/alignment and rotation, not the full declared editable box width. Line
+bounds remain conservative for rotated or interlocking glyphs; visual review is
+still required. Genuine overlap, omitted text, overflow and canvas bounds remain
+blocking. Preview/export still use the same PNG and browser-local font stacks.

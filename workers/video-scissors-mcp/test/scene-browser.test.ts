@@ -51,7 +51,7 @@ test(`inactive transport + actual provider/D1/controller: consent through revoke
     await waitFor(()=>controller.status('second-post')==='preview');assert.equal(controller.snapshot().scene.nodes[0].text,'Before');assert.equal(controller.apply('second-post'),'applied');transport.notifyLocalChange();
     await waitFor(()=>requests.some(r=>r.path.endsWith('/sync')&&JSON.parse(r.body).snapshot.revision===3));
     const final=JSON.parse((await f.rpc(token.access_token,'tools/call',{name:'get_scene',arguments:{}})).data.result.content[0].text);assert.equal(final.revision,3);assert.equal(final.scene.nodes[0].text,'Second post');assert.equal(final.scene.nodes[0].y,360);
-    const stale=await f.rpc(token.access_token,'tools/call',{name:'propose_scene',arguments:{proposal:{...proposal,requestId:'stale-repeat'}}});assert.equal(JSON.parse(stale.data.result.content[0].text).error,'STALE_OR_BROWSER_UNAVAILABLE');
+    const stale=await f.rpc(token.access_token,'tools/call',{name:'propose_scene',arguments:{proposal:{...proposal,requestId:'stale-repeat'}}});assert.equal(JSON.parse(stale.data.result.content[0].text).error,'STALE_REVISION');
     assert.ok(requests.every(r=>!r.body.includes('local-render')));
     const png=controller.exportPNG();await transport.disconnect();
     assert.equal(transport.snapshot().revocationConfirmed,true);assert.equal(controller.exportPNG().size,png.size);

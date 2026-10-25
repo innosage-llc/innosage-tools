@@ -29,7 +29,7 @@ test('downloadable agent handoff includes exact current authority and descriptor
   assert.doesNotMatch(output,/PRIVATE_|blob:private/);
   assert.match(brief.instructions.join(' '),/actually inspect/);
   assert.match(brief.instructions.join(' '),/Never substitute a standalone SVG/);
-  assert.match(brief.instructions.join(' '),/first call get_scene/);
+  assert.match(brief.instructions.join(' '),/call get_scene immediately before submission/);
   assert.match(brief.instructions.join(' '),/only actual applied status/);
 });
 
