@@ -339,3 +339,23 @@ no #84/#102 worktree/session changes. Existing Master acceptance unchanged.
   known rejection guides fresh read; uncertain submission reconciles same ID.
 - Targeted regressions and native gate/review before main integration/staging.
   New agent live MCP is NOT_RUN/user-owned. No production or Master closure.
+
+
+## 2026-10-25 latest Founder UX amendment
+
+Slack1792916071.055479 supersedes per-parameter Preview/Apply and duplicate ChatGPT
+image attachment. Existing85/87/88 bodies now explicitly record automatic local
+parameter rendering/commit, Undo/revision/export safety, and freshly consented
+app→GPT actual pixel delivery. Remote agent auto-apply is not inferred.
+
+First independently mergeable increment:250ms local debounce, immediate proposal
+fence, latest-ticket render/commit,20Undo checkpoints with typing coalescing,
+invalid/pending draft preservation/export block, obsolete Motion cancellation.
+Lead owns implementation/tests/operations; independentSolHIGHreview/nativegates
+before merge. Separate bounded AstraHIGH read-only advice for new image boundary
+completed; source/image envelopes, D1 retention and actual host vision require
+separate source-backed implementation/review. No new scopes/credentials/public
+image host, liveMCP, production or closure. Historical local-only uploads remain
+unshared. Local work continues while image activation requirements are resolved.
+
+Independent Sol review on f3ea021 requested P2 cancellation repair: Revoke/begin canceled local work without restoring form values. Lead now restores committed form state before exports resume; added pendingRevoke→lateredit and invalidDraft→proposal→Cancel UI regressions. Re-review and final native gate required on the repaired head.

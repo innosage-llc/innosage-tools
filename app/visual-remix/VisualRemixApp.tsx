@@ -122,6 +122,8 @@ export default function VisualRemixApp() {
   const epoch = useRef(0);
   const downloadURLs = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const localTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const localTicket = useRef(0);
   const [draft, setDraft] = useState<Scene | null>(null);
   const [selected, setSelected] = useState("");
   const [approved, setApproved] = useState<RasterAsset[]>([]);
@@ -157,6 +159,7 @@ export default function VisualRemixApp() {
     sharing.current?.notifyLocalChange();
     setSnapshot(state);
     if (resetDraft && state.scene) {
+      if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;controller.current?.discardLocalEdit();
       setDraft(structuredClone(state.scene));
       setSelected((id) =>
         state.scene!.nodes.some((n) => n.id === id)
@@ -167,6 +170,9 @@ export default function VisualRemixApp() {
     setApproved(assets.current.descriptors());
   }
   function begin(invalidate = false) {
+    const hadLocalDraft = controller.current?.snapshot().editing;
+    if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;controller.current?.discardLocalEdit();
+    if(hadLocalDraft)sync(true);
     pending.current?.abort();
     const abort = new AbortController();
     pending.current = abort;
@@ -247,6 +253,10 @@ export default function VisualRemixApp() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       epoch.current++;
       pending.current?.abort();
+      if(localTimer.current)clearTimeout(localTimer.current);
+      // Invalidate the live async ticket, not its value captured at mount.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      localTicket.current++;
       video.cancel();
       window.removeEventListener("focus",wake);document.removeEventListener("visibilitychange",wake);
       remote?.dispose();
@@ -487,22 +497,30 @@ export default function VisualRemixApp() {
       finish(ticket);
     }
   }
-  function previewEdits() {
-    const c = controller.current,
-      s = c?.snapshot();
-    if (!s || !draft) return;
-    void previewJSON(
-      JSON.stringify({
-        schemaVersion: 1,
-        requestId: `edit-${crypto.randomUUID()}`,
-        projectId: s.projectId,
-        generation: s.generation,
-        baseRevision: s.revision,
-        scene: draft,
-        explanation:
-          "Local content, layout and caption edits. Review before applying.",
-      }),
-    );
+  function editDraft(change: (scene: Scene) => Scene) {
+    const c = controller.current;
+    if (!c || !draft) return;
+    const next = change(draft), ticket = ++localTicket.current;
+    setDraft(next);setError("");
+    if (localTimer.current) clearTimeout(localTimer.current);
+    motion.current.cancel();motionTicket.current++;setMotionBusy(false);setMotionBlob(null);setMotionMessage("");
+    const edit = c.stageLocalEdit();sync();
+    setMessage("Updating local edit… Exports wait for the latest rendered parameters.");
+    localTimer.current = setTimeout(() => {
+      localTimer.current = null;
+      void c.renderLocalEdit(next,edit).then(result => {
+        if (ticket !== localTicket.current) return;
+        sync();
+        setMessage(result === "applied" ? `Local edit applied automatically · revision ${c.snapshot().revision}. Save project to keep it for reuse.` : "Local edit was superseded; current Scene preserved.");
+      }).catch(() => {
+        if (ticket !== localTicket.current) return;
+        sync();setError("These parameters could not render. Correct them or discard the local draft. The last applied Scene is preserved; exports wait for valid parameters.");
+      });
+    },250);
+  }
+  function discardLocalDraft() {
+    if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;
+    controller.current?.discardLocalEdit();sync(true);setError("");setMessage("Local draft discarded. Last applied Scene preserved.");
   }
   function apply() {
     const id = snapshot?.preview?.requestId;
@@ -526,12 +544,13 @@ export default function VisualRemixApp() {
   }
   function revoke() {
     pending.current?.abort();
+    if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;
     pending.current = null;
     epoch.current++;
     controller.current?.revoke();
     setBusy(false);
     setError("");
-    sync();
+    sync(true);
     setMessage(
       "Pending work revoked. Old agent briefs cannot apply; download a fresh brief to continue.",
     );
@@ -540,6 +559,7 @@ export default function VisualRemixApp() {
     const c = controller.current,
       s = c?.snapshot();
     if (!s?.scene) return;
+    if(s.editing){setError("Wait for the latest local parameters to apply, or discard the draft.");return;}
     const { ticket } = begin();
     try {
       const text = await savePortableProject(
@@ -565,6 +585,7 @@ export default function VisualRemixApp() {
   function brief() {
     const s = controller.current?.snapshot();
     if (!s?.scene) throw new Error("Project is not ready.");
+    if(s.editing)throw new Error("LOCAL_EDIT_PENDING");
     return agentBrief(
       { ...s, scene: s.scene },
       assets.current.descriptors(),
@@ -595,22 +616,11 @@ export default function VisualRemixApp() {
     }
   }
   function updateNode(patch: Partial<SceneNode>) {
-    setDraft((s) =>
-      s
-        ? {
-            ...s,
-            nodes: s.nodes.map((n) =>
-              n.id === selected ? ({ ...n, ...patch } as SceneNode) : n,
-            ),
-          }
-        : s,
-    );
+    editDraft(s => ({...s,nodes:s.nodes.map(n=>n.id===selected?({...n,...patch} as SceneNode):n)}));
   }
   function addText() {
     const id = `text-${crypto.randomUUID()}`;
-    setDraft((s) =>
-      s
-        ? {
+    editDraft((s) => ({
             ...s,
             nodes: [
               ...s.nodes,
@@ -633,14 +643,11 @@ export default function VisualRemixApp() {
                 fill: "#111111",
               },
             ],
-          }
-        : s,
-    );
+          }));
     setSelected(id);
   }
   function moveNode(direction: number) {
-    setDraft((s) => {
-      if (!s) return s;
+    editDraft((s) => {
       const nodes = [...s.nodes],
         at = nodes.findIndex((n) => n.id === selected),
         to = at + direction;
@@ -653,7 +660,7 @@ export default function VisualRemixApp() {
   const ready = !!snapshot?.scene && !busy;
   const exportable =
     ready &&
-    !!snapshot?.scene?.nodes.length &&
+    !!snapshot?.scene?.nodes.length && !snapshot.editing &&
     !snapshot?.output?.diagnostics.some((d) => d.severity === "error");
   const changes =
     snapshot?.preview && snapshot.scene
@@ -1000,6 +1007,7 @@ export default function VisualRemixApp() {
                 className={button}
                 disabled={!ready || !snapshot?.canUndo}
                 onClick={() => {
+                  if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;
                   controller.current!.undo();
                   sync(true);
                   setError("");
@@ -1033,8 +1041,7 @@ export default function VisualRemixApp() {
           <section className={panel}>
             <h2 className="font-semibold">Edit content and layout</h2>
             <p className="mt-2 text-xs text-zinc-600">
-              Form edits are drafts. Preview them, then Apply to update
-              downloads. Coordinates use the 1080×1440 canvas.
+              Local parameter edits render and apply automatically after a short pause. Undo restores earlier changes. Remote agent candidates still require Apply. Coordinates use the 1080×1440 canvas.
             </p>
             <fieldset disabled={!ready} className="mt-4 space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -1049,14 +1056,7 @@ export default function VisualRemixApp() {
                   className={button}
                   disabled={!node}
                   onClick={() => {
-                    setDraft((s) =>
-                      s
-                        ? {
-                            ...s,
-                            nodes: s.nodes.filter((n) => n.id !== selected),
-                          }
-                        : s,
-                    );
+                    editDraft(s => ({...s,nodes:s.nodes.filter(n=>n.id!==selected)}));
                     setSelected("");
                   }}
                 >
@@ -1101,9 +1101,7 @@ export default function VisualRemixApp() {
                     className={`${input} mt-1`}
                     value={draft?.background ?? ""}
                     onChange={(e) =>
-                      setDraft((s) =>
-                        s ? { ...s, background: e.target.value } : s,
-                      )
+                      editDraft(s => ({...s,background:e.target.value}))
                     }
                   />
                 </label>
@@ -1264,26 +1262,15 @@ export default function VisualRemixApp() {
                         maxLength={key.startsWith("title") ? 200 : 4000}
                         value={draft?.captions[key] ?? ""}
                         onChange={(e) =>
-                          setDraft((s) =>
-                            s
-                              ? {
-                                  ...s,
-                                  captions: {
-                                    ...s.captions,
-                                    [key]: e.target.value,
-                                  },
-                                }
-                              : s,
-                          )
+                          editDraft(s => ({...s,captions:{...s.captions,[key]:e.target.value}}))
                         }
                       />
                     </label>
                   ))}
                 </div>
               </details>
-              <button className={primary} onClick={previewEdits}>
-                Preview edits
-              </button>
+              {snapshot?.editing && <button className={button} onClick={discardLocalDraft}>Discard local draft</button>}
+              <p role="status" className="text-xs text-zinc-600">{snapshot?.editing ? "Local edit pending · downloads paused" : `Applied locally · revision ${snapshot?.revision ?? 0}`}</p>
             </fieldset>
           </section>
           <section className={panel}>
@@ -1315,14 +1302,14 @@ export default function VisualRemixApp() {
               </button>
               <button
                 className={button}
-                disabled={!ready}
+                disabled={!ready || snapshot?.editing}
                 onClick={() => void save()}
               >
                 Save project
               </button>
               <button
                 className={button}
-                disabled={!ready}
+                disabled={!ready || snapshot?.editing}
                 onClick={() =>
                   jsonDownload(
                     {
@@ -1360,6 +1347,7 @@ export default function VisualRemixApp() {
                 {motionBlob && (
                   <button
                     className={button}
+                    disabled={!exportable}
                     onClick={() => download(motionBlob, "visual-remix.mp4")}
                   >
                     Download MP4
