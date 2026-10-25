@@ -46,3 +46,12 @@ test('browser polling awaits false async results instead of treating Promises as
  await until({evaluate:async()=>{attempts++;return attempts>=3;}},()=>true,null,{timeout:1000});assert.equal(attempts,3);
  await assert.rejects(until({evaluate:async()=>false},()=>true,null,{timeout:60}),/not reached/);
 });
+
+test('request body timing keeps its originating operation clock across a later begin',async()=>{
+ const original=globalThis.fetch;globalThis.fetch=async()=>new Response('complete body');
+ try{
+  authorize('synthetic',60);begin(101);const response=await driveFetch(API+'/fixture-timing');
+  await new Promise(r=>setTimeout(r,20));begin(102);assert.equal(await response.text(),'complete body');
+  const row=evidence().requests.at(-1);assert.equal(row.operationId,101);assert(row.bodyCompletedMs>=15);assert(row.bodyCompletedMs>=row.headersMs);
+ }finally{globalThis.fetch=original;forget();}
+});
