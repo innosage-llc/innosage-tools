@@ -211,3 +211,13 @@ test('cleanup processes at most six oldest caches and never purges a fresh brows
 test('inactive cleanup also works when the reference table was never installed',async()=>{
  const f=await fixture(false);try{const p=await f.create(),a=await f.bind(p);f.advance(1800001);assert.equal((await f.call('purge',{},true,false)).status,200);assert.deepEqual((await f.call('lease',{auth:a})).value,{expiresAt:null});assert.equal(await f.db.prepare('SELECT snapshot FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('snapshot'),null);f.noEgress();}finally{await f.mf.dispose();}
 });
+
+
+test('unchanged cache generation retains the active-preview lock until resumed browser reports cancellation',async()=>{
+ const f=await fixture();try{
+  const p=await f.create(),a=await f.bind(p),old=proposal('before-suspend');await f.call('propose',{auth:a,proposal:old});await f.call('claim',{auth:p.auth,cacheEpoch:0});assert.equal((await f.call('report',{auth:p.auth,id:old.requestId,state:'preview'})).value,true);
+  f.advance(1800001);await f.call('sync',{auth:p.auth,snapshot:snapshot()});assert.deepEqual((await f.call('cache',{auth:p.auth})).value,{cacheEpoch:0});
+  const next=proposal('after-suspend');assert.equal((await f.call('propose',{auth:a,proposal:next})).status,409,'the actual D1 active-request constraint remains intact');
+  assert.equal((await f.call('report',{auth:p.auth,id:old.requestId,state:'canceled'})).value,true);assert.equal((await f.call('propose',{auth:a,proposal:next})).status,200);assert.ok((await f.call('claim',{auth:p.auth,cacheEpoch:0})).value);f.noEgress();
+ }finally{await f.mf.dispose();}
+});

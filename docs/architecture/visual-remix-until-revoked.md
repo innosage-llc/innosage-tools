@@ -119,3 +119,12 @@ binary treats sentinel0 as expired. Do not silently clear stored control records
 Actual stage migration, flags, schedule and new persistent grants remain NOT_RUN
 until the exact reviewed candidate/action is admitted. No live MCP run is part of
 these local guards.
+
+Rollback must keep NEXT_PUBLIC_SCENE_UNTIL_REVOKED=true while device-control
+records can exist: the current recovery UI is instantiated behind that flag.
+Disable new server creation separately; a timed-only client hides old recovery
+handles and is not a safe rollback by itself. Reconcile unpaired five-minute
+proofs before changing to a timed-only authorization notice. Concurrent Disconnect
+is one operation per captured owner; late replies cannot clear a newer record.
+On long suspension without a server cache reset, retain/report canceled request
+IDs so the server active-preview lock is released before further proposals.

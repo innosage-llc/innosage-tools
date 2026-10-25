@@ -38,6 +38,7 @@ export class VisualRemixTransport {
   private owner: Share | null = null;
   private creating = false;
   private controlStored=false;
+  private disconnecting:{owner:Share|null;promise:Promise<void>}|null=null;
   private restorePromise:Promise<void>|null=null;
   private lastSyncAt=0;
   private suspensionReset=false;
@@ -81,9 +82,14 @@ export class VisualRemixTransport {
     const local=this.controller.snapshot(),base={purpose:'visual-remix' as const,confirmed:true as const,projectId:local.projectId,generation:local.generation,fields:SCENE_SHARE_FIELDS};
     return new VisualRemixOfflineBridge(this.controller,expiresAt===null?{...base,expiresAt:null,lifetime:'until-revoked'}:{...base,expiresAt},this.now);
   }
-  private resetPending():void {
+  private resetPending(forget=true):void {
     for(const abort of this.preparing.values())abort.abort();this.preparing.clear();this.bridge?.revoke();
-    this.preparationStates.clear();this.issued.clear();this.acknowledged.clear();this.frames=[];this.fingerprint='';this.referenceUploaded=false;
+    if(forget){this.preparationStates.clear();this.issued.clear();this.acknowledged.clear();this.referenceUploaded=false;}
+    else for(const id of this.issued){
+      const state=this.preparationStates.get(id)??this.controller.status(id);
+      this.preparationStates.set(id,state && !['rendering','preview'].includes(state)?state:'canceled');
+    }
+    this.frames=[];this.fingerprint='';
     if(this.owner)this.bridge=this.openBridge(this.owner.expiresAt);
     this.renderChanged();
   }
@@ -169,7 +175,7 @@ export class VisualRemixTransport {
   notifyLocalChange(): void {
     if (this.stopped || !this.bridge || !this.owner) return;
     if (!this.bound()) { void this.disconnect(this.expirationNotice()); return; }
-    if(this.owner.lifetime && !this.suspensionReset && this.now()-this.lastSyncAt>=SCENE_LIMITS.leaseMs){this.suspensionReset=true;this.resetPending();}
+    if(this.owner.lifetime && !this.suspensionReset && this.now()-this.lastSyncAt>=SCENE_LIMITS.leaseMs){this.suspensionReset=true;this.resetPending(false);}
     let frame: Frame;
     try { frame = { snapshot:parseSceneSnapshot(this.bridge.getScene()), states:[] }; } catch { this.fail(); return; }
     for (const id of this.issued) {
@@ -267,22 +273,40 @@ export class VisualRemixTransport {
     } catch (error) { if (!this.stopped && this.owner === startedOwner) this.fail(error); }
     finally { this.pumping = false; if (!this.stopped && this.frames.length) void this.pump(); }
   }
-  async disconnect(reason?: string): Promise<void> {
+  disconnect(reason?:string):Promise<void> {
+    const owner=this.owner;
+    if(this.disconnecting?.owner===owner)return this.disconnecting.promise;
+    let resolve!:()=>void,reject!:(error:unknown)=>void;
+    const promise=new Promise<void>((ok,fail)=>{resolve=ok;reject=fail;});
+    const operation={owner,promise};this.disconnecting=operation;
+    const clear=()=>{if(this.disconnecting===operation)this.disconnecting=null;};
+    void this.disconnectOwner(owner,reason).then(()=>{clear();resolve();},error=>{clear();reject(error);});
+    return promise;
+  }
+  private async disconnectOwner(owner:Share|null,reason?:string):Promise<void> {
+    if(this.owner!==owner)return;
+    const remembered=this.controlStored;
     const notice = reason ?? this.state.notice;
-    const reauthorizationRequired = this.state.reauthorizationRequired || !!this.owner && (this.owner.expiresAt!==null && this.now()>=this.owner.expiresAt || this.state.phase==='awaiting-consent' && this.now()>=this.owner.proofExpiresAt);
+    const reauthorizationRequired = this.state.reauthorizationRequired || !!owner && (owner.expiresAt!==null && this.now()>=owner.expiresAt || this.state.phase==='awaiting-consent' && this.now()>=owner.proofExpiresAt);
     for(const abort of this.preparing.values()) abort.abort(); this.preparing.clear();
     this.stopped = true; if (this.timer) clearTimeout(this.timer); this.timer = null; this.frames = []; this.bridge?.revoke();
     if(!this.disposed)this.renderChanged();
     this.publish({ phase:'revoking',canConnect:false,canDisconnect:false });
     if (this.creating) return; // Late create response owns cleanup; never adopt it.
-    if (!this.owner) { this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:false,notice,reauthorizationRequired}); return; }
+    if (!owner) { this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:false,notice,reauthorizationRequired}); return; }
     try {
-      const result = sceneObject(await this.call('revoke', { auth:this.owner.auth },true), ['ok']);
+      const result = sceneObject(await this.call('revoke', { auth:owner.auth },true), ['ok']);
+      if(this.owner!==owner)return;
       if (result.ok !== true) throw new Error('SCENE_REVOKE');
-      if(this.controlStored){await this.options.controlStore!.clear(this.owner.auth);this.controlStored=false;}
+      if(remembered){
+        await this.options.controlStore!.clear(owner.auth);
+        if(this.owner!==owner)return;
+        this.controlStored=false;
+      }
       this.owner = null; this.bridge = null; this.reference = null; this.materialize = null; this.referenceUploaded=false; this.preparationStates.clear(); this.issued.clear(); this.acknowledged.clear(); this.fingerprint = '';
       this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:true,notice,reauthorizationRequired});
     } catch {
+      if(this.owner!==owner)return;
       this.publish({phase:'error',canConnect:false,canDisconnect:true,notice,reauthorizationRequired,error:'Revocation is unconfirmed. Retry Disconnect. Existing service content may remain until a successful revoke or later cleanup.'});
     }
   }

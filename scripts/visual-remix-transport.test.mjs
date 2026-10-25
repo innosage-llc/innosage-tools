@@ -15,14 +15,14 @@ const {VisualRemixTransport,VisualRemixController,LocalAssets,emptyScene,UNTIL_R
 const waitFor=async(check)=>{for(let i=0;i<150;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}assert.ok(check(),'condition did not complete');};
 const response=x=>Response.json(x);
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
-async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false,slowUpload=false,until=false,controlStore:providedStore,failSave=false,invalidUntilConfirmation=false}={}){
- let savedControl=null,cacheEpoch=0;
+async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false,slowUpload=false,until=false,controlStore:providedStore,failSave=false,invalidUntilConfirmation=false,slowRevoke=false}={}){
+ let savedControl=null,cacheEpoch=0,createCount=0;
  const controlStore=providedStore??{read:async()=>savedControl&&structuredClone(savedControl),save:async control=>{if(failSave)throw new Error('storage unavailable');savedControl=structuredClone(control);},clear:async()=>{savedControl=null;}};
  let renders=0,renderGate=null,command=null,cancel=[],connected=paired,revokeFailures=failRevoke?2:0;
  const calls=[],states=[];
  const controller=new VisualRemixController(async()=>{renders++;if(renderGate)await renderGate.promise;return{png:new Blob(['local-png']),diagnostics:[]};});
  await controller.open('fixture',0,emptyScene(),new LocalAssets());
- const source=controller.snapshot(),gate=deferred(),pollGate=deferred(),uploadGate=deferred();
+ const source=controller.snapshot(),gate=deferred(),pollGate=deferred(),uploadGate=deferred(),revokeGate=deferred();
  const owner={purpose:'visual-remix',shareId:'synthetic-share',projectId:source.projectId,generation:source.generation,epoch:1,credential:'a'.repeat(64)};
  const issuedAt=Date.now();
  const share={auth:owner,proof:'b'.repeat(64),expiresAt:until?null:issuedAt+1800000,proofExpiresAt:issuedAt+300000,...(until?{issuedAt,lifetime:'until-revoked'}:{})};if(invalidUntilConfirmation)share.issuedAt=0;
@@ -30,17 +30,17 @@ async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respect
   const body=JSON.parse(init.body);calls.push({path,body});
   if(path.endsWith('/create')){
    if(slowCreate)await (respectCreateAbort?Promise.race([gate.promise,new Promise((_,reject)=>init.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true}))]):gate.promise);
-   return response(share);
+   createCount++;return response(until&&createCount>1?{...share,auth:{...owner,shareId:'synthetic-share-'+createCount}}:share);
   }
   if(path.endsWith('/sync'))return response({ok:true,...(until?{cacheEpoch}:{})});
   if(path.endsWith('/poll')){if(pollStatus)return new Response('private token must never be reflected',{status:pollStatus,headers:{'X-Visual-Remix-Request-Id':'12345678-1234-1234-1234-123456789abc','X-Visual-Remix-Version':'0.1.6','X-Visual-Remix-Revision':'a'.repeat(40)}});const result={command,cancellations:cancel,connected,...(until?{cacheEpoch}:{})};command=null;if(slowPoll)await pollGate.promise;return response(result);}
   if(path.endsWith('/report'))return response({ok:true});
   if(path.endsWith('/reference')){if(slowUpload)await uploadGate.promise;return response({ok:true});}
-  if(path.endsWith('/revoke')){if(revokeFailures-->0)return new Response('Uncertain',{status:503});return response({ok:true});}
+  if(path.endsWith('/revoke')){if(slowRevoke)await revokeGate.promise;if(revokeFailures-->0)return new Response('Uncertain',{status:503});return response({ok:true});}
   throw new Error('Unknown path');
  },clientNow,{untilRevoked:until,controlStore});
  if(until)await transport.restoreControl();
- return{controller,transport,calls,states,controlStore,get savedControl(){return savedControl;},bumpCache:()=>{cacheEpoch++;},gate,pollGate,uploadGate,share,setPaired:c=>connected=c,setCommand:c=>command=c,setCancel:c=>cancel=c,setRenderGate:g=>renderGate=g,connect:async()=>{await transport.connect(true,undefined,undefined,until?UNTIL_REVOKED_CONSENT:undefined);await waitFor(()=>calls.some(c=>c.path.endsWith('/poll')));},get renders(){return renders;}};
+ return{controller,transport,calls,states,controlStore,get savedControl(){return savedControl;},bumpCache:()=>{cacheEpoch++;},revokeGate,gate,pollGate,uploadGate,share,setPaired:c=>connected=c,setCommand:c=>command=c,setCancel:c=>cancel=c,setRenderGate:g=>renderGate=g,connect:async()=>{await transport.connect(true,undefined,undefined,until?UNTIL_REVOKED_CONSENT:undefined);await waitFor(()=>calls.some(c=>c.path.endsWith('/poll')));},get renders(){return renders;}};
 }
 const proposal=(f,id='request')=>{const s=f.controller.snapshot();return{schemaVersion:1,projectId:s.projectId,generation:s.generation,baseRevision:s.revision,requestId:id,explanation:'Synthetic edit',scene:{...s.scene,background:'#123456'}};};
 const preparedReference=()=>({consent:{confirmed:true,reuseCrops:true,manifest:{version:1,sourceSHA256:'c'.repeat(64),sourceWidth:10,sourceHeight:10,sha256:'d'.repeat(64),width:10,height:10,mime:'image/png',bytes:3}},source:new Blob(['original-local-only']),data:'YWJj'});
@@ -393,5 +393,29 @@ test('local record deletion failure retains the revoke handle until a repeated a
  const f=await fixture({until:true,paired:true,controlStore:store});try{
   await f.connect();await f.transport.disconnect();assert.ok(record);assert.equal(f.transport.snapshot().canDisconnect,true);assert.equal(f.transport.snapshot().revocationConfirmed,undefined);
   await f.transport.disconnect();assert.equal(record,null);assert.equal(f.transport.snapshot().revocationConfirmed,true);assert.equal(f.calls.filter(c=>c.path.endsWith('/revoke')).length,2);
+ }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+});
+
+
+test('delayed double Disconnect is single-flight and cannot clear the next grant control record',async()=>{
+ const f=await fixture({until:true,paired:true,slowRevoke:true});try{
+  await f.connect();const first=f.transport.disconnect(),second=f.transport.disconnect();assert.equal(first,second);
+  await waitFor(()=>f.calls.some(c=>c.path.endsWith('/revoke')));assert.equal(f.calls.filter(c=>c.path.endsWith('/revoke')).length,1);
+  await assert.rejects(f.transport.connect(true,undefined,undefined,UNTIL_REVOKED_CONSENT),/NOT_CONFIRMED/);
+  f.revokeGate.resolve();await first;
+  await f.transport.connect(true,undefined,undefined,UNTIL_REVOKED_CONSENT);await waitFor(()=>f.transport.snapshot().phase==='connected');
+  const current=structuredClone(f.savedControl);assert.equal(current.auth.shareId,'synthetic-share-2');await second;await new Promise(r=>setTimeout(r,20));
+  assert.deepEqual(f.savedControl,current);assert.equal(f.transport.snapshot().phase,'connected');assert.equal(f.calls.filter(c=>c.path.endsWith('/revoke')).length,1);
+ }finally{f.revokeGate.resolve();await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+});
+
+
+test('suspended preview reports cancellation when cache epoch is unchanged, then permits the next proposal',async()=>{
+ let now=Date.now();const f=await fixture({until:true,paired:true,clientNow:()=>now});try{
+  await f.connect();await waitFor(()=>f.transport.snapshot().phase==='connected');const old=proposal(f,'suspended-preview');f.setCommand(old);f.transport.refresh();await waitFor(()=>f.controller.snapshot().preview?.requestId===old.requestId);
+  now+=1800001;f.transport.refresh();await waitFor(()=>f.calls.some(c=>c.path.endsWith('/report')&&c.body.requestId===old.requestId&&c.body.state==='canceled'));
+  assert.equal(f.controller.snapshot().preview,null);assert.equal(f.controller.status(old.requestId),'canceled');
+  const next=proposal(f,'after-suspend');f.setCommand(next);f.transport.refresh();await waitFor(()=>f.controller.snapshot().preview?.requestId===next.requestId);assert.equal(f.controller.apply(next.requestId),'applied');
+  assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);assert.equal(f.calls.filter(c=>c.path.endsWith('/revoke')).length,0);
  }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
 });
