@@ -123,7 +123,9 @@ function updateControlsDisabled() {
 }
 
 function finishOperation(errorMsg) {
-  if (!activeOperation) return;
+  // Later view/auth notifications may repeat the terminal backend operation.
+  // Freeze its first completion; re-finishing would keep growing wall time.
+  if (!activeOperation || (!activeOperation.pending && !activeOperation.uiPending)) return;
   stopOperationTimer();
   activeOperation.pending = false;
   activeOperation.uiPending = false;
