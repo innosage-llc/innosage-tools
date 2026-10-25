@@ -21,3 +21,9 @@ catalog initialization and awaits prior lock disposal. Focused Chrome regression
 with delayed IndexedDB reads and four overlapping size switches; a second tab is
 correctly refused. All three UI resolutions expose archived complete originals;
 1280px layout has no horizontal overflow. Final full browser replay pending.
+Independent source re-review PASS at d975851 after race repair. Final full Chrome
+replay PASS; all six runtime hashes match focused evidence and current files.
+Final 20-sample p50 small/large 16.7/16.3ms, max 30.7/37.6ms. 10s simulations
+10.05–10.08s; 45s 45.045–45.047s. Earlier outliers remain disclosed in manifest.
+Decision: bounded engineering GO after exact-head submission gate; human NOT_RUN,
+satisfaction UNKNOWN, production/integration not authorized. Draft submission pending.

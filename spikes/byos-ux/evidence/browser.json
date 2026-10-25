@@ -1,6 +1,13 @@
 {
   "status": "PASS",
-  "source": "working candidate; exact hashes in acceptance manifest",
+  "sourceHashes": {
+    "app.mjs": "3189830e3407efdb2e2851d0eb982488bf8553850dc29b1bef38b1b825dd6708",
+    "model.mjs": "b2770523cd8a166776d0872b5a889bfcb194d7f347fd469b3be28157cef0e315",
+    "storage.mjs": "c6d9d028309462c2f8111b169e371d60e42a4207234b8e908d6df6b9cfc822bb",
+    "index.html": "02b5cf6032578a014a223099193e727a961258fc4d0384cb8ca64e7c7d4199c3",
+    "styles.css": "bb916a1c3e79293f3db78ac031d60b1b5a8ae41c5949bd661d91c9cef1a5e31b",
+    "server.mjs": "36fa5338ec416917b6df629c0e26bf59ed211b9092d1341ad2b578ab36be1333"
+  },
   "fixtureSizes": [
     12,
     10000
@@ -11,26 +18,26 @@
       "bodyCharacters": 4096,
       "timingMethod": "20 sequential Playwright fill → matching edit durable ACK, browser performance.now; real wall clock, not fake clock",
       "samplesMs": [
-        38.89999985694885,
-        21.700000047683716,
-        21.700000047683716,
-        27.299999952316284,
-        21.799999952316284,
-        15.5,
-        17.09999990463257,
-        14.699999809265137,
-        28.299999952316284,
-        21.200000047683716,
-        15.800000190734863,
+        21.40000009536743,
+        30.700000047683716,
+        10.699999809265137,
+        23.5,
+        7.599999904632568,
+        23.699999809265137,
+        9,
+        24.09999990463257,
+        8.5,
         16.5,
-        16,
-        15.399999856948853,
+        16.09999990463257,
+        16.799999952316284,
+        15.700000047683716,
         16.90000009536743,
         16,
+        16.700000047683716,
+        16.100000143051147,
         16.799999952316284,
-        16.09999990463257,
-        15,
-        17.59999990463257
+        16.899999856948853,
+        16.09999990463257
       ],
       "metrics": {
         "bodyReads": 0,
@@ -46,13 +53,13 @@
       "realTimeOperations": [
         {
           "labelMs": 10000,
-          "observedWallMs": 10059.039166999999,
+          "observedWallMs": 10052.731709,
           "clock": "REAL",
           "provider": "SIMULATION"
         },
         {
           "labelMs": 45000,
-          "observedWallMs": 45047.74325,
+          "observedWallMs": 45047.013166,
           "clock": "REAL",
           "provider": "SIMULATION"
         }
@@ -67,34 +74,34 @@
         "conflict typing retained + Keep local",
         "local persistence failure no ACK"
       ],
-      "typingP50Ms": 16.90000009536743,
-      "typingMaxMs": 38.89999985694885
+      "typingP50Ms": 16.700000047683716,
+      "typingMaxMs": 30.700000047683716
     },
     {
       "size": 10000,
       "bodyCharacters": 4096,
       "timingMethod": "20 sequential Playwright fill → matching edit durable ACK, browser performance.now; real wall clock, not fake clock",
       "samplesMs": [
-        37.30000019073486,
-        22.100000143051147,
-        27.399999856948853,
-        38.60000014305115,
-        14.700000047683716,
-        17.200000047683716,
-        28.5,
-        20.600000143051147,
-        14.799999952316284,
-        18.299999952316284,
-        14.200000047683716,
-        17.5,
-        16.299999952316284,
+        9.799999952316284,
+        37.60000014305115,
+        11.299999952316284,
+        22.09999990463257,
+        10.299999952316284,
+        16.5,
+        16,
+        21.299999952316284,
+        11.200000047683716,
+        16.5,
+        15.700000047683716,
         16.800000190734863,
-        16.5,
-        16.5,
-        15,
-        17,
-        15.800000190734863,
-        16.799999952316284
+        16.299999952316284,
+        16.59999990463257,
+        14.800000190734863,
+        17.40000009536743,
+        16.09999990463257,
+        16.299999952316284,
+        16,
+        16.90000009536743
       ],
       "metrics": {
         "bodyReads": 0,
@@ -110,13 +117,13 @@
       "realTimeOperations": [
         {
           "labelMs": 10000,
-          "observedWallMs": 10050.426666,
+          "observedWallMs": 10078.980791,
           "clock": "REAL",
           "provider": "SIMULATION"
         },
         {
           "labelMs": 45000,
-          "observedWallMs": 45045.76025,
+          "observedWallMs": 45045.181958,
           "clock": "REAL",
           "provider": "SIMULATION"
         }
@@ -131,8 +138,8 @@
         "conflict typing retained + Keep local",
         "local persistence failure no ACK"
       ],
-      "typingP50Ms": 17,
-      "typingMaxMs": 38.60000014305115
+      "typingP50Ms": 16.299999952316284,
+      "typingMaxMs": 37.60000014305115
     }
   ],
   "externalRequests": [],

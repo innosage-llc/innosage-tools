@@ -46,6 +46,7 @@ Verification:
 - `npm run test:byos-ux:browser`: installed Chrome, actual IndexedDB, process close /
   reopen, real 10s/45s timers, bounded typing observations, screenshots; no external
   requests allowed. Requires root `npm ci` and local browser execution permission.
+- `npm run test:byos-ux:focused`: delayed overlapping catalog initialization, single-writer refusal, all three browser conflict choices and archive visibility.
 - `bash scripts/gatekeeper.sh`: native owning repository checks; never runs live Drive.
 
 See `evidence/` and `ACCEPTANCE.md` for exact outcomes, limitations and revision.

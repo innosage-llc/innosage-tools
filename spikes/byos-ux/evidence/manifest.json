@@ -1,0 +1,104 @@
+{
+  "issue": "https://github.com/innosage-llc/innosage-tools/issues/136",
+  "criteria": "frozen v1 U1-U8",
+  "sourceReviewedSha": "d975851e3a735f81ed781935b95b8c20a56da403",
+  "baseSha": "8e684260b1b644c1f2877472222ad64e24cf6ab5",
+  "runtimeHashes": {
+    "app.mjs": "3189830e3407efdb2e2851d0eb982488bf8553850dc29b1bef38b1b825dd6708",
+    "model.mjs": "b2770523cd8a166776d0872b5a889bfcb194d7f347fd469b3be28157cef0e315",
+    "storage.mjs": "c6d9d028309462c2f8111b169e371d60e42a4207234b8e908d6df6b9cfc822bb",
+    "index.html": "02b5cf6032578a014a223099193e727a961258fc4d0384cb8ca64e7c7d4199c3",
+    "styles.css": "bb916a1c3e79293f3db78ac031d60b1b5a8ae41c5949bd661d91c9cef1a5e31b",
+    "server.mjs": "36fa5338ec416917b6df629c0e26bf59ed211b9092d1341ad2b578ab36be1333"
+  },
+  "delivery": "draft PR; not integrated or deployed",
+  "integratedSha": null,
+  "deployedIdentity": null,
+  "engineeringDecision": "GO for bounded design evaluation after exact-head native gate receipt; no product/live-sync permission",
+  "humanUsability": "NOT_RUN",
+  "satisfaction": "UNKNOWN",
+  "sourceReview": "PASS independent read-only; evidence/review.md",
+  "checks": [
+    {
+      "command": "node --test spikes/byos-ux/model.test.mjs",
+      "exit": 0,
+      "result": "15 PASS; FAKE_CLOCK"
+    },
+    {
+      "command": "node spikes/byos-ux/browser.mjs",
+      "exit": 0,
+      "result": "PASS; actual Chrome process restart; REAL_CLOCK simulated waits"
+    },
+    {
+      "command": "node spikes/byos-ux/focused-browser.mjs",
+      "exit": 0,
+      "result": "PASS delayed catalog race + actual UI resolutions"
+    },
+    {
+      "command": "bash scripts/gatekeeper.sh",
+      "precursorExit": 0,
+      "exactFinalHeadReceipt": "Required in final PR/issue acceptance comment; do not infer PASS from precursor"
+    }
+  ],
+  "externalRequests": 0,
+  "preview": "npm run spike:byos-ux \u2192 http://127.0.0.1:4136",
+  "fixtureSizes": [
+    12,
+    10000
+  ],
+  "timings": [
+    {
+      "size": 12,
+      "p50Ms": 16.700000047683716,
+      "maxMs": 30.700000047683716,
+      "realTimeSimulatedOperations": [
+        {
+          "labelMs": 10000,
+          "observedWallMs": 10052.731709,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        },
+        {
+          "labelMs": 45000,
+          "observedWallMs": 45047.013166,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        }
+      ]
+    },
+    {
+      "size": 10000,
+      "p50Ms": 16.299999952316284,
+      "maxMs": 37.60000014305115,
+      "realTimeSimulatedOperations": [
+        {
+          "labelMs": 10000,
+          "observedWallMs": 10078.980791,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        },
+        {
+          "labelMs": 45000,
+          "observedWallMs": 45045.181958,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "No humans tested this",
+    "No Drive performance claim",
+    "No target SLO agreed; 20 automation samples per catalog, concurrent local contexts",
+    "Initial precursor maxima 343.8ms small / 189.9ms large remain observations at ce8a944, not erased by faster repeat",
+    "Browser eviction is not backup",
+    "Logical simulator cancellation does not prove physical remote cancellation",
+    "Active conflict-history serialization grows with local history"
+  ],
+  "remainingAcceptance": [
+    "Founder design evaluation",
+    "Separate product integration/sync feasibility decision",
+    "#102/#113 real product acceptance remains open"
+  ],
+  "remoteCI": "No new remote CI configured or dispatched; platform-required checks retained"
+}

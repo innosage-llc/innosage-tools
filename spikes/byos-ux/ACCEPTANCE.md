@@ -1,6 +1,6 @@
 # Acceptance candidate — issue #136 frozen v1
 
-Engineering verdict PENDING checks/review. Human usability NOT_RUN; satisfaction UNKNOWN.
+Engineering source verdict **GO for bounded design evaluation**. Final draft verification requires the exact-head native-gate receipt on the PR/issue; source review alone is not gate completion. Human usability NOT_RUN; satisfaction UNKNOWN.
 No source is integrated or deployed by this draft deliverable. #102/#113 remain open.
 
 | Criterion | Current evidence |
@@ -11,8 +11,8 @@ No source is integrated or deployed by this draft deliverable. #102/#113 remain 
 | U4 | immutable edit identity; old receipt cannot confirm new edit; full conflict sources/history; cloud/local/merge tests |
 | U5 | explicit handoff, matching identity and full body; second-device view only confirmed content; new edit invalidation |
 | U6 | browser script records 20 × 4096-character fills/ACKs per size under identical never-completing operation; real clock |
-| U7 | deterministic.tap; browser.json/screenshots; independent review + native gate results to be finalized |
-| U8 | final decision, exact hashes/SHA and remaining risks to be finalized after review |
+| U7 | `evidence/deterministic.tap`: 15 PASS; `browser.json` + `focused-browser.json`: PASS with matching runtime hashes; screenshots; independent source review PASS at d975851. Final exact-head native gate receipt belongs to PR/issue acceptance comment. |
+| U8 | GO only for bounded design evaluation; `evidence/manifest.json` binds reviewed source SHA, all six runtime hashes, methods, limits and remaining acceptance. Human usability NOT_RUN / satisfaction UNKNOWN. |
 
 The fake-clock matrix runs both sizes, both 10s/45s ordinary edit/switch and older
 completion, fairness/inactive progress, handoff completion/re-edit; never-completing,
@@ -36,3 +36,9 @@ history; automation sample size is bounded and no target SLO was agreed.
 3. Inject conflict while typing; inspect complete bodies; Keep local or Merge
    manually. Expect no automatic text replacement. Prepare handoff, then edit again:
    handoff returns to incomplete. Report page, edit IDs, scenario and expected/actual.
+
+## Bounded observations and decision
+
+Final real-clock replay: small/large fill-to-ACK p50 16.7/16.3 ms, maxima 30.7/37.6 ms; 20 sequential 4096-character automation samples per catalog under one never-completing simulated operation. Initial precursor maxima were 343.8/189.9 ms (ce8a944); faster repeats do not erase these outliers or prove a product SLO. Final 10-second simulations observed 10.05–10.08 seconds; 45-second simulations 45.045–45.047 seconds. No external requests or browser page errors were observed. No pure Drive latency or human-comprehension claim follows.
+
+The candidate is useful for inspecting truthful states and intentional handoff. Product integration, background sync and real-provider feasibility remain HOLD for a separate scope decision; this spike creates no such authority. Smallest next step is the three Founder journeys above with the draft kept isolated. #102/#113 and Founder acceptance remain open.

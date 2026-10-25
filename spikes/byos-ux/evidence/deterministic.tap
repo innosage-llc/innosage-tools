@@ -1,96 +1,96 @@
-(node:62062) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:63327) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 TAP version 13
-# (node:62063) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (node:63328) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: 12 pages / 10000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
 ok 1 - 12 pages / 10000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
   ---
-  duration_ms: 1.684208
+  duration_ms: 1.750167
   type: 'test'
   ...
 # Subtest: 12 pages / 45000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
 ok 2 - 12 pages / 45000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
   ---
-  duration_ms: 0.499333
+  duration_ms: 0.502333
   type: 'test'
   ...
 # Subtest: 12 pages: never, cancel, late completion, offline/auth recovery and pending reopen
 ok 3 - 12 pages: never, cancel, late completion, offline/auth recovery and pending reopen
   ---
-  duration_ms: 0.41275
+  duration_ms: 0.39725
   type: 'test'
   ...
 # Subtest: 12 pages: conflict while typing / cloud preserves both originals
 ok 4 - 12 pages: conflict while typing / cloud preserves both originals
   ---
-  duration_ms: 0.510041
+  duration_ms: 0.494667
   type: 'test'
   ...
 # Subtest: 12 pages: conflict while typing / local preserves both originals
 ok 5 - 12 pages: conflict while typing / local preserves both originals
   ---
-  duration_ms: 0.314042
+  duration_ms: 0.30975
   type: 'test'
   ...
 # Subtest: 12 pages: conflict while typing / merge preserves both originals
 ok 6 - 12 pages: conflict while typing / merge preserves both originals
   ---
-  duration_ms: 0.970625
+  duration_ms: 0.905208
   type: 'test'
   ...
 # Subtest: 10000 pages / 10000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
 ok 7 - 10000 pages / 10000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
   ---
-  duration_ms: 1.706875
+  duration_ms: 2.0215
   type: 'test'
   ...
 # Subtest: 10000 pages / 45000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
 ok 8 - 10000 pages / 45000ms fake clock: coalesce, one flight, FIFO fairness, handoff invalidation
   ---
-  duration_ms: 1.443083
+  duration_ms: 1.310709
   type: 'test'
   ...
 # Subtest: 10000 pages: never, cancel, late completion, offline/auth recovery and pending reopen
 ok 9 - 10000 pages: never, cancel, late completion, offline/auth recovery and pending reopen
   ---
-  duration_ms: 0.986583
+  duration_ms: 0.9245
   type: 'test'
   ...
 # Subtest: 10000 pages: conflict while typing / cloud preserves both originals
 ok 10 - 10000 pages: conflict while typing / cloud preserves both originals
   ---
-  duration_ms: 1.406791
+  duration_ms: 1.17525
   type: 'test'
   ...
 # Subtest: 10000 pages: conflict while typing / local preserves both originals
 ok 11 - 10000 pages: conflict while typing / local preserves both originals
   ---
-  duration_ms: 1.46625
+  duration_ms: 1.406125
   type: 'test'
   ...
 # Subtest: 10000 pages: conflict while typing / merge preserves both originals
 ok 12 - 10000 pages: conflict while typing / merge preserves both originals
   ---
-  duration_ms: 0.77575
+  duration_ms: 0.942208
   type: 'test'
   ...
 # Subtest: local ACK waits for commit; failed commit has no ACK or transport
 ok 13 - local ACK waits for commit; failed commit has no ACK or transport
   ---
-  duration_ms: 0.422917
+  duration_ms: 0.576875
   type: 'test'
   ...
 # Subtest: cancel after old completion starts cannot race durable receipt; newer edit survives
 ok 14 - cancel after old completion starts cannot race durable receipt; newer edit survives
   ---
-  duration_ms: 0.18925
+  duration_ms: 0.205583
   type: 'test'
   ...
 # Subtest: repeated conflict injection retains earlier complete conflict bodies
 ok 15 - repeated conflict injection retains earlier complete conflict bodies
   ---
-  duration_ms: 0.105083
+  duration_ms: 0.104583
   type: 'test'
   ...
 1..15
@@ -101,4 +101,4 @@ ok 15 - repeated conflict injection retains earlier complete conflict bodies
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 70.495
+# duration_ms 72.871625
