@@ -142,10 +142,11 @@ IndexedDB fixture run `node scripts/prepare-byos.mjs` and
 `node spikes/byos-sync/real-drive/mock-browser.mjs`. This is CLI-driven offline
 Chromium with intercepted Google calls, not real Google qualification.
 
-The real transport correlates v2 media bytes to an explicit revision between two
-fresh metadata reads before exposing the file's JSON ETag to native CAS. Empty
-bootstrap requires actual zero bytes and stable zero-size metadata. Conditional
-PUT and 412 handling are unchanged; missing metadata or drift fails closed.
+The real transport binds v2 media bytes to an explicit revision from one File
+metadata snapshot, returning that snapshot's ORIGINAL strong file ETag to native
+CAS. Empty bootstrap requires actual zero bytes matching zero-size metadata.
+Later changes are handled by native conditional PUT/412; unsupported metadata,
+wrong size/revision or failed downloads fail closed, with no fallback or retry.
 See the [compatibility evidence](../sessions/20261025-tools-113-real-drive/media-validator.md).
 
 If Google rejects an automation-controlled login, stop that flow. A human may use
@@ -176,11 +177,11 @@ retain honest real-provider coverage gaps.
 - No unattended sync, Shared Drives, production readiness, historical repair or
   Full Check claim. Original #102/#107/#109/#111 failures remain unchanged.
 
-### Non-content metadata version changes
+### Snapshot consistency and conditional writes
 
-For a nonempty explicitly pinned revision, the bridge accepts a version increase
-only while strong file ETag, head revision, size and MIME remain unchanged. Drive
-versions include invisible server changes; version alone is not a content oracle.
-Decreases and all content/CAS identity drift still reject. Empty bootstrap keeps
-exact version equality. No extra requests, retries or conditional-write changes.
-See [observed failure and assumption correction](../sessions/20261025-tools-113-real-drive/noncontent-version.md).
+Read metadata E1/R1, download exactly R1, return E1 unchanged. A later update may
+make that snapshot stale; the next native If-Match:E1 handles it with412. No
+AFTER freshness reread, read retry or later-validator substitution. Headless
+zero-size snapshots must download actual empty bytes. Same-origin local stores
+remain intact across code reload, while memory-only access tokens need normal
+reauthorization. See [actual evidence and corrected read contract](../sessions/20261025-tools-113-real-drive/snapshot-read.md).

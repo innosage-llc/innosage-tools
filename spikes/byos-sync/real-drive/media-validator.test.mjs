@@ -1,66 +1,63 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {errorSummary} from './diagnostics.mjs';
 import {API,authorize,forget,begin,driveFetch,evidence} from './transport.mjs';
-const path='/drive/v2/files/synthetic-file';
-const media=API+path+'?alt=media';
-const meta=()=>({id:'synthetic-file',etag:'"file-1"',version:'9007199254740993',headRevisionId:'revision-1',fileSize:'7',mimeType:'application/json'});
-async function fixture(work,{change,body='{"x":1}',missing,weak=false,empty=false,mediaStatus=200,zeroAlias=false}={}){
- const original=globalThis.fetch,calls=[];let reads=0;
- globalThis.fetch=async(u,opts)=>{const url=new URL(u);calls.push({url,opts});
-  if(opts.method==='PUT')return new Response('',{status:412});
-  if(url.searchParams.get('alt')==='media')return new Response(body,{status:mediaStatus,headers:{'Content-Type':'application/json',Date:'Sun, 25 Oct 2026 05:00:00 GMT'}});
-  const m=meta();if(zeroAlias)m.fileSize='00';if(empty){m.fileSize='0';delete m.headRevisionId;}if(missing)delete m[missing];if(weak)m.etag='W/"weak"';if(++reads===2&&change)change(m);
-  return Response.json(m,{headers:{ETag:m.etag??'"header-only"',Date:'Sun, 25 Oct 2026 05:00:00 GMT'}});
+import {fillFileIfEtagMatches} from '../node_modules/rxdb/dist/esm/plugins/replication-google-drive/google-drive-helper.js';
+const path='/drive/v2/files/synthetic-file',media=API+path+'?alt=media';
+const initial=()=>({id:'synthetic-file',etag:'"validator-private-1"',version:'9007199254740993',headRevisionId:'revision-1',fileSize:'7',mimeType:'application/json'});
+async function fixture(work,{metadata={},body='{"x":1}',changeDuringMedia=false,mediaStatus=200,actualBody,metadataStatus=200}={}){
+ const original=globalThis.fetch,calls=[],first={...initial(),...metadata};
+ const state={meta:{...first},body};let mediaCount=0;
+ globalThis.fetch=async(u,opts={})=>{
+  const url=new URL(u),headers=new Headers(opts.headers);calls.push({url,opts,headers});
+  if(opts.method==='PUT'){
+   assert.equal(headers.get('If-Match'),'"validator-private-1"');
+   return new Response('',{status:headers.get('If-Match')===state.meta.etag?200:412});
+  }
+  if(url.searchParams.get('alt')==='media'){
+   if(++mediaCount===1&&changeDuringMedia){state.meta={...state.meta,etag:'"validator-private-2"',version:'9007199254740994',headRevisionId:'revision-2'};state.body='{"x":2}';}
+   const pinned=url.searchParams.get('revisionId');
+   const bytes=actualBody??(pinned===first.headRevisionId?body:state.body);
+   return new Response(bytes,{status:mediaStatus,headers:{'Content-Type':'application/json',Date:'Sun, 25 Oct 2026 05:00:00 GMT',...(!pinned?{ETag:state.meta.etag}:{})}});
+  }
+  return Response.json(state.meta,{status:metadataStatus,headers:{ETag:state.meta.etag??'"http-only"'}});
  };
- authorize('SYNTHETIC_SECRET',60);begin();try{await work(calls);}finally{globalThis.fetch=original;forget();}
+ authorize('SYNTHETIC_SECRET',60);begin();
+ try{await work(calls,state);}finally{globalThis.fetch=original;forget();}
 }
-test('media bytes without ETag are correlated to a stable file version and explicit revision',async()=>{
- await fixture(async calls=>{const r=await driveFetch(media);assert.equal(r.headers.get('etag'),'"file-1"');assert.equal(await r.text(),'{"x":1}');assert.equal(r.headers.get('date'),'Sun, 25 Oct 2026 05:00:00 GMT');assert.equal(calls.length,3);assert.equal(calls[1].url.searchParams.get('revisionId'),'revision-1');assert(calls.every(c=>c.opts.cache==='no-store'));assert(calls.every(c=>c.opts.headers.get('Authorization')==='Bearer SYNTHETIC_SECRET'));assert.doesNotMatch(JSON.stringify(evidence()),/SYNTHETIC_SECRET|synthetic-file|revision-1/);});
+test('one metadata snapshot binds pinned bytes to original strong ETag with no after-read request',async()=>{
+ await fixture(async calls=>{
+  const r=await driveFetch(media);assert.equal(await r.text(),'{"x":1}');assert.equal(r.headers.get('etag'),'"validator-private-1"');
+  assert.equal(calls.length,2);assert.equal(calls[1].url.searchParams.get('revisionId'),'revision-1');
+  assert(calls.every(c=>c.opts.cache==='no-store'));assert(calls.every(c=>c.headers.get('Authorization')==='Bearer SYNTHETIC_SECRET'));
+  assert.doesNotMatch(JSON.stringify(evidence()),/SYNTHETIC_SECRET|synthetic-file|revision-1|validator-private/);
+ });
 });
-test('concurrent write during the read rejects instead of attaching a later ETag to old bytes',async()=>{
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{change:m=>{m.version='9007199254740994';m.etag='"file-2"';m.headRevisionId='revision-2';}});
+test('concurrent mutation after metadata preserves old pinned snapshot and native stale PUT still returns412',async()=>{
+ await fixture(async(calls,state)=>{
+  const r=await driveFetch(media);assert.equal(await r.text(),'{"x":1}');assert.equal(r.headers.get('etag'),'"validator-private-1"');assert.equal(calls.length,2);
+  assert.equal(state.meta.etag,'"validator-private-2"');assert.equal(state.body,'{"x":2}');
+  const write=await fillFileIfEtagMatches({apiEndpoint:API,authToken:'NATIVE_ONLY'},'synthetic-file',r.headers.get('etag'),{x:3});
+  assert.equal(write.status,412);assert.equal(state.body,'{"x":2}');assert.equal(calls.filter(c=>c.opts.method==='PUT').length,1);assert.equal(calls.length,4);
+ },{changeDuringMedia:true});
 });
-test('restored content and ETag cannot hide a different pinned head revision',async()=>{
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{change:m=>{m.version='9007199254740994';m.headRevisionId='revision-2';}});
+test('actual empty bytes uniquely identify a headless bootstrap snapshot; no later validator is substituted',async()=>{
+ for(const fileSize of ['0','00'])await fixture(async calls=>{
+  const r=await driveFetch(media);assert.equal(await r.text(),'');assert.equal(r.headers.get('etag'),'"validator-private-1"');assert.equal(calls.length,2);
+ },{metadata:{fileSize,headRevisionId:undefined},body:''});
 });
-test('missing identity/version/revision or weak file validator fails closed',async()=>{
- for(const missing of ['id','etag','version','headRevisionId','fileSize'])await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_METADATA_UNSUPPORTED/),{missing});
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_METADATA_UNSUPPORTED/),{weak:true});
+test('headless empty metadata followed by a nonempty download rejects rather than mixing snapshots',async()=>{
+ await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_SIZE_MISMATCH/),{metadata:{fileSize:'0',headRevisionId:undefined},body:'',changeDuringMedia:true});
 });
-test('native zero-byte bootstrap requires two matching metadata samples and actual zero bytes',async()=>{
- await fixture(async calls=>{const r=await driveFetch(media);assert.equal(await r.text(),'');assert.equal(r.headers.get('etag'),'"file-1"');assert.equal(calls.length,3);},{empty:true,body:''});
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_SIZE_MISMATCH/),{empty:true});
+test('missing or malformed identity, strong validator, size, version, MIME or required revision rejects',async()=>{
+ for(const metadata of [{id:'wrong'},{etag:undefined},{etag:'W/"weak"'},{fileSize:'invalid'},{fileSize:undefined},{version:undefined},{mimeType:'text/plain'},{headRevisionId:undefined}])
+  await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_METADATA_UNSUPPORTED/),{metadata});
 });
-test('a competing write AFTER the final metadata read still gets native 412; never replace validator',async()=>{
- await fixture(async calls=>{const r=await driveFetch(media);const response=await driveFetch(API+'/upload/drive/v2/files/synthetic-file?uploadType=media',{method:'PUT',headers:{'If-Match':r.headers.get('etag')},body:'{"x":2}'});assert.equal(response.status,412);assert.equal(calls.length,4);assert.equal(calls[3].opts.headers.get('If-Match'),'"file-1"');});
+test('unmatched caller revision and ranges reject before downloading bytes',async()=>{
+ await fixture(async calls=>{await assert.rejects(driveFetch(media+'&revisionId=other'),/MEDIA_REVISION_NOT_CURRENT/);assert.equal(calls.length,1);});
+ await fixture(async calls=>{await assert.rejects(driveFetch(media,{headers:{Range:'bytes=0-1'}}),/MEDIA_RANGE_UNSUPPORTED/);assert.equal(calls.length,0);});
 });
-test('failed revision download stays failed, with no metadata substitution or write',async()=>{
+test('wrong byte length rejects, failed pinned download remains failed with no current-body fallback',async()=>{
+ await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_SIZE_MISMATCH/),{actualBody:'wrong'});
  await fixture(async calls=>{const r=await driveFetch(media);assert.equal(r.status,404);assert.equal(calls.length,2);},{mediaStatus:404});
-});
-
-test('drift evidence identifies only changed fields and ordering, with no metadata values',async()=>{
- await fixture(()=>assert.rejects(driveFetch(media),error=>{
-  const summary=errorSummary(error);assert.equal(summary.code,'MEDIA_VERSION_CHANGED');
-  assert.deepEqual(summary.mediaDrift,{etag:true,version:true,headRevisionId:false,fileSize:false,mimeType:false,versionOrder:'greater',role:'other'});
-  assert.doesNotMatch(JSON.stringify(summary),/900719925|file-1|revision-1|synthetic-file/);return true;
- }),{change:m=>{m.version='9007199254740994';m.etag='"file-2"';}});
-});
-
-test('documented non-content version increase does not reject unchanged pinned bytes and file validator',async()=>{
- await fixture(async calls=>{const r=await driveFetch(media);assert.equal(await r.text(),'{"x":1}');assert.equal(r.headers.get('etag'),'"file-1"');assert.equal(calls.length,3);},{change:m=>{m.version='9007199254740994';}});
-});
-test('version decrease remains unsupported even with matching content identity',async()=>{
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{change:m=>{m.version='9007199254740992';}});
-});
-test('same size does not hide changed validator or revision even if version is unchanged',async()=>{
- for(const change of [m=>{m.etag='"file-2"';},m=>{m.headRevisionId='revision-2';},m=>{m.fileSize='8';},m=>{m.mimeType='text/plain';}])
-  await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED|MEDIA_METADATA_UNSUPPORTED/),{change});
-});
-test('zero-byte bootstrap cannot waive a version increase without a pinned content revision',async()=>{
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{empty:true,body:'',change:m=>{m.version='9007199254740994';}});
-});
-
-test('actual zero bytes with noncanonical decimal size and a revision still require exact version',async()=>{
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{zeroAlias:true,body:'',change:m=>{m.version='9007199254740994';}});
+ await fixture(async calls=>{const r=await driveFetch(media);assert.equal(r.status,503);assert.equal(calls.length,1);},{metadataStatus:503});
 });
