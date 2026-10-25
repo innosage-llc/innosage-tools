@@ -79,3 +79,43 @@ and consented existing grants. Reverting to the old binary interprets sentinel0
 as expired and terminates those new grants; disclose and reconcile them before
 such a rollback. Old fixed rows are not extended or rewritten. Main integration
 is not activation, Founder acceptance, production permission or Master closure.
+
+## Client increment and operational limits
+
+The client stores exactly version, until-revoked discriminator, createdAt and the
+existing purpose/project/generation/epoch-bound owner capability in one origin
+IndexedDB record. Atomic compare-and-set prevents another tab overwriting a
+revocation handle. Record failure blocks proof display and revokes the unpaired
+attempt, or retains an explicit uncertain-revoke state. Reload reads control only
+and offers Disconnect; it never syncs a new Scene, reconnects or uploads images.
+Only acknowledged service revoke followed by matching record deletion clears the
+recovery handle. Local teardown of an established until-revoked connection stops
+local work delivery without silently revoking it. Existing timed teardown is
+unchanged. The record contains no Scene, pixels, proof or OAuth token.
+
+Cache generation accompanies sync/poll/upload. Until-revoked poll claims require
+the matching generation, so stale polling cannot consume fresh commands. Cache
+reset cancels old local previews/preparation before re-uploading only the same
+already-consented reference. Manual Apply and local Undo/Redo/export stay intact.
+Cleanup checks for an existing reference table independently of its access flag;
+turning image access off must not retain old images. Each scheduled invocation
+uses at most21 D1 statements, including expiry and six oldest cache batches.
+
+The existing product-issued OAuth access token still lasts at most1800 seconds
+and has no refresh credential. A token issued four minutes after share creation
+is tested reading at31 minutes of share age, then rejected at35 minutes of share
+age; this proves independent grant/token lifetimes, not continuous host access.
+After token expiry the host can require a fresh manual connection, even though
+the sharing grant itself has no deadline. The current single-use pairing design
+cannot reauthorize that same grant. This limitation must be explicit in staging
+handoff; no perpetual-connection claim, new refresh grant or credential is added.
+
+Runtime creation remains gated by SCENE_UNTIL_REVOKED_ENABLED, and browser UI by
+NEXT_PUBLIC_SCENE_UNTIL_REVOKED. Never force either true in ordinary source.
+Stopping new creation does not revoke established grants. During rollback keep
+owner-control recovery and cleanup available, reconcile outstanding unpaired
+proofs before selecting a timed-only consent view, and disclose that an old
+binary treats sentinel0 as expired. Do not silently clear stored control records.
+Actual stage migration, flags, schedule and new persistent grants remain NOT_RUN
+until the exact reviewed candidate/action is admitted. No live MCP run is part of
+these local guards.

@@ -5,14 +5,17 @@ export type SceneConsentModel = {
   redirectHost: string;
   isLoopback: boolean;
   referenceEnabled?: boolean;
+  untilRevokedEnabled?: boolean;
 };
 export type SceneSharingState = {
   available: boolean;
   canConnect: boolean;
   canDisconnect: boolean;
-  phase: 'disconnected' | 'connecting' | 'awaiting-consent' | 'connected' | 'revoking' | 'error';
+  phase: 'disconnected' | 'connecting' | 'awaiting-consent' | 'connected' | 'revoking' | 'recovery' | 'error';
   proof?: string;
-  expiresAt?: number;
+  expiresAt?: number | null;
+  lifetime?: 'until-revoked';
+  untilRevokedAvailable?: boolean;
   error?: string;
   notice?: string;
   diagnostic?: { status: number; requestId?: string; version?: string; revision?: string };
@@ -23,7 +26,7 @@ export type SceneSharingState = {
 export type SceneSharingProps = {
   state: SceneSharingState;
   reference?: { name: string; width: number; height: number };
-  onConnect: (options?: { referencePixels: boolean; reuseCrops: boolean }) => void;
+  onConnect: (options?: { referencePixels: boolean; reuseCrops: boolean; untilRevoked?: boolean }) => void;
   onDisconnect: () => void;
   consentRequested?: boolean;
   onReauthorize?: () => void;

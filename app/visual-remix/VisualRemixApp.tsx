@@ -30,12 +30,15 @@ import { agentBrief, proposalSchema } from "@/lib/visual-remix-agent";
 import { VisualRemixTransport } from "@/lib/visual-remix-transport";
 import { prepareSharedReference, resolveReferenceCrops } from "@/lib/visual-remix-reference-browser";
 import type { SceneSharingState } from "@/lib/visual-remix-sharing-view";
+import { UNTIL_REVOKED_CONSENT } from "@/lib/visual-remix-lifetime";
+import { createBrowserSceneControlStore } from "@/lib/visual-remix-control-store";
 import { SceneSharingPanel } from "./SceneSharingPanel";
 import { PreviewControls } from "./PreviewControls";
 import { ReferenceCrop } from "./ReferenceCrop";
 
 const sceneRemoteEnabled = process.env.NEXT_PUBLIC_SCENE_REMOTE === "true";
 const sceneReferenceEnabled = process.env.NEXT_PUBLIC_SCENE_REFERENCE === "true";
+const sceneUntilRevokedEnabled = process.env.NEXT_PUBLIC_SCENE_UNTIL_REVOKED === "true";
 type Snapshot = ReturnType<VisualRemixController["snapshot"]>;
 const button =
   "inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40";
@@ -230,8 +233,26 @@ export default function VisualRemixApp() {
     controller.current = c;
     assets.current = store;
     // Default-off build gate. No capability probe, fetch or auto-connect at mount.
-    const remote = sceneRemoteEnabled ? new VisualRemixTransport(c, true, setSharingState, () => sync()) : null;
+    const remote = sceneRemoteEnabled
+      ? new VisualRemixTransport(
+          c,
+          true,
+          setSharingState,
+          () => sync(),
+          undefined,
+          undefined,
+          sceneUntilRevokedEnabled
+            ? {
+                untilRevoked: true,
+                controlStore: createBrowserSceneControlStore(),
+              }
+            : undefined,
+        )
+      : null;
     sharing.current = remote;
+    if (remote) {
+      void remote.restoreControl();
+    }
     const wake = () => { if (document.visibilityState === "visible") remote?.refresh(); };
     window.addEventListener("focus",wake);document.addEventListener("visibilitychange",wake);
     const ticket = ++epoch.current;
@@ -370,7 +391,7 @@ export default function VisualRemixApp() {
       finish(ticket);
     }
   }
-  async function connectScene(options?: {referencePixels: boolean; reuseCrops: boolean}) {
+  async function connectScene(options?: {referencePixels: boolean; reuseCrops: boolean; untilRevoked?: boolean}) {
     if(busy || !sharing.current) return;
     if(controller.current?.snapshot().editing){setError("Finish or discard the local draft before authorizing remote sharing. Your work is preserved.");return;}
     const {abort,ticket}=begin();
@@ -379,7 +400,8 @@ export default function VisualRemixApp() {
       const prepared=sceneReferenceEnabled && options?.referencePixels && reference
         ? await prepareSharedReference(reference.blob,options.reuseCrops,abort.signal) : undefined;
       if(ticket!==epoch.current || abort.signal.aborted) return;
-      await sharing.current.connect(true,prepared,(proposal,image,signal)=>resolveReferenceCrops(proposal,image,store,signal));
+      const lifetime = sceneUntilRevokedEnabled && options?.untilRevoked ? UNTIL_REVOKED_CONSENT : undefined;
+      await sharing.current.connect(true,prepared,(proposal,image,signal)=>resolveReferenceCrops(proposal,image,store,signal),lifetime);
       if(ticket===epoch.current) sync();
     } catch(e) {report(e,ticket);} finally {finish(ticket);}
   }
@@ -389,7 +411,11 @@ export default function VisualRemixApp() {
     if(remote.snapshot().canDisconnect)await remote.disconnect();
     if(!remote.prepareReauthorization())return;
     setConsentEpoch(value=>value+1);
-    setMessage("Local work preserved. Review fresh 30-minute consent, then Connect and manually authorize the host.");
+    setMessage(
+      sceneUntilRevokedEnabled
+        ? "Local work preserved. Review fresh consent, then Connect and manually authorize the host."
+        : "Local work preserved. Review fresh 30-minute consent, then Connect and manually authorize the host."
+    );
   }
   function historyStep(direction: "undo" | "redo") {
     if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;parameterGesture.current=null;
@@ -782,17 +808,22 @@ export default function VisualRemixApp() {
       </div>
       <div className="mb-5 rounded-xl bg-orange-50 px-4 py-3 text-sm leading-6 text-orange-950">
         <strong>Local by default.</strong> Selecting an image does not upload it
-        or run AI. {sceneReferenceEnabled ? "Reference sharing requires fresh consent for this image and manual connection; the agent may then process the shared copy remotely." : "You separately attach it to your chosen agent, which may process it remotely."} No model key, social login or automatic posting
-        here.
+        or run AI.{" "}
+        {sceneReferenceEnabled
+          ? sceneUntilRevokedEnabled
+            ? "Reference sharing requires fresh consent for this image and manual connection; the agent may then process the shared copy remotely until Disconnect or revoke."
+            : "Reference sharing requires fresh consent for this image and manual connection; the agent may then process the shared copy remotely."
+          : "You separately attach it to your chosen agent, which may process it remotely."}{" "}
+        No model key, social login or automatic posting here.
       </div>
       {sceneRemoteEnabled && snapshot?.scene && (
         <div className="mb-5">
           <SceneSharingPanel
-            key={`${consentEpoch}:${snapshot.generation}:${referenceURL ?? "none"}:${sharingState.phase === "disconnected" && sharingState.revocationConfirmed ? "revoked" : "current"}`}
+            key={`${consentEpoch}:${snapshot.generation}:${referenceURL ?? "none"}:${sharingState.phase === "disconnected" ? `disconnected-${sharingState.revocationConfirmed ? "revoked" : "idle"}` : sharingState.phase}`}
             state={{...sharingState,canConnect:sharingState.canConnect && ready && !snapshot.editing}}
             reference={sceneReferenceEnabled && reference ? {name:reference.name,width:reference.descriptor.width,height:reference.descriptor.height} : undefined}
             onConnect={(options) => {void connectScene(options);}}
-            onDisconnect={() => { void sharing.current?.disconnect(); }}
+            onDisconnect={() => { setConsentEpoch((v) => v + 1); void sharing.current?.disconnect(); }}
             onReauthorize={() => {void reauthorizeScene();}}
             consentRequested={consentEpoch > 0}
           />

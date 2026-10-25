@@ -9,8 +9,8 @@ export const SCENE_MESSAGE_BYTES = 12 * 1024;
 export const SCENE_SHARE_FIELDS = ['text', 'layout', 'captions', 'provenance', 'limitations', 'rasterDescriptors'] as const;
 export type SceneShareConsent = {
   purpose: 'visual-remix'; confirmed: true; projectId: string; generation: string;
-  expiresAt: number; fields: readonly (typeof SCENE_SHARE_FIELDS)[number][];
-};
+  fields: readonly (typeof SCENE_SHARE_FIELDS)[number][];
+} & ({expiresAt:number;lifetime?:undefined}|{expiresAt:null;lifetime:'until-revoked'});
 type Reply = { requestId: string; state: ProposalStatus | 'share_revoked'; applied: boolean; awaitingApply: boolean; terminal: boolean };
 function bounded(text: string): void {
   if (typeof text !== 'string' || new TextEncoder().encode(text).byteLength > SCENE_MESSAGE_BYTES) throw new Error('SCENE_MESSAGE_TOO_LARGE');
@@ -21,24 +21,24 @@ export class VisualRemixOfflineBridge {
   private readonly controller: VisualRemixController;
   private readonly now: () => number;
   private readonly issued = new Set<string>();
-  private readonly expiry: ReturnType<typeof setTimeout>;
+  private readonly expiry: ReturnType<typeof setTimeout> | null;
   private closed = false;
   constructor(controller: VisualRemixController, consent: SceneShareConsent, now: () => number = Date.now) {
     const snapshot = controller.snapshot();
     if (!consent || consent.purpose !== 'visual-remix' || consent.confirmed !== true ||
       consent.projectId !== snapshot.projectId || consent.generation !== snapshot.generation || !snapshot.scene || snapshot.loading ||
-      !Number.isFinite(consent.expiresAt) || consent.expiresAt <= now() || consent.expiresAt - now() > SCENE_LIMITS.leaseMs ||
+      !(consent.expiresAt===null ? consent.lifetime==='until-revoked' : consent.lifetime===undefined && Number.isFinite(consent.expiresAt) && consent.expiresAt>now() && consent.expiresAt-now()<=SCENE_LIMITS.leaseMs) ||
       !Array.isArray(consent.fields) || consent.fields.length !== SCENE_SHARE_FIELDS.length ||
       new Set(consent.fields).size !== SCENE_SHARE_FIELDS.length || !SCENE_SHARE_FIELDS.every(field => consent.fields.includes(field))) throw new Error('SCENE_SHARE_NOT_CONFIRMED');
     this.controller = controller; this.consent = { projectId: consent.projectId, generation: consent.generation, expiresAt: consent.expiresAt }; this.now = now;
-    this.expiry = setTimeout(() => this.revoke(), consent.expiresAt - now());
+    this.expiry = consent.expiresAt===null ? null : setTimeout(() => this.revoke(), consent.expiresAt - now());
   }
   private bound(): boolean {
     const snapshot = this.controller.snapshot();
     return !snapshot.loading && snapshot.projectId === this.consent.projectId && snapshot.generation === this.consent.generation;
   }
   private active(): boolean {
-    if (!this.closed && (!this.bound() || this.now() >= this.consent.expiresAt)) this.revoke();
+    if (!this.closed && (!this.bound() || this.consent.expiresAt!==null && this.now() >= this.consent.expiresAt)) this.revoke();
     return !this.closed;
   }
   private requireShare(): void { if (!this.active()) throw new Error('SCENE_SHARE_REVOKED_OR_EXPIRED'); }
@@ -73,7 +73,7 @@ export class VisualRemixOfflineBridge {
   }
   revoke(): void {
     if (this.closed) return;
-    this.closed = true; clearTimeout(this.expiry);
+    this.closed = true; if(this.expiry)clearTimeout(this.expiry);
     // An old session must never cancel a new project's reused request IDs.
     if (this.bound()) for (const requestId of this.issued) this.controller.cancel(requestId);
   }

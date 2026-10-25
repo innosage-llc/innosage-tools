@@ -18,7 +18,7 @@ function proposal(c: VisualRemixController, requestId: string, candidate = scene
   const s = c.snapshot(); return { schemaVersion: 1, requestId, projectId: s.projectId, generation: s.generation, baseRevision: s.revision, scene: candidate, explanation: 'Synthetic offline content/layout proposal' };
 }
 
-test('sharing requires current Scene purpose, explicit field consent and a finite local lease', async t => {
+test('legacy sharing requires current Scene purpose, explicit field consent and a finite local lease', async t => {
   const w = await world(); t.after(() => w.bridge.revoke());
   for (const patch of [{ purpose: 'video' }, { confirmed: false }, { projectId: 'another' }, { generation: 'stale' }, { expiresAt: 0 }, { expiresAt: Infinity }, { expiresAt: Date.now() + 31 * 60_000 }, { fields: ['text'] }]) {
     assert.throws(() => new VisualRemixOfflineBridge(w.controller, { ...w.consent, ...patch } as SceneShareConsent), /SCENE_SHARE_NOT_CONFIRMED/);
@@ -132,4 +132,15 @@ test('same-ID import rejects transitional consent and requires a settled fresh b
   const fresh = new VisualRemixOfflineBridge(w.controller, { ...w.consent, generation: settled.generation });
   t.after(() => fresh.revoke());
   assert.equal(fresh.getScene().scene.background, '#123456');
+});
+
+
+test('explicit until-revoked local bridge has no timer, still requires current binding and manual Apply',async t=>{
+ const w=await world();let now=Date.now();t.after(()=>w.bridge.revoke());
+ const consent={...w.consent,expiresAt:null,lifetime:'until-revoked' as const};
+ assert.throws(()=>new VisualRemixOfflineBridge(w.controller,{...consent,lifetime:undefined} as unknown as SceneShareConsent),/NOT_CONFIRMED/);
+ const b=new VisualRemixOfflineBridge(w.controller,consent,()=>now);t.after(()=>b.revoke());
+ now+=31*60000;assert.equal(b.getScene().projectId,'project');
+ const next=scene();next.background='#112233';assert.equal((await b.proposeScene(JSON.stringify(proposal(w.controller,'permanent-preview',next)))).awaitingApply,true);assert.equal(w.controller.snapshot().revision,0);
+ assert.equal(w.controller.apply('permanent-preview'),'applied');const png=w.controller.exportPNG();b.revoke();assert.throws(()=>b.getScene(),/REVOKED_OR_EXPIRED/);assert.equal(w.controller.exportPNG(),png);
 });

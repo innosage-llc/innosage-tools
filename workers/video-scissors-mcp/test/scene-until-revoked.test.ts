@@ -119,7 +119,7 @@ test('inactive cache purge preserves authority, invalidates pending work and per
         assert.equal((await f.call('upload', { auth: p.auth, reference: img.reference })).value, false, 'new grant requires cache generation');
         assert.equal((await f.call('upload', { auth: p.auth, reference: img.reference, cacheEpoch: 0 })).value, true);
         await f.call<{ state: string } | null>('propose', { auth: a, proposal: q });
-        await f.call('claim', { auth: p.auth });
+        await f.call('claim', { auth: p.auth,cacheEpoch:0 });
         await f.call('report', { auth: p.auth, id: q.requestId, state: 'preview' });
         f.advance(1800001);
         await f.call('purge', {}, true, false);
@@ -141,8 +141,12 @@ test('inactive cache purge preserves authority, invalidates pending work and per
         assert.equal((await f.call('upload', { auth: p.auth, reference: img.reference, cacheEpoch: 1 })).value, true);
         assert.equal((await f.call<{ content: { data: string }[]; isError?: boolean }>('readReference', { auth: a })).value.content[1].data, img.reference.data);
         assert.equal((await f.call<{ state: string } | null>('propose', { auth: a, proposal: q })).value!.state, 'stale', 'duplicate request never re-admitted');
-        assert.equal((await f.call('claim', { auth: p.auth })).value, null);
-        assert.equal(await f.db.prepare('SELECT request_count FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('request_count'), 1);
+        await f.call('propose',{auth:a,proposal:proposal('new-after-cache')});
+        assert.equal((await f.call('claim',{auth:p.auth,cacheEpoch:0})).value,null);
+        assert.ok((await f.call('claim',{auth:p.auth,cacheEpoch:1})).value);
+        await f.call('report',{auth:p.auth,id:'new-after-cache',state:'stale'});
+        assert.equal((await f.call('claim', { auth: p.auth,cacheEpoch:1 })).value, null);
+        assert.equal(await f.db.prepare('SELECT request_count FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('request_count'), 2);
         f.noEgress();
     }
     finally {
