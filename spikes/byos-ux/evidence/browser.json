@@ -1,0 +1,143 @@
+{
+  "status": "PASS",
+  "source": "working candidate; exact hashes in acceptance manifest",
+  "fixtureSizes": [
+    12,
+    10000
+  ],
+  "results": [
+    {
+      "size": 10000,
+      "bodyCharacters": 4096,
+      "timingMethod": "20 sequential Playwright fill → matching edit durable ACK, browser performance.now; real wall clock, not fake clock",
+      "samplesMs": [
+        189.90000009536743,
+        30.09999990463257,
+        33.30000019073486,
+        15,
+        17.5,
+        16.299999952316284,
+        15.100000143051147,
+        16.100000143051147,
+        17.700000047683716,
+        16.199999809265137,
+        14.799999952316284,
+        18,
+        14.200000047683716,
+        18.59999990463257,
+        16.300000190734863,
+        16,
+        16.299999952316284,
+        16.299999952316284,
+        16.299999952316284,
+        15.300000190734863
+      ],
+      "metrics": {
+        "bodyReads": 0,
+        "writes": 60,
+        "sends": 1
+      },
+      "browserRestart": {
+        "bodyExact": true,
+        "editIdentityExact": true,
+        "pendingPages": 1,
+        "cloud": "uncertain"
+      },
+      "realTimeOperations": [
+        {
+          "labelMs": 10000,
+          "observedWallMs": 10075.980124999998,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        },
+        {
+          "labelMs": 45000,
+          "observedWallMs": 45062.305833,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        }
+      ],
+      "browserScenarios": [
+        "restart exact full body/edit/pending",
+        "offline",
+        "auth",
+        "10s and 45s real-time simulated confirmation",
+        "handoff incomplete/confirmed/new edit",
+        "page switch distinct backlog",
+        "conflict typing retained + Keep local",
+        "local persistence failure no ACK"
+      ],
+      "typingP50Ms": 16.299999952316284,
+      "typingMaxMs": 189.90000009536743
+    },
+    {
+      "size": 12,
+      "bodyCharacters": 4096,
+      "timingMethod": "20 sequential Playwright fill → matching edit durable ACK, browser performance.now; real wall clock, not fake clock",
+      "samplesMs": [
+        120.79999995231628,
+        343.80000019073486,
+        15.099999904632568,
+        14.5,
+        232.89999985694885,
+        16,
+        18.299999952316284,
+        13.5,
+        131.19999980926514,
+        20.59999990463257,
+        16.199999809265137,
+        16.299999952316284,
+        15.299999952316284,
+        15.899999856948853,
+        18.90000009536743,
+        13.899999856948853,
+        14.299999952316284,
+        17.59999990463257,
+        16.700000047683716,
+        17.700000047683716
+      ],
+      "metrics": {
+        "bodyReads": 0,
+        "writes": 60,
+        "sends": 1
+      },
+      "browserRestart": {
+        "bodyExact": true,
+        "editIdentityExact": true,
+        "pendingPages": 1,
+        "cloud": "uncertain"
+      },
+      "realTimeOperations": [
+        {
+          "labelMs": 10000,
+          "observedWallMs": 10117.379667,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        },
+        {
+          "labelMs": 45000,
+          "observedWallMs": 45042.996125000005,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        }
+      ],
+      "browserScenarios": [
+        "restart exact full body/edit/pending",
+        "offline",
+        "auth",
+        "10s and 45s real-time simulated confirmation",
+        "handoff incomplete/confirmed/new edit",
+        "page switch distinct backlog",
+        "conflict typing retained + Keep local",
+        "local persistence failure no ACK"
+      ],
+      "typingP50Ms": 16.700000047683716,
+      "typingMaxMs": 343.80000019073486
+    }
+  ],
+  "externalRequests": [],
+  "pageErrors": [],
+  "humanUsability": "NOT_RUN",
+  "satisfaction": "UNKNOWN",
+  "limits": "Concurrent local synthetic browsers, 20 automation samples each; no human comprehension or Drive performance claim. Real time waits only prove simulated timers."
+}
