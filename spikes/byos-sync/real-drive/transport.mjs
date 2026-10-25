@@ -1,10 +1,13 @@
 import {readVersionedMedia} from './media-validator.mjs';
+import {metadataSummary} from './diagnostics.mjs';
 // Build-time fetch injection for the isolated demo bundle only. Native replication
 // and its transaction/CAS code are unchanged. No bearer enters native options.
 export const API='https://www.googleapis.com';
 export const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,expires=0,deadline=0,count=0;
 const observations=[];
+const fileAliases=new Map();
+let requestSequence=0;
 export function authorize(value,seconds){
  if(typeof value!=='string'||!value||!Number.isFinite(seconds)||seconds<=0)throw new Error('AUTH_INVALID');
  token=value;expires=Date.now()+seconds*1000;
@@ -26,11 +29,16 @@ async function dispatch(url,init={}){
  count++;
  const headers=new Headers(init.headers);headers.set('Authorization',`Bearer ${token}`);
  const method=init.method??'GET';
- const row={method,path:url.pathname.replace(/\/files\/[^/]+/g,'/files/<id>'),status:null,pageTokenPresent:url.searchParams.has('pageToken'),alt:url.searchParams.get('alt'),revisionIdPresent:url.searchParams.has('revisionId'),fields:url.searchParams.get('fields'),spaces:url.searchParams.get('spaces'),corpora:url.searchParams.get('corpora')};
+ const fileId=url.pathname.match(/\/files\/([^/]+)$/)?.[1];
+ if(fileId&&!fileAliases.has(fileId)&&fileAliases.size<2000)fileAliases.set(fileId,`file-${fileAliases.size+1}`);
+ const row={sequence:++requestSequence,fileAlias:fileId?(fileAliases.get(fileId)??'untracked'):null,method,path:url.pathname.replace(/\/files\/[^/]+/g,'/files/<id>'),status:null,pageTokenPresent:url.searchParams.has('pageToken'),alt:url.searchParams.get('alt'),revisionIdPresent:url.searchParams.has('revisionId'),fields:url.searchParams.get('fields'),spaces:url.searchParams.get('spaces'),corpora:url.searchParams.get('corpora')};
  observations.push(row);if(observations.length>2000)observations.shift();
  try{
   const r=await globalThis.fetch(url,{...init,headers,redirect:'error',signal:AbortSignal.timeout(20000)});
   row.status=r.status;row.etagVisible=r.headers.has('ETag');row.dateVisible=r.headers.has('Date');
+  if(r.ok&&method==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&!url.searchParams.has('alt')){
+   try{row.metadataValidators=metadataSummary(r.headers.get('ETag'),await r.clone().json());}catch{row.metadataValidators={unavailable:true};}
+  }
   if(r.ok&&['/drive/v3/files','/drive/v3/changes'].includes(url.pathname)&&method==='GET'){const data=await r.clone().json();row.page={files:data.files?.length,changes:data.changes?.length,nextPageToken:!!data.nextPageToken,newStartPageToken:!!data.newStartPageToken,incompleteSearch:data.incompleteSearch===true};}
   if(r.status===401){forget();throw failure('REAUTHORIZE_REQUIRED',401);}
   return r;

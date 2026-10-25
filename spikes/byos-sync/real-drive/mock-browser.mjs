@@ -64,6 +64,10 @@ try{
  await b.locator('#disconnect-btn').click();assert.match(await b.locator('#connection-status').textContent(),/Reload/);
  await b.locator('#authorize-btn').click();assert.match(await b.locator('#connection-status').textContent(),/Reload/);
  assert.equal((await b.evaluate(()=>window.byos.snapshot())).view.journal.draft.editId,failed.editId);
+ const diagnostics=await b.evaluate(()=>window.byos.snapshot());
+ assert(diagnostics.errors.length>0);assert(diagnostics.errors.length<=32);
+ assert(diagnostics.transport.requests.some(r=>r.metadataValidators?.equal===true&&r.fileAlias));
+ assert.doesNotMatch(JSON.stringify({errors:diagnostics.errors,requests:diagnostics.transport.requests}),/synthetic-only|Bearer|access_token|fixture-account/);
  assert.deepEqual(errors,[]);assert.equal(after.lastRemote.body,local.body);assert(after.checkpoint?.changes109);
  const receipt={status:'PASS',kind:'MOCK_BROWSER_PROVIDER_WIRING',requests,fullBodies:{A,B,local,cloud,conflict:conflict.view.journal,verified:after.lastRemote},checkpoint:after.checkpoint,pendingInitialAuthFailureDisconnect:'PASS_RELOAD_REQUIRED_NO_BEARER_SWAP',realProvider:'NOT_RUN_AUTH',upstream:'Existing src/mock + changes-feasibility/provider; fixture-only account/folder metadata and GIS consent stub'};
  await writeFile(resolve(root,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt));

@@ -1,12 +1,16 @@
 import {openPageStore as openNative} from '../native-overlay/page-store.mjs';
 import {createChangesReplication} from '../changes-feasibility/adapter.mjs';
 import {API,begin,isAuthorized,failure,evidence} from './transport.mjs';
+import {errorSummary} from './diagnostics.mjs';
 let active,lastRemote=null;
+const errors=[];let errorSequence=0;
+function recordError(error){const requests=evidence().requests;errors.push({sequence:++errorSequence,afterRequest:requests.at(-1)?.sequence??null,...errorSummary(error)});if(errors.length>32)errors.shift();}
+const diagnosticFactory=options=>createChangesReplication(options,{onCreated:state=>{state.error$.subscribe(recordError);}});
 import {preflight,workspace,bindingKey} from './config.mjs';
 export {clientId,setClientId,workspace} from './config.mjs';
 const params=new URLSearchParams(location.search);
 export async function openPageStore(options){
- active=await openNative({...options,hook:async(name,row)=>{if(name==='remote-read')lastRemote=row;},connectionProvider:async()=>({...await preflight(),factory:createChangesReplication})});
+ active=await openNative({...options,hook:async(name,row)=>{if(name==='remote-read')lastRemote=row;},connectionProvider:async()=>({...await preflight(),factory:diagnosticFactory})});
  const sync=active.sync.bind(active);
  let operation,halted=false;
  active.sync=async()=>{
@@ -23,7 +27,7 @@ export async function openPageStore(options){
      if(!active.replication)await active.connect(API,{live:false});
      await sync();
     })(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(failure('SYNC_BUDGET_EXHAUSTED',429)),180000);})]);
-   }catch(e){if(e.message==='SYNC_BUDGET_EXHAUSTED'){halted=true;}active.state=e.parameters?.status===401?'reauth-required':'blocked';active.notify();throw e;}
+   }catch(e){recordError(e);if(e.message==='SYNC_BUDGET_EXHAUSTED'){halted=true;}active.state=e.parameters?.status===401?'reauth-required':'blocked';active.notify();throw e;}
    finally{clearTimeout(timer);}
   })();
   try{return await operation;}finally{operation=null;active.operationBusy=false;}
@@ -33,5 +37,5 @@ export async function openPageStore(options){
 export function store(){return active;}
 export async function snapshot(){
  const v=await active.view(params.get('page')||'page');
- return {workspace,session:active.session,view:v,binding:JSON.parse(localStorage.getItem(bindingKey)??'null'),busy:!!active.operationBusy,lastRemote,checkpoint:active.replication?.internalReplicationState?.lastCheckpointDoc?.down?.checkpointData??null,transport:evidence()};
+ return {workspace,session:active.session,view:v,binding:JSON.parse(localStorage.getItem(bindingKey)??'null'),busy:!!active.operationBusy,lastRemote,checkpoint:active.replication?.internalReplicationState?.lastCheckpointDoc?.down?.checkpointData??null,transport:evidence(),errors:structuredClone(errors)};
 }

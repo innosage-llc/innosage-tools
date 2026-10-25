@@ -11,3 +11,7 @@ Current continuation: [media-validator compatibility investigation](media-valida
 The first staging candidate and human OAuth succeeded; the first real sync is
 HOLD, with local acknowledged content retained. Historical results above are
 capture-time facts, not current acceptance claims.
+
+Latest continuation: [second actual attempt and bounded CAS diagnostics](cas-diagnostics.md).
+The replacement c287ca1 candidate also remains incomplete. A is deliberately
+offline after observing blocked status; auth, full content and all tabs retained.
