@@ -1,3 +1,4 @@
+import { SceneRetirementStore } from './retirement';
 import { SceneReferenceStore } from './reference';
 import { parseUntilRevokedConsent, UNTIL_REVOKED_MODE } from '../../../../lib/visual-remix-lifetime';
 import { liveGrant, liveLifetime, grantArgs, SCENE_CACHE_MS } from './lifetime';
@@ -14,7 +15,7 @@ type RequestRow = { id: string; state: SceneState; payload: string | null; paylo
 // Inactive candidate. No entrypoint imports this module; no migration runs here.
 export class SceneMailbox {
   private readonly db: D1DatabaseSession;
-  constructor(db: D1Database, private readonly now: () => number = Date.now, private readonly referencesEnabled = false, private readonly allowUntilRevoked = false) { this.db = db.withSession('first-primary'); }
+  constructor(db: D1Database, private readonly now: () => number = Date.now, private readonly referencesEnabled = false, private readonly allowUntilRevoked = false, private readonly reclaimRetiredEnabled = false) { this.db = db.withSession('first-primary'); }
   async spend(): Promise<void> {
     const row = await this.db.prepare('UPDATE scene_budget SET http=http+1 WHERE singleton=1 RETURNING singleton').first();
     if (!row) throw new Error('SCENE_HTTP_BUDGET');
@@ -44,6 +45,12 @@ export class SceneMailbox {
       await this.db.batch(statements);
     }
   }
+  async reclaimRetired():Promise<void>{
+    if(!this.reclaimRetiredEnabled)return;
+    // Expire old unpaired proofs before releasing any consent-handle tombstone.
+    await this.sweepExpired();
+    await new SceneRetirementStore(this.db).reclaim();
+  }
   async create(input: unknown, fields: unknown, confirmed: unknown, reference?: unknown, duration?: unknown, lifetime?: unknown) {
     // Legacy clients disclosed 15min. Never silently upgrade their consent.
     if(duration !== undefined && duration !== SCENE_LIMITS.leaseMs) throw new Error('SCENE_DURATION_CONSENT');
@@ -58,6 +65,7 @@ export class SceneMailbox {
     const consent = reference === undefined ? null : parseReferenceConsent(reference);
     if (confirmed !== true || !Array.isArray(fields) || fields.length !== SCENE_FIELDS.length || new Set(fields).size !== fields.length || !SCENE_FIELDS.every(f => fields.includes(f))) throw new Error('SCENE_SHARE_CONSENT');
     const snapshot = parseSceneSnapshot(input), value = sceneJSON(snapshot); sceneToolResult(snapshot);
+    if(this.reclaimRetiredEnabled)await this.reclaimRetired();
     const id = crypto.randomUUID(), credential = secret(), proof = secret(), now = this.now();
     const insert = this.db.prepare('INSERT INTO scene_shares(id,project,generation,credential_hash,proof_hash,proof_expires,expires,snapshot,revision,seen,expiry_policy,grant_consent_version,snapshot_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)')
       .bind(id, snapshot.projectId, snapshot.generation, await digest(credential), await digest(proof), now + SCENE_LIMITS.proofMs, until?0:now + leaseMs, value, snapshot.revision, now,until?'until_revoked':'fixed',until?1:0,await digest(value));
@@ -167,6 +175,14 @@ export class SceneMailbox {
         AND (?!='applied' OR scene_requests.state='applied' OR (s.revision=scene_requests.base_revision+1 AND json_extract(s.snapshot,'$.scene')=json_extract(scene_requests.payload,'$.scene')))) RETURNING id`)
       .bind(state, a.shareId, a.epoch, id, state, state, ...args(a, this.now()), await digest(a.credential), state).first();
     return !!row;
+  }
+  async revokeOutcome(input:SceneOwner):Promise<{ok:boolean;state?:'already_absent'}>{
+    const a=parseSceneAuth(input,true) as SceneOwner;
+    if(await this.revoke(a))return {ok:true};
+    // Absence is not authenticated ownership or a newly performed revocation.
+    // A present row with any mismatched binding always remains denied.
+    const present=await this.db.prepare('SELECT id FROM scene_shares WHERE id=?').bind(a.shareId).first();
+    return present?{ok:false}:{ok:true,state:'already_absent'};
   }
   async revoke(input: SceneOwner): Promise<boolean> {
     const a = parseSceneAuth(input, true) as SceneOwner, hash = await digest(a.credential);

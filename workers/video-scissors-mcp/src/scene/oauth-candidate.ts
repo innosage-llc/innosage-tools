@@ -14,7 +14,7 @@ import { renderSceneConsentView } from './SceneConsentView';
 import { boundedSceneRpc, sceneMcpHandler } from './mcp';
 import { sceneBrowserRoute } from './browser-routes';
 import { sceneDiagnostic } from './diagnostics';
-type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string; SCENE_UNTIL_REVOKED_ENABLED?:string };
+type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string; SCENE_UNTIL_REVOKED_ENABLED?:string; SCENE_RETIRED_RECLAIM_ENABLED?:string };
 import { SCENE_SCOPES, parseSceneAuth, sceneObject, type SceneAuth } from '../../../../lib/visual-remix-remote';
 const videoScopes = ['video:read','video:edit'];
 const scopesEqual = (value: string[], expected: readonly string[]) => value.length === expected.length && new Set(value).size === expected.length && expected.every(scope => value.includes(scope));
@@ -34,7 +34,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
   const videoResource = origin + '/mcp', sceneResource = origin + '/scene/mcp';
   const options = videoOAuthOptionsFor(env, origin, bridge);
   const referencesEnabled = env.SCENE_REFERENCE_ENABLED === 'true';
-  const store = new SceneMailbox(env.DB,Date.now,referencesEnabled,env.SCENE_UNTIL_REVOKED_ENABLED==='true');
+  const store = new SceneMailbox(env.DB,Date.now,referencesEnabled,env.SCENE_UNTIL_REVOKED_ENABLED==='true',env.SCENE_RETIRED_RECLAIM_ENABLED==='true');
   const authorization = new OAuthAuthorizationServer<Env>({
     issuer: origin, resources: [videoResource,sceneResource], defaultResource: videoResource, legacyGrantResource: videoResource,
     authorizeEndpoint: options.authorizeEndpoint, tokenEndpoint: options.tokenEndpoint,

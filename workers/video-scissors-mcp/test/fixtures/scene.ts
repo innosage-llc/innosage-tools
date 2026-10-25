@@ -4,7 +4,7 @@ import { SCENE_FIELDS, type SceneAuth, type SceneOwner, type SceneState } from '
 export default { async fetch(request: Request, env: Env): Promise<Response> {
   const body = await request.json<{ action: string; leaseMs?: number; lifetime?:unknown; referenceConsent?:unknown; reference:unknown; cacheEpoch?:unknown; auth: SceneOwner; snapshot: unknown; proposal: unknown; id: string; state: SceneState; proof: string; handle: string }>();
   const clock = Number(request.headers.get('x-fixture-time')) || Date.now();
-  const store = new SceneMailbox(env.DB, () => clock,request.headers.get('x-fixture-reference')==='true',request.headers.get('x-fixture-until-revoked')==='true');
+  const store = new SceneMailbox(env.DB, () => clock,request.headers.get('x-fixture-reference')==='true',request.headers.get('x-fixture-until-revoked')==='true',request.headers.get('x-fixture-retirement')==='true');
   try {
     let value: unknown;
     switch (body.action) {
@@ -19,6 +19,8 @@ export default { async fetch(request: Request, env: Env): Promise<Response> {
       case 'cancellations': value = await store.cancellations(body.auth); break;
       case 'status': value = await store.status(body.auth as SceneAuth, body.id); break;
       case 'report': value = await store.report(body.auth, body.id, body.state); break;
+      case 'reclaim': await store.reclaimRetired();value=true;break;
+      case 'revokeOutcome': value=await store.revokeOutcome(body.auth);break;
       case 'revoke': value = await store.revoke(body.auth); break;
       case 'sweep': await store.sweepExpired(); value = true; break;
       case 'spend': await store.spend(); value = true; break;
