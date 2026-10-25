@@ -1,10 +1,13 @@
 import '../native-overlay/browser-runtime.mjs';
 import {authorize,forget,isAuthorized} from './transport.mjs';
 import {clientId,setClientId,store,snapshot,workspace} from './store.mjs';
+import {prepareOfflineShell} from './offline-shell.mjs';
 // Durable nonsecret writer identity; duplicate tabs are refused by existing
 // Web Locks. A fresh profile has a distinct identity and IndexedDB database.
 const url=new URL(location.href);
-if(!/^[a-f0-9-]{36}$/.test(workspace??'')){
+if(url.pathname.startsWith('/tools/byos-demo')){
+ url.pathname='/byos-demo/';location.replace(url);
+}else if(!/^[a-f0-9-]{36}$/.test(workspace??'')){
  url.searchParams.set('workspace',crypto.randomUUID());location.replace(url);
 }else{
  url.searchParams.delete('endpoint');
@@ -16,6 +19,7 @@ if(!/^[a-f0-9-]{36}$/.test(workspace??'')){
  // Existing controller is reused; do not expose credential-bearing native state.
  delete window.spike.store;
  window.byos={snapshot};
+ void prepareOfflineShell().then(result=>{window.byos.offlineShell=result;});
  const client=document.getElementById('oauth-client');client.value=clientId();
  const message=document.getElementById('connection-status');
  document.getElementById('workspace-link').textContent=location.origin+location.pathname+'?workspace='+workspace;
