@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BYOS Isolated UX Spike — Issue #136</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Persistent conspicuous simulation banner -->
+  <aside class="simulation-banner" role="region" aria-label="Simulation Notice">
+    <div class="banner-content">
+      <span class="banner-badge" aria-hidden="true">NOTICE</span>
+      <p class="banner-text">
+        <strong>SIMULATION — no Google Drive connection.</strong>
+        Local save means only this browser; cloud confirmation is simulated. This does not establish real device handoff.
+      </p>
+    </div>
+  </aside>
+
+  <div class="workspace-shell">
+    <!-- Workspace shell header with simulation controls -->
+    <header class="workspace-header">
+      <div class="header-branding">
+        <h1 class="header-title">Editorial Workspace</h1>
+        <span class="header-tag">BYOS UX Spike (#136)</span>
+      </div>
+
+      <div class="header-controls">
+        <div class="control-row simulation-configs">
+          <div class="control-field">
+            <label for="catalog">Catalog</label>
+            <select id="catalog">
+              <option value="12">12 Small</option>
+              <option value="10000">10000 Large</option>
+            </select>
+          </div>
+
+          <div class="control-field">
+            <label for="latency">Simulated Latency</label>
+            <select id="latency">
+              <option value="10000">10 seconds (simulated)</option>
+              <option value="45000">45 seconds (simulated)</option>
+              <option value="never">Never completes (simulated)</option>
+            </select>
+          </div>
+
+          <div class="control-field">
+            <label for="fault">Fault Mode</label>
+            <select id="fault">
+              <option value="none">Online simulation</option>
+              <option value="offline">Offline</option>
+              <option value="auth">Authorization needed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-row simulation-actions">
+          <button type="button" id="retry" class="btn btn-secondary">Retry simulation</button>
+          <button type="button" id="cancel" class="btn btn-secondary">Cancel / recover stalled operation</button>
+          <button type="button" id="late" class="btn btn-secondary">Deliver cancelled old completion</button>
+          <button type="button" id="conflict" class="btn btn-amber">Inject simulated conflict</button>
+          <button type="button" id="failLocal" class="btn btn-secondary">Fail next local save</button>
+          <button type="button" id="handoff" class="btn btn-primary">Prepare to switch device</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main three-pane editorial workspace -->
+    <div class="workspace-grid">
+      <!-- Section 1: Catalog navigation -->
+      <section class="workspace-catalog" aria-label="Document Catalog">
+        <div class="section-header">
+          <h2 class="section-title">Catalog</h2>
+        </div>
+        <div id="catalogInfo" class="catalog-summary">Catalog status initializing…</div>
+        <nav id="pages" class="pages-list" aria-label="Page navigation"></nav>
+        <button type="button" id="nextPages" class="btn btn-subtle">Next 20 pages</button>
+      </section>
+
+      <!-- Section 2: Editor workspace & conflict resolution -->
+      <main class="workspace-editor" aria-label="Editor Workspace">
+        <div class="editor-header">
+          <div class="editor-title-wrap">
+            <h2 id="pageTitle">Select or create a document</h2>
+          </div>
+          <div class="editor-status-bar" aria-label="Status indicators">
+            <span id="localStatus" role="status" aria-live="polite" class="status-indicator status-local">Local: Idle</span>
+            <span id="cloudStatus" class="status-indicator status-cloud">Cloud: Idle</span>
+            <span id="pendingCount" class="status-indicator status-pending">Pending: 0</span>
+          </div>
+        </div>
+
+        <div class="editor-textarea-container">
+          <textarea id="editor" aria-label="Page body" placeholder="Editorial content..."></textarea>
+        </div>
+
+        <!-- Conflict resolution section: initially hidden -->
+        <section id="resolution" class="resolution-panel" hidden aria-label="Conflict resolution">
+          <div class="resolution-heading">
+            <div class="resolution-title-row">
+              <h3 class="resolution-title">Version Conflict Detected</h3>
+              <span class="resolution-badge">Action Required</span>
+            </div>
+            <p class="resolution-explanation">
+              A conflicting remote update was detected. Both full originals are preserved and retained in local conflict history after the local commit succeeds. Choose a resolution strategy below or edit manually.
+            </p>
+          </div>
+
+          <div class="conflict-diff-grid">
+            <div class="diff-pane diff-local">
+              <div class="diff-pane-header">
+                <span class="diff-pane-label">Local Version (This Device)</span>
+              </div>
+              <pre id="localBody" class="diff-content"></pre>
+            </div>
+
+            <div class="diff-pane diff-remote">
+              <div class="diff-pane-header">
+                <span class="diff-pane-label">Simulated Cloud Version (Remote)</span>
+              </div>
+              <pre id="remoteBody" class="diff-content"></pre>
+            </div>
+          </div>
+
+          <div class="conflict-choice-actions">
+            <button type="button" id="useCloud" class="btn btn-danger-outline">Use cloud (explicitly discard local)</button>
+            <button type="button" id="keepLocal" class="btn btn-emerald">Keep local</button>
+          </div>
+
+          <div class="manual-merge-container">
+            <label for="mergeBody" class="merge-label">Manual merge resolution</label>
+            <p class="merge-instructions">Edit the combined text below to reconcile discrepancies:</p>
+            <textarea id="mergeBody" aria-label="Manual merged body" rows="6" placeholder="Combine and resolve text manually…"></textarea>
+            <div class="merge-action-bar">
+              <button type="button" id="merge" class="btn btn-primary">Merge manually</button>
+            </div>
+          </div>
+
+
+        </section>
+          <details class="conflict-history-drawer">
+            <summary class="history-summary">Archived conflict history &amp; snapshot log</summary>
+            <p class="history-note">Complete original bodies of previous conflicts are retained locally:</p>
+            <pre id="history" class="history-content"></pre>
+          </details>
+      </main>
+
+      <!-- Section 3: Aside handoff & diagnostics -->
+      <aside class="workspace-handoff" aria-label="Device handoff and operation monitor">
+        <div class="aside-section">
+          <h3 class="aside-heading">Device Handoff</h3>
+          <p class="aside-description">Prepare state descriptors for simulated device switching:</p>
+          <div id="handoffStatus" class="status-box">Handoff: not prepared</div>
+          <div class="destination-field">
+            <label for="destination" class="field-label">Destination descriptor</label>
+            <pre id="destination" class="destination-pre"></pre>
+          </div>
+        </div>
+
+        <div class="aside-section">
+          <h3 class="aside-heading">Operation Diagnostics</h3>
+          <label class="field-label">Active operation</label>
+          <div id="operation" role="status" class="operation-monitor">Idle</div>
+          <div id="error" role="alert" class="error-monitor"></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Workspace footer -->
+    <footer class="workspace-footer">
+      <p class="footer-statement">
+        Human usability NOT_RUN; satisfaction UNKNOWN. Prior real observations 9.57–45.67s end-to-end application orchestration (not pure Google latency).
+      </p>
+    </footer>
+  </div>
+
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

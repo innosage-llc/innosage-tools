@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "results": [
+    "delayed overlapping size switches serialize; final catalog and writer ownership retained",
+    "12: all three UI resolutions; complete archived bodies visible after resolution; no horizontal overflow at 1280px",
+    "10000: all three UI resolutions; complete archived bodies visible after resolution; no horizontal overflow at 1280px"
+  ],
+  "sourceHashes": {
+    "app.mjs": "3189830e3407efdb2e2851d0eb982488bf8553850dc29b1bef38b1b825dd6708",
+    "model.mjs": "b2770523cd8a166776d0872b5a889bfcb194d7f347fd469b3be28157cef0e315",
+    "storage.mjs": "c6d9d028309462c2f8111b169e371d60e42a4207234b8e908d6df6b9cfc822bb",
+    "index.html": "02b5cf6032578a014a223099193e727a961258fc4d0384cb8ca64e7c7d4199c3",
+    "styles.css": "bb916a1c3e79293f3db78ac031d60b1b5a8ae41c5949bd661d91c9cef1a5e31b",
+    "server.mjs": "36fa5338ec416917b6df629c0e26bf59ed211b9092d1341ad2b578ab36be1333"
+  },
+  "pageErrors": [],
+  "externalRequests": [],
+  "humanUsability": "NOT_RUN"
+}

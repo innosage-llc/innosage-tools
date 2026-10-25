@@ -1,0 +1,27 @@
+{
+  "requestedModel": "gemini-3.8-flash-high",
+  "requestedEffort": "high",
+  "CLI": "agy 1.4.7",
+  "catalogAdmitted": true,
+  "sandbox": true,
+  "mode": "accept-edits",
+  "providerObservedModel": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "result": {
+    "status": "SUCCESS",
+    "duration_seconds": 200.380567,
+    "num_turns": 1,
+    "usage": {
+      "input_tokens": 99238,
+      "output_tokens": 29349,
+      "thinking_tokens": 18772,
+      "cache_read_tokens": 234337,
+      "total_tokens": 128587
+    }
+  },
+  "artifactHashes": {
+    "index.html": "6044e260088fb59af546a82d106e269b9e844ca3a06314e4ecfe038eb79f4b8d",
+    "styles.css": "631d9ccf388645c24270fddd0a40e69342520d4099b6db7d52f5aa4b399a1ab9"
+  },
+  "deniedActionsObserved": []
+}

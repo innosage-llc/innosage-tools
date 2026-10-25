@@ -49,7 +49,11 @@
     "test:visual-remix-html-browser": "node --test scripts/visual-remix-html.test.mjs",
     "test:visual-remix-connected-build": "node --test scripts/visual-remix-connected-build.test.mjs",
     "build:visual-remix-connected": "NEXT_PUBLIC_SCENE_REMOTE=true NEXT_PUBLIC_SCENE_REFERENCE=true npm run build && npm run test:visual-remix-connected-build",
-    "test:byos-latency": "node scripts/prepare-byos.mjs && node spikes/byos-sync/real-drive/latency-browser.mjs"
+    "test:byos-latency": "node scripts/prepare-byos.mjs && node spikes/byos-sync/real-drive/latency-browser.mjs",
+    "test:byos-ux": "node --test spikes/byos-ux/model.test.mjs",
+    "spike:byos-ux": "node spikes/byos-ux/server.mjs",
+    "test:byos-ux:browser": "node spikes/byos-ux/browser.mjs",
+    "test:byos-ux:focused": "node spikes/byos-ux/focused-browser.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",

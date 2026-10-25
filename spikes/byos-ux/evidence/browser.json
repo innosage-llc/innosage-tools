@@ -1,0 +1,150 @@
+{
+  "status": "PASS",
+  "sourceHashes": {
+    "app.mjs": "3189830e3407efdb2e2851d0eb982488bf8553850dc29b1bef38b1b825dd6708",
+    "model.mjs": "b2770523cd8a166776d0872b5a889bfcb194d7f347fd469b3be28157cef0e315",
+    "storage.mjs": "c6d9d028309462c2f8111b169e371d60e42a4207234b8e908d6df6b9cfc822bb",
+    "index.html": "02b5cf6032578a014a223099193e727a961258fc4d0384cb8ca64e7c7d4199c3",
+    "styles.css": "bb916a1c3e79293f3db78ac031d60b1b5a8ae41c5949bd661d91c9cef1a5e31b",
+    "server.mjs": "36fa5338ec416917b6df629c0e26bf59ed211b9092d1341ad2b578ab36be1333"
+  },
+  "fixtureSizes": [
+    12,
+    10000
+  ],
+  "results": [
+    {
+      "size": 12,
+      "bodyCharacters": 4096,
+      "timingMethod": "20 sequential Playwright fill → matching edit durable ACK, browser performance.now; real wall clock, not fake clock",
+      "samplesMs": [
+        21.40000009536743,
+        30.700000047683716,
+        10.699999809265137,
+        23.5,
+        7.599999904632568,
+        23.699999809265137,
+        9,
+        24.09999990463257,
+        8.5,
+        16.5,
+        16.09999990463257,
+        16.799999952316284,
+        15.700000047683716,
+        16.90000009536743,
+        16,
+        16.700000047683716,
+        16.100000143051147,
+        16.799999952316284,
+        16.899999856948853,
+        16.09999990463257
+      ],
+      "metrics": {
+        "bodyReads": 0,
+        "writes": 60,
+        "sends": 1
+      },
+      "browserRestart": {
+        "bodyExact": true,
+        "editIdentityExact": true,
+        "pendingPages": 1,
+        "cloud": "uncertain"
+      },
+      "realTimeOperations": [
+        {
+          "labelMs": 10000,
+          "observedWallMs": 10052.731709,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        },
+        {
+          "labelMs": 45000,
+          "observedWallMs": 45047.013166,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        }
+      ],
+      "browserScenarios": [
+        "restart exact full body/edit/pending",
+        "offline",
+        "auth",
+        "10s and 45s real-time simulated confirmation",
+        "handoff incomplete/confirmed/new edit",
+        "page switch distinct backlog",
+        "conflict typing retained + Keep local",
+        "local persistence failure no ACK"
+      ],
+      "typingP50Ms": 16.700000047683716,
+      "typingMaxMs": 30.700000047683716
+    },
+    {
+      "size": 10000,
+      "bodyCharacters": 4096,
+      "timingMethod": "20 sequential Playwright fill → matching edit durable ACK, browser performance.now; real wall clock, not fake clock",
+      "samplesMs": [
+        9.799999952316284,
+        37.60000014305115,
+        11.299999952316284,
+        22.09999990463257,
+        10.299999952316284,
+        16.5,
+        16,
+        21.299999952316284,
+        11.200000047683716,
+        16.5,
+        15.700000047683716,
+        16.800000190734863,
+        16.299999952316284,
+        16.59999990463257,
+        14.800000190734863,
+        17.40000009536743,
+        16.09999990463257,
+        16.299999952316284,
+        16,
+        16.90000009536743
+      ],
+      "metrics": {
+        "bodyReads": 0,
+        "writes": 60,
+        "sends": 1
+      },
+      "browserRestart": {
+        "bodyExact": true,
+        "editIdentityExact": true,
+        "pendingPages": 1,
+        "cloud": "uncertain"
+      },
+      "realTimeOperations": [
+        {
+          "labelMs": 10000,
+          "observedWallMs": 10078.980791,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        },
+        {
+          "labelMs": 45000,
+          "observedWallMs": 45045.181958,
+          "clock": "REAL",
+          "provider": "SIMULATION"
+        }
+      ],
+      "browserScenarios": [
+        "restart exact full body/edit/pending",
+        "offline",
+        "auth",
+        "10s and 45s real-time simulated confirmation",
+        "handoff incomplete/confirmed/new edit",
+        "page switch distinct backlog",
+        "conflict typing retained + Keep local",
+        "local persistence failure no ACK"
+      ],
+      "typingP50Ms": 16.299999952316284,
+      "typingMaxMs": 37.60000014305115
+    }
+  ],
+  "externalRequests": [],
+  "pageErrors": [],
+  "humanUsability": "NOT_RUN",
+  "satisfaction": "UNKNOWN",
+  "limits": "Concurrent local synthetic browsers, 20 automation samples each; no human comprehension or Drive performance claim. Real time waits only prove simulated timers."
+}

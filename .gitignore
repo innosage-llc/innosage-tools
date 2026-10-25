@@ -50,3 +50,6 @@ next-env.d.ts
 
 /public/byos-demo/
 /.byos-real/
+
+# Private task-owned CLI streams (never publish provider logs)
+/.private/
