@@ -5,19 +5,24 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
-import { resolve, extname } from 'node:path';
+import { resolve, extname, sep } from 'node:path';
 import { chromium } from 'playwright';
 
 test('connected build retains pairing, consented reference sharing and HTML export', { timeout: 60000 }, async () => {
   const output=resolve('.deploy/visual-remix-connected-build');
+  const staticRoot=resolve('out');
   await mkdir(output,{recursive:true});
   const server=createServer(async(req,res)=>{
     try {
-      let name=decodeURIComponent(new URL(req.url,'http://localhost').pathname).replace(/^\/tools\/?/,'');
+      const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+      if(pathname!=='/tools'&&!pathname.startsWith('/tools/')){res.statusCode=404;return res.end();}
+      let name=pathname.slice('/tools'.length).replace(/^\//,'');
       if(name.includes('..')){res.statusCode=400;return res.end();}
       if(!name)name='index.html';else if(!extname(name))name+='.html';
+      const file=resolve(staticRoot,name);
+      if(!file.startsWith(staticRoot+sep)){res.statusCode=400;return res.end();}
       const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.png':'image/png','.svg':'image/svg+xml'};
-      res.setHeader('Content-Type',mime[extname(name)]||'application/octet-stream');res.end(await readFile(resolve('out',name)));
+      res.setHeader('Content-Type',mime[extname(name)]||'application/octet-stream');res.end(await readFile(file));
     } catch {res.statusCode=404;res.end();}
   });
   await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok);});
@@ -27,6 +32,9 @@ test('connected build retains pairing, consented reference sharing and HTML expo
     browser=await chromium.launch({headless:true});
     const page=await browser.newPage({viewport:{width:1440,height:1100},acceptDownloads:true});
     const origin='http://127.0.0.1:'+server.address().port;
+    const canary=resolve(output,'containment-canary.json');await writeFile(canary,'{"control":"LOCAL-CONTAINMENT-CONTROL"}');
+    assert.equal((await fetch(origin+encodeURI(canary))).status,404,'absolute requests cannot expose files outside out');
+    assert.ok([400,404].includes((await fetch(origin+'/tools/%2e%2e%2fpackage.json')).status),'encoded traversal is rejected');
     page.on('pageerror',error=>errors.push(error.message));
     await page.route('**/*',async route=>{
       const request=route.request(),url=new URL(request.url());
