@@ -249,6 +249,19 @@ test(
       assert.equal(JSON.parse(await page.getByTestId('applied-scene').textContent()).nodes.length,0);
       await page.getByRole('button',{name:'Redo',exact:true}).click();
       assert.deepEqual((await download('Download PNG')).bytes,png.bytes,'remote Apply Undo/Redo preserves preview/export pixels');
+      const html=await download('Export HTML');
+      assert.equal(html.name,'visual-remix.html');
+      assert.equal((html.bytes.toString().match(/data-layer-id=/g)??[]).length,scene.nodes.length);
+      assert.ok(html.bytes.toString().includes('default-src &#39;none&#39;'));
+      assert.doesNotMatch(html.bytes.toString(),/<script|private-reference-name|private-crop-name/);
+      const unexpected=[];const capture=d=>unexpected.push(d);page.on('download',capture);
+      await page.evaluate(()=>{const original=Blob.prototype.arrayBuffer;window.restoreHTMLRead=()=>{Blob.prototype.arrayBuffer=original;};Blob.prototype.arrayBuffer=function(){return this.type.startsWith('image/')?new Promise(resolve=>{window.releaseHTMLRead=()=>original.call(this).then(resolve);}):original.call(this);};});
+      await page.getByRole('button',{name:'Export HTML',exact:true}).click();
+      await page.waitForFunction(()=>typeof window.releaseHTMLRead==='function');
+      await page.getByRole('button',{name:'Revoke pending work',exact:true}).click();
+      await page.evaluate(()=>{window.restoreHTMLRead();window.releaseHTMLRead();});await page.waitForTimeout(100);
+      page.off('download',capture);assert.equal(unexpected.length,0,'revoked async HTML export cannot download stale state');
+      assert.deepEqual((await download('Download PNG')).bytes,png.bytes);
       const saved = await download("Save project");
       const project = JSON.parse(saved.bytes.toString());
       assert.equal(project.assets.length, 1);
@@ -312,6 +325,7 @@ test(
       revision=Number((await page.getByTestId('revision').textContent()).replace(/\D/g,''));
       await page.getByLabel('Text content',{exact:true}).fill('Second post · 重用已有设计');
       assert.equal(await page.getByRole('button',{name:'Download PNG',exact:true}).isDisabled(),true,'pending local draft cannot export the old PNG');
+      assert.equal(await page.getByRole('button',{name:'Export HTML',exact:true}).isDisabled(),true);
       await page.getByLabel('Node y',{exact:true}).fill('190');
       await page.getByText('Advanced appearance and captions',{exact:true}).click();await page.getByText('Chinese / English publishing captions',{exact:true}).click();await page.getByLabel('titleCN',{exact:true}).fill('第二篇文章');
       await page.waitForFunction(()=>JSON.parse(document.querySelector('[data-testid=applied-scene]').textContent).captions.titleCN==='第二篇文章');

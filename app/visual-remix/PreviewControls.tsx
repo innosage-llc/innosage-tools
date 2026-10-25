@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import {HtmlExportAction} from './HtmlExportAction';
 import type { SceneNode } from '../../lib/visual-remix';
 
 export type PreviewControlsProps = {
@@ -28,6 +29,7 @@ export type PreviewControlsProps = {
   onRemove: () => void;
   onMove: (direction: number) => void;
   onExportPNG: () => void;
+  onExportHTML: () => void;
   onSaveProject: () => void;
   onCaptions: () => void;
   onExportMotion: () => void;
@@ -63,6 +65,7 @@ export function PreviewControls({
   onRemove,
   onMove,
   onExportPNG,
+  onExportHTML,
   onSaveProject,
   onCaptions,
   onExportMotion,
@@ -142,6 +145,7 @@ export function PreviewControls({
         >
           Download PNG
         </button>
+        <HtmlExportAction disabled={exportDisabled} onExport={onExportHTML} />
         <button
           type="button"
           onClick={onSaveProject}

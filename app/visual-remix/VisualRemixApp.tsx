@@ -23,6 +23,7 @@ import {
   type LayoutDiagnostic,
 } from "@/lib/visual-remix-controller";
 import { renderScene } from "@/lib/visual-remix-renderer";
+import { exportSceneHTML } from "@/lib/visual-remix-html";
 import { RemixMotion } from "@/lib/visual-remix-motion";
 import { agentBrief, proposalSchema } from "@/lib/visual-remix-agent";
 
@@ -598,6 +599,21 @@ export default function VisualRemixApp() {
       "Pending work revoked. Old agent briefs cannot apply; download a fresh brief to continue.",
     );
   }
+  async function exportHTML() {
+    const c=controller.current,s=c?.snapshot();
+    if(!c || !s?.scene || busy)return;
+    if(s.editing){setError("Wait for the latest local parameters to apply, or discard the draft.");return;}
+    try{c.exportPNG();}catch(cause){report(cause);return;}
+    const identity=JSON.stringify([s.projectId,s.generation,s.revision]);
+    const {abort,ticket}=begin();setMessage("Preparing offline HTML from the applied Scene…");
+    try{
+      const html=await exportSceneHTML(s.scene,assets.current,abort.signal);
+      const current=c.snapshot();
+      if(ticket!==epoch.current || abort.signal.aborted || current.editing || current.loading || JSON.stringify([current.projectId,current.generation,current.revision])!==identity)return;
+      download(new Blob([html],{type:"text/html;charset=utf-8"}),"visual-remix.html");
+      setMessage("Offline HTML downloaded with separate layers and used image pixels. Local fonts/wrapping may vary. Native Stitch layer editing is not verified.");
+    }catch(cause){report(cause,ticket);}finally{finish(ticket);}
+  }
   async function save() {
     const c = controller.current,
       s = c?.snapshot();
@@ -980,7 +996,7 @@ export default function VisualRemixApp() {
                 onUndo={()=>historyStep("undo")} onRedo={()=>historyStep("redo")} onApply={apply} onCancel={cancel}
                 onAddText={addText} onRemove={()=>{editDraft(s=>({...s,nodes:s.nodes.filter(n=>n.id!==selected)}));setSelected("");}} onMove={moveNode}
                 onExportPNG={()=>{try{download(controller.current!.exportPNG(),"visual-remix.png");setMessage("Applied PNG downloaded locally.");}catch(e){report(e);}}}
-                onSaveProject={()=>{void save();}} onCaptions={()=>jsonDownload({captions:snapshot!.scene!.captions,provenance:snapshot!.scene!.provenance,limitations:snapshot!.scene!.limitations},"visual-remix.captions.json")}
+                onExportHTML={()=>{void exportHTML();}} onSaveProject={()=>{void save();}} onCaptions={()=>jsonDownload({captions:snapshot!.scene!.captions,provenance:snapshot!.scene!.provenance,limitations:snapshot!.scene!.limitations},"visual-remix.captions.json")}
                 onExportMotion={()=>{void exportMotion();}} onCancelMotion={cancelMotion} onDownloadMotion={()=>{if(motionBlob)download(motionBlob,"visual-remix.mp4");}}
                 onDiscardDraft={discardLocalDraft} onGestureStart={startParameterGesture} onGestureEnd={endParameterGesture}
               />
