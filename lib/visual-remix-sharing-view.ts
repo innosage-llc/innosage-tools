@@ -4,6 +4,7 @@ export type SceneConsentModel = {
   clientId: string;
   redirectHost: string;
   isLoopback: boolean;
+  referenceEnabled?: boolean;
 };
 export type SceneSharingState = {
   available: boolean;
@@ -16,9 +17,11 @@ export type SceneSharingState = {
   notice?: string;
   diagnostic?: { status: number; requestId?: string; version?: string; revision?: string };
   revocationConfirmed?: boolean;
+  reference?: 'uploading' | 'ready';
 };
 export type SceneSharingProps = {
   state: SceneSharingState;
-  onConnect: () => void;
+  reference?: { name: string; width: number; height: number };
+  onConnect: (options?: { referencePixels: boolean; reuseCrops: boolean }) => void;
   onDisconnect: () => void;
 };

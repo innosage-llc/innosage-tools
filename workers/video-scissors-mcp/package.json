@@ -15,6 +15,7 @@
     "test:d:browser": "node --experimental-strip-types --test test/d-browser.e2e.test.ts",
     "test:integration": "node --experimental-strip-types --test test/integration.test.ts",
     "test:scene-auth": "node --experimental-strip-types --test test/scene-auth.test.ts",
+    "test:scene-reference": "node --experimental-strip-types --test test/scene-reference.test.ts",
     "test:scene-browser": "node --experimental-strip-types --test test/scene-browser.test.ts"
   },
   "dependencies": {

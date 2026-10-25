@@ -1,3 +1,4 @@
+import { REFERENCE_LIMITS } from '../../../../lib/visual-remix-reference';
 // INACTIVE CANDIDATE. Never imported by src/index.ts; caller gate defaults off.
 import { OAuthAuthorizationServer, OAuthResourceServer, OAuthError, insufficientScope, type OAuthHelpers, type OAuthResourceContext } from '@cloudflare/workers-oauth-provider';
 import { videoOAuthOptionsFor } from '../oauth';
@@ -12,7 +13,7 @@ import { renderSceneConsentView } from './SceneConsentView';
 import { boundedSceneRpc, sceneMcpHandler } from './mcp';
 import { sceneBrowserRoute } from './browser-routes';
 import { sceneDiagnostic } from './diagnostics';
-type SceneEnv = Env & { SCENE_BUILD_REVISION?: string };
+type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string };
 import { SCENE_SCOPES, parseSceneAuth, sceneObject, type SceneAuth } from '../../../../lib/visual-remix-remote';
 const videoScopes = ['video:read','video:edit'];
 const scopesEqual = (value: string[], expected: readonly string[]) => value.length === expected.length && new Set(value).size === expected.length && expected.every(scope => value.includes(scope));
@@ -31,7 +32,8 @@ const consentHeaders = (headers: Headers) => {
 export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false, bridge?: BridgeNamespace) {
   const videoResource = origin + '/mcp', sceneResource = origin + '/scene/mcp';
   const options = videoOAuthOptionsFor(env, origin, bridge);
-  const store = new SceneMailbox(env.DB);
+  const referencesEnabled = env.SCENE_REFERENCE_ENABLED === 'true';
+  const store = new SceneMailbox(env.DB,Date.now,referencesEnabled);
   const authorization = new OAuthAuthorizationServer<Env>({
     issuer: origin, resources: [videoResource,sceneResource], defaultResource: videoResource, legacyGrantResource: videoResource,
     authorizeEndpoint: options.authorizeEndpoint, tokenEndpoint: options.tokenEndpoint,
@@ -64,7 +66,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
       if (!verified.auth?.clientId) return reply({ error: 'AUTH_CONTEXT' }, 401);
       if (!scopesEqual(verified.auth.scope, SCENE_SCOPES)) return insufficientScope(verified.auth, [...SCENE_SCOPES]);
       const auth = sceneProps(verified.props), clientId = verified.auth.clientId;
-      return boundedSceneRpc(request, bounded => sceneMcpHandler(current.DB, auth, sceneResource).fetch(bounded, { authInfo: { token: verified.auth.token, clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt, resource: new URL(sceneResource) } }));
+      return boundedSceneRpc(request, bounded => sceneMcpHandler(current.DB, auth, sceneResource,referencesEnabled).fetch(bounded, { authInfo: { token: verified.auth.token, clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt, resource: new URL(sceneResource) } }),referencesEnabled);
     } },
   });
   async function consent(request: Request, oauth: OAuthHelpers): Promise<Response> {
@@ -74,7 +76,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
       if (isScene) await new Mailbox(env.DB).recordActivity('oauth');
       else await new Mailbox(env.DB).spend('oauth');
       const details = await oauth.describeConsent(auth), transaction = await oauth.beginConsent(auth);
-      const html = isScene ? renderSceneConsentView({ handle: transaction.handle, clientName: details.clientName, clientId: details.clientId, redirectHost: details.redirectHost, isLoopback: details.redirectIsLoopback }) : renderConsentView({ details, handle: transaction.handle, errorCode: 'NONE' });
+      const html = isScene ? renderSceneConsentView({ handle: transaction.handle, clientName: details.clientName, clientId: details.clientId, redirectHost: details.redirectHost, isLoopback: details.redirectIsLoopback, referenceEnabled:referencesEnabled }) : renderConsentView({ details, handle: transaction.handle, errorCode: 'NONE' });
       return new Response(html, { headers: consentHeaders(transaction.headers) });
     }
     if (request.method !== 'POST' || !sameOrigin(request) || !request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded')) return reply({ error: 'ORIGIN_OR_METHOD' }, 403);
@@ -119,15 +121,16 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
       const videoStore = new Mailbox(current.DB);
       await videoStore.initialize(); await videoStore.recordActivity('http');
       if (path === '/oauth/register' && request.method === 'POST') await videoStore.spend('dcr');
+      if (path === '/scene/browser/reference' && !referencesEnabled) return finish(reply({error:'REFERENCE_NOT_ENABLED'},503));
       if (request.body) {
-        const text = await boundedBody(request);
+        const text = await boundedBody(request,path === '/scene/browser/reference' && referencesEnabled ? REFERENCE_LIMITS.wireBytes : undefined);
         if (path === '/scene/mcp') {
-          try { const rpc = JSON.parse(text); if (rpc?.method === 'tools/call' && ['get_scene','propose_scene','proposal_status','cancel_proposal'].includes(rpc.params?.name)) tool = rpc.params.name; } catch { /* Protocol parser returns the safe rejection. */ }
+          try { const rpc = JSON.parse(text); if (rpc?.method === 'tools/call' && ['get_scene','propose_scene','proposal_status','cancel_proposal','read_shared_reference'].includes(rpc.params?.name)) tool = rpc.params.name; } catch { /* Protocol parser returns the safe rejection. */ }
         }
         request = new Request(request,{body:text});
       }
       if (isScene) { await store.spend(); await store.sweepExpired(); }
-      if (path.startsWith('/scene/browser/')) return finish(await sceneBrowserRoute(request,store));
+      if (path.startsWith('/scene/browser/')) return finish(await sceneBrowserRoute(request,store,referencesEnabled));
       if (path.startsWith('/remote/')) return finish(await browserRoute(request,videoStore,bridge));
       if (path === '/authorize') return finish(await consent(request,authorization.getOAuthApi(current)));
       if (path === '/mcp' || path === '/.well-known/oauth-protected-resource/mcp') return finish(await video.fetch(request,current,ctx));

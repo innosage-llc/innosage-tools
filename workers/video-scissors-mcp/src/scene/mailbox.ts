@@ -1,3 +1,5 @@
+import { SceneReferenceStore } from './reference';
+import { parseReferenceConsent, materializeReferenceProposal, referenceCrop } from '../../../../lib/visual-remix-reference';
 import { digest } from '../mailbox';
 import { SCENE_FIELDS, SCENE_LIMITS, parseSceneAuth, parseSceneProposal, parseSceneSnapshot, sceneId, sceneJSON, sceneResult, sceneToolResult, type SceneAuth, type SceneOwner, type SceneSnapshot, type SceneState } from '../../../../lib/visual-remix-remote';
 
@@ -10,7 +12,7 @@ type RequestRow = { id: string; state: SceneState; payload: string | null; paylo
 // Inactive candidate. No entrypoint imports this module; no migration runs here.
 export class SceneMailbox {
   private readonly db: D1DatabaseSession;
-  constructor(db: D1Database, private readonly now: () => number = Date.now) { this.db = db.withSession('first-primary'); }
+  constructor(db: D1Database, private readonly now: () => number = Date.now, private readonly referencesEnabled = false) { this.db = db.withSession('first-primary'); }
   async spend(): Promise<void> {
     const row = await this.db.prepare('UPDATE scene_budget SET http=http+1 WHERE singleton=1 RETURNING singleton').first();
     if (!row) throw new Error('SCENE_HTTP_BUDGET');
@@ -19,13 +21,21 @@ export class SceneMailbox {
     // Lazy content purge, not guaranteed TTL deletion. Tombstones/counters stay.
     await this.db.prepare('UPDATE scene_shares SET revoked=1,epoch=epoch+1 WHERE revoked=0 AND expires<=?').bind(this.now()).run();
   }
-  async create(input: unknown, fields: unknown, confirmed: unknown) {
+  async create(input: unknown, fields: unknown, confirmed: unknown, reference?: unknown) {
+    if (reference !== undefined && !this.referencesEnabled) throw new Error('REFERENCE_NOT_ENABLED');
+    const consent = reference === undefined ? null : parseReferenceConsent(reference);
     if (confirmed !== true || !Array.isArray(fields) || fields.length !== SCENE_FIELDS.length || new Set(fields).size !== fields.length || !SCENE_FIELDS.every(f => fields.includes(f))) throw new Error('SCENE_SHARE_CONSENT');
     const snapshot = parseSceneSnapshot(input), value = sceneJSON(snapshot); sceneToolResult(snapshot);
     const id = crypto.randomUUID(), credential = secret(), proof = secret(), now = this.now();
-    await this.db.prepare('INSERT INTO scene_shares(id,project,generation,credential_hash,proof_hash,proof_expires,expires,snapshot,revision,seen) VALUES(?,?,?,?,?,?,?,?,?,?)')
-      .bind(id, snapshot.projectId, snapshot.generation, await digest(credential), await digest(proof), now + SCENE_LIMITS.proofMs, now + SCENE_LIMITS.leaseMs, value, snapshot.revision, now).run();
+    const insert = this.db.prepare('INSERT INTO scene_shares(id,project,generation,credential_hash,proof_hash,proof_expires,expires,snapshot,revision,seen) VALUES(?,?,?,?,?,?,?,?,?,?)')
+      .bind(id, snapshot.projectId, snapshot.generation, await digest(credential), await digest(proof), now + SCENE_LIMITS.proofMs, now + SCENE_LIMITS.leaseMs, value, snapshot.revision, now);
+    if (consent) await this.db.batch([insert,this.db.prepare('INSERT INTO scene_references(share,epoch,consent) VALUES(?,1,?)').bind(id,sceneJSON(consent))]);
+    else await insert.run();
     return { auth: { purpose: 'visual-remix' as const, shareId: id, projectId: snapshot.projectId, generation: snapshot.generation, epoch: 1, credential }, proof, expiresAt: now + SCENE_LIMITS.leaseMs, proofExpiresAt: now + SCENE_LIMITS.proofMs };
+  }
+  referenceStore(): SceneReferenceStore {
+    if (!this.referencesEnabled) throw new Error('REFERENCE_NOT_ENABLED');
+    return new SceneReferenceStore(this.db,this.now);
   }
   async bindFromProof(proof: string, handle: string): Promise<SceneAuth | null> {
     if (!/^[a-f0-9]{64}$/.test(proof) || !handle || handle.length > 1024) return null;
@@ -66,7 +76,9 @@ export class SceneMailbox {
     return row ? sceneResult(row.id, row.state) : null;
   }
   async propose(input: SceneAuth, value: unknown) {
-    const a = parseSceneAuth(input), p = parseSceneProposal(value), payload = sceneJSON(p), hash = await digest(payload);
+    const a = parseSceneAuth(input);
+    const consent = this.referencesEnabled ? await new SceneReferenceStore(this.db,this.now).consent(a) : null;
+    const p = consent ? materializeReferenceProposal(value,consent) : parseSceneProposal(value), payload = sceneJSON(p), hash = await digest(payload);
     // Also check the future browser command envelope before committing admission.
     sceneJSON({ auth: { ...a, credential: 'x'.repeat(64) }, command: p }, SCENE_LIMITS.wireBytes);
     if (p.projectId !== a.projectId || p.generation !== a.generation) throw new Error('SCENE_BINDING');
@@ -75,7 +87,7 @@ export class SceneMailbox {
     if (old) { if (old.payload_hash !== hash) throw new Error('SCENE_REQUEST_CONFLICT'); return sceneResult(old.id, old.state); }
     const snapshot = await this.snapshot(a);
     if (!snapshot || snapshot.revision !== p.baseRevision) return null;
-    if (p.scene.assets.some(asset => !snapshot.scene.assets.some(approved => sceneJSON(approved) === sceneJSON(asset)))) throw new Error('UNSHARED_SCENE_ASSET');
+    if (p.scene.assets.some(asset => !snapshot.scene.assets.some(approved => sceneJSON(approved) === sceneJSON(asset)) && !(consent?.reuseCrops && referenceCrop(consent.manifest,asset)))) throw new Error('UNSHARED_SCENE_ASSET');
     const row = await this.db.prepare(`INSERT INTO scene_requests(share,id,epoch,payload_hash,payload,base_revision,state)
       SELECT s.id,?,s.epoch,?,?,?,'queued' FROM scene_shares s WHERE ${remote} AND s.revision=? AND s.seen>=?
       ON CONFLICT(share,id) DO NOTHING RETURNING id,state,payload_hash`)

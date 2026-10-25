@@ -15,12 +15,12 @@ const {VisualRemixTransport,VisualRemixController,LocalAssets,emptyScene}=await 
 const waitFor=async(check)=>{for(let i=0;i<150;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}assert.ok(check(),'condition did not complete');};
 const response=x=>Response.json(x);
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
-async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false}={}){
+async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false,slowUpload=false}={}){
  let renders=0,renderGate=null,command=null,cancel=[],connected=paired,revokeFailures=failRevoke?2:0;
  const calls=[],states=[];
  const controller=new VisualRemixController(async()=>{renders++;if(renderGate)await renderGate.promise;return{png:new Blob(['local-png']),diagnostics:[]};});
  await controller.open('fixture',0,emptyScene(),new LocalAssets());
- const source=controller.snapshot(),gate=deferred(),pollGate=deferred();
+ const source=controller.snapshot(),gate=deferred(),pollGate=deferred(),uploadGate=deferred();
  const owner={purpose:'visual-remix',shareId:'synthetic-share',projectId:source.projectId,generation:source.generation,epoch:1,credential:'a'.repeat(64)};
  const issuedAt=Date.now();
  const share={auth:owner,proof:'b'.repeat(64),expiresAt:issuedAt+900000,proofExpiresAt:issuedAt+300000};
@@ -33,12 +33,41 @@ async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respect
   if(path.endsWith('/sync'))return response({ok:true});
   if(path.endsWith('/poll')){if(pollStatus)return new Response('private token must never be reflected',{status:pollStatus,headers:{'X-Visual-Remix-Request-Id':'12345678-1234-1234-1234-123456789abc','X-Visual-Remix-Version':'0.1.6','X-Visual-Remix-Revision':'a'.repeat(40)}});const result={command,cancellations:cancel,connected};command=null;if(slowPoll)await pollGate.promise;return response(result);}
   if(path.endsWith('/report'))return response({ok:true});
+  if(path.endsWith('/reference')){if(slowUpload)await uploadGate.promise;return response({ok:true});}
   if(path.endsWith('/revoke')){if(revokeFailures-->0)return new Response('Uncertain',{status:503});return response({ok:true});}
   throw new Error('Unknown path');
  },clientNow);
- return{controller,transport,calls,states,gate,pollGate,share,setCommand:c=>command=c,setCancel:c=>cancel=c,setRenderGate:g=>renderGate=g,connect:async()=>{await transport.connect(true);await waitFor(()=>calls.some(c=>c.path.endsWith('/poll')));},get renders(){return renders;}};
+ return{controller,transport,calls,states,gate,pollGate,uploadGate,share,setPaired:c=>connected=c,setCommand:c=>command=c,setCancel:c=>cancel=c,setRenderGate:g=>renderGate=g,connect:async()=>{await transport.connect(true);await waitFor(()=>calls.some(c=>c.path.endsWith('/poll')));},get renders(){return renders;}};
 }
 const proposal=(f,id='request')=>{const s=f.controller.snapshot();return{schemaVersion:1,projectId:s.projectId,generation:s.generation,baseRevision:s.revision,requestId:id,explanation:'Synthetic edit',scene:{...s.scene,background:'#123456'}};};
+const preparedReference=()=>({consent:{confirmed:true,reuseCrops:true,manifest:{version:1,sourceSHA256:'c'.repeat(64),sourceWidth:10,sourceHeight:10,sha256:'d'.repeat(64),width:10,height:10,mime:'image/png',bytes:3}},source:new Blob(['original-local-only']),data:'YWJj'});
+
+test('fresh pixel consent sends manifest before pairing but bytes only after binding; old flow never uploads',async()=>{
+ const f=await fixture();try {
+  const image=preparedReference();await f.transport.connect(true,image);await waitFor(()=>f.calls.some(c=>c.path.endsWith('/poll')));
+  assert.deepEqual(f.calls.find(c=>c.path.endsWith('/create')).body.referenceConsent,image.consent);
+  assert.ok(!f.calls.some(c=>JSON.stringify(c.body).includes('YWJj')),'no pixels before host binding');
+  f.setPaired(true);f.transport.refresh();await waitFor(()=>f.transport.snapshot().reference==='ready');
+  const uploads=f.calls.filter(c=>c.path.endsWith('/reference'));assert.equal(uploads.length,1);assert.deepEqual(uploads[0].body.reference,{manifest:image.consent.manifest,data:image.data});
+  f.transport.refresh();await new Promise(r=>setTimeout(r,20));assert.equal(f.calls.filter(c=>c.path.endsWith('/reference')).length,1);
+ }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+ const old=await fixture({paired:true});try{await old.connect();assert.ok(!old.calls.some(c=>c.path.endsWith('/reference')));}finally{await old.transport.disconnect();old.transport.dispose();old.controller.dispose();}
+});
+test('late image upload after Disconnect cannot revive connection or submit a candidate',async()=>{
+ const f=await fixture({paired:true,slowUpload:true});try {
+  await f.transport.connect(true,preparedReference());await waitFor(()=>f.calls.some(c=>c.path.endsWith('/reference')));
+  await f.transport.disconnect();f.uploadGate.resolve();await new Promise(r=>setTimeout(r,20));
+  assert.equal(f.transport.snapshot().phase,'disconnected');assert.equal(f.transport.snapshot().reference,undefined);assert.equal(f.controller.snapshot().revision,0);
+ }finally{f.uploadGate.resolve();f.transport.dispose();f.controller.dispose();}
+});
+test('cancellation while local crop preparation is pending reports canceled and never creates stale preview',async()=>{
+ const f=await fixture({paired:true}),gate=deferred();let preparing=false;try {
+  const p=proposal(f,'slow-crop');await f.transport.connect(true,preparedReference(),async p=>{preparing=true;await gate.promise;return p;});
+  await waitFor(()=>f.transport.snapshot().reference==='ready');f.setCommand(p);f.transport.refresh();await waitFor(()=>preparing);
+  f.setCancel([p.requestId]);f.transport.refresh();await waitFor(()=>f.calls.some(c=>c.path.endsWith('/report')&&c.body.state==='canceled'));
+  gate.resolve();await new Promise(r=>setTimeout(r,20));assert.equal(f.controller.snapshot().preview,null);assert.equal(f.controller.snapshot().revision,0);assert.notEqual(f.transport.snapshot().phase,'error');
+ }finally{gate.resolve();await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+});
 
 test('creation tolerates server clock offsets without extending the local lease',async()=>{
  for(const offset of [120000,-600000]){

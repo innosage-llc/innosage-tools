@@ -106,3 +106,71 @@ Undo retains at most20 committed checkpoints. Local commits within750ms coalesce
 as a typing burst; remote Apply/import/Undo/revoke end that grouping. Undo advances
 revision and cannot revive an old proposal. Local changes cancel obsolete motion
 work and invalidate old downloads. No additional renderer, transport or new API.
+## Reference sharing amendment (2026-10-25)
+
+Founder explicitly requested app-uploaded reference pixels be readable by the
+connected GPT without attaching the image again. This supersedes earlier
+descriptor-only sharing **only for a fresh, image-specific opt-in**. Local-only
+uploads and old field-only consent are not upgraded. Local parameter edits apply
+automatically; remote proposals remain candidate previews with one browser Apply.
+
+`NEXT_PUBLIC_SCENE_REFERENCE=true` and `SCENE_REFERENCE_ENABLED=true` gate the
+candidate client and server respectively; both default off. The separately
+reviewed `candidate-migrations/scene-reference.sql` adds one private D1 row per
+share to the existing database. No new service, scopes, credentials or public
+image URL are introduced. Current exact OAuth audience/scopes/PKCE/manual grant,
+15-minute nonrenewable lease, generation/epoch, owner credential, freshness,
+revision, revocation and request/storage bounds remain required.
+
+The browser validates the local PNG/JPEG, then only after fresh pixel consent
+re-encodes a PNG derivative (≤1MiB, ≤2048 longest edge). Original bytes remain
+local. Manifest hashes/dimensions and separate crop-reuse permission are bound
+atomically when creating the share, before host consent. Pixel upload occurs
+only after the existing OAuth lease has been paired. The exact same-origin owner
+upload route has a1.5MB envelope; every ordinary Scene/RPC request retains16KiB
+and descriptor payload12KiB. SHA, PNG CRC/chunks, dimensions, bounded deflate and
+filter checks run before writing. Upload is immutable and same-byte idempotent;
+the database write rechecks live owner/lease/epoch after validation.
+
+`read_shared_reference` returns native MCP `content: [{type:"text",…},
+{type:"image",data:<base64>,mimeType:"image/png"}]`. Only this exact tool response
+gets the larger envelope. It requires current OAuth binding, per-share image
+consent, stored bytes, unexpired lease and fresh browser heartbeat. No caller URL
+or arbitrary image ID is accepted. Repeated first-image reads are supported;
+subsequent editable Scene reuse needs no reference read. A valid image block and
+decoded matching SHA establish byte delivery, **not host semantic vision**.
+ChatGPT must identify actual image details not supplied in text before that
+criterion passes.
+
+Optional, separately unchecked crop permission lets the agent use a virtual
+original-dimension source descriptor for integer photo/logo crop geometry. The
+service normalizes proposals to deterministic tight-crop IDs before hashing and
+admitting them. The browser materializes only those crop pixels with its retained
+original, then renders the candidate. Full-source raster substitution is rejected.
+Candidate Apply commits editable text/shapes/layout and the previewed crops once;
+portable saving embeds only image assets used by the committed Scene. Reopen and
+later content/layout edits therefore preserve actual photo/logo pixels without
+the original or another image analysis. Image generation is not an identity fix.
+
+Revoke denies reads and deletes the active image row in the same database update;
+expiry immediately denies access and a lazy sweep deletes the row. Physical
+deletion on a timer is not promised. Cloudflare Free D1 Time Travel can retain
+backups for7days, and already delivered ChatGPT conversation content cannot be
+retracted. Both browser and OAuth consent pages disclose this retention boundary.
+No agent live MCP test is authorized by implementation or staging deployment.
+
+Evidence sources: [MCP native image content](https://modelcontextprotocol.io/specification/2025-03-26/server/tools#image-content),
+[OpenAI model-visible tool content](https://developers.openai.com/plugins/reference#tool-results),
+[D1 row and Free limits](https://developers.cloudflare.com/d1/platform/limits/),
+[D1 Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/).
+The1MiB/2048 bounds are our engineering choices, not published ChatGPT limits.
+Actual ChatGPT image interpretation, image-size support, staging CPU and current
+free-plan headroom require explicit evidence; local controls do not prove them.
+
+Local checks: `npm run test:visual-remix-reference` (actual disposable provider,
+native SDK, byte integrity and negative paths), `npm run test:visual-remix-transport`
+(delayed upload, cancellation and prior transport regressions), and
+`node --experimental-strip-types --test test/scene-reference-browser.test.ts`
+from the Worker folder after building the app with both reference/remote flags.
+The last check uses the actual supplied PNG and a historical editable fixture;
+it does not claim fresh agent reconstruction or real ChatGPT success.
