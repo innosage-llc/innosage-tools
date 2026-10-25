@@ -23,7 +23,7 @@ async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respect
  const source=controller.snapshot(),gate=deferred(),pollGate=deferred(),uploadGate=deferred();
  const owner={purpose:'visual-remix',shareId:'synthetic-share',projectId:source.projectId,generation:source.generation,epoch:1,credential:'a'.repeat(64)};
  const issuedAt=Date.now();
- const share={auth:owner,proof:'b'.repeat(64),expiresAt:issuedAt+900000,proofExpiresAt:issuedAt+300000};
+ const share={auth:owner,proof:'b'.repeat(64),expiresAt:issuedAt+1800000,proofExpiresAt:issuedAt+300000};
  const transport=new VisualRemixTransport(controller,true,s=>states.push(s),()=>{},async(path,init)=>{
   const body=JSON.parse(init.body);calls.push({path,body});
   if(path.endsWith('/create')){
@@ -77,7 +77,7 @@ test('creation tolerates server clock offsets without extending the local lease'
    await f.transport.connect(true);
    const state=f.transport.snapshot();
    assert.equal(state.phase,'awaiting-consent');
-   assert.ok(state.expiresAt>=started+899000&&state.expiresAt<=Date.now()+900000);
+   assert.ok(state.expiresAt>=started+1799000&&state.expiresAt<=Date.now()+1800000);
    assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);
   }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
  }
@@ -256,7 +256,7 @@ test('recovery: proof and lease expiry explain fresh manual authorization withou
   try{
    await f.transport.connect(true);for(let i=0;i<30;i++)await new Promise(setImmediate);
    if(paired)assert.equal(f.transport.snapshot().phase,'connected');
-   now+=paired?900001:300001;t.mock.timers.tick(3001);for(let i=0;i<30;i++)await new Promise(setImmediate);
+   now+=paired?1800001:300001;t.mock.timers.tick(3001);for(let i=0;i<30;i++)await new Promise(setImmediate);
    assert.equal(f.transport.snapshot().revocationConfirmed,true);
    assert.match(f.transport.snapshot().notice,paired?/lease expired/:/proof expired/);assert.equal(f.controller.exportPNG().size,9);assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);
   }finally{f.transport.dispose();f.controller.dispose();}
@@ -275,5 +275,25 @@ test('foreground wake refreshes only existing consent and never creates, extends
   assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);
   now=deadline+1;f.transport.refresh();await waitFor(()=>f.transport.snapshot().phase==='disconnected');
   f.transport.refresh();assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);assert.ok(f.transport.snapshot().revocationConfirmed);
+ }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+});
+
+test('expiry preserves pending local parameters, applied PNG and Undo/Redo; only explicit fresh consent reconnects',async()=>{
+ let now=Date.now();const f=await fixture({paired:true,clientNow:()=>now});try{
+  await f.connect();await waitFor(()=>f.transport.snapshot().phase==='connected');
+  const next={...f.controller.snapshot().scene,background:'#112233'};
+  await f.controller.renderLocalEdit(next,f.controller.stageLocalEdit());f.transport.notifyLocalChange();
+  const before=f.controller.snapshot(),png=await f.controller.exportPNG().text();
+  const draft=f.controller.stageLocalEdit('pending-gesture');
+  now+=1800001;f.transport.refresh();await waitFor(()=>f.transport.snapshot().phase==='disconnected');
+  assert.ok(f.transport.snapshot().reauthorizationRequired);assert.equal(f.controller.snapshot().editing,true);
+  assert.deepEqual(f.controller.snapshot().scene,before.scene);assert.equal(f.controller.snapshot().generation,before.generation);
+  assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);f.transport.refresh();assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);
+  const later={...next,background:'#223344'};assert.equal(await f.controller.renderLocalEdit(later,draft),'applied');assert.ok(f.controller.undo());assert.ok(f.controller.redo());
+  assert.equal(await f.controller.exportPNG().text(),png);assert.deepEqual(f.controller.snapshot().scene,later);
+  await assert.rejects(f.transport.connect(false),/NOT_CONFIRMED/);
+  await f.transport.connect(true);await waitFor(()=>f.transport.snapshot().phase==='connected');
+  assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,2);assert.equal(f.calls.filter(c=>c.path.endsWith('/create'))[1].body.leaseMs,1800000);
+  assert.deepEqual(f.controller.snapshot().scene,later);assert.equal(f.transport.snapshot().reauthorizationRequired,undefined);
  }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
 });

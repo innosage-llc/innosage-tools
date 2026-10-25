@@ -3,7 +3,7 @@ import { parseProposal, parseScene, type Proposal, type Scene } from './visual-r
 // Inactive candidate data contract. Never contains raster/export bytes or URLs.
 export const SCENE_SCOPES = ['scene:read', 'scene:propose'] as const;
 export const SCENE_FIELDS = ['text', 'layout', 'captions', 'provenance', 'limitations', 'rasterDescriptors'] as const;
-export const SCENE_LIMITS = { payloadBytes: 12_288, wireBytes: 16_384, leaseMs: 900_000, proofMs: 300_000, freshnessMs: 10_000, shares: 20, requests: 16 } as const;
+export const SCENE_LIMITS = { payloadBytes: 12_288, wireBytes: 16_384, leaseMs: 1_800_000, legacyLeaseMs: 900_000, proofMs: 300_000, freshnessMs: 10_000, shares: 20, requests: 16 } as const;
 export type SceneSnapshot = { schemaVersion: 1; projectId: string; generation: string; revision: number; scene: Scene };
 export type SceneAuth = { purpose: 'visual-remix'; shareId: string; projectId: string; generation: string; epoch: number };
 export type SceneOwner = SceneAuth & { credential: string };

@@ -21,17 +21,20 @@ export class SceneMailbox {
     // Lazy content purge, not guaranteed TTL deletion. Tombstones/counters stay.
     await this.db.prepare('UPDATE scene_shares SET revoked=1,epoch=epoch+1 WHERE revoked=0 AND expires<=?').bind(this.now()).run();
   }
-  async create(input: unknown, fields: unknown, confirmed: unknown, reference?: unknown) {
+  async create(input: unknown, fields: unknown, confirmed: unknown, reference?: unknown, duration?: unknown) {
+    // Legacy clients disclosed 15min. Never silently upgrade their consent.
+    if(duration !== undefined && duration !== SCENE_LIMITS.leaseMs) throw new Error('SCENE_DURATION_CONSENT');
+    const leaseMs = duration === SCENE_LIMITS.leaseMs ? SCENE_LIMITS.leaseMs : SCENE_LIMITS.legacyLeaseMs;
     if (reference !== undefined && !this.referencesEnabled) throw new Error('REFERENCE_NOT_ENABLED');
     const consent = reference === undefined ? null : parseReferenceConsent(reference);
     if (confirmed !== true || !Array.isArray(fields) || fields.length !== SCENE_FIELDS.length || new Set(fields).size !== fields.length || !SCENE_FIELDS.every(f => fields.includes(f))) throw new Error('SCENE_SHARE_CONSENT');
     const snapshot = parseSceneSnapshot(input), value = sceneJSON(snapshot); sceneToolResult(snapshot);
     const id = crypto.randomUUID(), credential = secret(), proof = secret(), now = this.now();
     const insert = this.db.prepare('INSERT INTO scene_shares(id,project,generation,credential_hash,proof_hash,proof_expires,expires,snapshot,revision,seen) VALUES(?,?,?,?,?,?,?,?,?,?)')
-      .bind(id, snapshot.projectId, snapshot.generation, await digest(credential), await digest(proof), now + SCENE_LIMITS.proofMs, now + SCENE_LIMITS.leaseMs, value, snapshot.revision, now);
+      .bind(id, snapshot.projectId, snapshot.generation, await digest(credential), await digest(proof), now + SCENE_LIMITS.proofMs, now + leaseMs, value, snapshot.revision, now);
     if (consent) await this.db.batch([insert,this.db.prepare('INSERT INTO scene_references(share,epoch,consent) VALUES(?,1,?)').bind(id,sceneJSON(consent))]);
     else await insert.run();
-    return { auth: { purpose: 'visual-remix' as const, shareId: id, projectId: snapshot.projectId, generation: snapshot.generation, epoch: 1, credential }, proof, expiresAt: now + SCENE_LIMITS.leaseMs, proofExpiresAt: now + SCENE_LIMITS.proofMs };
+    return { auth: { purpose: 'visual-remix' as const, shareId: id, projectId: snapshot.projectId, generation: snapshot.generation, epoch: 1, credential }, proof, expiresAt: now + leaseMs, proofExpiresAt: now + SCENE_LIMITS.proofMs };
   }
   referenceStore(): SceneReferenceStore {
     if (!this.referencesEnabled) throw new Error('REFERENCE_NOT_ENABLED');

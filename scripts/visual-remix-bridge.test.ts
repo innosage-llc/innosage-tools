@@ -20,7 +20,7 @@ function proposal(c: VisualRemixController, requestId: string, candidate = scene
 
 test('sharing requires current Scene purpose, explicit field consent and a finite local lease', async t => {
   const w = await world(); t.after(() => w.bridge.revoke());
-  for (const patch of [{ purpose: 'video' }, { confirmed: false }, { projectId: 'another' }, { generation: 'stale' }, { expiresAt: 0 }, { expiresAt: Infinity }, { expiresAt: Date.now() + 16 * 60_000 }, { fields: ['text'] }]) {
+  for (const patch of [{ purpose: 'video' }, { confirmed: false }, { projectId: 'another' }, { generation: 'stale' }, { expiresAt: 0 }, { expiresAt: Infinity }, { expiresAt: Date.now() + 31 * 60_000 }, { fields: ['text'] }]) {
     assert.throws(() => new VisualRemixOfflineBridge(w.controller, { ...w.consent, ...patch } as SceneShareConsent), /SCENE_SHARE_NOT_CONFIRMED/);
   }
   w.consent.projectId = 'mutated-after-consent';

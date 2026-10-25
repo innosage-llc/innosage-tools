@@ -18,10 +18,13 @@ export type SceneSharingState = {
   diagnostic?: { status: number; requestId?: string; version?: string; revision?: string };
   revocationConfirmed?: boolean;
   reference?: 'uploading' | 'ready';
+  reauthorizationRequired?: boolean;
 };
 export type SceneSharingProps = {
   state: SceneSharingState;
   reference?: { name: string; width: number; height: number };
   onConnect: (options?: { referencePixels: boolean; reuseCrops: boolean }) => void;
   onDisconnect: () => void;
+  consentRequested?: boolean;
+  onReauthorize?: () => void;
 };

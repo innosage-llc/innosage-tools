@@ -1,5 +1,6 @@
 import { importProposal, parseScene, type Scene } from './visual-remix.ts';
 import { VisualRemixController, type ProposalStatus } from './visual-remix-controller.ts';
+import { SCENE_LIMITS } from './visual-remix-remote.ts';
 
 // Offline preparation only. No route, OAuth verifier, storage, fetch or Apply tool.
 // A future transport must supply independently verified purpose-specific authority;
@@ -26,7 +27,7 @@ export class VisualRemixOfflineBridge {
     const snapshot = controller.snapshot();
     if (!consent || consent.purpose !== 'visual-remix' || consent.confirmed !== true ||
       consent.projectId !== snapshot.projectId || consent.generation !== snapshot.generation || !snapshot.scene || snapshot.loading ||
-      !Number.isFinite(consent.expiresAt) || consent.expiresAt <= now() || consent.expiresAt - now() > 15 * 60_000 ||
+      !Number.isFinite(consent.expiresAt) || consent.expiresAt <= now() || consent.expiresAt - now() > SCENE_LIMITS.leaseMs ||
       !Array.isArray(consent.fields) || consent.fields.length !== SCENE_SHARE_FIELDS.length ||
       new Set(consent.fields).size !== SCENE_SHARE_FIELDS.length || !SCENE_SHARE_FIELDS.every(field => consent.fields.includes(field))) throw new Error('SCENE_SHARE_NOT_CONFIRMED');
     this.controller = controller; this.consent = { projectId: consent.projectId, generation: consent.generation, expiresAt: consent.expiresAt }; this.now = now;

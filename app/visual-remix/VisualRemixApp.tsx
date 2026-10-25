@@ -30,6 +30,7 @@ import { VisualRemixTransport } from "@/lib/visual-remix-transport";
 import { prepareSharedReference, resolveReferenceCrops } from "@/lib/visual-remix-reference-browser";
 import type { SceneSharingState } from "@/lib/visual-remix-sharing-view";
 import { SceneSharingPanel } from "./SceneSharingPanel";
+import { PreviewControls } from "./PreviewControls";
 import { ReferenceCrop } from "./ReferenceCrop";
 
 const sceneRemoteEnabled = process.env.NEXT_PUBLIC_SCENE_REMOTE === "true";
@@ -126,6 +127,8 @@ export default function VisualRemixApp() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const localTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localTicket = useRef(0);
+  const parameterGesture = useRef<string | null>(null);
+  const [consentEpoch,setConsentEpoch] = useState(0);
   const [draft, setDraft] = useState<Scene | null>(null);
   const [selected, setSelected] = useState("");
   const [approved, setApproved] = useState<RasterAsset[]>([]);
@@ -368,6 +371,7 @@ export default function VisualRemixApp() {
   }
   async function connectScene(options?: {referencePixels: boolean; reuseCrops: boolean}) {
     if(busy || !sharing.current) return;
+    if(controller.current?.snapshot().editing){setError("Finish or discard the local draft before authorizing remote sharing. Your work is preserved.");return;}
     const {abort,ticket}=begin();
     const store=assets.current;
     try {
@@ -378,6 +382,27 @@ export default function VisualRemixApp() {
       if(ticket===epoch.current) sync();
     } catch(e) {report(e,ticket);} finally {finish(ticket);}
   }
+  async function reauthorizeScene() {
+    const remote=sharing.current;if(!remote || busy)return;
+    // First confirm cleanup of the old session. Never recreate on uncertainty.
+    if(remote.snapshot().canDisconnect)await remote.disconnect();
+    if(!remote.prepareReauthorization())return;
+    setConsentEpoch(value=>value+1);
+    setMessage("Local work preserved. Review fresh 30-minute consent, then Connect and manually authorize the host.");
+  }
+  function historyStep(direction: "undo" | "redo") {
+    if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;parameterGesture.current=null;
+    controller.current?.[direction]();sync(true);setError("");
+    setMessage(`${direction === "undo" ? "Undo" : "Redo"} completed. Pending proposals are stale; local Scene and exports now match.`);
+  }
+  function startParameterGesture(){parameterGesture.current ??= crypto.randomUUID();}
+  function endParameterGesture(){parameterGesture.current=null;}
+  useEffect(()=>{
+    const end=()=>{parameterGesture.current=null;};
+    const keyEnd=(event:KeyboardEvent)=>{if(["ArrowUp","ArrowDown","PageUp","PageDown"].includes(event.key))end();};
+    window.addEventListener("pointerup",end);window.addEventListener("pointercancel",end);window.addEventListener("keyup",keyEnd);window.addEventListener("blur",end);
+    return()=>{window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);window.removeEventListener("keyup",keyEnd);window.removeEventListener("blur",end);};
+  },[]);
   async function approveAsset(file: File) {
     const { abort, ticket } = begin(true);
     setMessage("Validating this explicitly approved local asset…");
@@ -522,7 +547,7 @@ export default function VisualRemixApp() {
     setDraft(next);setError("");
     if (localTimer.current) clearTimeout(localTimer.current);
     motion.current.cancel();motionTicket.current++;setMotionBusy(false);setMotionBlob(null);setMotionMessage("");
-    const edit = c.stageLocalEdit();sync();
+    const edit = c.stageLocalEdit(parameterGesture.current);sync();
     setMessage("Updating local edit… Exports wait for the latest rendered parameters.");
     localTimer.current = setTimeout(() => {
       localTimer.current = null;
@@ -638,6 +663,7 @@ export default function VisualRemixApp() {
     editDraft(s => ({...s,nodes:s.nodes.map(n=>n.id===selected?({...n,...patch} as SceneNode):n)}));
   }
   function addText() {
+    if(!draft || draft.nodes.length >= REMIX_LIMITS.nodes)return;
     const id = `text-${crypto.randomUUID()}`;
     editDraft((s) => ({
             ...s,
@@ -746,11 +772,13 @@ export default function VisualRemixApp() {
       {sceneRemoteEnabled && snapshot?.scene && (
         <div className="mb-5">
           <SceneSharingPanel
-            key={`${snapshot.generation}:${referenceURL ?? "none"}:${sharingState.phase === "disconnected" && sharingState.revocationConfirmed ? "revoked" : "current"}`}
-            state={{...sharingState,canConnect:sharingState.canConnect && ready}}
+            key={`${consentEpoch}:${snapshot.generation}:${referenceURL ?? "none"}:${sharingState.phase === "disconnected" && sharingState.revocationConfirmed ? "revoked" : "current"}`}
+            state={{...sharingState,canConnect:sharingState.canConnect && ready && !snapshot.editing}}
             reference={sceneReferenceEnabled && reference ? {name:reference.name,width:reference.descriptor.width,height:reference.descriptor.height} : undefined}
             onConnect={(options) => {void connectScene(options);}}
             onDisconnect={() => { void sharing.current?.disconnect(); }}
+            onReauthorize={() => {void reauthorizeScene();}}
+            consentRequested={consentEpoch > 0}
           />
         </div>
       )}
@@ -939,23 +967,31 @@ export default function VisualRemixApp() {
                 Applied revision {snapshot?.revision ?? "—"}
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Preview
-                title="Reference · local only"
-                url={referenceURL}
-                empty="Select a reference image, or reuse your saved project."
-              />
-              <Preview
-                title="Applied image"
-                url={currentURL}
-                empty="Your applied scene appears here."
-              />
-              <Preview
-                title="Candidate · not applied"
-                url={candidateURL}
-                empty="Import agent JSON or preview your edits."
+            <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(180px,1fr)_minmax(260px,1fr)]">
+              <div className="min-w-0 max-w-sm">
+                <Preview title="Applied image" url={currentURL} empty="Your applied scene appears here." />
+              </div>
+              <PreviewControls
+                nodes={draft?.nodes ?? []} node={node} selected={selected} background={draft?.background ?? ""}
+                ready={ready} pending={!!snapshot?.editing} revision={snapshot?.revision ?? 0}
+                canUndo={ready && !!snapshot?.canUndo} canRedo={ready && !!snapshot?.canRedo} hasCandidate={!!snapshot?.preview}
+                exportable={exportable} motionBusy={motionBusy} motionReady={!!motionBlob}
+                onSelect={setSelected} onChange={updateNode} onBackground={value=>editDraft(s=>({...s,background:value}))}
+                onUndo={()=>historyStep("undo")} onRedo={()=>historyStep("redo")} onApply={apply} onCancel={cancel}
+                onAddText={addText} onRemove={()=>{editDraft(s=>({...s,nodes:s.nodes.filter(n=>n.id!==selected)}));setSelected("");}} onMove={moveNode}
+                onExportPNG={()=>{try{download(controller.current!.exportPNG(),"visual-remix.png");setMessage("Applied PNG downloaded locally.");}catch(e){report(e);}}}
+                onSaveProject={()=>{void save();}} onCaptions={()=>jsonDownload({captions:snapshot!.scene!.captions,provenance:snapshot!.scene!.provenance,limitations:snapshot!.scene!.limitations},"visual-remix.captions.json")}
+                onExportMotion={()=>{void exportMotion();}} onCancelMotion={cancelMotion} onDownloadMotion={()=>{if(motionBlob)download(motionBlob,"visual-remix.mp4");}}
+                onDiscardDraft={discardLocalDraft} onGestureStart={startParameterGesture} onGestureEnd={endParameterGesture}
               />
             </div>
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-medium">Compare reference and candidate</summary>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <Preview title="Reference · local only" url={referenceURL} empty="Select a reference image, or reuse your saved project." />
+                <Preview title="Candidate · not applied" url={candidateURL} empty="Import agent JSON or request a remote candidate." />
+              </div>
+            </details>
             {snapshot?.preview && (
               <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
                 <p className="text-sm font-medium">
@@ -1004,14 +1040,6 @@ export default function VisualRemixApp() {
                 <div className="mt-3">
                   <Diagnostics items={snapshot.preview.output.diagnostics} />
                 </div>
-                <div className="mt-3 flex gap-2">
-                  <button className={primary} disabled={!ready} onClick={apply}>
-                    Apply candidate
-                  </button>
-                  <button className={button} disabled={!ready} onClick={cancel}>
-                    Cancel candidate
-                  </button>
-                </div>
                 <p className="mt-2 text-xs text-zinc-600">
                   Apply may retain layout errors for editing; PNG export stays
                   blocked until you fix them.
@@ -1019,21 +1047,6 @@ export default function VisualRemixApp() {
               </div>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                className={button}
-                disabled={!ready || !snapshot?.canUndo}
-                onClick={() => {
-                  if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;
-                  controller.current!.undo();
-                  sync(true);
-                  setError("");
-                  setMessage(
-                    "Undo completed. Revision advanced; pending proposals are stale.",
-                  );
-                }}
-              >
-                Undo last apply
-              </button>
               <button className={button} disabled={!snapshot} onClick={revoke}>
                 Revoke pending work
               </button>
@@ -1055,82 +1068,21 @@ export default function VisualRemixApp() {
             )}
           </section>
           <section className={panel}>
-            <h2 className="font-semibold">Edit content and layout</h2>
+            <details><summary className="cursor-pointer font-semibold">Advanced appearance and captions</summary>
             <p className="mt-2 text-xs text-zinc-600">
               Local parameter edits render and apply automatically after a short pause. Undo restores earlier changes. Remote agent candidates still require Apply. Coordinates use the 1080×1440 canvas.
             </p>
-            <fieldset disabled={!ready} className="mt-4 space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <button
-                  className={button}
-                  disabled={!ready || (draft?.nodes.length ?? 0) >= 100}
-                  onClick={addText}
-                >
-                  Add text block
-                </button>
-                <button
-                  className={button}
-                  disabled={!node}
-                  onClick={() => {
-                    editDraft(s => ({...s,nodes:s.nodes.filter(n=>n.id!==selected)}));
-                    setSelected("");
-                  }}
-                >
-                  Remove selected
-                </button>
-                <button
-                  className={button}
-                  disabled={!node}
-                  onClick={() => moveNode(-1)}
-                >
-                  Move backward
-                </button>
-                <button
-                  className={button}
-                  disabled={!node}
-                  onClick={() => moveNode(1)}
-                >
-                  Move forward
-                </button>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-sm">
-                  Layer
-                  <select
-                    aria-label="Layer"
-                    className={`${input} mt-1`}
-                    value={selected}
-                    onChange={(e) => setSelected(e.target.value)}
-                  >
-                    <option value="">Choose a layer</option>
-                    {draft?.nodes.map((n) => (
-                      <option key={n.id} value={n.id}>
-                        {n.type}: {n.id}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="text-sm">
-                  Background
-                  <input
-                    aria-label="Background"
-                    className={`${input} mt-1`}
-                    value={draft?.background ?? ""}
-                    onChange={(e) =>
-                      editDraft(s => ({...s,background:e.target.value}))
-                    }
-                  />
-                </label>
-              </div>
+            <fieldset disabled={!ready} className="mt-4 space-y-4"
+              onPointerDownCapture={event=>{if(event.target instanceof HTMLInputElement && event.target.type==="number")startParameterGesture();}}
+              onPointerUpCapture={endParameterGesture} onPointerCancelCapture={endParameterGesture}
+              onKeyDownCapture={event=>{if(event.target instanceof HTMLInputElement && event.target.type==="number" && ["ArrowUp","ArrowDown","PageUp","PageDown"].includes(event.key))startParameterGesture();}}
+              onKeyUpCapture={event=>{if(["ArrowUp","ArrowDown","PageUp","PageDown"].includes(event.key))endParameterGesture();}}
+            >
               {node && (
                 <>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {(
                       [
-                        "x",
-                        "y",
-                        "width",
-                        "height",
                         "rotation",
                         "opacity",
                       ] as const
@@ -1183,34 +1135,7 @@ export default function VisualRemixApp() {
                   )}
                   {node.type === "text" && (
                     <>
-                      <label className="block text-sm">
-                        Text content
-                        <textarea
-                          aria-label="Text content"
-                          className={`${input} mt-1`}
-                          rows={4}
-                          maxLength={20_000}
-                          value={node.text}
-                          onChange={(e) => updateNode({ text: e.target.value })}
-                        />
-                      </label>
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                        <label className="text-sm">
-                          Font size
-                          <input
-                            aria-label="Font size"
-                            type="number"
-                            className={`${input} mt-1`}
-                            value={
-                              Number.isFinite(node.fontSize)
-                                ? node.fontSize
-                                : ""
-                            }
-                            onChange={(e) =>
-                              updateNode({ fontSize: e.target.valueAsNumber })
-                            }
-                          />
-                        </label>
                         <label className="text-sm">
                           Line height
                           <input
@@ -1285,9 +1210,10 @@ export default function VisualRemixApp() {
                   ))}
                 </div>
               </details>
-              {snapshot?.editing && <button className={button} onClick={discardLocalDraft}>Discard local draft</button>}
+
               <p role="status" className="text-xs text-zinc-600">{snapshot?.editing ? "Local edit pending · downloads paused" : `Applied locally · revision ${snapshot?.revision ?? 0}`}</p>
             </fieldset>
+            </details>
           </section>
           <section className={panel}>
             <h2 className="font-semibold">
@@ -1298,48 +1224,6 @@ export default function VisualRemixApp() {
               above. Project JSON retains editable layers and used approved
               raster assets; the reference is excluded by default.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className={primary}
-                disabled={!exportable}
-                onClick={() => {
-                  try {
-                    download(
-                      controller.current!.exportPNG(),
-                      "visual-remix.png",
-                    );
-                    setMessage("Applied PNG downloaded locally.");
-                  } catch (e) {
-                    report(e);
-                  }
-                }}
-              >
-                Download PNG
-              </button>
-              <button
-                className={button}
-                disabled={!ready || snapshot?.editing}
-                onClick={() => void save()}
-              >
-                Save project
-              </button>
-              <button
-                className={button}
-                disabled={!ready || snapshot?.editing}
-                onClick={() =>
-                  jsonDownload(
-                    {
-                      captions: snapshot!.scene!.captions,
-                      provenance: snapshot!.scene!.provenance,
-                      limitations: snapshot!.scene!.limitations,
-                    },
-                    "visual-remix.captions.json",
-                  )
-                }
-              >
-                Download captions
-              </button>
-            </div>
             <div className="mt-5 border-t border-zinc-100 pt-4">
               <h3 className="text-sm font-semibold">A little motion</h3>
               <p className="my-2 text-xs leading-5 text-zinc-600">
@@ -1347,29 +1231,6 @@ export default function VisualRemixApp() {
                 seconds, 1080 × 1440. Processing stays on this device and may
                 take up to two minutes. Current desktop Chrome is recommended.
               </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  className={button}
-                  disabled={!exportable || motionBusy}
-                  onClick={() => void exportMotion()}
-                >
-                  Export MP4
-                </button>
-                {motionBusy && (
-                  <button className={button} onClick={cancelMotion}>
-                    Cancel motion export
-                  </button>
-                )}
-                {motionBlob && (
-                  <button
-                    className={button}
-                    disabled={!exportable}
-                    onClick={() => download(motionBlob, "visual-remix.mp4")}
-                  >
-                    Download MP4
-                  </button>
-                )}
-              </div>
               {motionBusy && (
                 <progress
                   className="mt-3 w-full"

@@ -245,6 +245,10 @@ test(
       assert.deepEqual(png.bytes, Buffer.from(candidateBytes));
       assert.equal(png.bytes.readUInt32BE(16), 1080);
       assert.equal(png.bytes.readUInt32BE(20), 1440);
+      await page.getByRole('button',{name:'Undo',exact:true}).click();
+      assert.equal(JSON.parse(await page.getByTestId('applied-scene').textContent()).nodes.length,0);
+      await page.getByRole('button',{name:'Redo',exact:true}).click();
+      assert.deepEqual((await download('Download PNG')).bytes,png.bytes,'remote Apply Undo/Redo preserves preview/export pixels');
       const saved = await download("Save project");
       const project = JSON.parse(saved.bytes.toString());
       assert.equal(project.assets.length, 1);
@@ -268,7 +272,7 @@ test(
         .getByRole("alert")
         .filter({ hasText: /INVALID_SCENE_DATA|Invalid scene data/ })
         .waitFor();
-      assert.match(await page.getByTestId("revision").textContent(), /1/);
+      assert.match(await page.getByTestId("revision").textContent(), /3$/);
       assert.deepEqual((await download("Download PNG")).bytes, png.bytes);
       await page.reload();
       await page.getByText("Ready. Select a reference or open a saved project.", { exact:true }).waitFor();
@@ -297,22 +301,35 @@ test(
       const appliedScene=async()=>JSON.parse(await page.getByTestId('applied-scene').textContent());
       const waitRevision=revision=>page.waitForFunction(r=>Number(document.querySelector('[data-testid=revision]').textContent.replace(/\D/g,''))>r,revision);
       let revision=Number((await page.getByTestId('revision').textContent()).replace(/\D/g,''));
+      const removeButton=page.getByRole('button',{name:'Remove selected',exact:true});
+      if(!await removeButton.isVisible())await page.getByTestId('preview-controls').locator('summary').first().click();
       await page.getByLabel('Layer',{exact:true}).selectOption('crop');
       await page.getByRole('button',{name:'Remove selected',exact:true}).click();await waitRevision(revision);
       const removed=JSON.parse((await download('Save project')).bytes.toString());assert.equal(removed.scene.nodes.some(n=>n.type==='image'),false);assert.deepEqual(removed.scene.assets,[]);assert.deepEqual(removed.assets,[]);
-      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();
+      await page.getByRole('button',{name:'Undo',exact:true}).click();
       const restored=JSON.parse((await download('Save project')).bytes.toString());assert.deepEqual(restored.scene,project.scene);assert.deepEqual(restored.assets,project.assets);
       await page.getByLabel('Layer',{exact:true}).selectOption('title');
       revision=Number((await page.getByTestId('revision').textContent()).replace(/\D/g,''));
       await page.getByLabel('Text content',{exact:true}).fill('Second post · 重用已有设计');
       assert.equal(await page.getByRole('button',{name:'Download PNG',exact:true}).isDisabled(),true,'pending local draft cannot export the old PNG');
       await page.getByLabel('Node y',{exact:true}).fill('190');
-      await page.getByText('Chinese / English publishing captions',{exact:true}).click();await page.getByLabel('titleCN',{exact:true}).fill('第二篇文章');
+      await page.getByText('Advanced appearance and captions',{exact:true}).click();await page.getByText('Chinese / English publishing captions',{exact:true}).click();await page.getByLabel('titleCN',{exact:true}).fill('第二篇文章');
       await page.waitForFunction(()=>JSON.parse(document.querySelector('[data-testid=applied-scene]').textContent).captions.titleCN==='第二篇文章');
       assert.equal((await appliedScene()).nodes[0].y,190);assert.match((await appliedScene()).nodes[0].text,/Second post/);
       assert.equal(await page.getByRole('button',{name:'Apply candidate',exact:true}).count(),0,'local parameters do not require Apply');
       assert.equal(JSON.parse((await download('Download captions')).bytes.toString()).captions.titleCN,'第二篇文章');
-      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();assert.equal((await appliedScene()).nodes[0].y,100);
+      await page.getByRole('button',{name:'Undo',exact:true}).click();assert.equal((await appliedScene()).nodes[0].y,100);
+      // One held advanced numeric gesture spans multiple render/debounce intervals.
+      const rotation=page.getByLabel('Node rotation',{exact:true});await rotation.focus();
+      const rotateStart=Number(await rotation.inputValue());
+      await page.keyboard.down('ArrowUp');
+      await page.waitForFunction(v=>JSON.parse(document.querySelector('[data-testid=applied-scene]').textContent).nodes[0].rotation===v,rotateStart+1);
+      await page.waitForTimeout(850);await page.keyboard.down('ArrowUp');
+      await page.waitForFunction(v=>JSON.parse(document.querySelector('[data-testid=applied-scene]').textContent).nodes[0].rotation===v,rotateStart+2);
+      await page.keyboard.up('ArrowUp');
+      await page.getByRole('button',{name:'Undo',exact:true}).click();assert.equal((await appliedScene()).nodes[0].rotation,rotateStart);
+      await page.getByRole('button',{name:'Redo',exact:true}).click();assert.equal((await appliedScene()).nodes[0].rotation,rotateStart+2);
+      await page.getByRole('button',{name:'Undo',exact:true}).click();
       const beforeRevoke=await download('Download PNG');
       // Revoke must restore canceled form values, not merely the PNG.
       await page.getByLabel('Node y',{exact:true}).fill('333');
@@ -321,7 +338,7 @@ test(
       await page.getByLabel('Node x',{exact:true}).fill('90');
       await page.waitForFunction(()=>JSON.parse(document.querySelector('[data-testid=applied-scene]').textContent).nodes[0].x===90);
       assert.equal((await appliedScene()).nodes[0].y,100,'a later edit cannot resurrect a revoked local y');
-      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();
+      await page.getByRole('button',{name:'Undo',exact:true}).click();
       assert.deepEqual((await download('Download PNG')).bytes,beforeRevoke.bytes);
       // Remote/imported agent proposals remain separate, explicitly applied candidates.
       const previewRemote=async(id)=>{const b=JSON.parse((await download('Download agent brief')).bytes.toString());const changed=structuredClone(b.currentScene);changed.nodes[0].y=160;await page.getByLabel('Proposal JSON',{exact:true}).fill(JSON.stringify({...b.proposalIdentity,requestId:id,scene:changed,explanation:'Remote candidate remains pending'}));await page.getByRole('button',{name:'Preview proposal',exact:true}).click();await page.getByRole('button',{name:'Apply candidate',exact:true}).waitFor();return b;};
@@ -372,7 +389,7 @@ test(
       revision=Number((await page.getByTestId('revision').textContent()).replace(/\D/g,''));
       await page.getByLabel('Node width',{exact:true}).fill('1');await waitRevision(revision);
       assert.equal(await page.getByRole('button',{name:'Download PNG',exact:true}).isDisabled(),true);
-      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();
+      await page.getByRole('button',{name:'Undo',exact:true}).click();
       const validBefore=await download('Download PNG');
       await page.getByLabel('Node fill',{exact:true}).fill('invalid');
       await page.getByText('These parameters could not render.',{exact:false}).waitFor();assert.equal(await page.getByRole('button',{name:'Save project',exact:true}).isDisabled(),true);
