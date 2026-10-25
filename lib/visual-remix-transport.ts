@@ -295,16 +295,18 @@ export class VisualRemixTransport {
     if (this.creating) return; // Late create response owns cleanup; never adopt it.
     if (!owner) { this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:false,notice,reauthorizationRequired}); return; }
     try {
-      const result = sceneObject(await this.call('revoke', { auth:owner.auth },true), ['ok']);
+      const raw=await this.call('revoke', { auth:owner.auth },true);
+      const result=sceneObject(raw,typeof raw==='object' && raw!==null && Object.hasOwn(raw,'state')?['ok','state']:['ok']);
+      const absent=result.state==='already_absent';
       if(this.owner!==owner)return;
-      if (result.ok !== true) throw new Error('SCENE_REVOKE');
+      if (result.ok !== true || result.state!==undefined && !absent) throw new Error('SCENE_REVOKE');
       if(remembered){
         await this.options.controlStore!.clear(owner.auth);
         if(this.owner!==owner)return;
         this.controlStored=false;
       }
       this.owner = null; this.bridge = null; this.reference = null; this.materialize = null; this.referenceUploaded=false; this.preparationStates.clear(); this.issued.clear(); this.acknowledged.clear(); this.fingerprint = '';
-      this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:true,notice,reauthorizationRequired});
+      this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:!absent,notice:absent?'Already absent: the service has no current grant for this ID. Saved device control was cleared; local work is preserved.':notice,reauthorizationRequired});
     } catch {
       if(this.owner!==owner)return;
       this.publish({phase:'error',canConnect:false,canDisconnect:true,notice,reauthorizationRequired,error:'Revocation is unconfirmed. Retry Disconnect. Existing service content may remain until a successful revoke or later cleanup.'});

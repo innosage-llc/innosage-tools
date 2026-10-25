@@ -228,3 +228,43 @@ test('explicit until-revoked grant outlives the former lease but never extends O
   assert.equal((await f.json('/scene/browser/revoke',{auth:p.auth})).status,200);assert.equal((await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()})).status,401);f.noEgress();
  }finally{await f.mf.dispose();}
 });
+
+
+test('retained-slot quarantine fences a consent transaction already read before expiry and rejects replay into a new grant',async()=>{
+ const f=await fixture(undefined,false,false,true);let held:Promise<Response>|undefined;
+ const fresh=async()=>{const r=await f.json('/scene/browser/create',{snapshot:snapshot(),fields:['text','layout','captions','provenance','limitations','rasterDescriptors'],confirmed:true,lifetime:UNTIL_REVOKED_CONSENT},{'x-fixture-until-revoked':'true'});assert.equal(r.status,200);return r.json();};
+ try{
+  const old=await fresh(),c=await f.client(),a=await f.authorize(c,scene,scopes.join(' '),false,true);
+  held=f.form('/authorize',new URLSearchParams([['handle',a.handle],['decision','approve'],['browserProof',old.proof],...scopes.map(s=>['scope',s])]),a.cookie,{'x-fixture-hold-consent':'true'});
+  for(let i=0;i<100;i++){if((await (await f.request('/__fixture/consent-held')).json()).held)break;await new Promise(resolve=>setTimeout(resolve,10));}
+  assert.equal((await (await f.request('/__fixture/consent-held')).json()).held,true);
+  f.advance(6*60000);assert.equal((await f.request('/__fixture/reclaim',{method:'POST'})).status,200);
+  assert.equal(await f.db.prepare('SELECT revoked FROM scene_shares WHERE id=?').bind(old.auth.shareId).first('revoked'),1);
+  f.advance(30*60000+1);assert.equal((await f.request('/__fixture/reclaim',{method:'POST'})).status,200);
+  assert.equal(await f.db.prepare('SELECT id FROM scene_shares WHERE id=?').bind(old.auth.shareId).first(),null);
+  const next=await fresh();await f.request('/__fixture/release-consent',{method:'POST'});assert.equal((await held).status,403,'the cached old transaction cannot bind its now-absent/expired proof');
+  assert.equal((await f.approve(a,next.proof)).status,400,'the consumed old handle cannot bind a different fresh grant after collection');
+  const current=await f.authorize(c,scene,scopes.join(' '),false,true),tr=await f.token(c,await f.approve(current,next.proof));assert.equal(tr.status,200);const token=await tr.json();
+  assert.equal((await f.rpc(token.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);
+  const absent=await f.json('/scene/browser/revoke',{auth:old.auth});assert.equal(absent.status,200);assert.deepEqual(await absent.json(),{ok:true,state:'already_absent'});f.noEgress();
+ }finally{await f.request('/__fixture/release-consent',{method:'POST'});await held?.catch(()=>{});await f.mf.dispose();}
+});
+
+
+test('a delayed token issuance stays denied by D1 revocation and absence even while the resulting OAuth token is still unexpired',async()=>{
+ const f=await fixture(undefined,false,false,true);let held:Promise<Response>|undefined;
+ try{
+  const r=await f.json('/scene/browser/create',{snapshot:snapshot(),fields:['text','layout','captions','provenance','limitations','rasterDescriptors'],confirmed:true,lifetime:UNTIL_REVOKED_CONSENT},{'x-fixture-until-revoked':'true'});assert.equal(r.status,200);const p=await r.json(),c=await f.client(),a=await f.authorize(c,scene,scopes.join(' '),false,true),approved=await f.approve(a,p.proof);
+  held=f.token(c,approved,scene,false,undefined,{'x-fixture-hold-lease':'true'});
+  for(let i=0;i<100;i++){if((await (await f.request('/__fixture/lease-held')).json()).held)break;await new Promise(resolve=>setTimeout(resolve,10));}
+  assert.equal((await (await f.request('/__fixture/lease-held')).json()).held,true);
+  assert.equal((await f.json('/scene/browser/revoke',{auth:p.auth})).status,200);const retiredAt=Number(await f.db.prepare('SELECT retired_at FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('retired_at'));
+  // A29sec delayed D1 reply is within the documented30sec query limit. The
+  // provider computes issuance time after its callback, so expiry alone is not
+  // a substitute for the resource's current D1 fence.
+  f.advance(29000);await f.request('/__fixture/release-lease',{method:'POST'});const tr=await held;assert.equal(tr.status,200);const token=await tr.json(),issued=f.now();assert.equal(token.refresh_token,undefined);assert.ok(token.expires_in<=1800);
+  assertSceneReauthorization((await f.rpc(token.access_token,'tools/list')).r);
+  f.advance(retiredAt+1800000+10-f.now());assert.equal((await f.request('/__fixture/reclaim',{method:'POST'})).status,200);assert.equal(await f.db.prepare('SELECT id FROM scene_shares WHERE id=?').bind(p.auth.shareId).first(),null);
+  assert.ok(f.now()<issued+token.expires_in*1000,'the issued token remains inside its finite lifetime at collection');assertSceneReauthorization((await f.rpc(token.access_token,'tools/list')).r);f.noEgress();
+ }finally{await f.request('/__fixture/release-lease',{method:'POST'});await held?.catch(()=>{});await f.mf.dispose();}
+});

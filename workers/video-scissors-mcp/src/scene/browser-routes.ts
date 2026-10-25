@@ -28,7 +28,7 @@ export async function sceneBrowserRoute(request: Request, store: SceneMailbox, r
   if (path === '/scene/browser/create') return result(await store.create(body.snapshot, body.fields, body.confirmed, body.referenceConsent,body.leaseMs,body.lifetime));
   const auth = parseSceneAuth(body.auth, true) as SceneOwner;
   // Revoke remains idempotent after the lease was revoked/expired.
-  if (path === '/scene/browser/revoke') return result({ ok: await store.revoke(auth) });
+  if (path === '/scene/browser/revoke') return result(await store.revokeOutcome(auth));
   if (!await store.owner(auth)) return reply({ error: 'OWNER_EXPIRED_OR_REVOKED' }, 401);
   if (path === '/scene/browser/sync') return result({ ok: await store.sync(auth, body.snapshot),...await store.cacheState(auth) });
   if (path === '/scene/browser/poll') return result({ command: await store.claim(auth,body.cacheEpoch), cancellations: await store.cancellations(auth), connected: !!await store.lease({purpose:auth.purpose,shareId:auth.shareId,projectId:auth.projectId,generation:auth.generation,epoch:auth.epoch}),...await store.cacheState(auth) });

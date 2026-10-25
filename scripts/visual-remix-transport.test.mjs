@@ -15,7 +15,7 @@ const {VisualRemixTransport,VisualRemixController,LocalAssets,emptyScene,UNTIL_R
 const waitFor=async(check)=>{for(let i=0;i<150;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}assert.ok(check(),'condition did not complete');};
 const response=x=>Response.json(x);
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
-async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false,slowUpload=false,until=false,controlStore:providedStore,failSave=false,invalidUntilConfirmation=false,slowRevoke=false}={}){
+async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false,slowUpload=false,until=false,controlStore:providedStore,failSave=false,invalidUntilConfirmation=false,slowRevoke=false,revokeState,revokeStatus=0}={}){
  let savedControl=null,cacheEpoch=0,createCount=0;
  const controlStore=providedStore??{read:async()=>savedControl&&structuredClone(savedControl),save:async control=>{if(failSave)throw new Error('storage unavailable');savedControl=structuredClone(control);},clear:async()=>{savedControl=null;}};
  let renders=0,renderGate=null,command=null,cancel=[],connected=paired,revokeFailures=failRevoke?2:0;
@@ -36,7 +36,7 @@ async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respect
   if(path.endsWith('/poll')){if(pollStatus)return new Response('private token must never be reflected',{status:pollStatus,headers:{'X-Visual-Remix-Request-Id':'12345678-1234-1234-1234-123456789abc','X-Visual-Remix-Version':'0.1.6','X-Visual-Remix-Revision':'a'.repeat(40)}});const result={command,cancellations:cancel,connected,...(until?{cacheEpoch}:{})};command=null;if(slowPoll)await pollGate.promise;return response(result);}
   if(path.endsWith('/report'))return response({ok:true});
   if(path.endsWith('/reference')){if(slowUpload)await uploadGate.promise;return response({ok:true});}
-  if(path.endsWith('/revoke')){if(slowRevoke)await revokeGate.promise;if(revokeFailures-->0)return new Response('Uncertain',{status:503});return response({ok:true});}
+  if(path.endsWith('/revoke')){if(revokeStatus)return new Response('Unavailable',{status:revokeStatus});if(slowRevoke)await revokeGate.promise;if(revokeFailures-->0)return new Response('Uncertain',{status:503});return response({ok:true,...(revokeState?{state:revokeState}:{})});}
   throw new Error('Unknown path');
  },clientNow,{untilRevoked:until,controlStore});
  if(until)await transport.restoreControl();
@@ -418,4 +418,17 @@ test('suspended preview reports cancellation when cache epoch is unchanged, then
   const next=proposal(f,'after-suspend');f.setCommand(next);f.transport.refresh();await waitFor(()=>f.controller.snapshot().preview?.requestId===next.requestId);assert.equal(f.controller.apply(next.requestId),'applied');
   assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);assert.equal(f.calls.filter(c=>c.path.endsWith('/revoke')).length,0);
  }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+});
+
+
+test('confirmed already-absent grant clears only local control without claiming a successful revoke or changing local work',async()=>{
+ const f=await fixture({until:true,paired:true,revokeState:'already_absent'});try{
+  await f.connect();const scene=f.controller.snapshot().scene,png=await f.controller.exportPNG().text();await f.transport.disconnect();assert.equal(f.savedControl,null);assert.equal(f.transport.snapshot().phase,'disconnected');assert.equal(f.transport.snapshot().revocationConfirmed,false);assert.match(f.transport.snapshot().notice,/Already absent/);assert.deepEqual(f.controller.snapshot().scene,scene);assert.equal(await f.controller.exportPNG().text(),png);
+ }finally{f.transport.dispose();f.controller.dispose();}
+});
+
+test('unknown absence states and 401/500 responses never clear a saved owner control',async()=>{
+ for(const options of [{revokeState:'unavailable'},{revokeStatus:401},{revokeStatus:500}]){
+  const f=await fixture({until:true,paired:true,...options});try{await f.connect();await f.transport.disconnect();assert.ok(f.savedControl);assert.equal(f.transport.snapshot().phase,'error');assert.equal(f.transport.snapshot().revocationConfirmed,undefined);}finally{f.transport.dispose();f.controller.dispose();}
+ }
 });
