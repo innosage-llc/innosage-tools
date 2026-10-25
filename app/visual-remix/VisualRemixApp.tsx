@@ -608,6 +608,7 @@ export default function VisualRemixApp() {
       { ...s, scene: s.scene },
       assets.current.descriptors(),
       request,
+      { referenceSharing:sceneReferenceEnabled },
     );
   }
   function downloadBrief() {

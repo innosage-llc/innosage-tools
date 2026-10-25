@@ -8,6 +8,7 @@ import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { emptyScene, type Proposal } from '../../../lib/visual-remix.ts';
 import { SCENE_LIMITS, type SceneOwner, type SceneAuth, type SceneSnapshot } from '../../../lib/visual-remix-remote.ts';
 import { REFERENCE_LIMITS, sourceAsset, type ReferenceConsent } from '../../../lib/visual-remix-reference.ts';
+import { proposalSchema } from '../../../lib/visual-remix-agent.ts';
 import { fixture as providerFixture } from './fixtures/scene-client.ts';
 function png(width = 400, height = 400, { extraRows = 0, filter = 0 } = {}) {
     const crc = (bytes: Buffer) => { let c = 0xffffffff; for (const b of bytes) {
@@ -75,6 +76,7 @@ test('private image bytes require fresh per-share consent and OAuth binding; nat
         assert.equal(sha(new Uint8Array(stored!)), sha(bytes));
         const rpc = await f.call('rpc', { auth: remote, rpc: { jsonrpc: '2.0', id: 'image-proof', method: 'tools/call', params: { name: 'read_shared_reference', arguments: {} } } });
         assert.equal(rpc.status, 200, JSON.stringify(rpc));
+        assert.deepEqual(JSON.parse(rpc.result!.content![0].text!).proposalSchema,proposalSchema,'schema arrives with native pixels, without another attachment');
         const image = rpc.result?.content?.find(c => c.type === 'image');
         assert.equal(image?.mimeType, 'image/png');
         assert.equal(sha(Buffer.from(image!.data!, 'base64')), sha(bytes));
