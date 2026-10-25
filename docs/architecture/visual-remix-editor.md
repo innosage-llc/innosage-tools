@@ -89,3 +89,20 @@ baseline/alignment and rotation, not the full declared editable box width. Line
 bounds remain conservative for rotated or interlocking glyphs; visual review is
 still required. Genuine overlap, omitted text, overflow and canvas bounds remain
 blocking. Preview/export still use the same PNG and browser-local font stacks.
+
+
+### 2026-10-25 local live-edit amendment
+
+Local parameter controls now debounce for250ms, render and commit automatically.
+The old local Preview edits/Apply step is superseded. Remote/imported proposals
+still render as separate candidates with explicit Apply; this grants no remote
+auto-apply authority. A local edit immediately invalidates pending proposals,
+uses a controller ticket bound to generation/revision and fences late renders.
+Pending or invalid drafts retain the last committed Scene but pause downloads;
+correct values or Discard local draft to recover. Genuine layout errors remain
+export-blocking after local commit. Save project persists the applied Scene.
+
+Undo retains at most20 committed checkpoints. Local commits within750ms coalesce
+as a typing burst; remote Apply/import/Undo/revoke end that grouping. Undo advances
+revision and cannot revive an old proposal. Local changes cancel obsolete motion
+work and invalidate old downloads. No additional renderer, transport or new API.

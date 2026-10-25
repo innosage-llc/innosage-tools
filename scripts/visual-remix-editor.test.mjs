@@ -302,127 +302,31 @@ test(
         brief.proposalIdentity.generation,
       );
       assert.equal(reuseBrief.currentScene.nodes.length, 3);
-      // Removing an image must remove its portable payload, without revoking
-      // the approved local store needed by Undo.
-      await page.getByLabel("Layer", { exact: true }).selectOption("crop");
-      await page
-        .getByRole("button", { name: "Remove selected", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Preview edits", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Apply candidate", exact: true })
-        .click();
-      const removed = JSON.parse(
-        (await download("Save project")).bytes.toString(),
-      );
-      assert.equal(
-        removed.scene.nodes.some((node) => node.type === "image"),
-        false,
-      );
-      assert.deepEqual(removed.scene.assets, []);
-      assert.deepEqual(removed.assets, []);
-      await page
-        .getByRole("button", { name: "Undo last apply", exact: true })
-        .click();
-      const restored = JSON.parse(
-        (await download("Save project")).bytes.toString(),
-      );
-      assert.deepEqual(restored.scene, project.scene);
-      assert.deepEqual(restored.assets, project.assets);
-      await page.getByLabel("Layer", { exact: true }).selectOption("title");
-      await page
-        .getByLabel("Text content", { exact: true })
-        .fill("Second post · 重用已有设计");
-      await page.getByLabel("Node y", { exact: true }).fill("190");
-      await page
-        .getByText("Chinese / English publishing captions", { exact: true })
-        .click();
-      await page.getByLabel("titleCN", { exact: true }).fill("第二篇文章");
-      await page
-        .getByRole("button", { name: "Preview edits", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Apply candidate", exact: true })
-        .waitFor();
-      assert.equal(
-        JSON.parse(await page.getByTestId("applied-scene").textContent())
-          .nodes[0].y,
-        100,
-      );
-      await page
-        .getByRole("button", { name: "Apply candidate", exact: true })
-        .click();
-      let applied = JSON.parse(
-        await page.getByTestId("applied-scene").textContent(),
-      );
-      assert.equal(applied.nodes[0].y, 190);
-      assert.match(applied.nodes[0].text, /Second post/);
-      const captions = JSON.parse(
-        (await download("Download captions")).bytes.toString(),
-      );
-      assert.equal(captions.captions.titleCN, "第二篇文章");
-      await page
-        .getByRole("button", { name: "Undo last apply", exact: true })
-        .click();
-      applied = JSON.parse(
-        await page.getByTestId("applied-scene").textContent(),
-      );
-      assert.equal(applied.nodes[0].y, 100);
-      const beforeRevoke = await download("Download PNG");
-      await page.getByLabel("Node y", { exact: true }).fill("150");
-      await page
-        .getByRole("button", { name: "Preview edits", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Cancel candidate", exact: true })
-        .waitFor();
-      await page
-        .getByRole("button", { name: "Cancel candidate", exact: true })
-        .click();
-      assert.deepEqual(
-        (await download("Download PNG")).bytes,
-        beforeRevoke.bytes,
-      );
-      const oldBrief = JSON.parse(
-        (await download("Download agent brief")).bytes.toString(),
-      );
-      await page.getByLabel("Node y", { exact: true }).fill("160");
-      await page
-        .getByRole("button", { name: "Preview edits", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Apply candidate", exact: true })
-        .waitFor();
-      await page
-        .getByRole("button", { name: "Revoke pending work", exact: true })
-        .click();
-      assert.equal(
-        await page
-          .getByRole("button", { name: "Apply candidate", exact: true })
-          .count(),
-        0,
-      );
-      const stale = {
-        ...oldBrief.proposalIdentity,
-        requestId: "stale-after-revoke",
-        scene: oldBrief.currentScene,
-        explanation: "Must be rejected.",
-      };
-      await page
-        .getByLabel("Proposal JSON", { exact: true })
-        .fill(JSON.stringify(stale));
-      await page
-        .getByRole("button", { name: "Preview proposal", exact: true })
-        .click();
-      await page
-        .getByText("stale-after-revoke: stale.", { exact: false })
-        .waitFor();
-      assert.deepEqual(
-        (await download("Download PNG")).bytes,
-        beforeRevoke.bytes,
-      );
+      const appliedScene=async()=>JSON.parse(await page.getByTestId('applied-scene').textContent());
+      const waitRevision=revision=>page.waitForFunction(r=>Number(document.querySelector('[data-testid=revision]').textContent.replace(/\D/g,''))>r,revision);
+      let revision=Number((await page.getByTestId('revision').textContent()).replace(/\D/g,''));
+      await page.getByLabel('Layer',{exact:true}).selectOption('crop');
+      await page.getByRole('button',{name:'Remove selected',exact:true}).click();await waitRevision(revision);
+      const removed=JSON.parse((await download('Save project')).bytes.toString());assert.equal(removed.scene.nodes.some(n=>n.type==='image'),false);assert.deepEqual(removed.scene.assets,[]);assert.deepEqual(removed.assets,[]);
+      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();
+      const restored=JSON.parse((await download('Save project')).bytes.toString());assert.deepEqual(restored.scene,project.scene);assert.deepEqual(restored.assets,project.assets);
+      await page.getByLabel('Layer',{exact:true}).selectOption('title');
+      revision=Number((await page.getByTestId('revision').textContent()).replace(/\D/g,''));
+      await page.getByLabel('Text content',{exact:true}).fill('Second post · 重用已有设计');
+      assert.equal(await page.getByRole('button',{name:'Download PNG',exact:true}).isDisabled(),true,'pending local draft cannot export the old PNG');
+      await page.getByLabel('Node y',{exact:true}).fill('190');
+      await page.getByText('Chinese / English publishing captions',{exact:true}).click();await page.getByLabel('titleCN',{exact:true}).fill('第二篇文章');
+      await page.waitForFunction(()=>JSON.parse(document.querySelector('[data-testid=applied-scene]').textContent).captions.titleCN==='第二篇文章');
+      assert.equal((await appliedScene()).nodes[0].y,190);assert.match((await appliedScene()).nodes[0].text,/Second post/);
+      assert.equal(await page.getByRole('button',{name:'Apply candidate',exact:true}).count(),0,'local parameters do not require Apply');
+      assert.equal(JSON.parse((await download('Download captions')).bytes.toString()).captions.titleCN,'第二篇文章');
+      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();assert.equal((await appliedScene()).nodes[0].y,100);
+      const beforeRevoke=await download('Download PNG');
+      // Remote/imported agent proposals remain separate, explicitly applied candidates.
+      const previewRemote=async(id)=>{const b=JSON.parse((await download('Download agent brief')).bytes.toString());const changed=structuredClone(b.currentScene);changed.nodes[0].y=160;await page.getByLabel('Proposal JSON',{exact:true}).fill(JSON.stringify({...b.proposalIdentity,requestId:id,scene:changed,explanation:'Remote candidate remains pending'}));await page.getByRole('button',{name:'Preview proposal',exact:true}).click();await page.getByRole('button',{name:'Apply candidate',exact:true}).waitFor();return b;};
+      await previewRemote('remote-cancel');await page.getByRole('button',{name:'Cancel candidate',exact:true}).click();assert.deepEqual((await download('Download PNG')).bytes,beforeRevoke.bytes);
+      const oldBrief=await previewRemote('remote-revoke');await page.getByRole('button',{name:'Revoke pending work',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Apply candidate',exact:true}).count(),0);
+      const stale={...oldBrief.proposalIdentity,requestId:'stale-after-revoke',scene:oldBrief.currentScene,explanation:'Must be rejected.'};await page.getByLabel('Proposal JSON',{exact:true}).fill(JSON.stringify(stale));await page.getByRole('button',{name:'Preview proposal',exact:true}).click();await page.getByText('stale-after-revoke: stale.',{exact:false}).waitFor();assert.deepEqual((await download('Download PNG')).bytes,beforeRevoke.bytes);
       // Revoke during a non-abortable File.text() must invalidate its later result.
       await page.evaluate(() => {
         const original = File.prototype.text;
@@ -453,26 +357,15 @@ test(
         (await download("Download PNG")).bytes,
         beforeRevoke.bytes,
       );
-      // A committed overflow is editable but never exportable.
-      await page.getByLabel("Node width", { exact: true }).fill("1");
-      await page
-        .getByRole("button", { name: "Preview edits", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Apply candidate", exact: true })
-        .waitFor();
-      await page
-        .getByRole("button", { name: "Apply candidate", exact: true })
-        .click();
-      assert.equal(
-        await page
-          .getByRole("button", { name: "Download PNG", exact: true })
-          .isDisabled(),
-        true,
-      );
-      await page
-        .getByRole("button", { name: "Undo last apply", exact: true })
-        .click();
+      // Local overflow auto-applies for correction, but genuine export safety remains.
+      revision=Number((await page.getByTestId('revision').textContent()).replace(/\D/g,''));
+      await page.getByLabel('Node width',{exact:true}).fill('1');await waitRevision(revision);
+      assert.equal(await page.getByRole('button',{name:'Download PNG',exact:true}).isDisabled(),true);
+      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();
+      const validBefore=await download('Download PNG');
+      await page.getByLabel('Node fill',{exact:true}).fill('invalid');
+      await page.getByText('These parameters could not render.',{exact:false}).waitFor();assert.equal(await page.getByRole('button',{name:'Save project',exact:true}).isDisabled(),true);
+      await page.getByRole('button',{name:'Discard local draft',exact:true}).click();assert.deepEqual((await download('Download PNG')).bytes,validBefore.bytes);
       // Tight crop approval is separate from selecting a reference and from Apply.
       await page.getByRole("button",{name:"New blank project",exact:true}).click();
       await page.getByText("New blank project ready.",{exact:true}).waitFor();
@@ -578,7 +471,7 @@ test(
           "PNG reference and real JPEG asset header/decode/portable reload",
           "project/assets reload without reference",
           "removed image excluded from portable descriptors/bytes; Undo retains crop and JPEG",
-          "content+geometry+caption edit",
+          "content+geometry+caption edit auto-applies without Preview/Apply; pending/invalid draft export block; coalesced Undo",
           "undo/cancel/revoke/stale preservation",
           "revoke during delayed project file read",
           "invalid export blocked",

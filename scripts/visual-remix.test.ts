@@ -169,3 +169,30 @@ test('portable export drops valid unused descriptors without touching approved s
   assert.deepEqual(store.descriptors(), [descriptor]);
   assert.equal((await store.blob(descriptor).arrayBuffer()).byteLength, pngHeader().length);
 });
+
+
+test('local parameters auto-apply latest render only; pending/invalid drafts preserve applied Scene and block stale export',async()=>{
+ let release: (()=>void)|undefined;
+ const c=new VisualRemixController(async s=>{if(s.background==='#111111')await new Promise<void>(r=>release=r);if(s.background==='#ff0000')throw new Error('render failed');return rendered(s);});
+ await c.open('local',0,scene(),new LocalAssets());const before=c.snapshot();
+ await c.propose(proposal(c,'remote-waiting'));
+ const first=c.stageLocalEdit();assert.equal(c.status('remote-waiting'),'stale');assert.equal(c.apply('remote-waiting'),'stale');assert.throws(()=>c.exportPNG(),/LOCAL_EDIT_PENDING/);
+ const slow=c.renderLocalEdit({...scene(),background:'#111111'},first);
+ const latest=c.stageLocalEdit(),next=scene();next.nodes[0].y=300;
+ assert.equal(await c.renderLocalEdit(next,latest),'applied');release!();assert.equal(await slow,'stale');assert.equal(c.snapshot().revision,1);assert.equal(c.snapshot().scene?.nodes[0].y,300);
+ const invalid=c.stageLocalEdit();await assert.rejects(c.renderLocalEdit({...scene(),background:'broken'},invalid));assert.deepEqual(c.snapshot().scene,next);assert.throws(()=>c.exportPNG(),/LOCAL_EDIT_PENDING/);
+ c.discardLocalEdit();assert.deepEqual(JSON.parse(await c.exportPNG().text()),next);
+ const failure=c.stageLocalEdit();await assert.rejects(c.renderLocalEdit({...scene(),background:'#ff0000'},failure));assert.deepEqual(c.snapshot().scene,next);c.discardLocalEdit();
+ assert.equal(c.undo(),true);assert.deepEqual(c.snapshot().scene,before.scene);assert.equal(c.snapshot().revision,2);
+});
+
+test('local edits coalesce typing, retain bounded Undo history, and never revive after revoke/import',async t=>{
+ let clock=10000;t.mock.method(Date,'now',()=>clock);
+ const c=new VisualRemixController(async s=>rendered(s));await c.open('local',0,scene(),new LocalAssets());
+ for(const x of [10,20,30]){const next=scene();next.nodes[0].x=x;await c.renderLocalEdit(next,c.stageLocalEdit());clock+=100;}
+ assert.equal(c.undo(),true);assert.deepEqual(c.snapshot().scene,scene());assert.equal(c.undo(),false,'one typing burst has one Undo checkpoint');
+ for(let i=0;i<23;i++){clock+=1000;const next=scene();next.nodes[0].x=i;await c.renderLocalEdit(next,c.stageLocalEdit());}
+ let undos=0;while(c.undo())undos++;assert.equal(undos,20);
+ const ticket=c.stageLocalEdit();c.revoke();assert.equal(await c.renderLocalEdit(scene(),ticket),'stale');
+ const old=c.stageLocalEdit();await c.open('new-project',0,scene(),new LocalAssets());assert.equal(await c.renderLocalEdit(scene(),old),'stale');
+});
