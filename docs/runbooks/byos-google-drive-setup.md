@@ -128,6 +128,35 @@ are resolved. No unconditional real PASS can be inferred from a zero-length log.
 
 ## Sources and limits
 
+### Deterministic compatibility loop and normal-browser fallback
+
+Use `npm run test:byos-real-drive:offline` for controlled read/write ordering,
+version drift, validator and failure assertions. For the existing native RxDB +
+IndexedDB fixture run `node scripts/prepare-byos.mjs` and
+`node spikes/byos-sync/real-drive/mock-browser.mjs`. This is CLI-driven offline
+Chromium with intercepted Google calls, not real Google qualification.
+
+The real transport correlates v2 media bytes to an explicit revision between two
+fresh metadata reads before exposing the file's JSON ETag to native CAS. Empty
+bootstrap requires actual zero bytes and stable zero-size metadata. Conditional
+PUT and 412 handling are unchanged; missing metadata or drift fails closed.
+See the [compatibility evidence](../sessions/20261025-tools-113-real-drive/media-validator.md).
+
+If Google rejects an automation-controlled login, stop that flow. A human may use
+two dedicated **ordinary Chrome profiles** and the same workspace link, perform
+login/consent, then use the normal app controls. Do not disable browser security,
+hide automation, copy tokens or substitute CLI authorization. Label these results
+native UI-assisted/manual, not an automated Playwright run. Preserve the original
+tabs and local stores; do not retry by rotating identity or clearing site data.
+
+Each replacement immutable staging origin needs its own authorized JavaScript
+origin and human in-memory authorization. It also has a separate IndexedDB;
+opening it does not migrate or prove recovery of edits on the prior candidate.
+Keep the old tabs/stores intact. Start with one A sync/remote verification, stop
+on compatibility failure, and proceed to B and the remaining journeys only after
+that boundary succeeds. Reuse offline evidence for ordering and injected faults;
+retain honest real-provider coverage gaps.
+
 - [GIS token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model)
 - [Drive least-privilege scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth)
 - [files.list](https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list),
