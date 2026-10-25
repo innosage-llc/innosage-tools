@@ -28,7 +28,12 @@ export async function readVersionedMedia(url,init,dispatch){
  const after=checked(await final.json(),id);
  const keys=['etag','version','headRevisionId','fileSize','mimeType'];
  const changed=Object.fromEntries(keys.map(key=>[key,before[key]!==after[key]]));
- if(Object.values(changed).some(Boolean))reject('MEDIA_VERSION_CHANGED',{mediaDrift:{...changed,
+ // Drive version includes invisible server changes. An increase alone is not
+ // a content change when the explicit nonempty revision and CAS identity agree.
+ const decreasingVersion=BigInt(after.version)<BigInt(before.version);
+ const contentDrift=['etag','headRevisionId','fileSize','mimeType'].some(key=>changed[key]);
+ const unpinnedVersionDrift=before.fileSize==='0'&&changed.version;
+ if(contentDrift||decreasingVersion||unpinnedVersionDrift)reject('MEDIA_VERSION_CHANGED',{mediaDrift:{...changed,
   versionOrder:BigInt(after.version)>BigInt(before.version)?'greater':BigInt(after.version)<BigInt(before.version)?'less':'equal',
   role:before.title==='transaction.json'?'transaction':before.title==='rxdb-wal.json'?'wal':'other'}});
  const headers=new Headers(media.headers);headers.set('ETag',before.etag);

@@ -17,3 +17,6 @@ The replacement c287ca1 candidate also remains incomplete. A is deliberately
 offline after observing blocked status; auth, full content and all tabs retained.
 
 Third attempt and fixed-origin correction: [read-drift.md](read-drift.md).
+
+Fixed-origin actual field evidence and guarded correction:
+[noncontent-version.md](noncontent-version.md).

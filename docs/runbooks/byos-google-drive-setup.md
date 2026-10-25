@@ -175,3 +175,12 @@ retain honest real-provider coverage gaps.
   Real CORS exposure and exact `drive.file` visibility are qualification requirements.
 - No unattended sync, Shared Drives, production readiness, historical repair or
   Full Check claim. Original #102/#107/#109/#111 failures remain unchanged.
+
+### Non-content metadata version changes
+
+For a nonempty explicitly pinned revision, the bridge accepts a version increase
+only while strong file ETag, head revision, size and MIME remain unchanged. Drive
+versions include invisible server changes; version alone is not a content oracle.
+Decreases and all content/CAS identity drift still reject. Empty bootstrap keeps
+exact version equality. No extra requests, retries or conditional-write changes.
+See [observed failure and assumption correction](../sessions/20261025-tools-113-real-drive/noncontent-version.md).

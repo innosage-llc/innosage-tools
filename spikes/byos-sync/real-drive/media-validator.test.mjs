@@ -21,8 +21,8 @@ test('media bytes without ETag are correlated to a stable file version and expli
 test('concurrent write during the read rejects instead of attaching a later ETag to old bytes',async()=>{
  await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{change:m=>{m.version='9007199254740994';m.etag='"file-2"';m.headRevisionId='revision-2';}});
 });
-test('ABA content/ETag equality cannot hide a changed monotonic version',async()=>{
- await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{change:m=>{m.version='9007199254740994';}});
+test('restored content and ETag cannot hide a different pinned head revision',async()=>{
+ await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{change:m=>{m.version='9007199254740994';m.headRevisionId='revision-2';}});
 });
 test('missing identity/version/revision or weak file validator fails closed',async()=>{
  for(const missing of ['id','etag','version','headRevisionId','fileSize'])await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_METADATA_UNSUPPORTED/),{missing});
@@ -42,7 +42,21 @@ test('failed revision download stays failed, with no metadata substitution or wr
 test('drift evidence identifies only changed fields and ordering, with no metadata values',async()=>{
  await fixture(()=>assert.rejects(driveFetch(media),error=>{
   const summary=errorSummary(error);assert.equal(summary.code,'MEDIA_VERSION_CHANGED');
-  assert.deepEqual(summary.mediaDrift,{etag:false,version:true,headRevisionId:false,fileSize:false,mimeType:false,versionOrder:'greater',role:'other'});
+  assert.deepEqual(summary.mediaDrift,{etag:true,version:true,headRevisionId:false,fileSize:false,mimeType:false,versionOrder:'greater',role:'other'});
   assert.doesNotMatch(JSON.stringify(summary),/900719925|file-1|revision-1|synthetic-file/);return true;
- }),{change:m=>{m.version='9007199254740994';}});
+ }),{change:m=>{m.version='9007199254740994';m.etag='"file-2"';}});
+});
+
+test('documented non-content version increase does not reject unchanged pinned bytes and file validator',async()=>{
+ await fixture(async calls=>{const r=await driveFetch(media);assert.equal(await r.text(),'{"x":1}');assert.equal(r.headers.get('etag'),'"file-1"');assert.equal(calls.length,3);},{change:m=>{m.version='9007199254740994';}});
+});
+test('version decrease remains unsupported even with matching content identity',async()=>{
+ await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{change:m=>{m.version='9007199254740992';}});
+});
+test('same size does not hide changed validator or revision even if version is unchanged',async()=>{
+ for(const change of [m=>{m.etag='"file-2"';},m=>{m.headRevisionId='revision-2';},m=>{m.fileSize='8';},m=>{m.mimeType='text/plain';}])
+  await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED|MEDIA_METADATA_UNSUPPORTED/),{change});
+});
+test('zero-byte bootstrap cannot waive a version increase without a pinned content revision',async()=>{
+ await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{empty:true,body:'',change:m=>{m.version='9007199254740994';}});
 });
