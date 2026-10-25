@@ -380,3 +380,10 @@ SDK403 was a fixture missing Host header, corrected without relaxing validation.
 Host vision proof NOT_RUN, live staging MCP NOT_RUN. No production/Master closure.
 
 Expanded local reference security suite5/5 PASS, transport20/20 PASS, and rendered actual-source app/provider journey PASS (Chromium151,8.2s fixture duration; not first-use benchmark). Derivative768×1024/953566B, nativeimage SHA matches, original55×54logo and84×84portrait crops confirmed by pixel inspection, PNGreopen byte parity and automatic content+layout edit after reopen PASS. No full original in portableScene,0externalrequests. HistoricalScene fixture reused; freshGPTreconstruction/hostvision/stagingrun remain NOT_RUN. Browser harness selector/static-path failures retained as fixture failures, not product fixes.
+
+DraftPR122 submitted at2d488b after native full gate PASS. Private browser fixture
+paths are now explicit environment inputs, with an honest SKIPPED result when
+unavailable; no original asset/Scene bytes are committed or uploaded. Independent
+security review and exact-head merge gate remain pending. Staging read-only
+preflight: priorac8e7f4e stillactive100%,0active shares,15/20 cumulative stored
+shares,151552B D1, reference table absent. No MCP calls or grants were made.

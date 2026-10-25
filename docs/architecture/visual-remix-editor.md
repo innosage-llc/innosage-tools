@@ -171,6 +171,9 @@ Local checks: `npm run test:visual-remix-reference` (actual disposable provider,
 native SDK, byte integrity and negative paths), `npm run test:visual-remix-transport`
 (delayed upload, cancellation and prior transport regressions), and
 `node --experimental-strip-types --test test/scene-reference-browser.test.ts`
-from the Worker folder after building the app with both reference/remote flags.
+from the Worker folder after building the app with both reference/remote flags,
+and setting `VISUAL_REMIX_REFERENCE_PATH` and `VISUAL_REMIX_SCENE_PATH` to the
+authorized local supplied PNG and historical editable Scene. Without those
+explicit private fixtures the test is SKIPPED, never a claimed PASS.
 The last check uses the actual supplied PNG and a historical editable fixture;
 it does not claim fresh agent reconstruction or real ChatGPT success.

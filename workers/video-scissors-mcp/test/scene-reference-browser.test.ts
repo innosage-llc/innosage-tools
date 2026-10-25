@@ -7,12 +7,13 @@ import { resolve, extname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { fixture, origin } from './fixtures/scene-client.ts';
-test('actual supplied pixels: fresh app consent -> native MCP image -> tight crop candidate -> Apply/export -> reopen and automatic local reuse', { timeout: 120000 }, async () => {
+const referencePath=process.env.VISUAL_REMIX_REFERENCE_PATH, scenePath=process.env.VISUAL_REMIX_SCENE_PATH;
+test('actual supplied pixels: fresh app consent -> native MCP image -> tight crop candidate -> Apply/export -> reopen and automatic local reuse', { timeout: 120000, skip:!referencePath || !scenePath ? 'Requires explicitly supplied local reference and historical Scene paths; no private fixture is committed.' : false }, async () => {
     const root = resolve('../..'), out = resolve(root, '.deploy/visual-remix/ux-20261025/reference-browser');
     await mkdir(out, { recursive: true });
-    const original = await readFile(resolve(root, '../../../reference-assets/1(1).png'));
+    const original = await readFile(resolve(referencePath!));
     assert.equal(createHash('sha256').update(original).digest('hex'), 'a933a808934eb8bf521b0d32c4bedb950698e76fccb62a997221e2d7b39715b5');
-    const historical = JSON.parse(await readFile(resolve(root, '.deploy/visual-remix-vision/publish-bundle-803a00b/editable-scene.json'), 'utf8'));
+    const historical = JSON.parse(await readFile(resolve(scenePath!), 'utf8'));
     const f = await fixture(undefined, false, true), browser = await chromium.launch({ headless: true }), page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
     const external: string[] = [], posts: {
         path: string;
