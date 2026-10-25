@@ -1,0 +1,19 @@
+{
+  "gcloud": {
+    "version": "590.0.1",
+    "archive_sha256": "02f20618f43b9147e049a73fec37ab71b586b0dc6a242fa6ca835229cb5e542f",
+    "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-590.0.1-darwin-arm.tar.gz"
+  },
+  "gws": {
+    "version": "0.22.5",
+    "archive_sha256": "1d2a9ffd5bc9b2c2c4b48630daf082fad13d9e57d741988a2c248eed562f7dac",
+    "upstream_release_digest_verified": true,
+    "url": "https://github.com/googleworkspace/cli/releases/tag/v0.22.5"
+  },
+  "schema": {
+    "files-list-schema.json": "156c71c5be04d00af02db4f8064c4f7998ea3a109e1967474a3b83fc429d95cf",
+    "changes-list-schema.json": "26bd5df335abcdea887b488cbcda5e94a2f1d951c5ca43962705b2c4e3f14706"
+  },
+  "auth": "NOT_RUN_AUTH",
+  "resources_created": false
+}

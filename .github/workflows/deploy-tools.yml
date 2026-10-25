@@ -40,6 +40,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install pinned BYOS browser dependencies
+        run: npm ci --prefix spikes/byos-sync --ignore-scripts --no-audit --no-fund
       - name: Install isolated Worker type dependencies
         # The static consent page imports the Worker's shared UI types.
         # The checks job's gate installs these too, but jobs have separate filesystems.

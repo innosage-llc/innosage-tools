@@ -1,0 +1,20 @@
+{
+  "spikes/byos-sync/real-drive/transport.mjs": "4c7e0a454886e17c5588272a30ae1c9d3abc8939704989dd353b97f4c43d7cf8",
+  "spikes/byos-sync/real-drive/run.mjs": "464effbb5835113d24465a49797c58d4b4bb67885d887c260f40f6db4ed1f856",
+  "spikes/byos-sync/real-drive/browser.mjs": "af8ed6bb8992f5aa9288894df865cfbef8dce7d8ea47343a450e669f330542e8",
+  "spikes/byos-sync/real-drive/wait.mjs": "21c9fa6c96c7a27cfb5f3454c6c0af3d5f759a1fe652a689134f14f76b94fde8",
+  "spikes/byos-sync/real-drive/mock-browser.mjs": "283f7aa52b293156762b4c1f020bde0f4b6aaace45bcc86c7967aa9e37d04230",
+  "spikes/byos-sync/real-drive/store.mjs": "53cd72f70396a29f88f5fd9e0d2670d95fab08ae995732057a80949af1771dc0",
+  "spikes/byos-sync/real-drive/browser-check.mjs": "c92f667af4fc7f42c7f82c330cfb4bfa73b231cf437f2113e3862995c1d51284",
+  "spikes/byos-sync/real-drive/toolchain.json": "a5d77645219b7546c98a7bf36bf687f4a634c02b19ecb17d37ef335125c994df",
+  "spikes/byos-sync/real-drive/config.mjs": "f6cca619f4b7e4368ba92490a34a15474ffa64972072405495daebd334263feb",
+  "spikes/byos-sync/real-drive/offline.test.mjs": "0a87b7ec2a8c460115f6fe72337f0aee7567d6b5e9c80af103950d7d0ba41c04",
+  "spikes/byos-sync/native-overlay/page-store.mjs": "d22b8b3a3a5ec7e1cf9086994203b32f968b3a8cae425aa1b1c33f92a579b842",
+  "spikes/byos-sync/changes-feasibility/adapter.mjs": "693ba3659d4bc2b891814d12dbf035be18b4053f2230d2dfebf2c9ba6cf5789d",
+  "spikes/byos-sync/native-overlay/ui.mjs": "2607c04c691d33fca650458dbd47c9cecd2db03e7969e2ce68af922f6aaef45c",
+  "spikes/byos-sync/native-overlay/index.html": "7eea9d31b5cbf9d78fddabd2d055a1c6aab5a9fd3bd8d7bd296fe8beb2e59e5e",
+  "scripts/prepare-byos.mjs": "c0859926218df278d4c057dae94b53449d7eff46806731b56a6ad7da03b5f6e4",
+  "app/byos/page.tsx": "0ddd4e0d9b4878e5ede8b01f6b1c62415276a211b2cb0c8383535d3142ca5a32",
+  "public/byos-demo/app.js": "84939da987d879515356d6e49f18d312cad53455902e2ff6c998d2fed4ca1c43",
+  "public/byos-demo/index.html": "007f9de6a4ced5afcb717acd97fd7a8ff2a5969b93073d11b6bfac387c628a8d"
+}

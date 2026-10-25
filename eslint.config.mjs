@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     "build/**",
     "public/video-scissors/ffmpeg/**",
+    "public/byos-demo/**",
+    ".byos-real/**",
     "spikes/byos-sync/.browser-bundle.js",
     "spikes/byos-sync/native-overlay/.generated/**",
     "spikes/byos-sync/changes-feasibility/.generated/**",

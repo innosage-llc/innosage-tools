@@ -1,0 +1,75 @@
+{
+  "status": "PASS",
+  "kind": "MOCK_BROWSER_PROVIDER_WIRING",
+  "requests": 546,
+  "fullBodies": {
+    "A": {
+      "id": "page",
+      "body": "# A complete\n\n中文 **Markdown**\n\n- retained\n",
+      "editId": "20a39c4c-50e6-41d8-8d42-242b7227a369/1/f8a66a0b-f1e1-4f9e-b6ad-51339132f606"
+    },
+    "B": {
+      "id": "page",
+      "body": "# B return\n\n```js\nconst body = \"complete\";\n```",
+      "editId": "c9e134d8-44c3-4602-bde2-5e14a471c123/1/5084a189-f100-44ca-8003-eec8ed17aa22"
+    },
+    "local": {
+      "id": "page",
+      "body": "# Local conflict full body",
+      "editId": "20a39c4c-50e6-41d8-8d42-242b7227a369/1/be2e2c00-d66b-4e02-a85b-097c6b3ddb98"
+    },
+    "cloud": {
+      "id": "page",
+      "body": "# Cloud conflict full body",
+      "editId": "c9e134d8-44c3-4602-bde2-5e14a471c123/1/c5ed1832-95f1-4113-b1cf-63d18d39a03b"
+    },
+    "conflict": {
+      "id": "page:20a39c4c-50e6-41d8-8d42-242b7227a369",
+      "page": "page",
+      "session": "20a39c4c-50e6-41d8-8d42-242b7227a369",
+      "seq": 1,
+      "state": "needs-resolution",
+      "draft": {
+        "id": "page",
+        "body": "# Local conflict full body",
+        "editId": "20a39c4c-50e6-41d8-8d42-242b7227a369/1/be2e2c00-d66b-4e02-a85b-097c6b3ddb98"
+      },
+      "base": {
+        "id": "page",
+        "body": "# B return\n\n```js\nconst body = \"complete\";\n```",
+        "editId": "c9e134d8-44c3-4602-bde2-5e14a471c123/1/5084a189-f100-44ca-8003-eec8ed17aa22"
+      },
+      "remote": {
+        "id": "page",
+        "body": "# Cloud conflict full body",
+        "editId": "c9e134d8-44c3-4602-bde2-5e14a471c123/1/c5ed1832-95f1-4113-b1cf-63d18d39a03b"
+      },
+      "sourceLocal": {
+        "id": "page",
+        "body": "# Local conflict full body",
+        "editId": "20a39c4c-50e6-41d8-8d42-242b7227a369/1/be2e2c00-d66b-4e02-a85b-097c6b3ddb98"
+      },
+      "sourceCloud": {
+        "id": "page",
+        "body": "# Cloud conflict full body",
+        "editId": "c9e134d8-44c3-4602-bde2-5e14a471c123/1/c5ed1832-95f1-4113-b1cf-63d18d39a03b"
+      },
+      "sourceExternal": null
+    },
+    "verified": {
+      "id": "page",
+      "body": "# Local conflict full body",
+      "editId": "20a39c4c-50e6-41d8-8d42-242b7227a369/2/6f4cae72-bb28-4673-b714-3fed9b8f1a2d"
+    }
+  },
+  "checkpoint": {
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000070"
+    }
+  },
+  "pendingInitialAuthFailureDisconnect": "PASS_RELOAD_REQUIRED_NO_BEARER_SWAP",
+  "realProvider": "NOT_RUN_AUTH",
+  "upstream": "Existing src/mock + changes-feasibility/provider; fixture-only account/folder metadata and GIS consent stub"
+}
