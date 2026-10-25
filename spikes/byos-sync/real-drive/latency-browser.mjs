@@ -96,15 +96,17 @@ try{
  const operationRows=after.transport.requests.slice(before.transport.requests.length);await writeFile(resolve(root,'structured-snapshots.json'),JSON.stringify({before,after},null,2));
  let idleSave=null,generationSafety=null;
  if(!baseline){
-  const settled=requests;await new Promise(r=>setTimeout(r,350));assert.equal(requests,settled);
+  const settled=requests;const completedProgress=await a.locator('#operation-status').textContent();
+  await new Promise(r=>setTimeout(r,1250));assert.equal(requests,settled);
   const saveStart=performance.now();const next=await save(a,'# Later local intent\n\nMust remain local until the next explicit action.');
   const ackMs=performance.now()-saveStart;
   await a.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,get:()=> 'hidden'});document.dispatchEvent(new Event('visibilitychange'));Object.defineProperty(document,'visibilityState',{configurable:true,get:()=> 'visible'});document.dispatchEvent(new Event('visibilitychange'));});
   await new Promise(r=>setTimeout(r,350));assert.equal(requests,settled);
+  assert.equal(await a.locator('#operation-status').textContent(),completedProgress,'completed duration must remain frozen after late view notifications');
   const pending=await a.evaluate(()=>window.byos.snapshot());assert.equal(pending.view.journal.draft.editId,next.editId);
   await verify(a);await until(a,async()=>!(await window.byos.snapshot()).busy,{},{timeout:90000});
   const verified=await a.evaluate(()=>window.byos.snapshot());assert.equal(verified.lastRemote.editId,next.editId);assert.equal(verified.lastRemote.body,next.body);assert.equal(verified.view.journal,null);assert.deepEqual(verified.errors,[]);
-  idleSave={idleRequests:0,localSaveRequests:0,localSaveAckMs:ackMs,pausedSavePickedUpOnExplicitResume:true,fullBodyVerified:true};
+  idleSave={completedDurationFrozen:true,idleRequests:0,localSaveRequests:0,localSaveAckMs:ackMs,pausedSavePickedUpOnExplicitResume:true,fullBodyVerified:true};
   if(delayMs===0){
    await receive(b,next);
    await save(a,'# Protected choice before preflight');
