@@ -56,7 +56,7 @@ export async function openPageStore({workspace,session,multiInstance=true,hook=a
 export class PageStore {
   constructor(db,workspace,session,hook) {
     Object.assign(this,{db,workspace,session,hook});
-    this.queue = Promise.resolve(); this.replication = null; this.state = 'clean';
+    this.queue = Promise.resolve(); this.operation = null; this.operationSequence = 0; this.replication = null; this.state = 'clean';
     this.subs = []; this.listeners = new Map(); this.closed = false; this.verified = new Map(); this.notificationVersions = new Map(); this.remoteRefreshes = new Map();
     // Reactive reads are RxDB-native and workspace-scoped by database identity.
     for (const collection of [db.pages,db.localDrafts])
@@ -81,7 +81,7 @@ export class PageStore {
       writer:this.writer,
       local:d?.draft.body ?? null,cloud:d?.remote?.body ?? null,
       drafts:all.map(x=>({session:x.session,body:x.draft.body,state:x.state,seq:x.seq,external:x.sourceExternal?.body??null})),
-      page:p,journal:copy(d)};
+      page:p,journal:copy(d),operation:this.operation ? {...this.operation,promise:undefined,key:undefined,elapsedMs:this.operation.pending?performance.now()-this.operation.startedAt:this.operation.elapsedMs} : null};
   }
   subscribe(id,callback) {
     if (!this.listeners.has(id)) this.listeners.set(id,new Set());
@@ -99,6 +99,27 @@ export class PageStore {
         for(const cb of listeners)cb(v);
       }).catch(()=>{});
     }
+  }
+  phase(phase) {
+    if(this.operation?.pending){this.operation.phase=phase;this.notify();}
+  }
+  runOperation(kind,key,fn) {
+    if(this.operation?.pending) {
+      if(this.operation.kind===kind&&this.operation.key===key)return this.operation.promise;
+      return Promise.reject(new Error('Another cloud action is running; local editing and saving remain available'));
+    }
+    const operation={id:++this.operationSequence,kind,key,phase:'preflight',pending:true,
+      startedAt:performance.now(),requestCount:0};
+    this.operation=operation;this.operationBusy=true;
+    // Publish before the first asynchronous authorization/leadership/network wait.
+    this.notify();
+    operation.promise=Promise.resolve().then(fn).then(value=>{
+      operation.phase='complete';return value;
+    },error=>{operation.phase='failed';throw error;}).finally(()=>{
+      operation.pending=false;operation.elapsedMs=performance.now()-operation.startedAt;
+      this.operationBusy=false;this.notify();
+    });
+    return operation.promise;
   }
   async save(id,body,options={}) {
     valid(id,'page');
@@ -169,12 +190,12 @@ export class PageStore {
     this.connecting=this._connect(endpoint,options);
     try{return await this.connecting;}catch(error){this.failure(error);throw error;}finally{this.connecting=null;}
   }
-  async _connect(endpoint,{live=true,transactionTimeout=60000,retryTime=5000}={}) {
+  async _connect(endpoint,{live=true,transactionTimeout=60000,retryTime=5000,autoStart=true}={}) {
     const url=new URL(endpoint);
     if(!this.connectionProvider&&(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.username||url.password))
       throw new Error('Offline spike permits only HTTP 127.0.0.1 mock transport');
     if(this.replication) return;
-    this.connection={endpoint,options:{live,transactionTimeout,retryTime}};
+    this.connection={endpoint,options:{live,transactionTimeout,retryTime,autoStart}};
     // Plugin initializes Drive folders BEFORE its own leadership gate.
     // Wait here so only the native elected owner initializes/replicates.
     await this.db.waitForLeadership();
@@ -183,14 +204,14 @@ export class PageStore {
     this.replication=await (provider?.factory??replicateGoogleDrive)({collection:this.db.pages,
       replicationIdentifier:'native-overlay',googleDrive:provider?.googleDrive??{apiEndpoint:url.origin,
         authToken:'synthetic',oauthClientId:'synthetic',folderPath:this.workspace,transactionTimeout},
-      pull:{batchSize:10},push:{batchSize:100},live,waitForLeadership:true,retryTime,
+      pull:{batchSize:10},push:{batchSize:100},live,autoStart,toggleOnDocumentVisible:!this.explicitSync,waitForLeadership:true,retryTime,
       signalingOptions:{config:{iceServers:[]}}});
     await this.hook('native-created',{workspace:this.workspace});
     this.subs.push(this.replication.error$.subscribe(error=>{
       const status=error.parameters?.status ?? error.parameters?.response?.status;
       this.state=status===401?'reauth-required':'blocked'; this.notify();
     }));
-    if(!live) await this.replication.awaitInitialReplication();
+    if(!live&&autoStart) await this.replication.awaitInitialReplication();
     // Event streams invalidate UI only. They never retire or create draft copies.
     this.subs.push(this.replication.sent$.subscribe(()=>this.notify()));
     for(const signal of ['conflict$','received$'])
@@ -205,6 +226,9 @@ export class PageStore {
     // per page; no history, retry timer or cleanup. Pending classification requires
     // native settlement and page=Master distinct from both draft and captured base.
     if(this.closed)return;
+    // Explicit cycles materialize once at their owned boundary. Native events
+    // remain invalidations and must not start competing background transactions.
+    if(this.explicitSync)return;
     const active=this.remoteRefreshes.get(id);
     if(active){active.dirty=true;return;}
     const ticket={dirty:true};this.remoteRefreshes.set(id,ticket);
@@ -241,32 +265,41 @@ export class PageStore {
     });
   }
   failure(error) {
-    const status=error.parameters?.status;
+    const status=error?.parameters?.status;
     if(status||error instanceof TypeError) {this.state=status===401?'reauth-required':'blocked';this.notify();}
   }
   async disconnect() {
     if(this.replication)await this.replication.cancel();
     this.replication=null;
   }
-  async sync() {
-    if(this.syncing)return this.syncing;
-    this.syncing=this._sync().catch(error=>{this.failure(error);throw error;});
-    try{return await this.syncing;}finally{this.syncing=null;}
-  }
-  async _sync() {
+  sync() { return this.runOperation('sync',null,()=>this._sync()); }
+  async _sync({materialize=true}={}) {
     if(!this.replication) throw new Error('No native sync owner in this tab');
     if(this.replication.isStopped()) {
       this.replication=null;
       await this.connect(this.connection.endpoint,this.connection.options);
     }
-    this.state='syncing'; this.notify();
-    this.replication.reSync();
-    await this.replication.awaitInitialReplication();
-    await this.replication.awaitInSync();
-    // Materialization/verification is separate; in-sync is not remote-verified.
-    const ids=new Set((await this.db.localDrafts.find().exec()).map(d=>d.page));
-    for(const id of ids) await this.withRemote(id,master=>this.captureMaster(master));
-    this.state='pending'; this.notify();
+    this.phase('synchronizing');this.state='syncing';this.notify();
+    const r=this.replication;
+    try {
+      if(this.explicitSync)await r.start();
+      else r.reSync();
+      await r.awaitInitialReplication();
+      await r.awaitInSync();
+    } finally {
+      if(this.explicitSync) {
+        // Public native lifecycle only. Drain already-dispatched work before
+        // reporting completion; paused local saves are picked up by next start.
+        await r.pause();
+        if(r.internalReplicationState)await r.awaitInSync();
+      }
+    }
+    if(materialize) {
+      this.phase('reading');
+      const ids=new Set((await this.db.localDrafts.find().exec()).map(d=>d.page));
+      for(const id of ids)await this.withRemote(id,master=>this.serial(()=>this.captureMaster(master)));
+    }
+    this.state='pending';this.notify();
   }
   async remote(id) { return this.withRemote(id,remote=>copy(remote)); }
   async withRemote(id,fn) {
@@ -274,18 +307,29 @@ export class PageStore {
     if(!r) throw new Error('Remote verification requires native sync owner');
     // Published native transaction first drains WAL. This is verification only:
     // no custom replication, direct document writes, or assumed-master mutation.
-    return runInTransaction(r.googleDrive,r.driveStructure,'id',async()=>{
-      const files=await getDocumentFiles(r.googleDrive,r.driveStructure,[id]);
-      if(files.files.length!==1) throw new Error('Remote document missing or ambiguous');
-      const docs=await fetchDocumentContents(r.googleDrive,[files.files[0].id]);
-      const remote=content(docs.ordered[0]);
-      if(remote?.id!==id) throw new Error('Remote document identity mismatch');
-      return fn(remote);
+    let callbackFailed=false,callbackError;
+    const result=await runInTransaction(r.googleDrive,r.driveStructure,'id',async()=>{
+      // Published runInTransaction has no finally-release for callback errors.
+      // Our callback performs reads/local checks only. Let the native transaction
+      // release its own CAS lease before surfacing an app/body/guard failure.
+      try {
+        const files=await getDocumentFiles(r.googleDrive,r.driveStructure,[id]);
+        if(files.files.length!==1)throw new Error('Remote document missing or ambiguous');
+        const docs=await fetchDocumentContents(r.googleDrive,[files.files[0].id]);
+        const remote=content(docs.ordered[0]);
+        if(remote?.id!==id)throw new Error('Remote document identity mismatch');
+        return await fn(remote);
+      }catch(error){callbackFailed=true;callbackError=error;}
     }).catch(error=>{this.failure(error);throw error;});
+    if(callbackFailed){this.failure(callbackError);throw callbackError;}
+    return result;
   }
-  async verify(id) {
+
+  verify(id) { return this.runOperation('verify',id,()=>this._verify(id)); }
+  async _verify(id) {
     if(!this.writer) throw new Error('Writer disabled: verification retirement requires session ownership');
-    await this.sync();
+    await this._sync({materialize:false});
+    this.phase('verifying');
     await this.withRemote(id,remote=>this.serial(async()=>{
       await this.hook('remote-read',copy(remote));
       const d=await this.draft(id);
@@ -304,16 +348,26 @@ export class PageStore {
     }));
     return this.view(id);
   }
-  async resolve(id,action,mergedBody) {
+  resolve(id,action,mergedBody) {
+    // Capture before any outer authorization/preflight wait. A newer Save is
+    // serialized after this read and must invalidate this choice, not become it.
+    const intended=this.serial(()=>this.draft(id));
+    return this.runOperation('resolve-'+action,JSON.stringify([id,mergedBody]),()=>this._resolve(id,action,mergedBody,intended));
+  }
+  async _resolve(id,action,mergedBody,intended) {
     if(!this.writer) throw new Error('Writer disabled: session ownership required');
     if(!['cloud','local','merge'].includes(action)) throw new Error('Unknown resolution');
     if(action==='merge'&&(typeof mergedBody!=='string'||mergedBody.length>LIMIT))
       throw new Error('Invalid merged body');
-    const initial=await this.draft(id);
+    const initial=await intended;
     if(!initial)throw new Error('No protected draft for this session');
-    await this.sync();
+    await this._sync({materialize:false});
+    this.phase('reading');
     const remote=await this.remote(id);
-    await this.sync();
+    // Retain the second native settlement and all original baseline/sequence
+    // guards. Only redundant journal materialization is omitted.
+    await this._sync({materialize:false});
+    this.phase('resolving');
     if(action==='cloud') {
       await this.withRemote(id,newest=>this.serial(async()=>{
         if(!same(newest,remote)||!same(await this.page(id),newest))

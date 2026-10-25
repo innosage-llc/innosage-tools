@@ -44,7 +44,8 @@
     "spike:byos-native-overlay": "cd spikes/byos-sync && node native-overlay/ui-server.mjs",
     "test:byos-real-drive": "node spikes/byos-sync/real-drive/run.mjs",
     "test:byos-real-drive:offline": "node --test spikes/byos-sync/real-drive/*.test.mjs",
-    "test:byos-offline-shell": "node scripts/prepare-byos.mjs && node spikes/byos-sync/real-drive/shell-browser.mjs"
+    "test:byos-offline-shell": "node scripts/prepare-byos.mjs && node spikes/byos-sync/real-drive/shell-browser.mjs",
+    "test:byos-latency": "node scripts/prepare-byos.mjs && node spikes/byos-sync/real-drive/latency-browser.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",

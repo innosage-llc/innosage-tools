@@ -51,7 +51,7 @@ export async function createChangesReplication(options,{event=()=>{},batchSize=o
    event({type:'pull-return',result:structuredClone(result),durable:false});return result;
   });
  }
- const state=replicateRxCollection({replicationIdentifier:options.replicationIdentifier,collection:options.collection,deletedField:'_deleted',pull:{batchSize,handler:pullHandler},push:{batchSize:options.push.batchSize,handler:rows=>runInTransaction(googleDrive,driveStructure,'id',()=>handleUpstreamBatch(googleDrive,driveStructure,'id',rows))},live:options.live,retryTime:options.retryTime,waitForLeadership:options.waitForLeadership,autoStart:false});
+ const state=replicateRxCollection({replicationIdentifier:options.replicationIdentifier,collection:options.collection,deletedField:'_deleted',pull:{batchSize,handler:pullHandler},push:{batchSize:options.push.batchSize,handler:rows=>runInTransaction(googleDrive,driveStructure,'id',()=>handleUpstreamBatch(googleDrive,driveStructure,'id',rows))},live:options.live,retryTime:options.retryTime,waitForLeadership:options.waitForLeadership,autoStart:false,toggleOnDocumentVisible:options.toggleOnDocumentVisible??true});
  // Fixture facade exposes unchanged published verification helpers' inputs only.
  state.googleDrive=googleDrive;state.driveStructure=driveStructure;
  event({type:'adapter-created',replicationIdentifier:state.replicationIdentifier,deletedField:state.deletedField,metaInfo:await state.metaInfoPromise,autoStart:state.autoStart,config:{googleDrive,pullBatchSize:batchSize,pushBatchSize:options.push.batchSize,live:options.live,retryTime:options.retryTime,waitForLeadership:options.waitForLeadership}});
@@ -60,7 +60,7 @@ export async function createChangesReplication(options,{event=()=>{},batchSize=o
  // Construction stays gated until metadata/instrumentation are ready. Match the
  // native factory: expose state before non-live settlement so consumers can
  // observe errors while initial replication is still retrying.
- state.autoStart=true;
+ state.autoStart=options.autoStart!==false;
  startReplicationOnLeaderShip(options.waitForLeadership,state);
  return state;
 }
