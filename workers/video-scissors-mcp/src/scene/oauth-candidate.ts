@@ -9,11 +9,12 @@ import legacyEntrypoint from '../index';
 import { browserRoute } from '../browser-routes';
 import type { BridgeNamespace } from '../browser-routes';
 import { SceneMailbox } from './mailbox';
+import { SCENE_OAUTH_SECONDS } from './lifetime';
 import { renderSceneConsentView } from './SceneConsentView';
 import { boundedSceneRpc, sceneMcpHandler } from './mcp';
 import { sceneBrowserRoute } from './browser-routes';
 import { sceneDiagnostic } from './diagnostics';
-type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string };
+type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string; SCENE_UNTIL_REVOKED_ENABLED?:string };
 import { SCENE_SCOPES, parseSceneAuth, sceneObject, type SceneAuth } from '../../../../lib/visual-remix-remote';
 const videoScopes = ['video:read','video:edit'];
 const scopesEqual = (value: string[], expected: readonly string[]) => value.length === expected.length && new Set(value).size === expected.length && expected.every(scope => value.includes(scope));
@@ -33,7 +34,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
   const videoResource = origin + '/mcp', sceneResource = origin + '/scene/mcp';
   const options = videoOAuthOptionsFor(env, origin, bridge);
   const referencesEnabled = env.SCENE_REFERENCE_ENABLED === 'true';
-  const store = new SceneMailbox(env.DB,Date.now,referencesEnabled);
+  const store = new SceneMailbox(env.DB,Date.now,referencesEnabled,env.SCENE_UNTIL_REVOKED_ENABLED==='true');
   const authorization = new OAuthAuthorizationServer<Env>({
     issuer: origin, resources: [videoResource,sceneResource], defaultResource: videoResource, legacyGrantResource: videoResource,
     authorizeEndpoint: options.authorizeEndpoint, tokenEndpoint: options.tokenEndpoint,
@@ -44,7 +45,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
       if (input.resource === videoResource) return options.tokenExchangeCallback?.(input);
       if (input.resource !== sceneResource || input.grantType !== 'authorization_code' || !scopesEqual(input.scope, SCENE_SCOPES) || !scopesEqual(input.requestedScope, SCENE_SCOPES)) throw new OAuthError('invalid_grant', { description: 'Scene lease or grant rejected' });
       const auth = sceneProps(input.props), lease = await new SceneMailbox(input.env.DB).lease(auth);
-      const ttl = lease ? Math.floor((lease.expiresAt - Date.now()) / 1000) : 0;
+      const ttl = lease ? lease.expiresAt===null?SCENE_OAUTH_SECONDS:Math.min(SCENE_OAUTH_SECONDS,Math.floor((lease.expiresAt - Date.now()) / 1000)) : 0;
       if (ttl < 60) throw new OAuthError('invalid_grant', { description: 'Scene lease or grant rejected' });
       return { accessTokenTTL: ttl, refreshTokenTTL: 0 };
     },

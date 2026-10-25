@@ -12,7 +12,7 @@ async function fixture() {
   let egress = 0;
   const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-10-13', d1Databases: ['DB'], outboundService: () => { egress++; return new Response('DENIED', { status: 403 }); } }));
   const db = await mf.getD1Database('DB');
-  for (const path of ['migrations/0001.sql','candidate-migrations/scene.sql']) await db.exec(readFileSync(path, 'utf8').replace(/--[^\n]*/g, '').replace(/\s+/g, ' '));
+  for (const path of ['migrations/0001.sql','candidate-migrations/scene.sql','candidate-migrations/scene-until-revoked.sql']) await db.exec(readFileSync(path, 'utf8').replace(/--[^\n]*/g, '').replace(/\s+/g, ' '));
   let time = Date.now();
   const call = async (action: string, data: Record<string, unknown> = {}) => {
     const response = await mf.dispatchFetch('https://localhost/fixture', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-fixture-time': String(time) }, body: JSON.stringify({ action, ...data }) });

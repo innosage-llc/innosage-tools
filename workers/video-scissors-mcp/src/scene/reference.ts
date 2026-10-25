@@ -1,4 +1,5 @@
 import { digest } from '../mailbox';
+import { liveGrant, grantArgs } from './lifetime';
 import { proposalSchema } from '../../../../lib/visual-remix-agent';
 import { SCENE_LIMITS, parseSceneAuth, sceneJSON, sceneObject, type SceneAuth, type SceneOwner } from '../../../../lib/visual-remix-remote';
 import { REFERENCE_LIMITS, parseReferenceConsent, parseReferenceManifest, referenceBase64, referenceSHA256, sourceAsset, type ReferenceConsent, type ReferenceManifest } from '../../../../lib/visual-remix-reference';
@@ -75,8 +76,8 @@ export async function validateReferencePNG(bytes: Uint8Array, m: ReferenceManife
         reader.releaseLock();
     }
 }
-const live = 's.id=? AND s.project=? AND s.generation=? AND s.epoch=? AND s.revoked=0 AND s.expires>? AND s.consent_hash IS NOT NULL AND r.epoch=s.epoch';
-const args = (a: SceneAuth, now: number) => [a.shareId, a.projectId, a.generation, a.epoch, now];
+const live = liveGrant+' AND s.consent_hash IS NOT NULL AND r.epoch=s.epoch';
+const args = grantArgs;
 export class SceneReferenceStore {
     constructor(private readonly db: D1DatabaseSession, private readonly now: () => number = Date.now) { }
     async consent(input: SceneAuth): Promise<ReferenceConsent | null> {
@@ -85,9 +86,11 @@ export class SceneReferenceStore {
         }>();
         return row ? parseReferenceConsent(JSON.parse(row.consent)) : null;
     }
-    async upload(input: SceneOwner, value: unknown): Promise<boolean> {
+    async upload(input: SceneOwner, value: unknown, cacheEpoch?:unknown): Promise<boolean> {
+        if(cacheEpoch!==undefined && (!Number.isSafeInteger(cacheEpoch) || Number(cacheEpoch)<0))throw new Error('REFERENCE_CACHE_GENERATION');
+        const expected=cacheEpoch===undefined?-1:Number(cacheEpoch);
         const a = parseSceneAuth(input, true) as SceneOwner, body = sceneObject(value, ['manifest', 'data']), manifest = parseReferenceManifest(body.manifest);
-        const row = await this.db.prepare(`SELECT r.consent FROM scene_references r JOIN scene_shares s ON s.id=r.share WHERE ${live} AND s.credential_hash=?`).bind(...args(a, this.now()), await digest(a.credential)).first<{
+        const row = await this.db.prepare(`SELECT r.consent FROM scene_references r JOIN scene_shares s ON s.id=r.share WHERE ${live} AND s.credential_hash=? AND (s.expiry_policy='fixed' OR (s.cache_epoch=? AND s.seen>=?))`).bind(...args(a, this.now()), await digest(a.credential),expected,this.now()-SCENE_LIMITS.freshnessMs).first<{
             consent: string;
         }>();
         if (!row)
@@ -100,8 +103,8 @@ export class SceneReferenceStore {
             throw new Error('REFERENCE_ENCODING');
         await validateReferencePNG(bytes, manifest);
         // Authorization is checked again in the write, including late revoke/expiry.
-        return !!await this.db.prepare(`UPDATE scene_references SET pixels=? WHERE share=? AND epoch=? AND consent=? AND (pixels IS NULL OR pixels=?) AND EXISTS(SELECT 1 FROM scene_shares s JOIN scene_references r ON r.share=s.id WHERE ${live} AND s.credential_hash=?) RETURNING share`)
-            .bind(bytes, a.shareId, a.epoch, row.consent, bytes, ...args(a, this.now()), await digest(a.credential)).first();
+        return !!await this.db.prepare(`UPDATE scene_references SET pixels=? WHERE share=? AND epoch=? AND consent=? AND (pixels IS NULL OR pixels=?) AND EXISTS(SELECT 1 FROM scene_shares s JOIN scene_references r ON r.share=s.id WHERE ${live} AND s.credential_hash=? AND (s.expiry_policy='fixed' OR (s.cache_epoch=? AND s.seen>=?))) RETURNING share`)
+            .bind(bytes, a.shareId, a.epoch, row.consent, bytes, ...args(a, this.now()), await digest(a.credential),expected,this.now()-SCENE_LIMITS.freshnessMs).first();
     }
     async read(input: SceneAuth) {
         const a = parseSceneAuth(input), row = await this.db.prepare(`SELECT r.consent,r.pixels FROM scene_references r JOIN scene_shares s ON s.id=r.share WHERE ${live} AND s.seen>=? AND r.pixels IS NOT NULL`).bind(...args(a, this.now()), this.now() - SCENE_LIMITS.freshnessMs).first<{

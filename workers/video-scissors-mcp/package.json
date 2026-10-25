@@ -6,7 +6,7 @@
   "scripts": {
     "types": "wrangler types worker-configuration.d.ts --include-runtime false",
     "check": "tsc --noEmit",
-    "test:scene-store": "node --experimental-strip-types --test test/scene-mailbox.test.ts",
+    "test:scene-store": "node --experimental-strip-types --test test/scene-mailbox.test.ts test/scene-until-revoked.test.ts",
     "test": "node --experimental-strip-types --test test/mailbox.test.ts test/oauth.test.ts test/ack.test.ts test/d-candidate.test.ts",
     "test:assets": "node --experimental-strip-types --test test/assets.test.ts",
     "test:background": "node --experimental-strip-types --test test/background.test.ts",

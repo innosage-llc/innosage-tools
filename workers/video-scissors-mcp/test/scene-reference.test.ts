@@ -39,7 +39,7 @@ async function fixture() {
     const bundle = await build({ entryPoints: ['test/fixtures/scene-reference.ts'], bundle: true, format: 'esm', platform: 'browser', conditions: ['workerd'], external: ['node:*', 'cloudflare:*'], write: false });
     let egress = 0, time = Date.now();
     const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], d1Databases: ['DB'], outboundService: () => { egress++; return new Response('DENIED', { status: 403 }); } })), db = await mf.getD1Database('DB');
-    for (const path of ['migrations/0001.sql', 'candidate-migrations/scene.sql', 'candidate-migrations/scene-reference.sql'])
+    for (const path of ['migrations/0001.sql', 'candidate-migrations/scene.sql', 'candidate-migrations/scene-until-revoked.sql', 'candidate-migrations/scene-reference.sql'])
         await db.exec(readFileSync(path, 'utf8').replace(/--[^\n]*/g, '').replace(/\s+/g, ' '));
     const call = async (action: string, data: Record<string, unknown> = {}, disabled = false) => {
         const response = await mf.dispatchFetch('https://localhost/fixture', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-time': String(time), ...(disabled ? { 'x-fixture-disabled': 'true' } : {}) }, body: JSON.stringify({ action, ...data }) });
