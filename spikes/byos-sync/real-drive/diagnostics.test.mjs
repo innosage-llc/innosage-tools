@@ -52,3 +52,22 @@ test('native timeout uses full metadata HTTP validator; hypothetical partial WAL
   assert.equal(calls[1].fields,'id,fileSize,mimeType,title,etag');assert.equal(calls[2].validator,'"current"');
  });
 });
+
+test('two native acquisitions sharing one empty observation produce one owner and one retry',async()=>{
+ let body='',etag='"v1"',reads=0,release;
+ const bothReads=new Promise(resolve=>{release=resolve;});
+ await isolate(async(u,o={})=>{
+  if(o.method==='PUT'){
+   if(o.headers['If-Match']!==etag)return response('',412);
+   body=o.body;etag='"v2"';return response('',200);
+  }
+  const content=body,validator=etag;
+  if(++reads<=2){if(reads===2)release();await bothReads;}
+  return new Response(content,{headers:{ETag:validator,Date:'Sun, 25 Oct 2026 05:01:00 GMT','Content-Type':'application/json'}});
+ },async()=>{
+  const results=await Promise.all([startTransactionTryOnce(options,init),startTransactionTryOnce(options,init)]);
+  assert.equal(results.filter(r=>r.retry).length,1);
+  assert.equal(results.filter(r=>r.etag==='"v2"').length,1);
+  assert.ok(body.includes('createdAtClientTime'));
+ });
+});
