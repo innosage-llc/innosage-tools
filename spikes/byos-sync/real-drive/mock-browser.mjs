@@ -35,7 +35,18 @@ async function open(label){
   if(r.method()==='POST'&&u.pathname==='/drive/v3/files'&&r.postDataJSON()?.appProperties){
    assert.equal(marked,false);marked=true;const f=m.create(r.postDataJSON());return route.fulfill({json:{id:f.id,mimeType:f.mimeType,ownedByMe:true,appProperties:{byos113:workspace}}});
   }
-  const response=await route.fetch({url:m.url+u.pathname+u.search,maxRedirects:0});return route.fulfill({response});
+  // Contract-grounded compatibility fixture: full metadata has a file validator
+  // and revision, while media does not expose ETag (observed real boundary).
+  const fileId=u.pathname.match(/^\/drive\/v2\/files\/([^/]+)$/)?.[1];
+  const file=fileId&&m.files.get(decodeURIComponent(fileId));
+  if(file&&u.searchParams.has('revisionId')&&u.searchParams.get('revisionId')!==`r${file.version}`)return route.fulfill({status:404,json:{error:{code:404}}});
+  const response=await route.fetch({url:m.url+u.pathname+u.search,maxRedirects:0});
+  if(file&&r.method()==='GET'&&response.ok()){
+   if(u.searchParams.get('alt')==='media'){const headers=response.headers();delete headers.etag;return route.fulfill({response,headers});}
+   const data=await response.json();if(file.body.length)data.headRevisionId=`r${file.version}`;
+   return route.fulfill({response,json:data});
+  }
+  return route.fulfill({response});
  });
  const page=await c.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>window.byos&&window.spike?.ready);
  await page.locator('#oauth-client').fill('123-fixture.apps.googleusercontent.com');await page.locator('#test-account').check();await page.locator('#authorize-btn').click();await until(page,async()=> (await window.byos.snapshot()).transport.authorized);return page;
