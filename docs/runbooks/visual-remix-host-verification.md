@@ -4,6 +4,23 @@ The editable application is `/tools/visual-remix` in the external browser. This 
 
 ## First and repeat use
 
+### Connected staging build guard
+
+Prepare the connected browser artifact with `npm run build:visual-remix-connected`.
+The app reads exactly `NEXT_PUBLIC_SCENE_REMOTE=true` and
+`NEXT_PUBLIC_SCENE_REFERENCE=true` at build time. Names ending in `_ENABLED` are
+server-side settings only and do not enable the compiled browser UI. A successful
+build or enabled Worker vars cannot prove the pairing UI is present.
+
+The build command guards the actual compiled route with a local mock: sharing
+and fresh reference consent must be visible, explicit Connect must expose the
+five-minute proof, reference bytes must wait for mock binding, Disconnect must
+preserve local work, and HTML export must remain available. No live MCP/OAuth
+traffic is sent. Run this command after native CI (whose default build is local
+only), then package that exact `out` directory. Do not rebuild without these
+flags between the guard and packaging. Preserve artifact hashes and deployed
+identity readback; real ChatGPT verification remains separately gated.
+
 1. Save local work, open the intended Scene/reference and review both sharing confirmations. Connect once, keep the browser awake, and enter the private one-use five-minute proof only in the official host consent form. New sessions require explicit consent to a fixed 30-minute lease; older 15-minute leases retain their original deadline. No refresh or heartbeat extends either lease. Expiry stops remote access while preserving the original image, applied Scene, local parameters and history. Use Reauthorize and continue, review fresh consent, Connect once and manually authorize the host to resume. Unknown revocation must be reconciled before a new share.
 2. Browser sharing authorized means the browser consent binding exists. It does **not** prove token exchange or successful host tool access. Require a successful `get_scene`, then submit a new `propose_scene` using that exact project/generation/revision and a new requestId.
 3. Require an actual candidate preview in the external editor and inspect content AND geometry. `queued`, `rendering` and `preview` are pending. Apply manually and check `proposal_status.applied`; export PNG/Scene/captions in the editor. No agent Apply/export is exposed.
