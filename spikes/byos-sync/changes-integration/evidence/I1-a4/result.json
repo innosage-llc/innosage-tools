@@ -1,0 +1,184 @@
+{
+  "id": "I1",
+  "status": "PASS",
+  "scope": "Original parent-folder inventory in spaces=drive; no corpora/driveId override; incomplete result handling is injected response behavior, not provider occurrence proof",
+  "beforeCheckpoint": {
+    "docIdsWithSameModifiedTime": [
+      "page.json"
+    ],
+    "modifiedTime": "2026-10-24T23:31:07.097Z"
+  },
+  "incompleteCheckpoint": {
+    "docIdsWithSameModifiedTime": [
+      "page.json"
+    ],
+    "modifiedTime": "2026-10-24T23:31:07.097Z"
+  },
+  "readCheckpoint": {
+    "docIdsWithSameModifiedTime": [
+      "page.json"
+    ],
+    "modifiedTime": "2026-10-24T23:31:07.097Z",
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000030"
+    }
+  },
+  "afterCheckpoint": {
+    "docIdsWithSameModifiedTime": [
+      "page.json"
+    ],
+    "modifiedTime": "2026-10-24T23:31:07.097Z",
+    "changes109": {
+      "tag": "tools109-changes-v1",
+      "phase": "changes",
+      "token": "opaque-000043"
+    }
+  },
+  "identity": {
+    "databaseName": "overlay693535326363343937656138323432386162376337306136303734633133316465",
+    "collectionName": "pages",
+    "replicationIdentifier": "native-overlay",
+    "deletedField": "_deleted",
+    "metaCollection": "rx-replication-meta-cb06b1ba2f9bc44ba2707f5e71c584115d1a786e6dc5c796d919d68ebdd34167",
+    "metaSchema": {
+      "title": "RxReplicationProtocolMetaData",
+      "primaryKey": {
+        "key": "id",
+        "fields": [
+          "itemId",
+          "isCheckpoint"
+        ],
+        "separator": "|"
+      },
+      "type": "object",
+      "version": 0,
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 102
+        },
+        "isCheckpoint": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ],
+          "minLength": 1,
+          "maxLength": 1
+        },
+        "itemId": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "checkpointData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "docData": {
+          "type": "object",
+          "properties": {
+            "_attachments": {
+              "type": "object"
+            },
+            "_deleted": {
+              "type": "boolean"
+            },
+            "_meta": {
+              "additionalProperties": true,
+              "properties": {
+                "lwt": {
+                  "maximum": 1000000000000000,
+                  "minimum": 1,
+                  "multipleOf": 0.01,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lwt"
+              ],
+              "type": "object"
+            },
+            "_rev": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 262144,
+              "type": "string"
+            },
+            "editId": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        },
+        "isResolvedConflict": {
+          "type": "string"
+        },
+        "_rev": {
+          "type": "string",
+          "minLength": 1
+        },
+        "_attachments": {
+          "type": "object"
+        },
+        "_deleted": {
+          "type": "boolean"
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "lwt": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000000000000000,
+              "multipleOf": 0.01
+            }
+          },
+          "additionalProperties": true,
+          "required": [
+            "lwt"
+          ]
+        }
+      },
+      "keyCompression": false,
+      "required": [
+        "id",
+        "isCheckpoint",
+        "itemId",
+        "_deleted",
+        "_rev",
+        "_meta",
+        "_attachments"
+      ],
+      "indexes": [
+        [
+          "_deleted",
+          "id"
+        ],
+        [
+          "_meta.lwt",
+          "id"
+        ]
+      ],
+      "encrypted": []
+    },
+    "logicalIdentifier": "rxdbreplicationnative-overlay"
+  },
+  "admittedOrReserved": 217,
+  "actualRequests": 217,
+  "mockRequests": 217,
+  "uiRequests": 0,
+  "nodeResponses": 217,
+  "snapshots": 6,
+  "explicitSyncOnly": true,
+  "noStorageReset": true
+}

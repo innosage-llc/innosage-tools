@@ -1,0 +1,161 @@
+{
+  "id": "I2",
+  "status": "PASS",
+  "identity": {
+    "databaseName": "overlay693434623437626237316361323439623538616165663834346538616530613762",
+    "collectionName": "pages",
+    "replicationIdentifier": "native-overlay",
+    "deletedField": "_deleted",
+    "metaCollection": "rx-replication-meta-cb06b1ba2f9bc44ba2707f5e71c584115d1a786e6dc5c796d919d68ebdd34167",
+    "metaSchema": {
+      "title": "RxReplicationProtocolMetaData",
+      "primaryKey": {
+        "key": "id",
+        "fields": [
+          "itemId",
+          "isCheckpoint"
+        ],
+        "separator": "|"
+      },
+      "type": "object",
+      "version": 0,
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 102
+        },
+        "isCheckpoint": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ],
+          "minLength": 1,
+          "maxLength": 1
+        },
+        "itemId": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "checkpointData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "docData": {
+          "type": "object",
+          "properties": {
+            "_attachments": {
+              "type": "object"
+            },
+            "_deleted": {
+              "type": "boolean"
+            },
+            "_meta": {
+              "additionalProperties": true,
+              "properties": {
+                "lwt": {
+                  "maximum": 1000000000000000,
+                  "minimum": 1,
+                  "multipleOf": 0.01,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lwt"
+              ],
+              "type": "object"
+            },
+            "_rev": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 262144,
+              "type": "string"
+            },
+            "editId": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        },
+        "isResolvedConflict": {
+          "type": "string"
+        },
+        "_rev": {
+          "type": "string",
+          "minLength": 1
+        },
+        "_attachments": {
+          "type": "object"
+        },
+        "_deleted": {
+          "type": "boolean"
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "lwt": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000000000000000,
+              "multipleOf": 0.01
+            }
+          },
+          "additionalProperties": true,
+          "required": [
+            "lwt"
+          ]
+        }
+      },
+      "keyCompression": false,
+      "required": [
+        "id",
+        "isCheckpoint",
+        "itemId",
+        "_deleted",
+        "_rev",
+        "_meta",
+        "_attachments"
+      ],
+      "indexes": [
+        [
+          "_deleted",
+          "id"
+        ],
+        [
+          "_meta.lwt",
+          "id"
+        ]
+      ],
+      "encrypted": []
+    },
+    "logicalIdentifier": "rxdbreplicationnative-overlay"
+  },
+  "configuration": {
+    "live": false,
+    "multiInstance": false,
+    "transactionTimeout": 50,
+    "retryTime": 1000
+  },
+  "choices": [
+    "cloud-owned-discard",
+    "local-independent-verification",
+    "merge-independent-verification"
+  ],
+  "reusedFaultControls": "S5_LOST_RESPONSE_INTENT-a3 unchanged source paths: lost response, newer generation, E race, owned cloud discard. No historical label promoted to new run.",
+  "admittedOrReserved": 805,
+  "actualRequests": 805,
+  "mockRequests": 805,
+  "uiRequests": 0,
+  "nodeResponses": 805,
+  "snapshots": 9,
+  "explicitSyncOnly": true,
+  "noStorageReset": true
+}

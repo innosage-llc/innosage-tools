@@ -1,0 +1,11 @@
+{
+  "protocol": "tools111-integration-fixture-v1",
+  "groups": ["I1", "I2", "I3_CRASH", "I3_TABS"],
+  "limits": {"requests": 1000, "wallMs": 180000},
+  "config": {"live": false, "transactionTimeout": 50, "retryTime": 1000, "multiInstance": true},
+  "I1": "Existing-query inventory incompleteSearch true and required body read 503, each held until full checkpoint/error/status capture; same receiver fault-clear retry.",
+  "I2": "One receiver, three independently protected pages for cloud/local/merge; D/E/unrelated explicit progress on cloud page; local and merge are independently verified before retirement. S5-a3 supplies unchanged lost-response, generation and remote-race controls.",
+  "I3_CRASH": "Real Chromium Page.crash while actual native downstream bulkWrite is held for new remote body; same BrowserContext retains native IndexedDB and same receiver/meta identity; reopen and explicit retry.",
+  "I3_TABS": "Existing UI/controller: clean refresh, unsaved dirty preservation and warning, acknowledged both-dirty journals, native multiInstance owner closure/handoff, reopen old session. live:false explicit sync only.",
+  "boundary": "Only 127.0.0.1 HTTP origins created by this invocation. No real provider. Request count includes setup, UI, browser preflight and Node calls. No storage deletion or evidence overwrite."
+}

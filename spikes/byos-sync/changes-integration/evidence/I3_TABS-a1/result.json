@@ -1,0 +1,187 @@
+{
+  "id": "I3_TABS",
+  "status": "PASS",
+  "browser": "151.0.7922.34",
+  "profile": "changes-integration/.generated/profiles/I3_TABS-a1",
+  "configuration": {
+    "live": false,
+    "multiInstance": true,
+    "transactionTimeout": 50,
+    "retryTime": 1000
+  },
+  "owners": [
+    {
+      "at": 1792884726714,
+      "session": "a",
+      "leader": true,
+      "created": true
+    },
+    {
+      "at": 1792884727265,
+      "session": "a",
+      "leader": true,
+      "closing": true
+    },
+    {
+      "at": 1792884727425,
+      "session": "b",
+      "leader": true,
+      "created": 1
+    }
+  ],
+  "uploads": [
+    {
+      "editId": "a/2/96cc04e7-d50b-47d0-bd53-73b85f548464",
+      "body": "# Local continued\n\nD — B extended during review.",
+      "at": 1792884727227,
+      "session": "a"
+    }
+  ],
+  "identity": {
+    "databaseName": "overlay693062346666663162663861363462643438626134636430643831306132633132",
+    "collectionName": "pages",
+    "replicationIdentifier": "native-overlay",
+    "deletedField": "_deleted",
+    "metaCollection": "rx-replication-meta-cb06b1ba2f9bc44ba2707f5e71c584115d1a786e6dc5c796d919d68ebdd34167",
+    "metaSchema": {
+      "title": "RxReplicationProtocolMetaData",
+      "primaryKey": {
+        "key": "id",
+        "fields": [
+          "itemId",
+          "isCheckpoint"
+        ],
+        "separator": "|"
+      },
+      "type": "object",
+      "version": 0,
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 102
+        },
+        "isCheckpoint": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ],
+          "minLength": 1,
+          "maxLength": 1
+        },
+        "itemId": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "checkpointData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "docData": {
+          "type": "object",
+          "properties": {
+            "_attachments": {
+              "type": "object"
+            },
+            "_deleted": {
+              "type": "boolean"
+            },
+            "_meta": {
+              "additionalProperties": true,
+              "properties": {
+                "lwt": {
+                  "maximum": 1000000000000000,
+                  "minimum": 1,
+                  "multipleOf": 0.01,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lwt"
+              ],
+              "type": "object"
+            },
+            "_rev": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 262144,
+              "type": "string"
+            },
+            "editId": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        },
+        "isResolvedConflict": {
+          "type": "string"
+        },
+        "_rev": {
+          "type": "string",
+          "minLength": 1
+        },
+        "_attachments": {
+          "type": "object"
+        },
+        "_deleted": {
+          "type": "boolean"
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "lwt": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000000000000000,
+              "multipleOf": 0.01
+            }
+          },
+          "additionalProperties": true,
+          "required": [
+            "lwt"
+          ]
+        }
+      },
+      "keyCompression": false,
+      "required": [
+        "id",
+        "isCheckpoint",
+        "itemId",
+        "_deleted",
+        "_rev",
+        "_meta",
+        "_attachments"
+      ],
+      "indexes": [
+        [
+          "_deleted",
+          "id"
+        ],
+        [
+          "_meta.lwt",
+          "id"
+        ]
+      ],
+      "encrypted": []
+    },
+    "logicalIdentifier": "rxdbreplicationnative-overlay"
+  },
+  "cleanDirtyBothDirtyAndHandoff": true,
+  "limitations": "Explicit sync; no unattended freshness claim. Workspace/no-lock/duplicate-session guards reused with unchanged source justification.",
+  "admittedOrReserved": 394,
+  "actualRequests": 200,
+  "mockRequests": 194,
+  "uiRequests": 6,
+  "nodeResponses": 0,
+  "snapshots": 6,
+  "explicitSyncOnly": true,
+  "noStorageReset": true
+}

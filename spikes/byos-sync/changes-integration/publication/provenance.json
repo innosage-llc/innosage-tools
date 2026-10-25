@@ -1,0 +1,87 @@
+{
+  "protocol": "tools111-publication-redaction-v1",
+  "substitution": "Exact absolute spike directory prefix to <byos>; gzip mtime=0. No body, assertion, status, ordering or result changes. Original evidence hashes remain original; this map binds published copies. Raw originals retained locally.",
+  "files": [
+    {
+      "original": "evidence/I1-a1/console.txt",
+      "originalSha256": "dedf1ca6ca96d75060de541b3efd127d4cafc04d50366c2d65ab7c22383593f7",
+      "originalDecodedSha256": "dedf1ca6ca96d75060de541b3efd127d4cafc04d50366c2d65ab7c22383593f7",
+      "published": "publication/I1-a1/console.txt.gz",
+      "publishedSha256": "f8f0d727fc979f8e28008402f6df932e4dae65854fa66c22b3983bd30a403a10",
+      "publishedDecodedSha256": "dedf1ca6ca96d75060de541b3efd127d4cafc04d50366c2d65ab7c22383593f7",
+      "substitutionCount": 0
+    },
+    {
+      "original": "evidence/I1-a2/console.txt",
+      "originalSha256": "e8de8f728a77066bc7c6b542c5e43054feebe04596256ca05a601c77a194b660",
+      "originalDecodedSha256": "e8de8f728a77066bc7c6b542c5e43054feebe04596256ca05a601c77a194b660",
+      "published": "publication/I1-a2/console.txt.gz",
+      "publishedSha256": "d5cdd3c78f17a645ba675ecbf6496b60c67233c5a82b3add327bdc298a8f3d03",
+      "publishedDecodedSha256": "e8de8f728a77066bc7c6b542c5e43054feebe04596256ca05a601c77a194b660",
+      "substitutionCount": 0
+    },
+    {
+      "original": "evidence/I1-a3/console.txt",
+      "originalSha256": "230e88475a654afbb1404a91830cd0931fc0858767e4326260a2f12d3c3417d1",
+      "originalDecodedSha256": "230e88475a654afbb1404a91830cd0931fc0858767e4326260a2f12d3c3417d1",
+      "published": "publication/I1-a3/console.txt.gz",
+      "publishedSha256": "397c35b4c1322a5e8742bf5b86c1bc16de2a6a8ed4ff7389e6a88cf99a8dd225",
+      "publishedDecodedSha256": "d97acecb97f166c64771f676e41b5b46f86d4798adca0e71176012bbe04be27c",
+      "substitutionCount": 3
+    },
+    {
+      "original": "evidence/I1-a4/console.txt",
+      "originalSha256": "579a8d2e50ececf1938495e86d3ce33d07a53a7a5079126c0d714e0b287ab58f",
+      "originalDecodedSha256": "579a8d2e50ececf1938495e86d3ce33d07a53a7a5079126c0d714e0b287ab58f",
+      "published": "publication/I1-a4/console.txt.gz",
+      "publishedSha256": "adfb8101368ede62fe911cf396e13c6e03abc6dff85ab3c5d05edef8b5a9cbc7",
+      "publishedDecodedSha256": "579a8d2e50ececf1938495e86d3ce33d07a53a7a5079126c0d714e0b287ab58f",
+      "substitutionCount": 0
+    },
+    {
+      "original": "evidence/I2-a1/console.txt",
+      "originalSha256": "d56b25d072c17fab2fcdc8e88943acbba53b64b0390b1f434650cf918dd9b047",
+      "originalDecodedSha256": "d56b25d072c17fab2fcdc8e88943acbba53b64b0390b1f434650cf918dd9b047",
+      "published": "publication/I2-a1/console.txt.gz",
+      "publishedSha256": "38d8b3eba21ec8314fcf83537db71e5db6709e8ce101c494826a0da18a5e699c",
+      "publishedDecodedSha256": "d56b25d072c17fab2fcdc8e88943acbba53b64b0390b1f434650cf918dd9b047",
+      "substitutionCount": 0
+    },
+    {
+      "original": "evidence/I3_CRASH-a1/console.txt",
+      "originalSha256": "ce99ebc8939a7b08a1df7acf98147f5540cee55064ffdc323fd915e9464710cc",
+      "originalDecodedSha256": "ce99ebc8939a7b08a1df7acf98147f5540cee55064ffdc323fd915e9464710cc",
+      "published": "publication/I3_CRASH-a1/console.txt.gz",
+      "publishedSha256": "583d29ed1a2694de572d9397a14b9333a33b0a4ef542df3241c41d5a65b626d1",
+      "publishedDecodedSha256": "ce99ebc8939a7b08a1df7acf98147f5540cee55064ffdc323fd915e9464710cc",
+      "substitutionCount": 0
+    },
+    {
+      "original": "evidence/I3_TABS-a1/console.txt",
+      "originalSha256": "48b54f120c4fe5e4dc11ebe195240b589e2eace21f31abf6b053b2cb9fc47399",
+      "originalDecodedSha256": "48b54f120c4fe5e4dc11ebe195240b589e2eace21f31abf6b053b2cb9fc47399",
+      "published": "publication/I3_TABS-a1/console.txt.gz",
+      "publishedSha256": "3632a84526312ef4f8089e62a431af085d6d8c858df55b995c8979e0fecc1fd0",
+      "publishedDecodedSha256": "48b54f120c4fe5e4dc11ebe195240b589e2eace21f31abf6b053b2cb9fc47399",
+      "substitutionCount": 0
+    },
+    {
+      "original": "evidence/I1-a2/events.jsonl.gz",
+      "originalSha256": "89f04662aa2c18e617494c0aaf9fd8bd2f5da2de0ff6a3f03a7b33dda4cdcc3c",
+      "originalDecodedSha256": "2823efa06708d1e5a3b92e52c7082fc2f054094cb4f6a3038a8a243ab931f6d8",
+      "published": "publication/I1-a2/events.jsonl.gz",
+      "publishedSha256": "49ca7323082a11182762728a7f3bb6fce6bb5caebd1d96e62e5eb3fbc7af1fc2",
+      "publishedDecodedSha256": "2de83dc2b2d7f5970dae878d9bc17f7554815ad86b55565bfec722f0b3f38ab1",
+      "substitutionCount": 1
+    },
+    {
+      "original": "evidence/I1-a2/phase-02.json.gz",
+      "originalSha256": "7a1083d0e532663eade36d6dbafd3ba78607e9c8e28a61b407d624b4dc66bea0",
+      "originalDecodedSha256": "b7afcd60dd71575ea238fe647ef76dc36acb08fa2a755836c874c1383e459cb8",
+      "published": "publication/I1-a2/phase-02.json.gz",
+      "publishedSha256": "86cc75ec7f56b9b58291a9545426abce630c4759d4400af957ed81ae5f3a0809",
+      "publishedDecodedSha256": "500a56abc38a9f82afb972569747b934a46ef0742623b69009695aacb90fedd5",
+      "substitutionCount": 8
+    }
+  ]
+}

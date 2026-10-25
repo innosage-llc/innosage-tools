@@ -1,0 +1,89 @@
+{
+  "protocol": "decoded-source-dedup-v1",
+  "files": [
+    {
+      "original": "evidence/I1-a1/sources-pre.json.gz",
+      "sha256": "21d07aa1ed9e0a6ed01392f12e629e4876717490b09b9ce662c22c07f1407962",
+      "decodedSha256": "312b61ed9de5808de0b7c245df80a445b26a5e042939999660320b992f98248e",
+      "identicalDecodedArchive": "sources-v001.json.gz"
+    },
+    {
+      "original": "evidence/I1-a1/sources-post.json.gz",
+      "sha256": "21d07aa1ed9e0a6ed01392f12e629e4876717490b09b9ce662c22c07f1407962",
+      "decodedSha256": "312b61ed9de5808de0b7c245df80a445b26a5e042939999660320b992f98248e",
+      "identicalDecodedArchive": "sources-v001.json.gz"
+    },
+    {
+      "original": "evidence/I1-a2/sources-pre.json.gz",
+      "sha256": "21d07aa1ed9e0a6ed01392f12e629e4876717490b09b9ce662c22c07f1407962",
+      "decodedSha256": "312b61ed9de5808de0b7c245df80a445b26a5e042939999660320b992f98248e",
+      "identicalDecodedArchive": "sources-v001.json.gz"
+    },
+    {
+      "original": "evidence/I1-a2/sources-post.json.gz",
+      "sha256": "21d07aa1ed9e0a6ed01392f12e629e4876717490b09b9ce662c22c07f1407962",
+      "decodedSha256": "312b61ed9de5808de0b7c245df80a445b26a5e042939999660320b992f98248e",
+      "identicalDecodedArchive": "sources-v001.json.gz"
+    },
+    {
+      "original": "evidence/I1-a3/sources-pre.json.gz",
+      "sha256": "77e0508052c752136311178dadd92a4d7c9fcf63e5d3a5323961f996640ca4a8",
+      "decodedSha256": "55a05b76b7357e3c6922991b8a4094f8139814e7f2edece6797ece3f1c1f99e3",
+      "identicalDecodedArchive": "sources-v002.json.gz"
+    },
+    {
+      "original": "evidence/I1-a3/sources-post.json.gz",
+      "sha256": "77e0508052c752136311178dadd92a4d7c9fcf63e5d3a5323961f996640ca4a8",
+      "decodedSha256": "55a05b76b7357e3c6922991b8a4094f8139814e7f2edece6797ece3f1c1f99e3",
+      "identicalDecodedArchive": "sources-v002.json.gz"
+    },
+    {
+      "original": "evidence/I1-a4/sources-pre.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    },
+    {
+      "original": "evidence/I1-a4/sources-post.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    },
+    {
+      "original": "evidence/I2-a1/sources-pre.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    },
+    {
+      "original": "evidence/I2-a1/sources-post.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    },
+    {
+      "original": "evidence/I3_CRASH-a1/sources-pre.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    },
+    {
+      "original": "evidence/I3_CRASH-a1/sources-post.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    },
+    {
+      "original": "evidence/I3_TABS-a1/sources-pre.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    },
+    {
+      "original": "evidence/I3_TABS-a1/sources-post.json.gz",
+      "sha256": "c46c14473a952ecc01c159519d1a3b978d11827b07f92e11c74d18cfb7d8282b",
+      "decodedSha256": "95fd5e3a9edaaef2e2e865a3576b9338689affb383d979ae48840df8d2445955",
+      "identicalDecodedArchive": "sources-v003.json.gz"
+    }
+  ]
+}
