@@ -27,11 +27,13 @@ import { RemixMotion } from "@/lib/visual-remix-motion";
 import { agentBrief, proposalSchema } from "@/lib/visual-remix-agent";
 
 import { VisualRemixTransport } from "@/lib/visual-remix-transport";
+import { prepareSharedReference, resolveReferenceCrops } from "@/lib/visual-remix-reference-browser";
 import type { SceneSharingState } from "@/lib/visual-remix-sharing-view";
 import { SceneSharingPanel } from "./SceneSharingPanel";
 import { ReferenceCrop } from "./ReferenceCrop";
 
 const sceneRemoteEnabled = process.env.NEXT_PUBLIC_SCENE_REMOTE === "true";
+const sceneReferenceEnabled = process.env.NEXT_PUBLIC_SCENE_REFERENCE === "true";
 type Snapshot = ReturnType<VisualRemixController["snapshot"]>;
 const button =
   "inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40";
@@ -340,6 +342,10 @@ export default function VisualRemixApp() {
     );
   }
   async function selectReference(file: File) {
+    if (sharing.current?.snapshot().canDisconnect) {
+      await sharing.current.disconnect("Reference changed. Fresh consent is required before sharing the replacement image.");
+      if (sharing.current.snapshot().phase !== "disconnected") {setError("Disconnect must be confirmed before replacing a shared reference.");return;}
+    }
     const { abort, ticket } = begin(true);
     setMessage("Checking reference pixels locally…");
     try {
@@ -352,13 +358,25 @@ export default function VisualRemixApp() {
         descriptor,
       });
       setMessage(
-        "Reference ready locally. Attach it yourself to your chosen vision agent; this tool has not sent it.",
+        sceneReferenceEnabled ? "Reference ready locally. Choose reference sharing when connecting to let the agent see it; no pixels have been sent." : "Reference ready locally. Attach it yourself to your chosen vision agent; this tool has not sent it.",
       );
     } catch (e) {
       report(e, ticket);
     } finally {
       finish(ticket);
     }
+  }
+  async function connectScene(options?: {referencePixels: boolean; reuseCrops: boolean}) {
+    if(busy || !sharing.current) return;
+    const {abort,ticket}=begin();
+    const store=assets.current;
+    try {
+      const prepared=sceneReferenceEnabled && options?.referencePixels && reference
+        ? await prepareSharedReference(reference.blob,options.reuseCrops,abort.signal) : undefined;
+      if(ticket!==epoch.current || abort.signal.aborted) return;
+      await sharing.current.connect(true,prepared,(proposal,image,signal)=>resolveReferenceCrops(proposal,image,store,signal));
+      if(ticket===epoch.current) sync();
+    } catch(e) {report(e,ticket);} finally {finish(ticket);}
   }
   async function approveAsset(file: File) {
     const { abort, ticket } = begin(true);
@@ -721,16 +739,16 @@ export default function VisualRemixApp() {
       </div>
       <div className="mb-5 rounded-xl bg-orange-50 px-4 py-3 text-sm leading-6 text-orange-950">
         <strong>Local by default.</strong> Selecting an image does not upload it
-        or run AI. You separately attach it to your chosen agent, which may
-        process it remotely. No model key, social login or automatic posting
+        or run AI. {sceneReferenceEnabled ? "Reference sharing requires fresh consent for this image and manual connection; the agent may then process the shared copy remotely." : "You separately attach it to your chosen agent, which may process it remotely."} No model key, social login or automatic posting
         here.
       </div>
       {sceneRemoteEnabled && snapshot?.scene && (
         <div className="mb-5">
           <SceneSharingPanel
-            key={`${snapshot.generation}:${sharingState.phase === "disconnected" && sharingState.revocationConfirmed ? "revoked" : "current"}`}
-            state={sharingState}
-            onConnect={() => { void sharing.current?.connect(true).catch(() => setError("Scene sharing could not start. Check the Scene size and current project; local exports are preserved.")); }}
+            key={`${snapshot.generation}:${referenceURL ?? "none"}:${sharingState.phase === "disconnected" && sharingState.revocationConfirmed ? "revoked" : "current"}`}
+            state={{...sharingState,canConnect:sharingState.canConnect && ready}}
+            reference={sceneReferenceEnabled && reference ? {name:reference.name,width:reference.descriptor.width,height:reference.descriptor.height} : undefined}
+            onConnect={(options) => {void connectScene(options);}}
             onDisconnect={() => { void sharing.current?.disconnect(); }}
           />
         </div>
@@ -835,10 +853,7 @@ export default function VisualRemixApp() {
               />
             </label>
             <p className="my-3 text-xs leading-5 text-zinc-600">
-              First time: attach the image plus this brief to a vision-capable
-              agent. For reuse, the brief includes your current scene; no
-              reference image is needed. Ask for proposal JSON, then return
-              here.
+              {sceneReferenceEnabled ? "For a connected agent, approve reference sharing above, connect, and ask it to read the shared image and Scene. No duplicate image attachment is needed. The agent submits a candidate here for your review and Apply. For reuse, open the saved Scene without the original image." : "First time: attach the image plus this brief to a vision-capable agent. For reuse, the brief includes your current scene; no reference image is needed. Ask for proposal JSON, then return here."}
             </p>
             <div className="flex flex-wrap gap-2">
               <button

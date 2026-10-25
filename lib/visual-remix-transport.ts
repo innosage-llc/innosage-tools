@@ -1,3 +1,6 @@
+import { REFERENCE_LIMITS } from './visual-remix-reference.ts';
+import type { PreparedReference } from './visual-remix-reference-browser.ts';
+import type { Proposal } from './visual-remix.ts';
 import { VisualRemixOfflineBridge, SCENE_SHARE_FIELDS } from './visual-remix-bridge.ts';
 import { VisualRemixController } from './visual-remix-controller.ts';
 import { SCENE_LIMITS, parseSceneAuth, parseSceneProposal, parseSceneSnapshot, sceneJSON, sceneObject, type SceneOwner, type SceneSnapshot, type SceneState } from './visual-remix-remote.ts';
@@ -21,8 +24,14 @@ const recovery = (error?: unknown) => error instanceof SceneHttpError && error.d
 type Sender = (path: string, init: RequestInit) => Promise<Response>;
 
 // Only instantiated behind the product build gate and explicit user consent.
-// No configurable destination, source bytes, persistence, Apply or export.
+// No configurable destination, credential persistence, Apply or export. Only a
+// freshly consented reference derivative can enter the dedicated image route.
 export class VisualRemixTransport {
+  private reference: PreparedReference | null = null;
+  private referenceUploaded = false;
+  private readonly preparing = new Map<string,AbortController>();
+  private readonly preparationStates = new Map<string,SceneState>();
+  private materialize: ((proposal: unknown, reference: PreparedReference, signal: AbortSignal) => Promise<Proposal>) | null = null;
   private bridge: VisualRemixOfflineBridge | null = null;
   private owner: Share | null = null;
   private creating = false;
@@ -46,9 +55,9 @@ export class VisualRemixTransport {
     if (!this.disposed) this.changed(this.snapshot());
   }
   private async call(path: string, data: unknown, retry = false): Promise<unknown> {
-    const body = sceneJSON(data, SCENE_LIMITS.wireBytes);
+    const body = sceneJSON(data, path === 'reference' ? REFERENCE_LIMITS.wireBytes : SCENE_LIMITS.wireBytes);
     for (let attempt = 0; ; attempt++) {
-      const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), path === 'create' ? 15000 : 5000);
+      const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), path === 'create' || path === 'reference' ? 15000 : 5000);
       let retryable = true;
       try {
         const response = await this.send('/scene/browser/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: abort.signal, cache: 'no-store', credentials: 'omit', redirect: 'error' });
@@ -67,8 +76,9 @@ export class VisualRemixTransport {
       finally { clearTimeout(timeout); }
     }
   }
-  async connect(confirmed: boolean): Promise<void> {
+  async connect(confirmed: boolean, reference?: PreparedReference, materialize?: (proposal: unknown, reference: PreparedReference, signal: AbortSignal) => Promise<Proposal>): Promise<void> {
     if (!confirmed || !this.available || !this.state.canConnect || this.disposed) throw new Error('SCENE_SHARE_NOT_CONFIRMED');
+    this.reference = reference ?? null; this.referenceUploaded = false; this.materialize = materialize ?? null;
     const local = this.controller.snapshot(), startedAt = this.now(), expiresAt = startedAt + SCENE_LIMITS.leaseMs;
     const proofExpiresAt = startedAt + SCENE_LIMITS.proofMs;
     const bridge = new VisualRemixOfflineBridge(this.controller, { purpose:'visual-remix', confirmed:true, projectId:local.projectId, generation:local.generation, expiresAt, fields:SCENE_SHARE_FIELDS }, this.now);
@@ -78,7 +88,7 @@ export class VisualRemixTransport {
     this.publish({ phase:'connecting', canConnect:false, canDisconnect:true });
     try {
       // Never retry creation: a lost response can conceal a committed share.
-      const value = sceneObject(await this.call('create', { snapshot, fields:SCENE_SHARE_FIELDS, confirmed:true }), ['auth','proof','expiresAt','proofExpiresAt']);
+      const value = sceneObject(await this.call('create', { snapshot, fields:SCENE_SHARE_FIELDS, confirmed:true, ...(reference ? {referenceConsent:reference.consent} : {}) }), ['auth','proof','expiresAt','proofExpiresAt']);
       const auth = parseSceneAuth(value.auth,true) as SceneOwner;
       if (auth.projectId !== snapshot.projectId || auth.generation !== snapshot.generation) throw new Error('SCENE_BINDING');
       // Retain validated ownership only for explicit Disconnect if confirmation fails.
@@ -114,7 +124,7 @@ export class VisualRemixTransport {
     let frame: Frame;
     try { frame = { snapshot:parseSceneSnapshot(this.bridge.getScene()), states:[] }; } catch { this.fail(); return; }
     for (const id of this.issued) {
-      const status = this.controller.status(id);
+      const status = this.preparationStates.get(id) ?? this.controller.status(id);
       if (status && status !== 'rendering') frame.states.push([id,status]);
     }
     const fingerprint = sceneJSON(frame, SCENE_LIMITS.wireBytes);
@@ -140,6 +150,7 @@ export class VisualRemixTransport {
       : 'The local project changed. Create a fresh share and manually reconnect the host.';
   }
   private fail(error?: unknown): void {
+    for(const abort of this.preparing.values()) abort.abort(); this.preparing.clear();
     this.stopped = true; if (this.timer) clearTimeout(this.timer); this.timer = null; this.frames = [];
     this.bridge?.revoke(); this.renderChanged();
     this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, diagnostic:error instanceof SceneHttpError ? error.diagnostic : undefined, error:`Connection stopped. Local edits and exports are preserved. ${recovery(error)} Expiration alone does not guarantee physical deletion.` });
@@ -166,14 +177,36 @@ export class VisualRemixTransport {
         const polled = sceneObject(await this.call('poll', { auth:owner.auth }), ['command','cancellations','connected']);
         if (this.stopped || this.owner !== owner) return;
         if (!Array.isArray(polled.cancellations) || polled.cancellations.length > SCENE_LIMITS.requests || typeof polled.connected !== 'boolean') throw new Error('SCENE_POLL');
-        if (polled.connected && this.state.phase === 'awaiting-consent') this.publish({phase:'connected',canConnect:false,canDisconnect:true,expiresAt:owner.expiresAt});
-        for (const id of polled.cancellations) if (typeof id === 'string' && this.issued.has(id)) { this.bridge!.cancelProposal(id); this.renderChanged(); }
+        if (polled.connected && this.reference && !this.referenceUploaded) {
+          this.publish({phase:'connected',canConnect:false,canDisconnect:true,expiresAt:owner.expiresAt,reference:'uploading'});
+          const uploaded=sceneObject(await this.call('reference',{auth:owner.auth,reference:{manifest:this.reference.consent.manifest,data:this.reference.data}},true),['ok']);
+          if(this.stopped || this.owner!==owner || !this.bound()) return;
+          if(uploaded.ok!==true) throw new Error('REFERENCE_UPLOAD');
+          this.referenceUploaded=true;
+          this.publish({phase:'connected',canConnect:false,canDisconnect:true,expiresAt:owner.expiresAt,reference:'ready'});
+        } else if (polled.connected && this.state.phase === 'awaiting-consent') this.publish({phase:'connected',canConnect:false,canDisconnect:true,expiresAt:owner.expiresAt});
+        for (const id of polled.cancellations) if (typeof id === 'string' && this.issued.has(id)) {
+          const preparing=this.preparing.get(id);
+          if(preparing) {preparing.abort();this.preparationStates.set(id,'canceled');}
+          else if(!this.preparationStates.has(id)) this.bridge!.cancelProposal(id);
+          this.renderChanged();
+        }
         if (polled.command) {
           const proposal = parseSceneProposal(polled.command);
           if (this.issued.has(proposal.requestId) || this.issued.size >= SCENE_LIMITS.requests) throw new Error('SCENE_CLAIM_REPLAY');
           this.issued.add(proposal.requestId);
+          const prepareAbort=new AbortController();this.preparing.set(proposal.requestId,prepareAbort);
           // Rendering is intentionally separate so heartbeat and cancel continue.
-          void this.bridge!.proposeScene(sceneJSON(proposal)).then(() => { if (this.owner === owner && !this.stopped) { this.renderChanged(); this.notifyLocalChange(); } }).catch(() => { if (this.owner === owner && !this.stopped) this.fail(); });
+          const rendering = async () => {
+            const resolved = this.reference && this.materialize ? await this.materialize(proposal,this.reference,prepareAbort.signal) : proposal;
+            if(prepareAbort.signal.aborted || this.stopped || this.owner!==owner || !this.bound()) return;
+            this.preparing.delete(proposal.requestId);
+            await this.bridge!.proposeScene(sceneJSON(resolved));
+          };
+          void rendering().catch(() => {if(this.owner===owner && !this.stopped && !prepareAbort.signal.aborted) this.preparationStates.set(proposal.requestId,'failed');}).finally(()=>{
+            this.preparing.delete(proposal.requestId);
+            if(this.owner===owner && !this.stopped) {this.renderChanged();this.notifyLocalChange();}
+          });
           this.renderChanged();
         }
         this.notifyLocalChange();
@@ -183,6 +216,7 @@ export class VisualRemixTransport {
   }
   async disconnect(reason?: string): Promise<void> {
     const notice = reason ?? this.state.notice;
+    for(const abort of this.preparing.values()) abort.abort(); this.preparing.clear();
     this.stopped = true; if (this.timer) clearTimeout(this.timer); this.timer = null; this.frames = []; this.bridge?.revoke();
     this.publish({ phase:'revoking',canConnect:false,canDisconnect:false });
     if (this.creating) return; // Late create response owns cleanup; never adopt it.
@@ -190,7 +224,7 @@ export class VisualRemixTransport {
     try {
       const result = sceneObject(await this.call('revoke', { auth:this.owner.auth },true), ['ok']);
       if (result.ok !== true) throw new Error('SCENE_REVOKE');
-      this.owner = null; this.bridge = null; this.issued.clear(); this.acknowledged.clear(); this.fingerprint = '';
+      this.owner = null; this.bridge = null; this.reference = null; this.materialize = null; this.referenceUploaded=false; this.preparationStates.clear(); this.issued.clear(); this.acknowledged.clear(); this.fingerprint = '';
       this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:true,notice});
     } catch {
       this.publish({phase:'error',canConnect:false,canDisconnect:true,notice,error:'Revocation is unconfirmed. Retry Disconnect. Existing service content may remain until a successful revoke or later cleanup.'});

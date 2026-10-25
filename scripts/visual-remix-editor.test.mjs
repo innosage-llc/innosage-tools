@@ -80,11 +80,7 @@ test(
       await page
         .getByRole("button", { name: "Download agent brief", exact: true })
         .waitFor();
-      await page.waitForFunction(() =>
-        document
-          .querySelector("[role=status]")
-          ?.textContent?.includes("Ready."),
-      );
+      await page.getByText("Ready. Select a reference or open a saved project.", { exact:true }).waitFor();
       const initialJS = await page.evaluate(() =>
         performance
           .getEntriesByType("resource")
@@ -275,11 +271,7 @@ test(
       assert.match(await page.getByTestId("revision").textContent(), /1/);
       assert.deepEqual((await download("Download PNG")).bytes, png.bytes);
       await page.reload();
-      await page.waitForFunction(() =>
-        document
-          .querySelector("[role=status]")
-          ?.textContent?.includes("Ready."),
-      );
+      await page.getByText("Ready. Select a reference or open a saved project.", { exact:true }).waitFor();
       await page.getByLabel("Open project", { exact: true }).setInputFiles({
         name: "reusable.json",
         mimeType: "application/json",

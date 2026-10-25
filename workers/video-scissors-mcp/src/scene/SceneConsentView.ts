@@ -14,12 +14,35 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
   const safeClientName = escapeHtml(model.clientName);
   const safeClientId = escapeHtml(model.clientId);
   const safeRedirectHost = escapeHtml(model.redirectHost);
+  const referenceEnabled = Boolean(model.referenceEnabled);
 
   const loopbackWarning = model.isLoopback
     ? `<div class="alert-warning" role="alert">
         <strong>Notice:</strong> The redirect destination (<code>${safeRedirectHost}</code>) is a local loopback address. Verify that this client was started locally on your machine.
       </div>`
     : '';
+
+  const descriptionText = referenceEnabled
+    ? 'This explicitly authorizes Visual Remix Scene sharing, not video control. Text, layout, style, captions, provenance, limitations, and used raster descriptors are shared; original images and exports stay in your browser unless a normalized reference copy is separately approved in the paired editor. No model or social-platform credentials are requested.'
+    : 'This explicitly authorizes Visual Remix Scene sharing, not video control. Text, layout, style, captions, provenance, limitations, and used raster descriptors are shared; original images and exports stay in your browser. No model or social-platform credentials are requested.';
+
+  const disclosuresList = referenceEnabled
+    ? `<li><strong>Scope:</strong> Text, layout, style, captions, provenance, limitations, and used raster descriptors are shared. Reference images may be shared ONLY if separately approved in the paired editor. Without pixel consent, original images and exports remain local. Optional reference sharing sends a size-limited PNG derivative (at most 1 MiB and 2048 pixels on the longest side), not original file metadata. Shared original remains local for exact crops. No model or social-platform credentials are requested.</li>
+        <li><strong>Permissions:</strong> The agent may READ and propose previews only; user Apply approves candidate and included crop assets once. Local parameter edits apply automatically with Undo; actual applied and export safety remain unaffected. Apply and export actions remain browser-owned.</li>
+        <li><strong>Pairing Proof:</strong> The pairing proof comes from your current Visual Remix browser tab and is one-use/five-minute. Opening this page or connecting does not authorize sharing automatically.</li>
+        <li><strong>Duration:</strong> Share expires within 15 minutes; no refresh extension is provided. Expiry blocks access immediately.</li>
+        <li><strong>Storage &amp; Retention:</strong> Shared text/layout and explicitly approved reference PNG are stored in existing private service D1 during the 15-minute nonrenewable share; no public URL. Revoke removes active reference payload; expiry blocks access immediately but cleanup is lazy. Cloudflare Free backups can retain up to 7 days, and already delivered ChatGPT conversation content cannot be retracted.</li>
+        <li><strong>Image Processing:</strong> Remote model processing may occur only on explicitly authorized reference derivatives. No unauthorized source image analysis is performed by this page.</li>`
+    : `<li><strong>Scope:</strong> Text, layout, style, captions, provenance, limitations, and used raster descriptors are shared. Original images and exports stay in your browser. No model or social-platform credentials are requested.</li>
+        <li><strong>Permissions:</strong> The agent may READ and propose previews only; Apply and export actions remain browser-owned.</li>
+        <li><strong>Pairing Proof:</strong> The pairing proof comes from your current Visual Remix browser tab and is one-use/five-minute.</li>
+        <li><strong>Duration:</strong> Share expires within 15 minutes; no refresh extension is provided.</li>
+        <li><strong>Storage &amp; Retention:</strong> Shared text/layout is stored by the service; revoke removes current payloads; expiry cleanup is lazy and data can remain until cleanup. Remote model processing may occur; automatic physical deletion is not guaranteed.</li>
+        <li><strong>Image Processing:</strong> No source image analysis is performed by this page.</li>`;
+
+  const readScopeDescription = referenceEnabled
+    ? '<code>scene:read</code> &mdash; Read scene text, layout, style, captions, provenance, limitations, and used raster descriptors (may include explicitly shared reference if enabled and approved in the paired editor)'
+    : '<code>scene:read</code> &mdash; Read scene text, layout, style, captions, provenance, limitations, and used raster descriptors';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -207,7 +230,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
   <main class="container">
     <h1>Authorize Scene Sharing</h1>
     <p class="description">
-      This explicitly authorizes Visual Remix Scene sharing, not video control. Text, layout, style, captions, provenance, limitations, and used raster descriptors are shared; original images and exports stay in your browser. No model or social-platform credentials are requested.
+      ${descriptionText}
     </p>
 
     <section class="client-details" aria-label="Client Details">
@@ -226,12 +249,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
     <section class="disclosure-box" aria-label="Permissions and Data Disclosures">
       <h2>Sharing Scope and Data Disclosures</h2>
       <ul>
-        <li><strong>Scope:</strong> Text, layout, style, captions, provenance, limitations, and used raster descriptors are shared. Original images and exports stay in your browser. No model or social-platform credentials are requested.</li>
-        <li><strong>Permissions:</strong> The agent may READ and propose previews only; Apply and export actions remain browser-owned.</li>
-        <li><strong>Pairing Proof:</strong> The pairing proof comes from your current Visual Remix browser tab and is one-use/five-minute.</li>
-        <li><strong>Duration:</strong> Share expires within 15 minutes; no refresh extension is provided.</li>
-        <li><strong>Storage &amp; Retention:</strong> Shared text/layout is stored by the service; revoke removes current payloads; expiry cleanup is lazy and data can remain until cleanup. Remote model processing may occur; automatic physical deletion is not guaranteed.</li>
-        <li><strong>Image Processing:</strong> No source image analysis is performed by this page.</li>
+        ${disclosuresList}
       </ul>
     </section>
 
@@ -242,7 +260,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
         <span class="scope-label">Requested Scopes</span>
         <div class="checkbox-item">
           <input type="checkbox" id="scope-read" name="scope" value="scene:read" checked>
-          <label for="scope-read"><code>scene:read</code> &mdash; Read scene text, layout, style, captions, provenance, limitations, and used raster descriptors</label>
+          <label for="scope-read">${readScopeDescription}</label>
         </div>
         <div class="checkbox-item">
           <input type="checkbox" id="scope-propose" name="scope" value="scene:propose" checked>

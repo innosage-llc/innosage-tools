@@ -1,3 +1,4 @@
+import { REFERENCE_LIMITS } from '../../../../lib/visual-remix-reference';
 import { McpServer } from '@modelcontextprotocol/server';
 import { createMcpHandler } from 'agents/mcp/server';
 import { z } from 'zod';
@@ -6,10 +7,10 @@ import { boundedBody, reply } from '../http';
 import { SCENE_SCOPES, SCENE_LIMITS, sceneJSON, sceneToolResult, type SceneAuth } from '../../../../lib/visual-remix-remote';
 import { SCENE_SERVICE_VERSION, sceneReauthorization } from './diagnostics';
 
-export function sceneMcpHandler(db: D1Database, auth: SceneAuth, resource: string) {
+export function sceneMcpHandler(db: D1Database, auth: SceneAuth, resource: string, referencesEnabled = false) {
   return createMcpHandler(() => {
     const server = new McpServer({ name: 'visual-remix-scene', version: SCENE_SERVICE_VERSION });
-    const store = new SceneMailbox(db), id = z.string().regex(/^[a-zA-Z0-9_-]{1,96}$/);
+    const store = new SceneMailbox(db,Date.now,referencesEnabled), id = z.string().regex(/^[a-zA-Z0-9_-]{1,96}$/);
     const meta = { securitySchemes: [{ type: 'oauth2', scopes: [...SCENE_SCOPES] }] };
     const invoke = async (action: () => Promise<unknown>) => {
       if (!await store.lease(auth)) return sceneReauthorization(resource);
@@ -19,7 +20,11 @@ export function sceneMcpHandler(db: D1Database, auth: SceneAuth, resource: strin
       }
       catch { return { isError: true, content: [{ type: 'text' as const, text: 'SCENE_COMMAND_REJECTED' }] }; }
     };
-    server.registerTool('get_scene', { description: 'Read the current shared Scene before proposing. No raster bytes. Keep the external Visual Remix browser open. On authorization failure stop and request fresh manual connection; no proposal or edit was completed. Never substitute an SVG download for the application preview.', inputSchema: z.object({}).strict(), _meta: meta, annotations: { readOnlyHint: true } },
+    if (referencesEnabled) server.registerTool('read_shared_reference', {description:'Read the freshly consented reference as native image content for vision, without asking the user to attach it again. Read only for first reconstruction; reuse the editable Scene thereafter. No URL/public image is supplied. Authorization, lease, browser freshness and explicit image consent are required. A successful transport is not proof you understood the pixels. Use original dimensions for photo/logo crop coordinates; preserve editable text/shapes. Never generate substitute identity assets.',inputSchema:z.object({}).strict(),_meta:meta,annotations:{readOnlyHint:true}},async()=>{
+      if(!await store.lease(auth)) return sceneReauthorization(resource);
+      try {return await store.referenceStore().read(auth);} catch {return {isError:true,content:[{type:'text' as const,text:'REFERENCE_READ_REJECTED'}]};}
+    });
+    server.registerTool('get_scene', { description: 'Read the current shared Scene before proposing. No raster bytes in this tool. When available, read_shared_reference returns the freshly consented reference as native image content for first reconstruction; no duplicate attachment is needed. Keep the external Visual Remix browser open. On authorization failure stop and request fresh manual connection; no proposal or edit was completed. Never substitute an SVG download for the application preview.', inputSchema: z.object({}).strict(), _meta: meta, annotations: { readOnlyHint: true } },
       async () => invoke(async () => await store.snapshot(auth) ?? { error: 'BROWSER_UNAVAILABLE', recovery: 'Bring the existing editor into a visible window and wait for its heartbeat, then read get_scene again. Do not create another share unless authorization expired.' }));
     server.registerTool('propose_scene', { description: 'Queue one bounded Scene proposal for preview in the external Visual Remix browser, not a ChatGPT image viewer. Queued/rendering/preview are pending; only proposal_status applied confirms manual Apply. Read get_scene immediately before submitting, after preparing the Scene. Only poll a successfully admitted queued/rendering/preview request; a result with admitted:false was rejected and gives recovery steps. Keep the editor visible in a separate window to avoid background suspension. For uncertain delivery query the same requestId before any bounded retry. Use fresh get_scene project/generation/revision, a unique requestId, explanation and full descriptor-only scene. On authorization failure no preview was delivered; stop, preserve work and request manual reconnection, never claim completion or substitute SVG.', inputSchema: z.object({ proposal: z.unknown() }).strict(), _meta: meta },
       async input => invoke(async () => await store.propose(auth, input.proposal) ?? await store.proposalRejection(auth,input.proposal)));
@@ -33,16 +38,18 @@ export function sceneMcpHandler(db: D1Database, auth: SceneAuth, resource: strin
 
 // Only finite owned SDK requests are admitted. Bound ids before any tool mutates
 // the mailbox, and the complete escaped response before releasing it.
-export async function boundedSceneRpc(request: Request, run: (request: Request) => Promise<Response>): Promise<Response> {
+export async function boundedSceneRpc(request: Request, run: (request: Request) => Promise<Response>, referencesEnabled = false): Promise<Response> {
   if (request.method !== 'POST') return new Response(null, { status: 405, headers: { Allow: 'POST', 'Cache-Control': 'no-store' } });
   const text = await boundedBody(request), rpc = JSON.parse(text);
   if (!rpc || typeof rpc !== 'object' || Array.isArray(rpc) || rpc.jsonrpc !== '2.0' ||
     !['initialize','notifications/initialized','ping','tools/list','tools/call'].includes(rpc.method) ||
     (rpc.id !== undefined && !(typeof rpc.id === 'string' && /^[a-zA-Z0-9_-]{1,96}$/.test(rpc.id)) && !(typeof rpc.id === 'number' && Number.isSafeInteger(rpc.id))) ||
     (rpc.method === 'tools/call' && rpc.id === undefined)) return reply({ error: 'SCENE_RPC' }, 400);
+  const imageRead = referencesEnabled && rpc.method === 'tools/call' && rpc.params?.name === 'read_shared_reference';
+  const responseLimit = imageRead ? REFERENCE_LIMITS.wireBytes : SCENE_LIMITS.wireBytes;
   const response = await run(new Request(request, { body: text }));
   if (!response.body) return response;
-  const body = await boundedBody(new Request(request.url, { method: 'POST', body: response.body }), SCENE_LIMITS.wireBytes);
+  const body = await boundedBody(new Request(request.url, { method: 'POST', body: response.body }), responseLimit);
   const json = response.headers.get('content-type')?.includes('text/event-stream') ? body.split('\n').find(line => line.startsWith('data: '))?.slice(6) : body;
   const data = JSON.parse(json ?? '');
   if (rpc.method === 'tools/list' && data.result?.tools) {
@@ -50,5 +57,5 @@ export async function boundedSceneRpc(request: Request, run: (request: Request) 
   }
   const headers = new Headers(response.headers);
   headers.set('Content-Type', 'application/json'); headers.set('Cache-Control', 'no-store'); headers.delete('Content-Length');
-  return new Response(sceneJSON(data, SCENE_LIMITS.wireBytes), { status: response.status, headers });
+  return new Response(sceneJSON(data, responseLimit), { status: response.status, headers });
 }

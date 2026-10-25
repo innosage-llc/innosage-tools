@@ -359,3 +359,38 @@ image host, liveMCP, production or closure. Historical local-only uploads remain
 unshared. Local work continues while image activation requirements are resolved.
 
 Independent Sol review on f3ea021 requested P2 cancellation repair: Revoke/begin canceled local work without restoring form values. Lead now restores committed form state before exports resume; added pendingRevoke→lateredit and invalidDraft→proposal→Cancel UI regressions. Re-review and final native gate required on the repaired head.
+
+PR121 repaired/integrated head af40dab independently PASS against fa3ce86;
+native full merge gate PASS; merged fecaec4f117db427588b88bc27f6d51cae1a7ca2.
+Local edits250ms,20Undo,manual remote candidate Apply and real export checks.
+
+Second increment: inactive reference-sharing candidate, default-off client/server
+flags. Fresh specific image consent and separate candidate crop reuse permission;
+one normalized PNG derivative≤1MiB/2048edge in existing private D1,15min lease,
+no scopes/credentials/public URLs added. Native read_shared_reference image block;
+exact route-specific larger envelopes, ordinary Scene limits unchanged. Original
+source remains local; agent crop geometry becomes deterministic tight PNG assets
+before admission/hash, local preview, and candidate Apply before portable reuse.
+Revoke purges active image row; expiry immediately denies access with lazy purge.
+Free D1 backup retention≤7days and already delivered host content disclosed.
+UI generated through canonical Antigravity Gemini3.8FlashHIGH native-file route,
+no shell/network/auth/deploy in that invocation; observed provider identity UNKNOWN.
+Local D1/SDK byte-integrity3/3 and actual local OAuth provider4/4 PASS; initial
+SDK403 was a fixture missing Host header, corrected without relaxing validation.
+Host vision proof NOT_RUN, live staging MCP NOT_RUN. No production/Master closure.
+
+Expanded local reference security suite5/5 PASS, transport20/20 PASS, and rendered actual-source app/provider journey PASS (Chromium151,8.2s fixture duration; not first-use benchmark). Derivative768×1024/953566B, nativeimage SHA matches, original55×54logo and84×84portrait crops confirmed by pixel inspection, PNGreopen byte parity and automatic content+layout edit after reopen PASS. No full original in portableScene,0externalrequests. HistoricalScene fixture reused; freshGPTreconstruction/hostvision/stagingrun remain NOT_RUN. Browser harness selector/static-path failures retained as fixture failures, not product fixes.
+
+DraftPR122 submitted at2d488b after native full gate PASS. Private browser fixture
+paths are now explicit environment inputs, with an honest SKIPPED result when
+unavailable; no original asset/Scene bytes are committed or uploaded. Independent
+security review and exact-head merge gate remain pending. Staging read-only
+preflight: priorac8e7f4e stillactive100%,0active shares,15/20 cumulative stored
+shares,151552B D1, reference table absent. No MCP calls or grants were made.
+
+Independent security review PASS a1626bb vs fecaec4; no actionable findings or
+additional unhandled staging data/access risk within fresh feature scope. Latest
+gated actual-source browser journey PASS. Existing public-route smoke assumed
+the first role=status was editor readiness; with remote panel enabled it selects
+connection status. Test now targets the exact editor readiness text; runtime
+source unchanged. Recheck that smoke and bind final review to repaired test head.
