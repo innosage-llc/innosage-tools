@@ -1,40 +1,70 @@
 import { SceneReferenceStore } from './reference';
+import { parseUntilRevokedConsent, UNTIL_REVOKED_MODE } from '../../../../lib/visual-remix-lifetime';
+import { liveGrant, liveLifetime, grantArgs, SCENE_CACHE_MS } from './lifetime';
 import { parseReferenceConsent, materializeReferenceProposal, referenceCrop } from '../../../../lib/visual-remix-reference';
 import { digest } from '../mailbox';
 import { SCENE_FIELDS, SCENE_LIMITS, parseSceneAuth, parseSceneProposal, parseSceneSnapshot, sceneId, sceneJSON, sceneResult, sceneToolResult, type SceneAuth, type SceneOwner, type SceneSnapshot, type SceneState } from '../../../../lib/visual-remix-remote';
 
 const secret = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
-const live = 's.id=? AND s.project=? AND s.generation=? AND s.epoch=? AND s.revoked=0 AND s.expires>?';
+const live = liveGrant;
 const remote = live + ' AND s.consent_hash IS NOT NULL';
-const args = (a: SceneAuth, now: number) => [a.shareId, a.projectId, a.generation, a.epoch, now];
+const args = grantArgs;
 type RequestRow = { id: string; state: SceneState; payload: string | null; payload_hash: string; cancel_requested: number; base_revision: number };
 
 // Inactive candidate. No entrypoint imports this module; no migration runs here.
 export class SceneMailbox {
   private readonly db: D1DatabaseSession;
-  constructor(db: D1Database, private readonly now: () => number = Date.now, private readonly referencesEnabled = false) { this.db = db.withSession('first-primary'); }
+  constructor(db: D1Database, private readonly now: () => number = Date.now, private readonly referencesEnabled = false, private readonly allowUntilRevoked = false) { this.db = db.withSession('first-primary'); }
   async spend(): Promise<void> {
     const row = await this.db.prepare('UPDATE scene_budget SET http=http+1 WHERE singleton=1 RETURNING singleton').first();
     if (!row) throw new Error('SCENE_HTTP_BUDGET');
   }
   async sweepExpired(): Promise<void> {
-    // Lazy content purge, not guaranteed TTL deletion. Tombstones/counters stay.
-    await this.db.prepare('UPDATE scene_shares SET revoked=1,epoch=epoch+1 WHERE revoked=0 AND expires<=?').bind(this.now()).run();
+    // Fixed deadlines are immutable. A never-paired new grant is abandoned when
+    // its short proof expires; an established until-revoked grant never times out.
+    await this.db.prepare("UPDATE scene_shares SET revoked=1,epoch=epoch+1 WHERE revoked=0 AND ((expiry_policy='fixed' AND expires<=?) OR (expiry_policy='until_revoked' AND consent_hash IS NULL AND proof_expires<=?))").bind(this.now(),this.now()).run();
   }
-  async create(input: unknown, fields: unknown, confirmed: unknown, reference?: unknown, duration?: unknown) {
+  async purgeInactiveCache():Promise<void>{
+    // Payload cache lifetime is separate from authority. Each D1 batch is atomic
+    // and fences seen/cache generation again so a fresh browser sync wins safely.
+    const cutoff=this.now()-SCENE_CACHE_MS;
+    // Turning image access off must never disable erasure of already-stored
+    // images. The reference schema remains optional for non-image installations.
+    const hasReferences=!!await this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='scene_references'").first();
+    const pixels=hasReferences?' OR EXISTS(SELECT 1 FROM scene_references r WHERE r.share=s.id AND r.pixels IS NOT NULL)':'';
+    // Six rows bound each cleanup to <=21 D1 statements including expiry. Oldest
+    // caches go first; backlog/provider failure can delay physical removal.
+    const rows=await this.db.prepare("SELECT s.id,s.epoch,s.cache_epoch FROM scene_shares s WHERE s.revoked=0 AND s.expiry_policy='until_revoked' AND s.consent_hash IS NOT NULL AND s.seen<=? AND (s.snapshot IS NOT NULL OR EXISTS(SELECT 1 FROM scene_requests q WHERE q.share=s.id AND q.payload IS NOT NULL)"+pixels+') ORDER BY s.seen LIMIT 6').bind(cutoff).all<{id:string;epoch:number;cache_epoch:number}>();
+    for(const row of rows.results){
+      const fence="s.id=? AND s.epoch=? AND s.cache_epoch=? AND s.revoked=0 AND s.expiry_policy='until_revoked' AND s.consent_hash IS NOT NULL AND s.seen<=?";
+      const values=[row.id,row.epoch,row.cache_epoch,cutoff],statements:D1PreparedStatement[]=[];
+      if(hasReferences)statements.push(this.db.prepare('UPDATE scene_references SET pixels=NULL WHERE share=? AND epoch=? AND EXISTS(SELECT 1 FROM scene_shares s WHERE '+fence+')').bind(row.id,row.epoch,...values));
+      statements.push(this.db.prepare("UPDATE scene_requests SET payload=NULL,cancel_requested=CASE WHEN state IN ('queued','rendering','preview') THEN 1 ELSE cancel_requested END,state=CASE WHEN state IN ('queued','rendering','preview') THEN 'stale' ELSE state END WHERE share=? AND epoch=? AND EXISTS(SELECT 1 FROM scene_shares s WHERE "+fence+')').bind(row.id,row.epoch,...values));
+      statements.push(this.db.prepare('UPDATE scene_shares AS s SET snapshot=NULL,cache_epoch=cache_epoch+1 WHERE '+fence).bind(...values));
+      await this.db.batch(statements);
+    }
+  }
+  async create(input: unknown, fields: unknown, confirmed: unknown, reference?: unknown, duration?: unknown, lifetime?: unknown) {
     // Legacy clients disclosed 15min. Never silently upgrade their consent.
     if(duration !== undefined && duration !== SCENE_LIMITS.leaseMs) throw new Error('SCENE_DURATION_CONSENT');
+    const until=lifetime!==undefined;
+    if(until){
+      if(!this.allowUntilRevoked)throw new Error('SCENE_UNTIL_REVOKED_NOT_ENABLED');
+      parseUntilRevokedConsent(lifetime);
+      if(duration!==undefined)throw new Error('SCENE_LIFETIME_CONFLICT');
+    }
     const leaseMs = duration === SCENE_LIMITS.leaseMs ? SCENE_LIMITS.leaseMs : SCENE_LIMITS.legacyLeaseMs;
     if (reference !== undefined && !this.referencesEnabled) throw new Error('REFERENCE_NOT_ENABLED');
     const consent = reference === undefined ? null : parseReferenceConsent(reference);
     if (confirmed !== true || !Array.isArray(fields) || fields.length !== SCENE_FIELDS.length || new Set(fields).size !== fields.length || !SCENE_FIELDS.every(f => fields.includes(f))) throw new Error('SCENE_SHARE_CONSENT');
     const snapshot = parseSceneSnapshot(input), value = sceneJSON(snapshot); sceneToolResult(snapshot);
     const id = crypto.randomUUID(), credential = secret(), proof = secret(), now = this.now();
-    const insert = this.db.prepare('INSERT INTO scene_shares(id,project,generation,credential_hash,proof_hash,proof_expires,expires,snapshot,revision,seen) VALUES(?,?,?,?,?,?,?,?,?,?)')
-      .bind(id, snapshot.projectId, snapshot.generation, await digest(credential), await digest(proof), now + SCENE_LIMITS.proofMs, now + leaseMs, value, snapshot.revision, now);
+    const insert = this.db.prepare('INSERT INTO scene_shares(id,project,generation,credential_hash,proof_hash,proof_expires,expires,snapshot,revision,seen,expiry_policy,grant_consent_version,snapshot_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)')
+      .bind(id, snapshot.projectId, snapshot.generation, await digest(credential), await digest(proof), now + SCENE_LIMITS.proofMs, until?0:now + leaseMs, value, snapshot.revision, now,until?'until_revoked':'fixed',until?1:0,await digest(value));
     if (consent) await this.db.batch([insert,this.db.prepare('INSERT INTO scene_references(share,epoch,consent) VALUES(?,1,?)').bind(id,sceneJSON(consent))]);
     else await insert.run();
-    return { auth: { purpose: 'visual-remix' as const, shareId: id, projectId: snapshot.projectId, generation: snapshot.generation, epoch: 1, credential }, proof, expiresAt: now + leaseMs, proofExpiresAt: now + SCENE_LIMITS.proofMs };
+    const result={ auth: { purpose: 'visual-remix' as const, shareId: id, projectId: snapshot.projectId, generation: snapshot.generation, epoch: 1, credential }, proof, expiresAt: until?null:now + leaseMs, proofExpiresAt: now + SCENE_LIMITS.proofMs };
+    return until?{...result,lifetime:UNTIL_REVOKED_MODE,issuedAt:now}:result;
   }
   referenceStore(): SceneReferenceStore {
     if (!this.referencesEnabled) throw new Error('REFERENCE_NOT_ENABLED');
@@ -42,13 +72,18 @@ export class SceneMailbox {
   }
   async bindFromProof(proof: string, handle: string): Promise<SceneAuth | null> {
     if (!/^[a-f0-9]{64}$/.test(proof) || !handle || handle.length > 1024) return null;
-    const row = await this.db.prepare(`UPDATE scene_shares SET consent_hash=?,proof_hash=NULL WHERE proof_hash=? AND proof_expires>? AND expires>? AND revoked=0 AND consent_hash IS NULL RETURNING id,project,generation,epoch`)
+    const row = await this.db.prepare(`UPDATE scene_shares AS s SET consent_hash=?,proof_hash=NULL WHERE proof_hash=? AND proof_expires>? AND ${liveLifetime} AND revoked=0 AND consent_hash IS NULL RETURNING id,project,generation,epoch`)
       .bind(await digest(handle), await digest(proof), this.now(), this.now()).first<{ id: string; project: string; generation: string; epoch: number }>();
     return row ? { purpose: 'visual-remix', shareId: row.id, projectId: row.project, generation: row.generation, epoch: row.epoch } : null;
   }
-  async lease(input: SceneAuth): Promise<{ expiresAt: number } | null> {
-    const a = parseSceneAuth(input), row = await this.db.prepare(`SELECT s.expires FROM scene_shares s WHERE ${remote}`).bind(...args(a, this.now())).first<{ expires: number }>();
-    return row ? { expiresAt: row.expires } : null;
+  async lease(input: SceneAuth): Promise<{ expiresAt: number|null } | null> {
+    const a = parseSceneAuth(input), row = await this.db.prepare(`SELECT s.expires,s.expiry_policy FROM scene_shares s WHERE ${remote}`).bind(...args(a, this.now())).first<{ expires: number;expiry_policy:string }>();
+    return row ? { expiresAt: row.expiry_policy==='until_revoked'?null:row.expires } : null;
+  }
+  async cacheState(input: SceneOwner):Promise<{cacheEpoch:number}|null>{
+    const a=parseSceneAuth(input,true) as SceneOwner;
+    const row=await this.db.prepare(`SELECT s.cache_epoch FROM scene_shares s WHERE ${live} AND s.credential_hash=? AND s.expiry_policy='until_revoked'`).bind(...args(a,this.now()),await digest(a.credential)).first<{cache_epoch:number}>();
+    return row?{cacheEpoch:row.cache_epoch}:null;
   }
   async owner(input: SceneOwner): Promise<boolean> {
     const a = parseSceneAuth(input, true) as SceneOwner;
@@ -69,8 +104,9 @@ export class SceneMailbox {
     const a = parseSceneAuth(input, true) as SceneOwner, snapshot = parseSceneSnapshot(value); sceneToolResult(snapshot);
     if (snapshot.projectId !== a.projectId || snapshot.generation !== a.generation) return false;
     const text = sceneJSON(snapshot);
-    const row = await this.db.prepare(`UPDATE scene_shares AS s SET snapshot=?,revision=?,seen=? WHERE ${live} AND s.credential_hash=? AND s.revision<=? AND (s.revision<? OR s.snapshot=?) RETURNING id`)
-      .bind(text, snapshot.revision, this.now(), ...args(a, this.now()), await digest(a.credential), snapshot.revision, snapshot.revision, text).first();
+    const hash=await digest(text);
+    const row = await this.db.prepare(`UPDATE scene_shares AS s SET snapshot=?,snapshot_hash=?,revision=?,seen=? WHERE ${live} AND s.credential_hash=? AND s.revision<=? AND (s.revision<? OR s.snapshot=? OR (s.expiry_policy='until_revoked' AND s.snapshot IS NULL AND s.snapshot_hash=?)) RETURNING id`)
+      .bind(text,hash, snapshot.revision, this.now(), ...args(a, this.now()), await digest(a.credential), snapshot.revision, snapshot.revision, text,hash).first();
     return !!row;
   }
   async status(input: SceneAuth, requestId: string) {

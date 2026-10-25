@@ -112,7 +112,7 @@ test('actual supplied pixels: fresh app consent -> native MCP image -> tight cro
         const row=await f.db.prepare('SELECT id,expires,proof_expires FROM scene_shares ORDER BY rowid DESC LIMIT 1').first<{id:string;expires:number;proof_expires:number}>();
         assert.equal(row!.expires-row!.proof_expires,1500000);
         const createsBefore=posts.filter(r=>r.path.endsWith('/create')).length;
-        await f.db.prepare('UPDATE scene_shares SET expires=? WHERE id=?').bind(Date.now()-1,row!.id).run();
+        f.advance(row!.expires-f.now()+1);
         await page.getByRole('button',{name:'Reauthorize and continue',exact:true}).waitFor({timeout:20000});
         assert.deepEqual(await download('Download PNG'),png);
         await page.getByLabel('Layer',{exact:true}).selectOption('quote');

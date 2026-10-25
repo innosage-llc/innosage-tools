@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyScene } from '../../../lib/visual-remix.ts';
 import { fixture, origin, video, scene, scopes, snapshot } from './fixtures/scene-client.ts';
+import { UNTIL_REVOKED_CONSENT } from '../../../lib/visual-remix-lifetime.ts';
 
 function assertSceneReauthorization(response: Response) {
   assert.equal(response.status,401);
@@ -71,12 +72,12 @@ test('inactive candidate: missing cookie/proof, cross-purpose proof, recovered h
     const replay = await f.authorize(c); assert.equal((await f.approve(replay,p.proof)).status,403);
     assert.equal((await f.token(c,approved,scene,false,'b'.repeat(64))).status,400);
     const expiring = await f.create(), auth = await f.authorize(c), approval = await f.approve(auth,expiring.proof);
-    await f.db.prepare('UPDATE scene_shares SET expires=? WHERE id=?').bind(Date.now()+59000,expiring.auth.shareId).run();
-    assert.equal((await f.token(c,approval)).status,400,'KV minimum TTL must never extend a short lease');
+    f.advance(expiring.expiresAt-f.now()-59000);
+    assert.equal((await f.token(c,approval)).status,400,'delayed token exchange cannot extend the original deadline');
     const active = await f.link();
-    await f.db.prepare('UPDATE scene_shares SET seen=? WHERE id=?').bind(Date.now()-11000,active.p.auth.shareId).run();
+    f.advance(11000);
     assert.equal(JSON.parse((await f.rpc(active.t.access_token,'tools/call',{name:'get_scene',arguments:{}})).data.result.content[0].text).error,'BROWSER_UNAVAILABLE');
-    await f.db.prepare('UPDATE scene_shares SET expires=? WHERE id=?').bind(Date.now()-1,active.p.auth.shareId).run();
+    f.advance(active.p.expiresAt-f.now()+1);
     assertSceneReauthorization((await f.rpc(active.t.access_token,'tools/list')).r);
     assert.equal((await f.form('/oauth/token',new URLSearchParams({grant_type:'refresh_token',client_id:active.c.client_id,refresh_token:active.t.access_token,resource:scene}))).status,400);
     f.noEgress();
@@ -115,7 +116,7 @@ test('recovery: same client can manually authorize a new share while the expired
  const f=await fixture();
  try{
   const first=await f.link();assert.equal((await f.rpc(first.t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);
-  await f.db.prepare('UPDATE scene_shares SET expires=? WHERE id=?').bind(Date.now()-1,first.p.auth.shareId).run();
+  f.advance(first.p.expiresAt-f.now()+1);
   const expired=await f.rpc(first.t.access_token,'tools/call',{name:'get_scene',arguments:{}});assertSceneReauthorization(expired.r);
   assert.match(expired.r.headers.get('x-visual-remix-request-id')!,/^[a-f0-9-]{36}$/);
   assert.equal(expired.r.headers.get('x-visual-remix-version'),'0.1.6');assert.equal(expired.r.headers.get('x-visual-remix-revision'),'a'.repeat(40));assert.equal(expired.r.headers.get('x-visual-remix-tool'),'get_scene');
@@ -202,12 +203,28 @@ test('fresh explicit 30-minute consent issues only bounded existing scopes; lega
   assert.equal((await f.rpc(t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);
   const before=await f.db.prepare('SELECT expires FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('expires');
   await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()});assert.equal(await f.db.prepare('SELECT expires FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('expires'),before);
-  await f.db.prepare('UPDATE scene_shares SET expires=? WHERE id=?').bind(Date.now()-1,p.auth.shareId).run();
+  f.advance(p.expiresAt-f.now()+1);
   assertSceneReauthorization((await f.rpc(t.access_token,'tools/list')).r);
   assert.equal((await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()})).status,401);
   await f.json('/scene/browser/revoke',{auth:p.auth});assertSceneReauthorization((await f.rpc(t.access_token,'tools/list')).r);
   const fresh=await f.link(undefined,1800000);assert.notEqual(fresh.p.auth.shareId,p.auth.shareId);
   assert.equal((await f.rpc(fresh.t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);
   assertSceneReauthorization((await f.rpc(t.access_token,'tools/list')).r);f.noEgress();
+ }finally{await f.mf.dispose();}
+});
+
+test('explicit until-revoked grant outlives the former lease but never extends OAuth or permits proof reuse',async()=>{
+ const f=await fixture();try{
+  const created=await f.json('/scene/browser/create',{snapshot:snapshot(),fields:['text','layout','captions','provenance','limitations','rasterDescriptors'],confirmed:true,lifetime:UNTIL_REVOKED_CONSENT},{'x-fixture-until-revoked':'true'});
+  assert.equal(created.status,200,await created.clone().text());const p=await created.json();assert.equal(p.expiresAt,null);assert.equal(p.lifetime,'until-revoked');
+  const c=await f.client();f.advance(240000);const a=await f.authorize(c),tr=await f.token(c,await f.approve(a,p.proof));assert.equal(tr.status,200,await tr.clone().text());const t=await tr.json();
+  assert.equal(t.refresh_token,undefined);assert.ok(t.expires_in<=1800&&t.expires_in>=1795);assert.deepEqual(t.scope.split(' ').sort(),scopes.slice().sort());
+  f.advance(27*60000);assert.equal((await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()})).status,200);
+  assert.equal((await f.rpc(t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200,'31-minute sharing remains valid while the independently issued token is live');
+  f.advance(4*60000);assertSceneReauthorization((await f.rpc(t.access_token,'tools/list')).r);
+  assert.equal((await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()})).status,200,'OAuth expiry does not revoke the browser grant');
+  const replay=await f.authorize(c);assert.equal((await f.approve(replay,p.proof)).status,403);
+  assert.equal((await f.form('/oauth/token',new URLSearchParams({grant_type:'refresh_token',client_id:c.client_id,refresh_token:t.access_token,resource:scene}))).status,400);
+  assert.equal((await f.json('/scene/browser/revoke',{auth:p.auth})).status,200);assert.equal((await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()})).status,401);f.noEgress();
  }finally{await f.mf.dispose();}
 });

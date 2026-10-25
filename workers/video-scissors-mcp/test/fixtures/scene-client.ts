@@ -15,9 +15,10 @@ export async function fixture(assetsDirectory?: string, withBridge = false, with
   let egress = 0;
   const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], d1Databases: ['DB'], kvNamespaces: ['OAUTH_KV'], ...(withBridge ? {durableObjects:{VIDEO_BRIDGE:{className:'VideoScissorsBridgeDO',useSQLite:true}}} : {}), bindings: { EXPERIMENT_ENABLED: 'true', SCENE_REFERENCE_ENABLED:withReference?'true':'false' }, ...(assetsDirectory ? { assets: { directory: assetsDirectory, binding: 'ASSETS', run_worker_first: true, routerConfig: { has_user_worker: true } } } : {}), outboundService: () => { egress++; return new Response('Egress denied', { status: 403 }); } }));
   const db = await mf.getD1Database('DB');
-  for (const file of ['migrations/0001.sql','candidate-migrations/scene.sql']) await db.exec(readFileSync(new URL('../../' + file, import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' '));
+  for (const file of ['migrations/0001.sql','candidate-migrations/scene.sql','candidate-migrations/scene-until-revoked.sql']) await db.exec(readFileSync(new URL('../../' + file, import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' '));
   if(withReference) await db.exec(readFileSync(new URL('../../candidate-migrations/scene-reference.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' '));
-  const request = (path: string, options: RequestInit = {}) => mf.dispatchFetch(origin + path, { ...options, redirect: 'manual' });
+  let timeOffset=0;
+  const request = (path: string, options: RequestInit = {}) => { const headers=new Headers(options.headers); headers.set('x-fixture-time-offset',String(timeOffset)); return mf.dispatchFetch(origin + path, { ...options, headers, redirect: 'manual' }); };
   const json = (path: string, value: unknown, headers: Record<string,string> = {}) => request(path, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(value) });
   const form = (path: string, value: URLSearchParams, cookie = '', headers: Record<string,string> = {}) => request(path, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/x-www-form-urlencoded', Cookie: cookie, ...headers }, body: value.toString() });
   const create = async (referenceConsent?:unknown, leaseMs?:number) => { const r = await json('/scene/browser/create', { snapshot: snapshot(), fields: SCENE_FIELDS, confirmed: true,...(leaseMs!==undefined?{leaseMs}:{}),...(referenceConsent?{referenceConsent}:{}) }); assert.equal(r.status,200,await r.clone().text()); return r.json(); };
@@ -42,5 +43,5 @@ export async function fixture(assetsDirectory?: string, withBridge = false, with
     const body = await r.text(), data = r.headers.get('content-type')?.includes('text/event-stream') ? JSON.parse(body.split('\n').find(l=>l.startsWith('data: '))!.slice(6)) : body ? JSON.parse(body) : null;
     return { r,data,body };
   };
-  return { mf,db,kv:await mf.getKVNamespace('OAUTH_KV'),request,json,form,create,client,authorize,approve,token,link,rpc, noEgress: () => assert.equal(egress,0) };
+  return { mf,db,kv:await mf.getKVNamespace('OAUTH_KV'),request,json,form,create,client,authorize,approve,token,link,rpc, advance:(ms:number)=>{timeOffset+=ms;}, now:()=>Date.now()+timeOffset, noEgress: () => assert.equal(egress,0) };
 }
