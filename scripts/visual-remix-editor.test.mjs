@@ -322,9 +322,28 @@ test(
       assert.equal(JSON.parse((await download('Download captions')).bytes.toString()).captions.titleCN,'第二篇文章');
       await page.getByRole('button',{name:'Undo last apply',exact:true}).click();assert.equal((await appliedScene()).nodes[0].y,100);
       const beforeRevoke=await download('Download PNG');
+      // Revoke must restore canceled form values, not merely the PNG.
+      await page.getByLabel('Node y',{exact:true}).fill('333');
+      await page.getByRole('button',{name:'Revoke pending work',exact:true}).click();
+      assert.equal(await page.getByLabel('Node y',{exact:true}).inputValue(),'100');
+      await page.getByLabel('Node x',{exact:true}).fill('90');
+      await page.waitForFunction(()=>JSON.parse(document.querySelector('[data-testid=applied-scene]').textContent).nodes[0].x===90);
+      assert.equal((await appliedScene()).nodes[0].y,100,'a later edit cannot resurrect a revoked local y');
+      await page.getByRole('button',{name:'Undo last apply',exact:true}).click();
+      assert.deepEqual((await download('Download PNG')).bytes,beforeRevoke.bytes);
       // Remote/imported agent proposals remain separate, explicitly applied candidates.
       const previewRemote=async(id)=>{const b=JSON.parse((await download('Download agent brief')).bytes.toString());const changed=structuredClone(b.currentScene);changed.nodes[0].y=160;await page.getByLabel('Proposal JSON',{exact:true}).fill(JSON.stringify({...b.proposalIdentity,requestId:id,scene:changed,explanation:'Remote candidate remains pending'}));await page.getByRole('button',{name:'Preview proposal',exact:true}).click();await page.getByRole('button',{name:'Apply candidate',exact:true}).waitFor();return b;};
       await previewRemote('remote-cancel');await page.getByRole('button',{name:'Cancel candidate',exact:true}).click();assert.deepEqual((await download('Download PNG')).bytes,beforeRevoke.bytes);
+      // Starting a proposal operation cancels an invalid draft and resets inputs.
+      const operationBrief=JSON.parse((await download('Download agent brief')).bytes.toString());
+      await page.getByLabel('Node fill',{exact:true}).fill('invalid');
+      await page.getByText('These parameters could not render.',{exact:false}).waitFor();
+      const operationBase=await appliedScene();
+      await page.getByLabel('Proposal JSON',{exact:true}).fill(JSON.stringify({...operationBrief.proposalIdentity,requestId:'invalid-draft-reset',scene:operationBrief.currentScene,explanation:'Resets canceled local draft'}));
+      await page.getByRole('button',{name:'Preview proposal',exact:true}).click();
+      await page.getByRole('button',{name:'Cancel candidate',exact:true}).waitFor();
+      assert.equal(await page.getByLabel('Node fill',{exact:true}).inputValue(),operationBase.nodes[0].fill);
+      await page.getByRole('button',{name:'Cancel candidate',exact:true}).click();
       const oldBrief=await previewRemote('remote-revoke');await page.getByRole('button',{name:'Revoke pending work',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Apply candidate',exact:true}).count(),0);
       const stale={...oldBrief.proposalIdentity,requestId:'stale-after-revoke',scene:oldBrief.currentScene,explanation:'Must be rejected.'};await page.getByLabel('Proposal JSON',{exact:true}).fill(JSON.stringify(stale));await page.getByRole('button',{name:'Preview proposal',exact:true}).click();await page.getByText('stale-after-revoke: stale.',{exact:false}).waitFor();assert.deepEqual((await download('Download PNG')).bytes,beforeRevoke.bytes);
       // Revoke during a non-abortable File.text() must invalidate its later result.

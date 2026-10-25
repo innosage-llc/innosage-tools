@@ -170,7 +170,9 @@ export default function VisualRemixApp() {
     setApproved(assets.current.descriptors());
   }
   function begin(invalidate = false) {
+    const hadLocalDraft = controller.current?.snapshot().editing;
     if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;controller.current?.discardLocalEdit();
+    if(hadLocalDraft)sync(true);
     pending.current?.abort();
     const abort = new AbortController();
     pending.current = abort;
@@ -251,7 +253,10 @@ export default function VisualRemixApp() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       epoch.current++;
       pending.current?.abort();
-      if(localTimer.current)clearTimeout(localTimer.current);localTicket.current++;
+      if(localTimer.current)clearTimeout(localTimer.current);
+      // Invalidate the live async ticket, not its value captured at mount.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      localTicket.current++;
       video.cancel();
       window.removeEventListener("focus",wake);document.removeEventListener("visibilitychange",wake);
       remote?.dispose();
@@ -545,7 +550,7 @@ export default function VisualRemixApp() {
     controller.current?.revoke();
     setBusy(false);
     setError("");
-    sync();
+    sync(true);
     setMessage(
       "Pending work revoked. Old agent briefs cannot apply; download a fresh brief to continue.",
     );

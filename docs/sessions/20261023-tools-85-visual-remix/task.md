@@ -357,3 +357,5 @@ completed; source/image envelopes, D1 retention and actual host vision require
 separate source-backed implementation/review. No new scopes/credentials/public
 image host, liveMCP, production or closure. Historical local-only uploads remain
 unshared. Local work continues while image activation requirements are resolved.
+
+Independent Sol review on f3ea021 requested P2 cancellation repair: Revoke/begin canceled local work without restoring form values. Lead now restores committed form state before exports resume; added pendingRevoke→lateredit and invalidDraft→proposal→Cancel UI regressions. Re-review and final native gate required on the repaired head.
