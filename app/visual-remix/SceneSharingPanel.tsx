@@ -31,6 +31,7 @@ export function SceneSharingPanel({
     (state.phase === 'connecting' ||
       state.phase === 'awaiting-consent' ||
       state.phase === 'connected' ||
+      state.phase === 'recovery' ||
       state.phase === 'error');
 
   const disconnectLabel =
@@ -46,17 +47,28 @@ export function SceneSharingPanel({
     'awaiting-consent': 'Awaiting Consent',
     connected: 'Browser sharing authorized',
     revoking: 'Revoking...',
+    recovery: 'Saved control recovery',
     error: 'Error',
   };
 
   const handleConnect = () => {
+    const untilRevoked = Boolean(state.untilRevokedAvailable && confirmRetention);
     if (reference) {
       onConnect({
         referencePixels: authorizeReferencePixels,
         reuseCrops: authorizeReferencePixels && allowReuseCrops,
+        ...(state.untilRevokedAvailable ? { untilRevoked } : {}),
       });
     } else {
-      onConnect();
+      if (state.untilRevokedAvailable) {
+        onConnect({
+          referencePixels: false,
+          reuseCrops: false,
+          untilRevoked,
+        });
+      } else {
+        onConnect();
+      }
     }
   };
 
@@ -112,15 +124,35 @@ export function SceneSharingPanel({
       )}
 
       {/* Expiry - Never hidden behind details */}
-      {state.expiresAt !== undefined && (
+      {(state.expiresAt !== undefined || state.lifetime === 'until-revoked') && (
         <div className="text-xs text-gray-500">
           <span className="font-medium text-gray-700">Expires: </span>
-          <span>{new Date(state.expiresAt).toLocaleString()}</span>
+          <span>
+            {state.expiresAt === null || (state.expiresAt === undefined && state.lifetime === 'until-revoked')
+              ? 'Until you Disconnect or revoke'
+              : typeof state.expiresAt === 'number'
+              ? new Date(state.expiresAt).toLocaleString()
+              : 'Until you Disconnect or revoke'}
+          </span>
         </div>
       )}
 
       {/* Notice - Never hidden behind details */}
       {state.notice && <p role="status" className="text-xs text-gray-700">{state.notice}</p>}
+
+      {/* Recovery Phase Notice - Never hidden behind details */}
+      {state.phase === 'recovery' && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-900 space-y-1"
+        >
+          <div className="font-semibold">Saved Control Recovery</div>
+          <p>
+            Saved browser control was recovered on this device so you can explicitly Disconnect or revoke remote sharing. Local Scene is untouched; this does not reconnect, does not share pixels, and does not promise browser availability.
+          </p>
+        </div>
+      )}
 
       {/* Diagnostic - Formatted key */}
       {state.diagnostic && (
@@ -178,7 +210,9 @@ export function SceneSharingPanel({
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs space-y-2">
           <div className="font-semibold text-amber-900">Remote Reauthorization Required</div>
           <p className="text-amber-800">
-            Remote access has expired or requires authorization. Local work, editing, and Undo/Redo remain fully preserved. Explicit reauthorization starts a new 30-minute session; no heartbeat extends an expired session.
+            {state.untilRevokedAvailable
+              ? 'Remote access has expired or requires authorization. Local work, editing, and Undo/Redo remain fully preserved. Explicit reauthorization starts a new session with fresh consent; no heartbeat extends an expired session.'
+              : 'Remote access has expired or requires authorization. Local work, editing, and Undo/Redo remain fully preserved. Explicit reauthorization starts a new 30-minute session; no heartbeat extends an expired session.'}
           </p>
           <button
             type="button"
@@ -223,11 +257,16 @@ export function SceneSharingPanel({
               : 'Remote agent may READ and propose previews only; Apply and export actions remain browser-owned.'}
           </li>
           <li>
-            <strong>Session Duration &amp; Lifecycle:</strong> Session runs for an authorized 30-minute remote-sharing duration with no silent renewal or heartbeat extension. Expiry blocks remote access; explicit reauthorization starts a new session.
+            <strong>Session Duration &amp; Lifecycle:</strong>{' '}
+            {state.untilRevokedAvailable
+              ? 'When until-revoked mode is explicitly consented, sharing remains authorized until you Disconnect or revoke, with browser control remembered on this device (clearing site data loses recovery). Existing timed grants keep their original 15/30-minute expiry with no silent renewal or silent upgrade; choosing new mode requires explicit new consent and reconnection. Browser must stay available; OAuth or platform authorization may still expire.'
+              : 'Session runs for an authorized 30-minute remote-sharing duration with no silent renewal or heartbeat extension. Expiry blocks remote access; explicit reauthorization starts a new session.'}
           </li>
           <li>
             <strong>Retention:</strong>{' '}
-            {reference
+            {state.untilRevokedAvailable
+              ? 'The service caches shared Scene and approved reference content. Inactive cache is eligible for cleanup after 30 minutes without browser sync; scheduled cleanup, backlog, or provider failures can delay deletion. Revoke removes current service payloads; backups and already-delivered host data cannot be recalled (immediate or guaranteed timed physical erasure is not promised). No silent renewal.'
+              : reference
               ? 'Shared text/layout and separately approved reference data are stored by the service in existing private service D1 during the 30-minute nonrenewable share; no public URL. Revoke removes active reference payload; expiry blocks access immediately but cleanup is lazy. Backups may retain data up to 7 days, and delivered ChatGPT content cannot be retracted.'
               : 'Shared text/layout is stored by the service; expiry blocks access, cleanup is lazy, backups may retain data up to 7 days, and delivered ChatGPT content cannot be retracted.'}
           </li>
@@ -252,7 +291,9 @@ export function SceneSharingPanel({
         {state.reauthorizationRequired ? (
           <div className="pt-2 text-xs text-gray-600 space-y-2">
             <p>
-              Your previous session is no longer authorized. To start a fresh 30-minute session, click &quot;Reauthorize and continue&quot; above.
+              {state.untilRevokedAvailable
+                ? 'Your previous session is no longer authorized. To start a fresh session, click "Reauthorize and continue" above.'
+                : 'Your previous session is no longer authorized. To start a fresh 30-minute session, click "Reauthorize and continue" above.'}
             </p>
             <p className="text-gray-500">
               Review fresh consent after the previous session is safely disconnected.
@@ -282,9 +323,23 @@ export function SceneSharingPanel({
                 className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span>
-                I authorize a 30-minute remote-sharing session, with no silent renewal. Shared text/layout and separately approved reference data are stored by the service; expiry blocks access, cleanup is lazy, backups may retain data up to 7 days, and delivered ChatGPT content cannot be retracted.
+                {state.untilRevokedAvailable ? (
+                  <>
+                    I authorize sharing until I Disconnect or revoke and storing browser control on this device so I can revoke after reopening. Anyone with access to this browser may use this control; clearing site data loses recovery.
+                  </>
+                ) : (
+                  <>
+                    I authorize a 30-minute remote-sharing session, with no silent renewal. Shared text/layout and separately approved reference data are stored by the service; expiry blocks access, cleanup is lazy, backups may retain data up to 7 days, and delivered ChatGPT content cannot be retracted.
+                  </>
+                )}
               </span>
             </label>
+
+            {state.untilRevokedAvailable && (
+              <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-200">
+                Existing timed grants require explicit new consent and reconnection to choose until-revoked mode; existing 15/30-minute grants keep their original expiry with no silent upgrade.
+              </p>
+            )}
 
             {reference && (
               <>

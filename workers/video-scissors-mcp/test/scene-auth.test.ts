@@ -217,7 +217,7 @@ test('explicit until-revoked grant outlives the former lease but never extends O
  const f=await fixture();try{
   const created=await f.json('/scene/browser/create',{snapshot:snapshot(),fields:['text','layout','captions','provenance','limitations','rasterDescriptors'],confirmed:true,lifetime:UNTIL_REVOKED_CONSENT},{'x-fixture-until-revoked':'true'});
   assert.equal(created.status,200,await created.clone().text());const p=await created.json();assert.equal(p.expiresAt,null);assert.equal(p.lifetime,'until-revoked');
-  const c=await f.client();f.advance(240000);const a=await f.authorize(c),tr=await f.token(c,await f.approve(a,p.proof));assert.equal(tr.status,200,await tr.clone().text());const t=await tr.json();
+  const c=await f.client();f.advance(240000);const a=await f.authorize(c,scene,scopes.join(' '),false,true);assert.match(a.html,/existing timed shares keep their original fixed deadline/i);assert.match(a.html,/OAuth and platform authorization remain finite/);const tr=await f.token(c,await f.approve(a,p.proof));assert.equal(tr.status,200,await tr.clone().text());const t=await tr.json();
   assert.equal(t.refresh_token,undefined);assert.ok(t.expires_in<=1800&&t.expires_in>=1795);assert.deepEqual(t.scope.split(' ').sort(),scopes.slice().sort());
   f.advance(27*60000);assert.equal((await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()})).status,200);
   assert.equal((await f.rpc(t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200,'31-minute sharing remains valid while the independently issued token is live');

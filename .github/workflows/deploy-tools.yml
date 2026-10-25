@@ -23,6 +23,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install locked browser for IndexedDB checks
+        run: npx --no-install playwright install --with-deps chromium --only-shell
       - name: Run repository checks
         run: bash scripts/gatekeeper.sh
 

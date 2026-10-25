@@ -77,7 +77,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
       if (isScene) await new Mailbox(env.DB).recordActivity('oauth');
       else await new Mailbox(env.DB).spend('oauth');
       const details = await oauth.describeConsent(auth), transaction = await oauth.beginConsent(auth);
-      const html = isScene ? renderSceneConsentView({ handle: transaction.handle, clientName: details.clientName, clientId: details.clientId, redirectHost: details.redirectHost, isLoopback: details.redirectIsLoopback, referenceEnabled:referencesEnabled }) : renderConsentView({ details, handle: transaction.handle, errorCode: 'NONE' });
+      const html = isScene ? renderSceneConsentView({ handle: transaction.handle, clientName: details.clientName, clientId: details.clientId, redirectHost: details.redirectHost, isLoopback: details.redirectIsLoopback, referenceEnabled:referencesEnabled,untilRevokedEnabled:env.SCENE_UNTIL_REVOKED_ENABLED==='true' }) : renderConsentView({ details, handle: transaction.handle, errorCode: 'NONE' });
       return new Response(html, { headers: consentHeaders(transaction.headers) });
     }
     if (request.method !== 'POST' || !sameOrigin(request) || !request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded')) return reply({ error: 'ORIGIN_OR_METHOD' }, 403);

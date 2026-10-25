@@ -9,7 +9,8 @@ import { resolve, extname, sep } from 'node:path';
 import { chromium } from 'playwright';
 
 test('connected build retains pairing, consented reference sharing and HTML export', { timeout: 60000 }, async () => {
-  const output=resolve('.deploy/visual-remix-connected-build');
+  const until=process.env.NEXT_PUBLIC_SCENE_UNTIL_REVOKED==='true';
+  const output=resolve(until?'.deploy/visual-remix/until-revoked/compiled-guard':'.deploy/visual-remix-connected-build');
   const staticRoot=resolve('out');
   await mkdir(output,{recursive:true});
   const server=createServer(async(req,res)=>{
@@ -43,9 +44,9 @@ test('connected build retains pairing, consented reference sharing and HTML expo
       const body=request.postDataJSON();calls.push({path:url.pathname,body});
       let result={ok:true};
       if(url.pathname.endsWith('/create')){
-        const issued=Date.now();result={auth:{purpose:'visual-remix',shareId:'local-build-guard',projectId:body.snapshot.projectId,generation:body.snapshot.generation,epoch:1,credential:'a'.repeat(64)},proof:'b'.repeat(64),expiresAt:issued+1800000,proofExpiresAt:issued+300000};
-      } else if(url.pathname.endsWith('/poll'))result={command:null,cancellations:[],connected:paired};
-      else assert.ok(['/sync','/reference','/revoke','/report'].some(suffix=>url.pathname.endsWith(suffix)),url.pathname);
+        const issued=Date.now();result={auth:{purpose:'visual-remix',shareId:'local-build-guard',projectId:body.snapshot.projectId,generation:body.snapshot.generation,epoch:1,credential:'a'.repeat(64)},proof:'b'.repeat(64),expiresAt:until?null:issued+1800000,proofExpiresAt:issued+300000,...(until?{lifetime:'until-revoked',issuedAt:issued}:{})};
+      } else if(url.pathname.endsWith('/poll'))result={command:null,cancellations:[],connected:paired,...(until?{cacheEpoch:0}:{})};
+      else {if(until&&url.pathname.endsWith('/sync'))result.cacheEpoch=0;assert.ok(['/sync','/reference','/revoke','/report'].some(suffix=>url.pathname.endsWith(suffix)),url.pathname);}
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});
     });
     await page.goto(origin+'/tools/visual-remix');
@@ -66,23 +67,39 @@ test('connected build retains pairing, consented reference sharing and HTML expo
     const connect=page.getByRole('button',{name:'Connect',exact:true});assert.ok(await connect.isDisabled());
     await page.getByRole('checkbox',{name:/I authorize sharing scene text/}).check();
     assert.ok(await connect.isDisabled(),'both sharing confirmations are required');
-    await page.getByRole('checkbox',{name:/I authorize a 30-minute remote-sharing session/}).check();
+    await page.getByRole('checkbox',{name:until?/I authorize sharing until I Disconnect or revoke/:/I authorize a 30-minute remote-sharing session/}).check();
     await page.getByRole('checkbox',{name:/Authorize sharing a normalized PNG copy/}).check();
     assert.equal(calls.length,0,'consent toggles alone must not upload');
     await connect.click();
     const proof=page.getByLabel('Pairing Proof (single-use, valid 5 minutes)',{exact:true});await proof.waitFor();assert.match(await proof.inputValue(),/^[a-f0-9]{64}$/);
-    const creation=calls.filter(c=>c.path.endsWith('/create'));assert.equal(creation.length,1);assert.equal(creation[0].body.leaseMs,1800000);assert.equal(creation[0].body.referenceConsent.confirmed,true);
+    const creation=calls.filter(c=>c.path.endsWith('/create'));assert.equal(creation.length,1);if(until){assert.equal(creation[0].body.leaseMs,undefined);assert.deepEqual(creation[0].body.lifetime,{mode:'until-revoked',version:1,rememberBrowserControl:true});}else assert.equal(creation[0].body.leaseMs,1800000);assert.equal(creation[0].body.referenceConsent.confirmed,true);
     assert.equal(calls.filter(c=>c.path.endsWith('/reference')).length,0,'no image bytes before host binding');
     paired=true;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
     await page.getByText('Reference is stored in service D1',{exact:false}).waitFor();
     const uploads=calls.filter(c=>c.path.endsWith('/reference'));assert.equal(uploads.length,1);const image=uploads[0].body.reference;
     assert.equal(createHash('sha256').update(Buffer.from(image.data,'base64')).digest('hex'),image.manifest.sha256);
+    assert.equal(await page.getByAltText('Reference · local only').count(),1);
+    if(until){
+      await page.getByText('Until you Disconnect or revoke',{exact:true}).waitFor();
+      const beforeReload=calls.length;
+      await page.reload();
+      await page.getByText('Saved control recovery',{exact:true}).waitFor();
+      assert.equal(calls.length,beforeReload,'recovered owner control must not sync, upload or reconnect');
+      assert.equal(await page.getByLabel('Pairing Proof (single-use, valid 5 minutes)').count(),0);
+      assert.equal(await page.getByRole('button',{name:'Connect',exact:true,includeHidden:true}).isDisabled(),true);
+      await page.getByRole('button',{name:'Add text block',exact:true}).click();
+      await page.getByLabel('Text content',{exact:true}).fill('Local work during control recovery');
+      await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>b.textContent==='Export HTML'&&!b.disabled));
+      const [recoveryDownload]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Export HTML',exact:true}).click()]);
+      assert.match(await readFile(await recoveryDownload.path(),'utf8'),/Local work during control recovery/);
+      assert.equal(calls.length,beforeReload);
+    }
     await page.getByRole('button',{name:'Disconnect',exact:true}).click();
     await page.getByText('Revocation confirmed: active payloads have been removed from the service.',{exact:true}).waitFor();
-    assert.equal(calls.filter(c=>c.path.endsWith('/revoke')).length,1);assert.equal(await page.getByAltText('Reference · local only').count(),1);
+    assert.equal(calls.filter(c=>c.path.endsWith('/revoke')).length,1);if(!until)assert.equal(await page.getByAltText('Reference · local only').count(),1);else assert.equal(await page.getByLabel('Text content',{exact:true}).inputValue(),'Local work during control recovery');
     assert.equal(external.length,0);assert.deepEqual(errors,[]);
     await page.screenshot({path:resolve(output,'connected-controls.png'),fullPage:true});
-    const receipt={classification:'Compiled connected UI with local mock only; not live MCP/host proof',browser:browser.version(),sharingVisible:true,referenceConsentVisible:true,manualConsentRequired:true,pairingProofReachable:true,referenceBytesAfterMockBinding:true,referenceHashVerified:true,htmlExportPreserved:true,revocationConfirmedLocally:true,localReferencePreserved:true,externalRequests:external.length,postCounts:Object.fromEntries([...new Set(calls.map(c=>c.path))].map(path=>[path,calls.filter(c=>c.path===path).length]))};
+    const receipt={classification:'Compiled connected UI with local mock only; not live MCP/host proof',browser:browser.version(),sharingVisible:true,untilRevokedMode:until,explicitRecoveryWithoutAutoSharing:until,localWorkDuringRecovery:until,referenceConsentVisible:true,manualConsentRequired:true,pairingProofReachable:true,referenceBytesAfterMockBinding:true,referenceHashVerified:true,htmlExportPreserved:true,revocationConfirmedLocally:true,localReferencePreserved:true,externalRequests:external.length,postCounts:Object.fromEntries([...new Set(calls.map(c=>c.path))].map(path=>[path,calls.filter(c=>c.path===path).length]))};
     await writeFile(resolve(output,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));
   } finally {await browser?.close();await new Promise(ok=>server.close(ok));}
 });

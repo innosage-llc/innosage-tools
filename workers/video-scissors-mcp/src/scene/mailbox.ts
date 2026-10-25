@@ -138,11 +138,12 @@ export class SceneMailbox {
     if (raced && raced.payload_hash !== hash) throw new Error('SCENE_REQUEST_CONFLICT');
     return raced ? sceneResult(raced.id, raced.state) : null;
   }
-  async claim(input: SceneOwner): Promise<unknown | null> {
+  async claim(input: SceneOwner, cacheEpoch?:unknown): Promise<unknown | null> {
+    if(cacheEpoch!==undefined && (!Number.isSafeInteger(cacheEpoch) || Number(cacheEpoch)<0))throw new Error('SCENE_CACHE_GENERATION');
     const a = parseSceneAuth(input, true) as SceneOwner;
     const row = await this.db.prepare(`UPDATE scene_requests SET state='rendering' WHERE share=? AND epoch=? AND state='queued' AND id=(SELECT id FROM scene_requests WHERE share=? AND state='queued' LIMIT 1)
-      AND EXISTS(SELECT 1 FROM scene_shares s WHERE ${remote} AND s.credential_hash=?) RETURNING payload`)
-      .bind(a.shareId, a.epoch, a.shareId, ...args(a, this.now()), await digest(a.credential)).first<{ payload: string }>();
+      AND EXISTS(SELECT 1 FROM scene_shares s WHERE ${remote} AND s.credential_hash=? AND (s.expiry_policy='fixed' OR s.cache_epoch=?)) RETURNING payload`)
+      .bind(a.shareId, a.epoch, a.shareId, ...args(a, this.now()), await digest(a.credential),cacheEpoch===undefined?-1:Number(cacheEpoch)).first<{ payload: string }>();
     return row ? parseSceneProposal(JSON.parse(row.payload)) : null;
   }
   async cancel(input: SceneAuth, requestId: string): Promise<boolean> {

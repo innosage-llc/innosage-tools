@@ -14,7 +14,7 @@ export default { async fetch(request: Request, env: Env): Promise<Response> {
       case 'lease': value = await store.lease(body.auth as SceneAuth); break;
       case 'sync': value = await store.sync(body.auth, body.snapshot); break;
       case 'propose': value = await store.propose(body.auth as SceneAuth, body.proposal); break;
-      case 'claim': value = await store.claim(body.auth); break;
+      case 'claim': value = await store.claim(body.auth,body.cacheEpoch); break;
       case 'cancel': value = await store.cancel(body.auth as SceneAuth, body.id); break;
       case 'cancellations': value = await store.cancellations(body.auth); break;
       case 'status': value = await store.status(body.auth as SceneAuth, body.id); break;

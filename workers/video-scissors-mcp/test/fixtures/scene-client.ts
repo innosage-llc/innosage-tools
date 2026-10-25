@@ -24,10 +24,10 @@ export async function fixture(assetsDirectory?: string, withBridge = false, with
   const create = async (referenceConsent?:unknown, leaseMs?:number) => { const r = await json('/scene/browser/create', { snapshot: snapshot(), fields: SCENE_FIELDS, confirmed: true,...(leaseMs!==undefined?{leaseMs}:{}),...(referenceConsent?{referenceConsent}:{}) }); assert.equal(r.status,200,await r.clone().text()); return r.json(); };
   const client = async (old = false, redirectUri = 'https://client.example/callback') => { const r = await json('/oauth/register', { client_name: '<img src=x onerror=alert(1)>', redirect_uris: [redirectUri], token_endpoint_auth_method: 'none', grant_types: ['authorization_code','refresh_token'], response_types: ['code'] }, old ? { 'x-fixture-old': 'true' } : {}); assert.equal(r.status,201,await r.clone().text()); return r.json(); };
   const verifier = 'a'.repeat(64), challenge = Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))).toString('base64url');
-  const authorize = async (c: { client_id: string }, resource: string | undefined = scene, scope = scopes.join(' '), old = false) => {
+  const authorize = async (c: { client_id: string }, resource: string | undefined = scene, scope = scopes.join(' '), old = false, untilRevoked = false) => {
     const query = new URLSearchParams({ client_id: c.client_id, redirect_uri: 'https://client.example/callback', response_type: 'code', scope, state: 'synthetic-state', code_challenge: challenge, code_challenge_method: 'S256' });
     if (resource) query.set('resource',resource);
-    const r = await request('/authorize?' + query, { headers: old ? { 'x-fixture-old': 'true' } : {} });
+    const r = await request('/authorize?' + query, { headers: { ...(old?{'x-fixture-old':'true'}:{}),...(untilRevoked?{'x-fixture-until-revoked':'true'}:{}) } });
     const html = await r.text(), handle = html.match(/name="handle"[^>]*value="([^"]+)"/)?.[1] ?? '';
     return { r, html, handle, cookie: (r.headers.get('set-cookie') ?? '').split(';')[0] };
   };
