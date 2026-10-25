@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "kind": "LOCAL_BROWSER",
+  "browser": "151.0.7922.34",
+  "source": "working-tree",
+  "workspace": "58a9e909-9866-4168-9ace-315dbe63dd5a",
+  "body": "# Offline acknowledged content\n\nFull Markdown, **bold**, 中文.\n\n```js\nconst safe = true;\n```\n",
+  "editId": "75c00fda-2526-4829-9125-a0eb5bb12c0c/1/1fea2625-9579-4185-be83-c5fe7ebb89a3",
+  "stableIdentity": true,
+  "twoIndependentProfiles": true,
+  "duplicateWriterRefused": true,
+  "noAuthNoNetwork": true,
+  "externalRequests": 0,
+  "realProvider": "NOT_RUN_AUTH"
+}

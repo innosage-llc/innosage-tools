@@ -1,3 +1,11 @@
+# Active task: Tools #113 — real Drive vertical slice
+
+V1 root lead sole executor; independent reviewer /root/review_113 read-only.
+Session: docs/sessions/20261025-tools-113-real-drive/.
+Authorized existing Pages staging, no production/closure/cleanup. Real OAuth requires dedicated account approval. #111 Founder accepted/closed.
+
+## Preserved prior task records
+
 # Active task: Tools #111 — adapter core integration acceptance
 
 Parent #102 revision4; child #111 revision3; #109 accepted/closed.

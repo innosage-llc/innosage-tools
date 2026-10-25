@@ -47,3 +47,6 @@ venv/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/public/byos-demo/
+/.byos-real/

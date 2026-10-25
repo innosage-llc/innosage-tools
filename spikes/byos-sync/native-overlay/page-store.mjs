@@ -27,13 +27,14 @@ const valid = (v,name) => {
 };
 
 /** Two native collections only. No conflict handler or transport override. */
-export async function openPageStore({workspace,session,multiInstance=true,hook=async()=>{}}) {
+export async function openPageStore({workspace,session,multiInstance=true,hook=async()=>{},connectionProvider=null}) {
   valid(workspace,'workspace'); valid(session,'session');
   const db = await createRxDatabase({name:'overlay'+Array.from(workspace)
     .map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(''),
     storage:getRxStorageDexie(),multiInstance});
   await db.addCollections({pages:{schema:pageSchema},localDrafts:{schema:draftSchema}});
   const store=new PageStore(db,workspace,session,hook);
+  store.connectionProvider=connectionProvider;
   // A duplicated browser tab may inherit sessionStorage. Refuse its shared
   // writer identity instead of allowing a second owner to clobber that journal.
   const ownerKey=`overlay:${workspace}:${session}`;
@@ -170,7 +171,7 @@ export class PageStore {
   }
   async _connect(endpoint,{live=true,transactionTimeout=60000,retryTime=5000}={}) {
     const url=new URL(endpoint);
-    if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.username||url.password)
+    if(!this.connectionProvider&&(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.username||url.password))
       throw new Error('Offline spike permits only HTTP 127.0.0.1 mock transport');
     if(this.replication) return;
     this.connection={endpoint,options:{live,transactionTimeout,retryTime}};
@@ -178,8 +179,9 @@ export class PageStore {
     // Wait here so only the native elected owner initializes/replicates.
     await this.db.waitForLeadership();
     if(this.closed) return;
-    this.replication=await replicateGoogleDrive({collection:this.db.pages,
-      replicationIdentifier:'native-overlay',googleDrive:{apiEndpoint:url.origin,
+    const provider=this.connectionProvider ? await this.connectionProvider() : null;
+    this.replication=await (provider?.factory??replicateGoogleDrive)({collection:this.db.pages,
+      replicationIdentifier:'native-overlay',googleDrive:provider?.googleDrive??{apiEndpoint:url.origin,
         authToken:'synthetic',oauthClientId:'synthetic',folderPath:this.workspace,transactionTimeout},
       pull:{batchSize:10},push:{batchSize:100},live,waitForLeadership:true,retryTime,
       signalingOptions:{config:{iceServers:[]}}});

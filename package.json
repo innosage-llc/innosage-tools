@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "infisical run -- next dev",
-    "prebuild": "node scripts/prepare-video-scissors.mjs",
+    "prebuild": "node scripts/prepare-video-scissors.mjs && node scripts/prepare-byos.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint && eslint",
@@ -40,7 +40,9 @@
     "test:visual-remix-scene-browser": "npm --prefix workers/video-scissors-mcp run test:scene-browser",
     "test:byos-native-overlay": "node spikes/byos-sync/native-overlay/check.mjs",
     "test:byos-native-overlay:full": "node spikes/byos-sync/native-overlay/check.mjs --full",
-    "spike:byos-native-overlay": "cd spikes/byos-sync && node native-overlay/ui-server.mjs"
+    "spike:byos-native-overlay": "cd spikes/byos-sync && node native-overlay/ui-server.mjs",
+    "test:byos-real-drive": "node spikes/byos-sync/real-drive/run.mjs",
+    "test:byos-real-drive:offline": "node --test spikes/byos-sync/real-drive/*.test.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",
