@@ -852,3 +852,7 @@ pre#destination {
   line-height: 1.4;
   text-align: center;
 }
+
+/* Long edit identities and complete bodies stay inside their panes. */
+.status-box { white-space: pre-line; overflow-wrap: anywhere; }
+.status-indicator, .operation-monitor { overflow-wrap: anywhere; max-width: 100%; }

@@ -8,6 +8,7 @@ const workspace=new URLSearchParams(location.search).get('workspace')??'demo';
 let releaseOwner;
 // Single browser writer per fixture database. Separate tabs cannot overwrite it.
 async function start(count) {
+  $('editor').disabled=true;
   sim?.close();storage?.close();releaseOwner?.();
   let grant;const granted=new Promise(r=>grant=r);
   if(!navigator.locks) throw new Error('Browser writer locks unavailable; editing disabled');
@@ -18,7 +19,7 @@ async function start(count) {
   storage=await browserStorage(`${workspace}-${count}`);
   sim=new Simulation(storage,{changed:render});items=catalog(count);offset=0;active='page-1';
   await sim.open();sim.latency=$('latency').value==='never'?'never':Number($('latency').value);
-  sim.setFault($('fault').value);nav();load();
+  sim.setFault($('fault').value);nav();load();$('editor').disabled=false;
   window.ux={sim,storage,snapshot:()=>sim.view(active),active:()=>active};
 }
 function nav(){
@@ -39,7 +40,8 @@ function render(){
     $('history').textContent=JSON.stringify(v.history,null,2);
     $('error').textContent=v.error??'';
     $('destination').textContent=JSON.stringify(sim.destination(active)??'No confirmed version on simulated second device',null,2);
-    $('handoffStatus').textContent=sim.handoffRequested?JSON.stringify(sim.handoff()):'Prepare explicitly. Local save alone cannot confirm another device.';
+    const h=sim.handoffRequested?sim.handoff():null;
+    $('handoffStatus').textContent=h?`${h.state}\n${h.localProtected}/${h.pages} locally protected\n${h.confirmed}/${h.pages} simulated-cloud confirmed\n${h.pending} pending • ${h.conflicts} conflicts • ${h.errors} errors`:'Prepare explicitly. Local save alone cannot confirm another device.';
   }finally{rendering=false;}
 }
 const run=fn=>Promise.resolve().then(fn).catch(error=>{$('error').textContent=error.message;});
