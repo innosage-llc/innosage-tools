@@ -185,3 +185,24 @@ AFTER freshness reread, read retry or later-validator substitution. Headless
 zero-size snapshots must download actual empty bytes. Same-origin local stores
 remain intact across code reload, while memory-only access tokens need normal
 reauthorization. See [actual evidence and corrected read contract](../sessions/20261025-tools-113-real-drive/snapshot-read.md).
+
+### Offline editor reopen
+
+Use the canonical `/byos-demo/?workspace=...` entry on the same registered origin.
+The `/tools/byos-demo/` form redirects there without changing workspace, session
+or origin-scoped data. Wait for **Offline editor ready** once online, then the
+editor can reopen offline with its existing IndexedDB journal. Google sign-in
+and explicit remote sync still require connectivity; no token is persisted.
+
+Only the generated static HTML and exact integrity-pinned bundle enter the demo
+service worker cache. Google/GIS/API responses, user bodies and workspace URLs
+do not. Existing open tabs retain their loaded code; a service-worker update
+waits rather than reloading an editor or forcing activation. An offline restart
+can use the previous complete shell while an update waits; record the loaded
+bundle identity separately from the moving staging release. Prior complete
+static caches remain intact. This is a bounded demo policy, not a general PWA
+cache lifecycle or background synchronization system.
+
+`npm run test:byos-offline-shell` verifies the static cache, corrupt-update
+rejection, offline reload and persistent-browser process reopen locally without
+Google traffic. Real-provider reconnect remains a separate staging criterion.
