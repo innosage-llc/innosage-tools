@@ -39,6 +39,7 @@ npm run test:recorder
 npm run test:visual-remix
 npm run test:visual-remix-bridge
 npm run test:visual-remix-motion
+npm run test:visual-remix-html
 npm run test:meeting-fixer
 npm run test:video-scissors
 npm run test:video-scissors-remote
