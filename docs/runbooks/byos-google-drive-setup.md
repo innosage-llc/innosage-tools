@@ -7,8 +7,13 @@ research demo, not production. #111 remains accepted bounded mock evidence.
 ## Current delivery and authorization
 
 The final #113 acceptance comment supplies the **immutable staging URL, deployed
-source/version and deployment ID**. Use that exact origin, not the moving staging
-alias or a previously deployed candidate. `/tools/byos` links to the editor at
+source/version and deployment ID**. For repeatable OAuth testing, prefer the existing stable staging alias
+`https://staging.innosage-tools.pages.dev` once registered by the account owner.
+Before and after each run, verify release.json source/version/build/config and
+served assets against the selected immutable deployment receipt. A mismatch or
+concurrent deployment makes that run INCONCLUSIVE. Retain immutable URLs as
+release evidence; do not move an already authorized active run merely to change
+origins. An existing immutable deployment cannot be overwritten for a new build. `/tools/byos` links to the editor at
 `/tools/byos-demo/index.html`. Client ID is entered at runtime; registering OAuth
 requires no rebuild. No client secret belongs in this browser app.
 
@@ -34,9 +39,10 @@ Real tests never silently widen `drive.file` or substitute a CLI token.
    impersonation or service account.
 4. In [Clients](https://console.cloud.google.com/auth/clients), create an OAuth
    **Web application** client named `InnoSage BYOS staging`. Authorized JavaScript
-   origin = the exact HTTPS immutable Pages **origin** from the delivery packet,
+   origin = the selected fixed staging **origin** from the delivery packet,
    with no path/query/trailing slash. Example shape:
-   `https://<deployment>.innosage-tools.pages.dev` (replace with actual packet).
+   `https://staging.innosage-tools.pages.dev`. An explicitly selected immutable
+   candidate is also supported, but requires registering that different origin.
    This GIS token-popup integration needs **no Authorized redirect URI** and no
    client secret in the app. Do not register the `/tools/...` path as an origin.
 5. Open the exact demo. Paste the **public Client ID** in its field. Check the
@@ -149,7 +155,11 @@ hide automation, copy tokens or substitute CLI authorization. Label these result
 native UI-assisted/manual, not an automated Playwright run. Preserve the original
 tabs and local stores; do not retry by rotating identity or clearing site data.
 
-Each replacement immutable staging origin needs its own authorized JavaScript
+Prefer reusing the registered stable staging origin for future builds. This
+retains origin-scoped local stores, but still requires compatibility and truthful
+release checks; it does not guarantee token lifetime or waive reauthorization.
+Keep all historical immutable-origin stores intact. Each replacement immutable
+staging origin, if deliberately chosen instead, needs its own authorized JavaScript
 origin and human in-memory authorization. It also has a separate IndexedDB;
 opening it does not migrate or prove recovery of edits on the prior candidate.
 Keep the old tabs/stores intact. Start with one A sync/remote verification, stop

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {errorSummary} from './diagnostics.mjs';
 import {API,authorize,forget,begin,driveFetch,evidence} from './transport.mjs';
 const path='/drive/v2/files/synthetic-file';
 const media=API+path+'?alt=media';
@@ -36,4 +37,12 @@ test('a competing write AFTER the final metadata read still gets native 412; nev
 });
 test('failed revision download stays failed, with no metadata substitution or write',async()=>{
  await fixture(async calls=>{const r=await driveFetch(media);assert.equal(r.status,404);assert.equal(calls.length,2);},{mediaStatus:404});
+});
+
+test('drift evidence identifies only changed fields and ordering, with no metadata values',async()=>{
+ await fixture(()=>assert.rejects(driveFetch(media),error=>{
+  const summary=errorSummary(error);assert.equal(summary.code,'MEDIA_VERSION_CHANGED');
+  assert.deepEqual(summary.mediaDrift,{etag:false,version:true,headRevisionId:false,fileSize:false,mimeType:false,versionOrder:'greater',role:'other'});
+  assert.doesNotMatch(JSON.stringify(summary),/900719925|file-1|revision-1|synthetic-file/);return true;
+ }),{change:m=>{m.version='9007199254740994';}});
 });

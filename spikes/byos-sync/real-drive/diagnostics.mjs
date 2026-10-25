@@ -11,5 +11,10 @@ export function errorSummary(error,depth=0){
  const p=error?.parameters;
  const status=[p?.status,p?.response?.status,p?.args?.status].find(v=>Number.isInteger(v)&&v>=100&&v<=599)??null;
  const direction=['pull','push'].includes(p?.direction)?p.direction:null;
- return {code,status,direction,nested:depth<2&&Array.isArray(p?.errors)?p.errors.slice(0,4).map(e=>errorSummary(e,depth+1)):[]};
+ const drift=p?.mediaDrift;
+ const mediaDrift=code==='MEDIA_VERSION_CHANGED'&&drift?Object.fromEntries([
+  ...['etag','version','headRevisionId','fileSize','mimeType'].map(k=>[k,drift[k]===true]),
+  ['versionOrder',['greater','less','equal'].includes(drift.versionOrder)?drift.versionOrder:'unknown'],
+  ['role',['transaction','wal','other'].includes(drift.role)?drift.role:'other']]):null;
+ return {code,status,direction,...(mediaDrift?{mediaDrift}:{}),nested:depth<2&&Array.isArray(p?.errors)?p.errors.slice(0,4).map(e=>errorSummary(e,depth+1)):[]};
 }

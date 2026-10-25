@@ -4,7 +4,7 @@
 // Contract: https://developers.google.com/workspace/drive/api/reference/rest/v2/files
 // revisionId: https://developers.google.com/workspace/drive/api/reference/rest/v2/files/get
 const strongEtag=value=>typeof value==='string'&&/^"[\x21\x23-\x7e\x80-\xff]+"$/.test(value);
-function reject(code){throw new Error(code);}
+function reject(code,parameters){const error=new Error(code);if(parameters)error.parameters=parameters;throw error;}
 function checked(meta,id){
  if(meta.id!==id||!strongEtag(meta.etag)||typeof meta.version!=='string'||!/^\d+$/.test(meta.version)||
     typeof meta.fileSize!=='string'||!/^\d+$/.test(meta.fileSize)||meta.mimeType!=='application/json'||
@@ -26,7 +26,11 @@ export async function readVersionedMedia(url,init,dispatch){
  if(BigInt(bytes.byteLength)!==BigInt(before.fileSize))reject('MEDIA_SIZE_MISMATCH');
  const final=await dispatch(metadataUrl,options);if(!final.ok)return final;
  const after=checked(await final.json(),id);
- for(const key of ['etag','version','headRevisionId','fileSize','mimeType'])if(before[key]!==after[key])reject('MEDIA_VERSION_CHANGED');
+ const keys=['etag','version','headRevisionId','fileSize','mimeType'];
+ const changed=Object.fromEntries(keys.map(key=>[key,before[key]!==after[key]]));
+ if(Object.values(changed).some(Boolean))reject('MEDIA_VERSION_CHANGED',{mediaDrift:{...changed,
+  versionOrder:BigInt(after.version)>BigInt(before.version)?'greater':BigInt(after.version)<BigInt(before.version)?'less':'equal',
+  role:before.title==='transaction.json'?'transaction':before.title==='rxdb-wal.json'?'wal':'other'}});
  const headers=new Headers(media.headers);headers.set('ETag',before.etag);
  return new Response(bytes,{status:media.status,statusText:media.statusText,headers});
 }
