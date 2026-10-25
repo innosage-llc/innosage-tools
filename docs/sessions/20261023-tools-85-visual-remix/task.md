@@ -316,3 +316,26 @@ Canonical conditional Astra principal read-only consultation identified diagnost
 Latest trusted Founder instruction1792828696.730639 removes artificial task quotas while preserving security/abuse/provider limits and free-plan-only spending. Lead classified20OAuth/lifetimeHTTP counters as test admission caps and removed only those admission predicates while retaining monotonically increasing accounting. SQL20stored shares/16requests and DCR20 remain storage/abuse bounds; no mutation of deployed counters/triggers or new grant. The earlier statement requiring approval merely to remove20consent-attempt quota is superseded. Exact host cause remains unknown; live per-run/OAuth permissions remain separate.
 
 Independent Sol review found a diagnostic-wrapper regression for the optional video bridge101/WebSocket extension. The lead now returns upgrade responses unchanged and added an actual candidate+DurableObject upgrade/one-use-proof regression. No deployed binding changes or live bridge run; re-review required on the repaired head. Actual local two-preview/manualApply/PNG/save/reopen browser journey passed; stale harness Connected label failed once, corrected with its failed receipt retained.
+
+
+## 2026-10-25 Founder partial-verification remediation
+
+Canonical V1 lead executes; independent Sol HIGH review, with one bounded
+read-only Astra fidelity advisory coordinated by dot. Earlier custom role notes
+are historical. Product base 1953de9 includes unrelated BYOS main integrations;
+no #84/#102 worktree/session changes. Existing Master acceptance unchanged.
+
+- Founder screenshots inspected from actual pixels: first rejected proposal
+  STALE_OR_BROWSER_UNAVAILABLE then UNKNOWN_REQUEST; retry reached 26-element
+  preview. Host is PARTIAL, not first-call/full-journey PASS. Exact incident
+  freshness/revision cause remains UNKNOWN.
+- Explicit tight local reference crop preview/approval, separately reviewed
+  placement/Apply, used descriptor handoff and portable cropped PNG reuse.
+  Original source stays local; no generated identity substitute or auto-approval.
+- Renderer measures Konva per-line glyph ink rather than whole editable box
+  widths. Real collisions, overflow and clipping must still block PNG export.
+- Preserve ten-second freshness, fifteen-minute lease, revision/revoke/auth and
+  storage bounds. Foreground wake refreshes existing heartbeat only. Structured
+  known rejection guides fresh read; uncertain submission reconciles same ID.
+- Targeted regressions and native gate/review before main integration/staging.
+  New agent live MCP is NOT_RUN/user-owned. No production or Master closure.

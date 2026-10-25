@@ -46,6 +46,12 @@ export class SceneMailbox {
       .bind(...args(a, this.now()), this.now() - SCENE_LIMITS.freshnessMs).first<{ snapshot: string }>();
     return row ? parseSceneSnapshot(JSON.parse(row.snapshot)) : null;
   }
+  async proposalRejection(input: SceneAuth, value: unknown) {
+    const a = parseSceneAuth(input), p = parseSceneProposal(value);
+    const row = await this.db.prepare(`SELECT s.revision,s.seen,s.snapshot IS NOT NULL AS present FROM scene_shares s WHERE ${remote}`).bind(...args(a,this.now())).first<{revision:number;seen:number;present:number}>();
+    const error = !row ? 'SHARE_UNAVAILABLE' : !row.present || row.seen < this.now()-SCENE_LIMITS.freshnessMs ? 'BROWSER_UNAVAILABLE' : row.revision !== p.baseRevision ? 'STALE_REVISION' : 'PROPOSAL_NOT_ADMITTED';
+    return {error,requestId:p.requestId,admitted:false,applied:false,recovery:error === 'STALE_REVISION' ? 'Read get_scene again and rebuild against the returned revision. Do not guess a revision or poll this rejected request.' : error === 'SHARE_UNAVAILABLE' ? 'Stop and request a fresh manual connection. No edit was applied.' : 'Bring the existing editor into a visible window and wait for its heartbeat, then read get_scene. A rejected, unchanged proposal may reuse this requestId; never blindly resend an uncertain submission or poll a rejected request.'};
+  }
   async sync(input: SceneOwner, value: unknown): Promise<boolean> {
     const a = parseSceneAuth(input, true) as SceneOwner, snapshot = parseSceneSnapshot(value); sceneToolResult(snapshot);
     if (snapshot.projectId !== a.projectId || snapshot.generation !== a.generation) return false;

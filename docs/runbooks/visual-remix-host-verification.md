@@ -22,3 +22,34 @@ The Founder removed purely artificial Scene lifetime test quotas on2026-10-24: c
 Each agent-driven live synthetic MCP staging run still needs the canonical exact-candidate per-run Founder approval (fixture, maximum calls/retries, current usage or UNKNOWN, costs/limits, cleanup). Staging deployment permission is insufficient. The Founder may instead own the real ChatGPT run. Local/provider/browser regressions do not establish real-host acceptance. No production or Master closure follows from this checklist.
 
 The lease-race tool-result challenge follows [OpenAI authentication guidance](https://developers.openai.com/plugins/build/auth#triggering-authentication-ui); ordinary resource-server validation and HTTP401 discovery remain unchanged.
+
+
+### Founder partial verification follow-up (2026-10-25)
+
+The first proposal rejection followed by UNKNOWN_REQUEST and later 26-element
+preview is partial host evidence, not first-call success. Historical cause is
+unknown. A fresh read must happen immediately before submission, after preparing
+the Scene. Keep the editor visible in a separate window; returning foreground
+refreshes the existing heartbeat without creating a share or extending expiry.
+A known admission rejection is returned with `isError` and `admitted:false`:
+`BROWSER_UNAVAILABLE` requires foreground heartbeat/fresh read;
+`STALE_REVISION` requires fresh read and rebuilt proposal. Do not poll rejected
+requests. Uncertain submissions must reconcile the same request ID and current
+Scene before any bounded retry; no new ID or Connect loop to bypass uncertainty.
+
+For the portrait/logo verification, load the reference, expand Approve local
+raster assets, drag a tight photo/logo rectangle (or enter pixel coordinates),
+Preview crop, inspect actual pixels, then Approve crop and preview placement.
+Apply the placement, repeat for the other asset, and only then obtain a fresh
+brief and connect. Ask the agent to retain/reposition these image IDs and remove
+placeholder initials/approximate logo shapes while rebuilding editable text and
+layout. Never call a placeholder design publish-ready. Save/reopen without the
+reference, verify those exact identity pixels remain, change text AND layout and
+export again. No crop bytes are uploaded or embedded into code/issue comments.
+Do not generate a replacement real face/brand mark for fidelity acceptance.
+
+Overlap export regression: separated author name/handle and headline/suffix may
+have intersecting editable boxes but must not fail when their rendered glyphs
+are separated. A genuine glyph collision or overflow must still block export.
+Test long CN/EN reflow by adjusting geometry, not globally shrinking typography.
+Retain earlier five-minute first-use failure; no new timing is inferred here.

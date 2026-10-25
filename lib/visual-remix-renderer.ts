@@ -61,16 +61,38 @@ async function renderSerial(scene: Scene, assets: LocalAssets, signal: AbortSign
           const minimumWidth = Array.from(graphemes).reduce((width, item) => item.segment.trim() ? Math.max(width, text.measureSize(item.segment).width) : width, 0);
           diagnostics.push({ code: 'TEXT_OVERFLOW', severity: 'error', nodeIds: [n.id], message: `Some text could not be laid out. Widest grapheme measures ${Math.ceil(minimumWidth)}px; box width is ${n.width}px. Widen the text box before exporting.` });
         } else if (text.height() > n.height + 0.5 || text.textArr.some(line => line.width > n.width + 0.5)) diagnostics.push({ code: 'TEXT_OVERFLOW', severity: 'error', nodeIds: [n.id], message: `Text needs ${Math.ceil(text.height())}px height; box has ${n.height}px. Enlarge or move the text box.` });
-        if (n.text.trim() && n.opacity > 0) textBoxes.push({ id: n.id, ...text.getClientRect() });
+        if (n.text.trim() && n.opacity > 0 && !(n.fill.length === 9 && n.fill.endsWith('00'))) {
+          // Measure actual glyph ink, not the full editable box width. Keep
+          // per-line bounds so centered/right-aligned and wrapped text agrees
+          // with Konva's drawing baseline, including local CJK fallback metrics.
+          const sample = text.measureSize('M');
+          const baseline = ((sample.fontBoundingBoxAscent ?? sample.actualBoundingBoxAscent) - (sample.fontBoundingBoxDescent ?? sample.actualBoundingBoxDescent)) / 2 + n.lineHeight * n.fontSize / 2;
+          text.textArr.forEach((line, index) => {
+            if (!line.text.trim()) return;
+            const ink = text.measureSize(line.text);
+            const x = n.align === 'center' ? (n.width-line.width)/2 : n.align === 'right' ? n.width-line.width : 0;
+            const y = baseline + index*n.lineHeight*n.fontSize;
+            const left = x-ink.actualBoundingBoxLeft, right = x+ink.actualBoundingBoxRight;
+            const top = y-ink.actualBoundingBoxAscent, bottom = y+ink.actualBoundingBoxDescent;
+            const points = [{x:left,y:top},{x:right,y:top},{x:left,y:bottom},{x:right,y:bottom}].map(point => group.getAbsoluteTransform().point(point));
+            const xs=points.map(point=>point.x), ys=points.map(point=>point.y);
+            textBoxes.push({id:n.id,x:Math.min(...xs),y:Math.min(...ys),width:Math.max(...xs)-Math.min(...xs),height:Math.max(...ys)-Math.min(...ys)});
+          });
+        }
       } else if (n.type === 'rect') group.add(new Konva.Rect({ width: n.width, height: n.height, fill: n.fill, cornerRadius: n.cornerRadius, listening: false }));
       else if (n.type === 'ellipse') group.add(new Konva.Ellipse({ x: n.width/2, y: n.height/2, radiusX: n.width/2, radiusY: n.height/2, fill: n.fill, listening: false }));
       else group.add(new Konva.Image({ width: n.width, height: n.height, image: images.get(n.assetId)!, crop: n.crop, listening: false }));
       const bounds = group.getClientRect();
       if (bounds.x < -0.5 || bounds.y < -0.5 || bounds.x + bounds.width > 1080.5 || bounds.y + bounds.height > 1440.5) diagnostics.push({ code: 'OUTSIDE_CANVAS', severity: 'error', nodeIds: [n.id], message: 'Rendered content extends outside the canvas. Move or resize it before exporting.' });
     }
+    textBoxes.sort((a,b)=>a.y-b.y);
+    const overlapping = new Set<string>();
     for (let i = 0; i < textBoxes.length; i++) for (let j = i + 1; j < textBoxes.length; j++) {
       const a = textBoxes[i], b = textBoxes[j];
-      if (Math.min(a.x+a.width,b.x+b.width) > Math.max(a.x,b.x) + 0.5 && Math.min(a.y+a.height,b.y+b.height) > Math.max(a.y,b.y) + 0.5) diagnostics.push({ code: 'TEXT_OVERLAP', severity: 'error', nodeIds: [a.id,b.id], message: 'Text bounds overlap. Separate the blocks before exporting.' });
+      if (b.y >= a.y+a.height-0.5) break;
+      const pair = [a.id,b.id].sort().join('|');
+      if (a.id === b.id || overlapping.has(pair)) continue;
+      if (Math.min(a.x+a.width,b.x+b.width) > Math.max(a.x,b.x) + 0.5 && Math.min(a.y+a.height,b.y+b.height) > Math.max(a.y,b.y) + 0.5) { overlapping.add(pair); diagnostics.push({ code: 'TEXT_OVERLAP', severity: 'error', nodeIds: [a.id,b.id], message: 'Rendered text bounds overlap. Move the named text blocks apart before exporting.' }); }
     }
     signal.throwIfAborted(); layer.draw();
     const png = await stage.toBlob({ mimeType: 'image/png', pixelRatio: 1 });

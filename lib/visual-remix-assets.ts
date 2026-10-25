@@ -92,3 +92,23 @@ export async function savePortableProject(projectId: string, revision: number, s
   importProject(text); // Same limits on export and import; no unusable saved file.
   return text;
 }
+
+export type RasterCrop = { x: number; y: number; width: number; height: number };
+// Materialize only selected pixels. A render-time image crop would otherwise
+// embed the whole reference in a portable project. Never fetch or auto-approve.
+export async function cropRaster(source: Blob, crop: RasterCrop, signal: AbortSignal): Promise<Blob> {
+  signal.throwIfAborted();
+  const header = rasterHeader(new Uint8Array(await source.arrayBuffer()));
+  if (![crop.x,crop.y,crop.width,crop.height].every(Number.isSafeInteger) || crop.x < 0 || crop.y < 0 || crop.width < 1 || crop.height < 1 || crop.x + crop.width > header.width || crop.y + crop.height > header.height) throw new Error('INVALID_CROP');
+  signal.throwIfAborted();
+  const bitmap = await createImageBitmap(source, { imageOrientation: 'none' });
+  try {
+    signal.throwIfAborted();
+    if (bitmap.width !== header.width || bitmap.height !== header.height) throw new Error('RASTER_DIMENSION_MISMATCH');
+    const canvas = document.createElement('canvas'); canvas.width = crop.width; canvas.height = crop.height;
+    const context = canvas.getContext('2d'); if (!context) throw new Error('CROP_FAILED');
+    context.drawImage(bitmap, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+    signal.throwIfAborted(); if (!blob) throw new Error('CROP_FAILED'); return blob;
+  } finally { bitmap.close(); }
+}
