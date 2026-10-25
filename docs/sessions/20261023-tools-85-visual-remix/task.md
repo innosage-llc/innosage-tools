@@ -387,3 +387,10 @@ unavailable; no original asset/Scene bytes are committed or uploaded. Independen
 security review and exact-head merge gate remain pending. Staging read-only
 preflight: priorac8e7f4e stillactive100%,0active shares,15/20 cumulative stored
 shares,151552B D1, reference table absent. No MCP calls or grants were made.
+
+Independent security review PASS a1626bb vs fecaec4; no actionable findings or
+additional unhandled staging data/access risk within fresh feature scope. Latest
+gated actual-source browser journey PASS. Existing public-route smoke assumed
+the first role=status was editor readiness; with remote panel enabled it selects
+connection status. Test now targets the exact editor readiness text; runtime
+source unchanged. Recheck that smoke and bind final review to repaired test head.
