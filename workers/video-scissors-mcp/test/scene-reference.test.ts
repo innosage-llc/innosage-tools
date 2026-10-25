@@ -59,7 +59,7 @@ async function fixture() {
                 };
             } };
     };
-    const create = async (c: unknown = consent) => { const r = await call('create', { snapshot, consent: c }); assert.equal(r.status, 200, r.error); return r.value as Created; };
+    const create = async (c: unknown = consent, leaseMs?:number) => { const r = await call('create', { snapshot, consent: c,...(leaseMs!==undefined?{leaseMs}:{}) }); assert.equal(r.status, 200, r.error); return r.value as Created; };
     const bind = async (p: Created) => { const r = await call('bind', { proof: p.proof }); assert.ok(r.value); return r.value as SceneAuth; };
     return { mf, db, call, create, bind, advance: (ms: number) => { time += ms; }, noEgress: () => assert.equal(egress, 0) };
 }
@@ -215,4 +215,20 @@ test('actual local OAuth provider: exact scopes, private upload route, native im
     finally {
         await f.mf.dispose();
     }
+});
+
+
+test('30-minute reference access expires without heartbeat extension; old payload cannot enter fresh consent',async()=>{
+ const f=await fixture();try{
+  const p=await f.create(consent,1800000),remote=await f.bind(p);await f.call('upload',{auth:p.auth,reference});
+  f.advance(900001);assert.equal((await f.call('sync',{auth:p.auth,snapshot})).value,true);
+  assert.ok(!((await f.call('read',{auth:remote})).value as {isError?:boolean}).isError);
+  f.advance(900000);assert.equal((await f.call('sync',{auth:p.auth,snapshot})).value,false);
+  assert.ok(((await f.call('read',{auth:remote})).value as {isError?:boolean}).isError);assert.equal((await f.call('upload',{auth:p.auth,reference})).value,false);
+  await f.call('revoke',{auth:p.auth});assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_references WHERE share=?').bind(p.auth.shareId).first('n'),0);
+  const fresh=await f.create(undefined,1800000),newRemote=await f.bind(fresh);
+  assert.ok(((await f.call('read',{auth:newRemote})).value as {isError?:boolean}).isError,'fresh grant does not inherit bytes');
+  assert.equal((await f.call('upload',{auth:fresh.auth,reference})).value,true);assert.ok(!((await f.call('read',{auth:newRemote})).value as {isError?:boolean}).isError);
+  assert.ok(((await f.call('read',{auth:remote})).value as {isError?:boolean}).isError);f.noEgress();
+ }finally{await f.mf.dispose();}
 });

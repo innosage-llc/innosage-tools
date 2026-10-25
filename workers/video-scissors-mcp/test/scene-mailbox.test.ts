@@ -18,7 +18,7 @@ async function fixture() {
     const response = await mf.dispatchFetch('https://localhost/fixture', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-fixture-time': String(time) }, body: JSON.stringify({ action, ...data }) });
     return { status: response.status, ...await response.json() as { value?: unknown; error?: string } };
   };
-  const create = async () => { const r = await call('create', { snapshot: snapshot() }); assert.equal(r.status, 200, r.error); return r.value as Created; };
+  const create = async (leaseMs?:number) => { const r = await call('create', { snapshot: snapshot(),...(leaseMs!==undefined?{leaseMs}:{}) }); assert.equal(r.status, 200, r.error); return r.value as Created; };
   const consent = async () => { const created = await create(); const r = await call('bind', { proof: created.proof, handle: crypto.randomUUID() }); assert.equal(r.status, 200, r.error); return { ...created, remote: r.value as SceneAuth }; };
   return { mf, db, call, create, consent, advance: (ms: number) => { time += ms; }, noEgress: () => assert.equal(egress, 0) };
 }
@@ -125,4 +125,24 @@ test('actual local D1: finite cumulative share and distinct-request budgets cann
     assert.equal(await f.db.prepare('SELECT request_count FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('request_count'), 16);
     f.noEgress();
   } finally { await f.mf.dispose(); }
+});
+
+test('explicit 30-minute consent keeps legacy leases short and fixed across heartbeat; expiry and revoke remain enforced',async()=>{
+ const f=await fixture();try{
+  const old=await f.create(),newer=await f.create(SCENE_LIMITS.leaseMs);
+  assert.equal(newer.expiresAt-old.expiresAt,900000);
+  const oldRemote=(await f.call('bind',{proof:old.proof,handle:'legacy'})).value;
+  const remote=(await f.call('bind',{proof:newer.proof,handle:'new-consent'})).value;
+  for(const bad of [0,900000,1800001,'1800000',null])assert.equal((await f.call('create',{snapshot:snapshot(),leaseMs:bad})).status,409);
+  f.advance(900001);assert.equal((await f.call('lease',{auth:oldRemote})).value,null);
+  assert.deepEqual((await f.call('lease',{auth:remote})).value,{expiresAt:newer.expiresAt});
+  assert.equal((await f.call('sync',{auth:newer.auth,snapshot:snapshot()})).value,true);
+  assert.deepEqual((await f.call('lease',{auth:remote})).value,{expiresAt:newer.expiresAt},'heartbeat does not extend');
+  f.advance(900000);assert.equal((await f.call('lease',{auth:remote})).value,null);assert.equal((await f.call('snapshot',{auth:remote})).value,null);
+  assert.equal((await f.call('sync',{auth:newer.auth,snapshot:snapshot()})).value,false);
+  assert.equal((await f.call('propose',{auth:remote,proposal:proposal('expired')})).value,null);
+  assert.equal((await f.call('revoke',{auth:newer.auth})).value,true);assert.equal((await f.call('revoke',{auth:newer.auth})).value,true);
+  const next=await f.create(SCENE_LIMITS.leaseMs);assert.notEqual(next.auth.shareId,newer.auth.shareId);assert.notEqual(next.proof,newer.proof);
+  assert.equal((await f.call('bind',{proof:newer.proof,handle:'no-reuse'})).value,null);f.noEgress();
+ }finally{await f.mf.dispose();}
 });

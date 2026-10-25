@@ -21,10 +21,10 @@ export async function sceneBrowserRoute(request: Request, store: SceneMailbox, r
     return reply({ok:await store.referenceStore().upload(auth,body.reference)});
   }
   const raw = JSON.parse(await boundedBody(request));
-  const keys = path === '/scene/browser/create' && referencesEnabled && raw && Object.hasOwn(raw,'referenceConsent') ? [...fields[path],'referenceConsent'] : fields[path];
+  const keys = [...fields[path],...(path === '/scene/browser/create' && referencesEnabled && raw && Object.hasOwn(raw,'referenceConsent') ? ['referenceConsent'] : []),...(path === '/scene/browser/create' && raw && Object.hasOwn(raw,'leaseMs') ? ['leaseMs'] : [])];
   const body = sceneObject(raw, keys);
   const result = (data: unknown) => new Response(sceneJSON(data, SCENE_LIMITS.wireBytes), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
-  if (path === '/scene/browser/create') return result(await store.create(body.snapshot, body.fields, body.confirmed, body.referenceConsent));
+  if (path === '/scene/browser/create') return result(await store.create(body.snapshot, body.fields, body.confirmed, body.referenceConsent,body.leaseMs));
   const auth = parseSceneAuth(body.auth, true) as SceneOwner;
   // Revoke remains idempotent after the lease was revoked/expired.
   if (path === '/scene/browser/revoke') return result({ ok: await store.revoke(auth) });

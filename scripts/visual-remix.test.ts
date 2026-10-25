@@ -204,3 +204,34 @@ test('local edits coalesce typing, retain bounded Undo history, and never revive
  const ticket=c.stageLocalEdit();c.revoke();assert.equal(await c.renderLocalEdit(scene(),ticket),'stale');
  const old=c.stageLocalEdit();await c.open('new-project',0,scene(),new LocalAssets());assert.equal(await c.renderLocalEdit(scene(),old),'stale');
 });
+
+test('local gestures and remote Apply support PNG-identical Undo/Redo; a new edit clears redo',async t=>{
+ let clock=10000;t.mock.method(Date,'now',()=>clock);
+ const c=new VisualRemixController(async s=>rendered(s));await c.open('local',0,scene(),new LocalAssets());
+ const original=await c.exportPNG().text();
+ for(const x of [90,100,110]){clock+=2000;const next=scene();next.nodes[0].x=x;await c.renderLocalEdit(next,c.stageLocalEdit('held-arrow'));}
+ const moved=await c.exportPNG().text();assert.notEqual(moved,original);
+ assert.ok(c.undo());assert.equal(await c.exportPNG().text(),original);assert.equal(c.undo(),false,'long held gesture creates one step');
+ assert.ok(c.snapshot().canRedo);assert.ok(c.redo());assert.equal(await c.exportPNG().text(),moved);assert.equal(c.redo(),false);
+ const remote=scene();remote.nodes[0].y=280;
+ await c.propose(proposal(c,'remote',remote));assert.equal(c.apply('remote'),'applied');const applied=await c.exportPNG().text();
+ assert.ok(c.undo());assert.equal(await c.exportPNG().text(),moved);assert.ok(c.redo());assert.equal(await c.exportPNG().text(),applied);
+ assert.ok(c.undo());const fresh=scene();fresh.nodes[0].x=120;await c.renderLocalEdit(fresh,c.stageLocalEdit('next-gesture'));
+ assert.equal(c.snapshot().canRedo,false);assert.equal(c.redo(),false);
+ // Separate gestures do not merge even within the typing debounce window.
+ const next=scene();next.nodes[0].x=130;await c.renderLocalEdit(next,c.stageLocalEdit('another-gesture'));
+ assert.ok(c.undo());assert.deepEqual(c.snapshot().scene,fresh);assert.ok(c.undo());assert.equal(await c.exportPNG().text(),moved);
+ c.revoke();assert.ok(c.redo(),'remote revocation does not discard local history');
+ await c.open('replacement',0,scene(),new LocalAssets());assert.equal(c.snapshot().canRedo,false);assert.equal(c.snapshot().canUndo,false);c.dispose();
+});
+
+test('Undo/Redo fence late local rendering and stale remote proposals without weakening export checks',async()=>{
+ let release:(()=>void)|undefined;
+ const c=new VisualRemixController(async s=>{if(s.background==='#123456')await new Promise<void>(r=>release=r);return rendered(s);});
+ await c.open('local',0,scene(),new LocalAssets());
+ const next=scene();next.nodes[0].y=260;await c.renderLocalEdit(next,c.stageLocalEdit());
+ const late=c.renderLocalEdit({...next,background:'#123456'},c.stageLocalEdit());
+ assert.ok(c.undo());assert.ok(c.redo());release!();assert.equal(await late,'stale');assert.deepEqual(c.snapshot().scene,next);
+ await c.propose(proposal(c,'pending'));assert.ok(c.undo());assert.equal(c.status('pending'),'stale');assert.ok(c.redo());assert.equal(c.apply('pending'),'stale');
+ assert.deepEqual(JSON.parse(await c.exportPNG().text()),next);c.dispose();
+});

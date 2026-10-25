@@ -17,8 +17,10 @@ export class VisualRemixController {
   private revision = 0;
   private current: Committed | null = null;
   private history: Committed[] = [];
-  private localEdit: { id: string; generation: string; revision: number; abort: AbortController } | null = null;
+  private future: Committed[] = [];
+  private localEdit: { id: string; generation: string; revision: number; gesture: string | null; abort: AbortController } | null = null;
   private lastLocalCommit = 0;
+  private lastLocalGesture: string | null = null;
   private assets = new LocalAssets();
   private receipts = new Map<string, Receipt>();
   private loading: AbortController | null = null;
@@ -27,7 +29,7 @@ export class VisualRemixController {
   constructor(renderer: SceneRenderer) { this.renderer = renderer; }
   snapshot() {
     const preview = this.previewId ? this.receipts.get(this.previewId) : undefined;
-    return copy({ projectId: this.projectId, generation: this.generation, revision: this.revision, loading: this.loading !== null, editing: this.localEdit !== null, scene: this.current?.scene ?? null, output: this.current?.render ?? null, canUndo: this.history.length > 0,
+    return copy({ projectId: this.projectId, generation: this.generation, revision: this.revision, loading: this.loading !== null, editing: this.localEdit !== null, scene: this.current?.scene ?? null, output: this.current?.render ?? null, canUndo: this.history.length > 0, canRedo: this.future.length > 0,
       preview: preview?.status === 'preview' ? { requestId: preview.proposal.requestId, scene: preview.proposal.scene, explanation: preview.proposal.explanation, output: preview.render! } : null });
   }
   status(requestId: string): ProposalStatus | null { return this.receipts.get(requestId)?.status ?? null; }
@@ -51,7 +53,7 @@ export class VisualRemixController {
       // A transitional snapshot cannot grant authority over the committed import.
       this.generation = crypto.randomUUID();
       this.projectId = projectId; this.revision = revision; this.assets = assets;
-      this.current = { scene, render: copy(render) }; this.history = []; this.lastLocalCommit = 0; this.receipts = new Map();
+      this.current = { scene, render: copy(render) }; this.history = []; this.future = []; this.lastLocalCommit = 0; this.lastLocalGesture = null; this.receipts = new Map();
     } finally { if (this.loading === abort) this.loading = null; }
   }
   propose(input: unknown): Promise<ProposalStatus> {
@@ -87,20 +89,21 @@ export class VisualRemixController {
     for (const a of scene.assets) this.assets.blob(a);
     if (JSON.stringify({ ...r.proposal, scene }) !== r.payload || !r.render) throw new Error('PREVIEW_CHANGED');
     if (this.revision >= Number.MAX_SAFE_INTEGER - 1) throw new Error('REVISION_LIMIT');
-    this.remember(); this.lastLocalCommit = 0; this.current = { scene, render: r.render }; this.revision++;
+    this.remember(); this.lastLocalCommit = 0; this.lastLocalGesture = null; this.current = { scene, render: r.render }; this.revision++;
     r.status = 'applied'; r.render = undefined; this.invalidate('stale');
     return r.status;
   }
   private remember(): void {
     if (this.current) this.history = [...this.history.slice(-19), this.current];
+    this.future = [];
   }
   // Browser-owned parameter edits only. Remote JSON/tools cannot invoke this
   // path. Stage immediately fences pending proposals; UI debounces rendering.
-  stageLocalEdit(): string {
+  stageLocalEdit(gesture: string | null = null): string {
     if (!this.current || this.loading) throw new Error('NO_SCENE');
     this.discardLocalEdit(); this.invalidate('stale');
     const id = crypto.randomUUID();
-    this.localEdit = {id,generation:this.generation,revision:this.revision,abort:new AbortController()};
+    this.localEdit = {id,generation:this.generation,revision:this.revision,gesture,abort:new AbortController()};
     return id;
   }
   discardLocalEdit(): void { this.localEdit?.abort.abort(); this.localEdit = null; }
@@ -114,7 +117,8 @@ export class VisualRemixController {
     if (this.revision >= Number.MAX_SAFE_INTEGER-1) throw new Error('REVISION_LIMIT');
     // Consecutive typing in one short burst shares an Undo checkpoint.
     const now = Date.now();
-    if (!this.lastLocalCommit || now-this.lastLocalCommit > 750) this.remember();
+    if (edit.gesture ? edit.gesture !== this.lastLocalGesture : this.lastLocalGesture !== null || !this.lastLocalCommit || now-this.lastLocalCommit > 750) this.remember();
+    this.future = []; this.lastLocalGesture = edit.gesture;
     this.lastLocalCommit = now; this.current = {scene,render:copy(render)};this.revision++;
     this.localEdit = null;this.invalidate('stale');
     return 'applied';
@@ -122,18 +126,27 @@ export class VisualRemixController {
   undo(): boolean {
     this.discardLocalEdit();
     if (!this.history.length || this.loading || this.revision >= Number.MAX_SAFE_INTEGER-1) return false;
-    this.invalidate('stale'); this.current = this.history.pop()!;this.lastLocalCommit = 0;this.revision++;return true;
+    this.invalidate('stale');
+    if(this.current) this.future = [...this.future.slice(-19),this.current];
+    this.current = this.history.pop()!;this.lastLocalCommit = 0;this.lastLocalGesture = null;this.revision++;return true;
+  }
+  redo(): boolean {
+    this.discardLocalEdit();
+    if (!this.future.length || this.loading || this.revision >= Number.MAX_SAFE_INTEGER-1) return false;
+    this.invalidate('stale');
+    if(this.current) this.history = [...this.history.slice(-19),this.current];
+    this.current = this.future.pop()!;this.lastLocalCommit = 0;this.lastLocalGesture = null;this.revision++;return true;
   }
   cancel(requestId: string): void {
     const r = this.receipts.get(requestId);
     if (r && (r.status === 'rendering' || r.status === 'preview')) { r.status = 'canceled'; r.abort.abort(); r.render = undefined; if (this.previewId === requestId) this.previewId = null; }
   }
-  revoke(): void { this.discardLocalEdit(); this.lastLocalCommit = 0; this.loading?.abort(); this.loading = null; this.invalidate('revoked'); this.generation = crypto.randomUUID(); }
+  revoke(): void { this.discardLocalEdit(); this.lastLocalCommit = 0; this.lastLocalGesture = null; this.loading?.abort(); this.loading = null; this.invalidate('revoked'); this.generation = crypto.randomUUID(); }
   exportPNG(): Blob {
     if (!this.current) throw new Error('NO_SCENE');
     if (this.localEdit) throw new Error('LOCAL_EDIT_PENDING');
     if (this.current.render.diagnostics.some(d => d.severity === 'error')) throw new Error('FIX_LAYOUT_BEFORE_EXPORT');
     return this.current.render.png;
   }
-  dispose(): void { this.discardLocalEdit(); this.loading?.abort(); this.loading = null; this.invalidate('canceled'); this.current = null; this.history = []; this.generation = crypto.randomUUID(); }
+  dispose(): void { this.discardLocalEdit(); this.loading?.abort(); this.loading = null; this.invalidate('canceled'); this.current = null; this.history = []; this.future = []; this.generation = crypto.randomUUID(); }
 }

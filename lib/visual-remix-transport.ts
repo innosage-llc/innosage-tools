@@ -88,7 +88,7 @@ export class VisualRemixTransport {
     this.publish({ phase:'connecting', canConnect:false, canDisconnect:true });
     try {
       // Never retry creation: a lost response can conceal a committed share.
-      const value = sceneObject(await this.call('create', { snapshot, fields:SCENE_SHARE_FIELDS, confirmed:true, ...(reference ? {referenceConsent:reference.consent} : {}) }), ['auth','proof','expiresAt','proofExpiresAt']);
+      const value = sceneObject(await this.call('create', { snapshot, fields:SCENE_SHARE_FIELDS, confirmed:true, leaseMs:SCENE_LIMITS.leaseMs, ...(reference ? {referenceConsent:reference.consent} : {}) }), ['auth','proof','expiresAt','proofExpiresAt']);
       const auth = parseSceneAuth(value.auth,true) as SceneOwner;
       if (auth.projectId !== snapshot.projectId || auth.generation !== snapshot.generation) throw new Error('SCENE_BINDING');
       // Retain validated ownership only for explicit Disconnect if confirmation fails.
@@ -153,7 +153,7 @@ export class VisualRemixTransport {
     for(const abort of this.preparing.values()) abort.abort(); this.preparing.clear();
     this.stopped = true; if (this.timer) clearTimeout(this.timer); this.timer = null; this.frames = [];
     this.bridge?.revoke(); this.renderChanged();
-    this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, diagnostic:error instanceof SceneHttpError ? error.diagnostic : undefined, error:`Connection stopped. Local edits and exports are preserved. ${recovery(error)} Expiration alone does not guarantee physical deletion.` });
+    this.publish({ phase:'error', canConnect:false, canDisconnect:!!this.owner, reauthorizationRequired:error instanceof SceneHttpError && error.diagnostic.status===401 || !!this.owner && this.now()>=this.owner.expiresAt, diagnostic:error instanceof SceneHttpError ? error.diagnostic : undefined, error:`Connection stopped. Local edits and exports are preserved. ${recovery(error)} Expiration alone does not guarantee physical deletion.` });
   }
   private async pump(): Promise<void> {
     if (this.pumping || this.stopped || !this.owner) return;
@@ -216,19 +216,25 @@ export class VisualRemixTransport {
   }
   async disconnect(reason?: string): Promise<void> {
     const notice = reason ?? this.state.notice;
+    const reauthorizationRequired = this.state.reauthorizationRequired || !!this.owner && (this.now()>=this.owner.expiresAt || this.state.phase==='awaiting-consent' && this.now()>=this.owner.proofExpiresAt);
     for(const abort of this.preparing.values()) abort.abort(); this.preparing.clear();
     this.stopped = true; if (this.timer) clearTimeout(this.timer); this.timer = null; this.frames = []; this.bridge?.revoke();
+    if(!this.disposed)this.renderChanged();
     this.publish({ phase:'revoking',canConnect:false,canDisconnect:false });
     if (this.creating) return; // Late create response owns cleanup; never adopt it.
-    if (!this.owner) { this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:false,notice}); return; }
+    if (!this.owner) { this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:false,notice,reauthorizationRequired}); return; }
     try {
       const result = sceneObject(await this.call('revoke', { auth:this.owner.auth },true), ['ok']);
       if (result.ok !== true) throw new Error('SCENE_REVOKE');
       this.owner = null; this.bridge = null; this.reference = null; this.materialize = null; this.referenceUploaded=false; this.preparationStates.clear(); this.issued.clear(); this.acknowledged.clear(); this.fingerprint = '';
-      this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:true,notice});
+      this.publish({phase:'disconnected',canConnect:this.available,canDisconnect:false,revocationConfirmed:true,notice,reauthorizationRequired});
     } catch {
-      this.publish({phase:'error',canConnect:false,canDisconnect:true,notice,error:'Revocation is unconfirmed. Retry Disconnect. Existing service content may remain until a successful revoke or later cleanup.'});
+      this.publish({phase:'error',canConnect:false,canDisconnect:true,notice,reauthorizationRequired,error:'Revocation is unconfirmed. Retry Disconnect. Existing service content may remain until a successful revoke or later cleanup.'});
     }
+  }
+  prepareReauthorization(): boolean {
+    if(this.disposed || this.state.phase!=='disconnected' || !this.state.canConnect || this.owner || this.creating)return false;
+    this.publish({...this.state,reauthorizationRequired:false});return true;
   }
   dispose(): void { this.disposed = true; void this.disconnect(); }
 }

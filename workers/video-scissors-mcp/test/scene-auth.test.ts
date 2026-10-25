@@ -192,3 +192,22 @@ test('known stale/browser rejection is not queued; same-ID recovery is idempoten
   f.noEgress();
  }finally{await f.mf.dispose();}
 });
+
+test('fresh explicit 30-minute consent issues only bounded existing scopes; legacy clients still receive 15 minutes',async()=>{
+ const f=await fixture();try{
+  for(const bad of [null,0,1800001,'1800000'])assert.equal((await f.json('/scene/browser/create',{snapshot:snapshot(),fields:['text','layout','captions','provenance','limitations','rasterDescriptors'],confirmed:true,leaseMs:bad})).status,400);
+  const {p,t}=await f.link(undefined,1800000);
+  assert.equal(p.expiresAt-p.proofExpiresAt,1500000);assert.ok(t.expires_in<=1800&&t.expires_in>=1795);assert.equal(t.refresh_token,undefined);
+  assert.deepEqual(t.scope.split(' ').sort(),scopes.slice().sort());
+  assert.equal((await f.rpc(t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);
+  const before=await f.db.prepare('SELECT expires FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('expires');
+  await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()});assert.equal(await f.db.prepare('SELECT expires FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('expires'),before);
+  await f.db.prepare('UPDATE scene_shares SET expires=? WHERE id=?').bind(Date.now()-1,p.auth.shareId).run();
+  assertSceneReauthorization((await f.rpc(t.access_token,'tools/list')).r);
+  assert.equal((await f.json('/scene/browser/sync',{auth:p.auth,snapshot:snapshot()})).status,401);
+  await f.json('/scene/browser/revoke',{auth:p.auth});assertSceneReauthorization((await f.rpc(t.access_token,'tools/list')).r);
+  const fresh=await f.link(undefined,1800000);assert.notEqual(fresh.p.auth.shareId,p.auth.shareId);
+  assert.equal((await f.rpc(fresh.t.access_token,'tools/call',{name:'get_scene',arguments:{}})).r.status,200);
+  assertSceneReauthorization((await f.rpc(t.access_token,'tools/list')).r);f.noEgress();
+ }finally{await f.mf.dispose();}
+});

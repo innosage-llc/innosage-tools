@@ -10,6 +10,7 @@ export default { async fetch(request: Request, env: Env) {
             return sceneBrowserRoute(request, store, enabled);
         const body = await request.json<{
             action: string;
+            leaseMs?: number;
             snapshot: unknown;
             consent: unknown;
             auth: SceneOwner;
@@ -28,7 +29,7 @@ export default { async fetch(request: Request, env: Env) {
             let value: unknown;
             switch (body.action) {
                 case 'create':
-                    value = await store.create(body.snapshot, SCENE_FIELDS, true, body.consent);
+                    value = await store.create(body.snapshot, SCENE_FIELDS, true, body.consent,body.leaseMs);
                     break;
                 case 'bind':
                     value = await store.bindFromProof(body.proof, crypto.randomUUID());
