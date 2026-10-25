@@ -32,7 +32,7 @@ export async function readVersionedMedia(url,init,dispatch){
  // a content change when the explicit nonempty revision and CAS identity agree.
  const decreasingVersion=BigInt(after.version)<BigInt(before.version);
  const contentDrift=['etag','headRevisionId','fileSize','mimeType'].some(key=>changed[key]);
- const unpinnedVersionDrift=before.fileSize==='0'&&changed.version;
+ const unpinnedVersionDrift=bytes.byteLength===0&&changed.version;
  if(contentDrift||decreasingVersion||unpinnedVersionDrift)reject('MEDIA_VERSION_CHANGED',{mediaDrift:{...changed,
   versionOrder:BigInt(after.version)>BigInt(before.version)?'greater':BigInt(after.version)<BigInt(before.version)?'less':'equal',
   role:before.title==='transaction.json'?'transaction':before.title==='rxdb-wal.json'?'wal':'other'}});

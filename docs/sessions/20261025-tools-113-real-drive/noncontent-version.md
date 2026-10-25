@@ -39,8 +39,14 @@ MEDIA_VERSION_CHANGED (retained /tmp/tools113-version-red.log), then passed on
 the correction. Original test source is retained privately and in Git history.
 No prior real attempt is retroactively green.
 
-21 focused tests PASS, including permitted nonempty version-only increase;
+22 focused tests PASS, including permitted nonempty version-only increase;
 rejected decrease/head/ETag/size/MIME drift and empty-file version drift;
 unchanged stale conditional PUT412. Existing native mock integration also run.
 Actual corrected-source Google qualification remains necessary after review,
 repository gates and exact staging integration; no new live retry yet.
+
+Independent review caught a decimal-size edge: '00' passes numeric metadata
+validation but is actual zero bytes. Stopped the owned submission gate before
+publication; leading-zero regression RED, then actual bytes.byteLength-based
+classification GREEN. Empty bytes remain strict even with a revision field.
+Original interrupted gate is not counted as PASS.

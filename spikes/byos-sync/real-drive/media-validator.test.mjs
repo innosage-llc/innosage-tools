@@ -5,12 +5,12 @@ import {API,authorize,forget,begin,driveFetch,evidence} from './transport.mjs';
 const path='/drive/v2/files/synthetic-file';
 const media=API+path+'?alt=media';
 const meta=()=>({id:'synthetic-file',etag:'"file-1"',version:'9007199254740993',headRevisionId:'revision-1',fileSize:'7',mimeType:'application/json'});
-async function fixture(work,{change,body='{"x":1}',missing,weak=false,empty=false,mediaStatus=200}={}){
+async function fixture(work,{change,body='{"x":1}',missing,weak=false,empty=false,mediaStatus=200,zeroAlias=false}={}){
  const original=globalThis.fetch,calls=[];let reads=0;
  globalThis.fetch=async(u,opts)=>{const url=new URL(u);calls.push({url,opts});
   if(opts.method==='PUT')return new Response('',{status:412});
   if(url.searchParams.get('alt')==='media')return new Response(body,{status:mediaStatus,headers:{'Content-Type':'application/json',Date:'Sun, 25 Oct 2026 05:00:00 GMT'}});
-  const m=meta();if(empty){m.fileSize='0';delete m.headRevisionId;}if(missing)delete m[missing];if(weak)m.etag='W/"weak"';if(++reads===2&&change)change(m);
+  const m=meta();if(zeroAlias)m.fileSize='00';if(empty){m.fileSize='0';delete m.headRevisionId;}if(missing)delete m[missing];if(weak)m.etag='W/"weak"';if(++reads===2&&change)change(m);
   return Response.json(m,{headers:{ETag:m.etag??'"header-only"',Date:'Sun, 25 Oct 2026 05:00:00 GMT'}});
  };
  authorize('SYNTHETIC_SECRET',60);begin();try{await work(calls);}finally{globalThis.fetch=original;forget();}
@@ -59,4 +59,8 @@ test('same size does not hide changed validator or revision even if version is u
 });
 test('zero-byte bootstrap cannot waive a version increase without a pinned content revision',async()=>{
  await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{empty:true,body:'',change:m=>{m.version='9007199254740994';}});
+});
+
+test('actual zero bytes with noncanonical decimal size and a revision still require exact version',async()=>{
+ await fixture(()=>assert.rejects(driveFetch(media),/MEDIA_VERSION_CHANGED/),{zeroAlias:true,body:'',change:m=>{m.version='9007199254740994';}});
 });
