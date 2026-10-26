@@ -38,6 +38,7 @@ export type PreviewControlsProps = {
   onDiscardDraft: () => void;
   onGestureStart: () => void;
   onGestureEnd: () => void;
+  onCenterNode?: (axis: 'x' | 'y') => void;
 };
 
 export function PreviewControls({
@@ -74,6 +75,7 @@ export function PreviewControls({
   onDiscardDraft,
   onGestureStart,
   onGestureEnd,
+  onCenterNode,
 }: PreviewControlsProps) {
   const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.key)) {
@@ -241,6 +243,21 @@ export function PreviewControls({
               </div>
             )}
 
+            <div className="grid grid-cols-2 gap-2">
+              {node.type !== 'image' && <label>Fill
+                <input aria-label="Inspector fill" className="w-full rounded border p-1" value={node.fill} onChange={e=>onChange({fill:e.target.value})}/>
+              </label>}
+              {node.type === 'image' && <p className="col-span-2 break-all">Approved image: {node.assetId} · crop {node.crop.x}, {node.crop.y}, {node.crop.width} × {node.crop.height}</p>}
+              {node.type === 'rect' && <label>Corner radius<input {...numberGestureProps} aria-label="Inspector corner radius" className="w-full rounded border p-1" type="number" value={node.cornerRadius} onChange={e=>onChange({cornerRadius:e.target.valueAsNumber})}/></label>}
+              {node.type === 'text' && <>
+                <label>Font family<select aria-label="Inspector font family" className="w-full rounded border p-1" value={node.font} onChange={e=>onChange({font:e.target.value as 'sans'|'serif'|'mono'})}>{['sans','serif','mono'].map(v=><option key={v}>{v}</option>)}</select></label>
+                <label>Weight<select aria-label="Inspector font weight" className="w-full rounded border p-1" value={node.fontWeight} onChange={e=>onChange({fontWeight:e.target.value as 'normal'|'bold'})}>{['normal','bold'].map(v=><option key={v}>{v}</option>)}</select></label>
+                <label>Alignment<select aria-label="Inspector text alignment" className="w-full rounded border p-1" value={node.align} onChange={e=>onChange({align:e.target.value as 'left'|'center'|'right'})}>{['left','center','right'].map(v=><option key={v}>{v}</option>)}</select></label>
+                <label>Line height<input {...numberGestureProps} aria-label="Inspector line height" className="w-full rounded border p-1" type="number" step="0.1" value={node.lineHeight} onChange={e=>onChange({lineHeight:e.target.valueAsNumber})}/></label>
+                <label>Wrap<select aria-label="Inspector wrap" className="w-full rounded border p-1" value={node.wrap} onChange={e=>onChange({wrap:e.target.value as 'word'|'char'})}>{['word','char'].map(v=><option key={v}>{v}</option>)}</select></label>
+              </>}
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
                 <label htmlFor="preview-node-x" className="block text-[11px] font-medium text-gray-600 mb-0.5">
@@ -313,6 +330,46 @@ export function PreviewControls({
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-0.5">
+              <span className="text-[11px] font-medium text-gray-600">Align:</span>
+              <button
+                type="button"
+                aria-label="Center X"
+                onClick={() =>
+                  onCenterNode
+                    ? onCenterNode('x')
+                    : onChange({
+                        x: Math.max(
+                          0,
+                          Math.min(1080 - node.width, Math.round((1080 - node.width) / 2))
+                        ),
+                      })
+                }
+                disabled={!ready}
+                className="px-2 py-0.5 text-[11px] font-medium rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40"
+              >
+                Center X
+              </button>
+              <button
+                type="button"
+                aria-label="Center Y"
+                onClick={() =>
+                  onCenterNode
+                    ? onCenterNode('y')
+                    : onChange({
+                        y: Math.max(
+                          0,
+                          Math.min(1440 - node.height, Math.round((1440 - node.height) / 2))
+                        ),
+                      })
+                }
+                disabled={!ready}
+                className="px-2 py-0.5 text-[11px] font-medium rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40"
+              >
+                Center Y
+              </button>
             </div>
 
             {node.type === 'text' && (

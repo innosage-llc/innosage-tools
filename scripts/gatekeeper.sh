@@ -38,6 +38,7 @@ echo "🧪 Checking the deployment and release contract..."
 npm run test:deploy
 npm run test:recorder
 npm run test:visual-remix
+npm run test:visual-remix-canvas
 npm run test:visual-remix-bridge
 npm run test:visual-remix-motion
 npm run test:visual-remix-html

@@ -35,6 +35,8 @@ import { createBrowserSceneControlStore } from "@/lib/visual-remix-control-store
 import { SceneSharingPanel } from "./SceneSharingPanel";
 import { PreviewControls } from "./PreviewControls";
 import { ReferenceCrop } from "./ReferenceCrop";
+import { EditableCanvas } from "./EditableCanvas";
+import { centerNode } from "../../lib/visual-remix-canvas";
 
 const sceneRemoteEnabled = process.env.NEXT_PUBLIC_SCENE_REMOTE === "true";
 const sceneReferenceEnabled = process.env.NEXT_PUBLIC_SCENE_REFERENCE === "true";
@@ -133,6 +135,8 @@ export default function VisualRemixApp() {
   const localTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localTicket = useRef(0);
   const parameterGesture = useRef<string | null>(null);
+  const [canvasReset, setCanvasReset] = useState(0);
+  const canvasGesture = useRef<{ id: string; ticket: string } | null>(null);
   const [consentEpoch,setConsentEpoch] = useState(0);
   const [draft, setDraft] = useState<Scene | null>(null);
   const [selected, setSelected] = useState("");
@@ -180,6 +184,8 @@ export default function VisualRemixApp() {
     setApproved(assets.current.descriptors());
   }
   function begin(invalidate = false) {
+    setCanvasReset(value=>value+1);
+    canvasGesture.current = null;
     const hadLocalDraft = controller.current?.snapshot().editing;
     if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;controller.current?.discardLocalEdit();
     if(hadLocalDraft)sync(true);
@@ -422,7 +428,9 @@ export default function VisualRemixApp() {
     );
   }
   function historyStep(direction: "undo" | "redo") {
+    setCanvasReset(value=>value+1);
     if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;parameterGesture.current=null;
+    canvasGesture.current = null;
     controller.current?.[direction]();sync(true);setError("");
     setMessage(`${direction === "undo" ? "Undo" : "Redo"} completed. Pending proposals are stale; local Scene and exports now match.`);
   }
@@ -572,6 +580,7 @@ export default function VisualRemixApp() {
     }
   }
   function editDraft(change: (scene: Scene) => Scene) {
+    canvasGesture.current = null;
     const c = controller.current;
     if (!c || !draft) return;
     const next = change(draft), ticket = ++localTicket.current;
@@ -593,8 +602,72 @@ export default function VisualRemixApp() {
     },250);
   }
   function discardLocalDraft() {
+    setCanvasReset(value=>value+1);
+    canvasGesture.current = null;
     if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;
     controller.current?.discardLocalEdit();sync(true);setError("");setMessage("Local draft discarded. Last applied Scene preserved.");
+  }
+  function stageCanvasGesture(gestureId: string): string {
+    const c = controller.current;
+    if (!c) return "";
+    if (localTimer.current) {
+      clearTimeout(localTimer.current);
+      localTimer.current = null;
+    }
+    localTicket.current++;
+    motion.current.cancel();
+    motionTicket.current++;
+    setMotionBusy(false);
+    setMotionBlob(null);
+    setMotionMessage("");
+    const ticket = c.stageLocalEdit(gestureId);
+    canvasGesture.current = { id: gestureId, ticket };
+    sync();
+    setMessage("Updating local edit… Exports wait for the latest rendered parameters.");
+    return ticket;
+  }
+  function commitCanvasGesture(nextScene: Scene, gestureId: string) {
+    const c = controller.current;
+    const g = canvasGesture.current;
+    canvasGesture.current = null;
+    if (!c || !g || g.id !== gestureId) {
+      return;
+    }
+    const ticket = ++localTicket.current;
+    setDraft(nextScene);
+    setError("");
+    void c
+      .renderLocalEdit(nextScene, g.ticket)
+      .then((result) => {
+        if (ticket !== localTicket.current) return;
+        sync();
+        setMessage(
+          result === "applied"
+            ? `Local edit applied automatically · revision ${c.snapshot().revision}. Save project to keep it for reuse.`
+            : "Local edit was superseded; current Scene preserved."
+        );
+      })
+      .catch(() => {
+        if (ticket !== localTicket.current) return;
+        sync();
+        setError(
+          "These parameters could not render. Correct them or discard the local draft. The last applied Scene is preserved; exports wait for valid parameters."
+        );
+      });
+  }
+  function cancelCanvasGesture(id: string) {
+    if (canvasGesture.current?.id !== id) return;
+    canvasGesture.current = null;
+    controller.current?.discardLocalEdit();
+    sync(true);
+    setError("");
+    setMessage("Local gesture cancelled. Last applied Scene preserved.");
+  }
+  function handleCenterNode(axis: "x" | "y") {
+    if (!selected || !draft) return;
+    const n = draft.nodes.find((item) => item.id === selected);
+    if (!n) return;
+    updateNode(centerNode(n,axis));
   }
   function apply() {
     const id = snapshot?.preview?.requestId;
@@ -617,6 +690,8 @@ export default function VisualRemixApp() {
     }
   }
   function revoke() {
+    setCanvasReset(value=>value+1);
+    canvasGesture.current = null;
     pending.current?.abort();
     if(localTimer.current)clearTimeout(localTimer.current);localTimer.current=null;localTicket.current++;
     pending.current = null;
@@ -1020,23 +1095,40 @@ export default function VisualRemixApp() {
                 Applied revision {snapshot?.revision ?? "—"}
               </span>
             </div>
-            <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(180px,1fr)_minmax(260px,1fr)]">
-              <div className="min-w-0 max-w-sm">
-                <Preview title="Applied image" url={currentURL} empty="Your applied scene appears here." />
+            <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] items-start">
+              <div className="flex flex-col items-center min-w-0 w-full">
+                <h3 className="mb-2 text-sm font-semibold self-start">Applied image</h3>
+                <EditableCanvas
+                  scene={draft ?? snapshot?.scene ?? emptyScene()}
+                  committedScene={snapshot?.scene ?? emptyScene()}
+                  committedPngUrl={currentURL}
+                  selectedId={selected}
+                  onSelect={setSelected}
+                  onCommit={commitCanvasGesture}
+                  onCancel={cancelCanvasGesture}
+                  onStage={stageCanvasGesture}
+                  onCenterNode={handleCenterNode}
+                  resetKey={`${snapshot?.generation}:${snapshot?.revision}:${canvasReset}`}
+                  ready={ready}
+                  pending={!!snapshot?.editing}
+                />
               </div>
-              <PreviewControls
-                nodes={draft?.nodes ?? []} node={node} selected={selected} background={draft?.background ?? ""}
-                ready={ready} pending={!!snapshot?.editing} revision={snapshot?.revision ?? 0}
-                canUndo={ready && !!snapshot?.canUndo} canRedo={ready && !!snapshot?.canRedo} hasCandidate={!!snapshot?.preview}
-                exportable={exportable} motionBusy={motionBusy} motionReady={!!motionBlob}
-                onSelect={setSelected} onChange={updateNode} onBackground={value=>editDraft(s=>({...s,background:value}))}
-                onUndo={()=>historyStep("undo")} onRedo={()=>historyStep("redo")} onApply={apply} onCancel={cancel}
-                onAddText={addText} onRemove={()=>{editDraft(s=>({...s,nodes:s.nodes.filter(n=>n.id!==selected)}));setSelected("");}} onMove={moveNode}
-                onExportPNG={()=>{try{download(controller.current!.exportPNG(),"visual-remix.png");setMessage("Applied PNG downloaded locally.");}catch(e){report(e);}}}
-                onExportHTML={()=>{void exportHTML();}} onSaveProject={()=>{void save();}} onCaptions={()=>jsonDownload({captions:snapshot!.scene!.captions,provenance:snapshot!.scene!.provenance,limitations:snapshot!.scene!.limitations},"visual-remix.captions.json")}
-                onExportMotion={()=>{void exportMotion();}} onCancelMotion={cancelMotion} onDownloadMotion={()=>{if(motionBlob)download(motionBlob,"visual-remix.mp4");}}
-                onDiscardDraft={discardLocalDraft} onGestureStart={startParameterGesture} onGestureEnd={endParameterGesture}
-              />
+              <div className="min-w-0 w-full">
+                <PreviewControls
+                  nodes={draft?.nodes ?? []} node={node} selected={selected} background={draft?.background ?? ""}
+                  ready={ready} pending={!!snapshot?.editing} revision={snapshot?.revision ?? 0}
+                  canUndo={ready && !!snapshot?.canUndo} canRedo={ready && !!snapshot?.canRedo} hasCandidate={!!snapshot?.preview}
+                  exportable={exportable} motionBusy={motionBusy} motionReady={!!motionBlob}
+                  onSelect={setSelected} onChange={updateNode} onBackground={value=>editDraft(s=>({...s,background:value}))}
+                  onUndo={()=>historyStep("undo")} onRedo={()=>historyStep("redo")} onApply={apply} onCancel={cancel}
+                  onAddText={addText} onRemove={()=>{editDraft(s=>({...s,nodes:s.nodes.filter(n=>n.id!==selected)}));setSelected("");}} onMove={moveNode}
+                  onExportPNG={()=>{try{download(controller.current!.exportPNG(),"visual-remix.png");setMessage("Applied PNG downloaded locally.");}catch(e){report(e);}}}
+                  onExportHTML={()=>{void exportHTML();}} onSaveProject={()=>{void save();}} onCaptions={()=>jsonDownload({captions:snapshot!.scene!.captions,provenance:snapshot!.scene!.provenance,limitations:snapshot!.scene!.limitations},"visual-remix.captions.json")}
+                  onExportMotion={()=>{void exportMotion();}} onCancelMotion={cancelMotion} onDownloadMotion={()=>{if(motionBlob)download(motionBlob,"visual-remix.mp4");}}
+                  onDiscardDraft={discardLocalDraft} onGestureStart={startParameterGesture} onGestureEnd={endParameterGesture}
+                  onCenterNode={handleCenterNode}
+                />
+              </div>
             </div>
             <details className="mt-4">
               <summary className="cursor-pointer text-sm font-medium">Compare reference and candidate</summary>
