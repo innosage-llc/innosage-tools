@@ -20,6 +20,20 @@ export function sceneMcpHandler(db: D1Database, auth: SceneAuth, resource: strin
       }
       catch { return { isError: true, content: [{ type: 'text' as const, text: 'SCENE_COMMAND_REJECTED' }] }; }
     };
+    // The independently consented share is this service's profile, not an owner
+    // account or the project shared by several grants. Identity needs live
+    // authority, but never browser freshness, cached Scene content or pixels.
+    server.registerTool('get_profile', {
+      description:'Return the authenticated Scene share profile. Its stored opaque ID identifies this independently authorized share; another share, even for the same project, is a distinct profile. No Scene or image is read.',
+      inputSchema:z.object({}).strict(),
+      outputSchema:z.object({id:z.string().min(1).regex(/\S/),name:z.string().optional(),email:z.string().optional(),nickname:z.string().optional()}).strict(),
+      annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false},
+      _meta:{...meta,'openai/profile':true},
+    },async()=>{
+      if(!await store.lease(auth))return sceneReauthorization(resource);
+      const profile={id:auth.shareId,name:'Editable Screen Scene share',nickname:'Scene share '+auth.shareId.slice(0,8)};
+      return {isError:false,structuredContent:profile,content:[{type:'text' as const,text:sceneJSON(profile)}]};
+    });
     if (referencesEnabled) server.registerTool('read_shared_reference', {description:'Read the freshly consented reference as native image content for vision, without asking the user to attach it again. Read only for first reconstruction; reuse the editable Scene thereafter. No URL/public image is supplied. Authorization, lease, browser freshness and explicit image consent are required. A successful transport is not proof you understood the pixels. Use original dimensions for photo/logo crop coordinates; preserve editable text/shapes. Never generate substitute identity assets.',inputSchema:z.object({}).strict(),_meta:meta,annotations:{readOnlyHint:true}},async()=>{
       if(!await store.lease(auth)) return sceneReauthorization(resource);
       try {return await store.referenceStore().read(auth);} catch {return {isError:true,content:[{type:'text' as const,text:'REFERENCE_READ_REJECTED'}]};}

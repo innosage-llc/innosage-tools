@@ -31,7 +31,7 @@ test('inactive candidate: real provider consent/PKCE, exact audiences/scopes and
     assert.equal((await f.request('/scene/mcp',{ headers: { Authorization:'Bearer '+t.access_token } })).status,405);
     assert.equal((await f.rpc(t.access_token,'tools/list',{},'/mcp')).r.status,401);
     const listed = await f.rpc(t.access_token,'tools/list'); assert.equal(listed.r.status,200);
-    assert.deepEqual(listed.data.result.tools.map((x: { name: string }) => x.name), ['get_scene','propose_scene','proposal_status','cancel_proposal']);
+    assert.deepEqual(listed.data.result.tools.map((x: { name: string }) => x.name), ['get_profile','get_scene','propose_scene','proposal_status','cancel_proposal']);
     for (const tool of listed.data.result.tools) assert.deepEqual(tool.securitySchemes,[{ type:'oauth2',scopes }]);
     const shared = await f.rpc(t.access_token,'tools/call',{name:'get_scene',arguments:{}}); assert.deepEqual(JSON.parse(shared.data.result.content[0].text),snapshot());
     const proposal = { schemaVersion:1,projectId:snapshot().projectId,generation:snapshot().generation,baseRevision:0,requestId:'one',explanation:'Content and layout edit',scene:{...emptyScene(),background:'#112233'} };
