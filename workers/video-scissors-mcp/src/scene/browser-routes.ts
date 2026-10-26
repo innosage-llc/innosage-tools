@@ -1,16 +1,18 @@
 import { REFERENCE_LIMITS } from '../../../../lib/visual-remix-reference';
 import { boundedBody, reply, sameOrigin } from '../http';
 import { SceneMailbox } from './mailbox';
+import type { SceneReauthorizationStore } from './reauthorization';
 import { parseSceneAuth, sceneId, sceneJSON, sceneObject, SCENE_LIMITS, type SceneOwner, type SceneState } from '../../../../lib/visual-remix-remote';
 
 // Inactive candidate; same-origin browser ownership is distinct from OAuth.
-export async function sceneBrowserRoute(request: Request, store: SceneMailbox, referencesEnabled = false): Promise<Response> {
+export async function sceneBrowserRoute(request: Request, store: SceneMailbox, referencesEnabled = false,reauthorization?:SceneReauthorizationStore): Promise<Response> {
   if (request.method !== 'POST' || !sameOrigin(request) || request.headers.get('content-type')?.split(';')[0] !== 'application/json') return reply({ error: 'ORIGIN_OR_METHOD' }, 403);
   const path = new URL(request.url).pathname;
   const fields: Record<string, string[]> = {
     '/scene/browser/create': ['snapshot','fields','confirmed'],
     '/scene/browser/sync': ['auth','snapshot'], '/scene/browser/poll': ['auth'],
     '/scene/browser/report': ['auth','requestId','state'], '/scene/browser/revoke': ['auth'],
+    ...(reauthorization?{'/scene/browser/reauth/describe':['auth','requestId'],'/scene/browser/reauth/issue':['auth','requestId','confirmed']}:{}),
   };
   if (!fields[path] && path !== '/scene/browser/reference') return reply({ error: 'NOT_FOUND' }, 404);
   if (path === '/scene/browser/reference') {
@@ -30,6 +32,15 @@ export async function sceneBrowserRoute(request: Request, store: SceneMailbox, r
   // Revoke remains idempotent after the lease was revoked/expired.
   if (path === '/scene/browser/revoke') return result(await store.revokeOutcome(auth));
   if (!await store.owner(auth)) return reply({ error: 'OWNER_EXPIRED_OR_REVOKED' }, 401);
+  const resource=new URL('/scene/mcp',request.url).href;
+  if(path==='/scene/browser/reauth/describe'){
+    const value=await reauthorization!.describe(auth,body.requestId,resource);
+    return value?result(value):reply({error:'SCENE_REAUTH_UNAVAILABLE'},409);
+  }
+  if(path==='/scene/browser/reauth/issue'){
+    const value=await reauthorization!.issue(auth,body.requestId,resource,body.confirmed);
+    return value?result(value):reply({error:'SCENE_REAUTH_UNAVAILABLE'},409);
+  }
   if (path === '/scene/browser/sync') return result({ ok: await store.sync(auth, body.snapshot),...await store.cacheState(auth) });
   if (path === '/scene/browser/poll') return result({ command: await store.claim(auth,body.cacheEpoch), cancellations: await store.cancellations(auth), connected: !!await store.lease({purpose:auth.purpose,shareId:auth.shareId,projectId:auth.projectId,generation:auth.generation,epoch:auth.epoch}),...await store.cacheState(auth) });
   return result({ ok: await store.report(auth, sceneId(body.requestId), body.state as SceneState) });

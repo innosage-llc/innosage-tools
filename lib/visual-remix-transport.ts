@@ -7,6 +7,8 @@ import { VisualRemixOfflineBridge, SCENE_SHARE_FIELDS } from './visual-remix-bri
 import { VisualRemixController } from './visual-remix-controller.ts';
 import { SCENE_LIMITS, parseSceneAuth, parseSceneProposal, parseSceneSnapshot, sceneJSON, sceneObject, type SceneOwner, type SceneSnapshot, type SceneState } from './visual-remix-remote.ts';
 import type { SceneSharingState } from './visual-remix-sharing-view.ts';
+import { SCENE_REAUTH_CHANNEL, type SceneReauthorizationPrompt } from './visual-remix-reauth-contract.ts';
+import { SCENE_SCOPES } from './visual-remix-remote.ts';
 
 type Frame = { snapshot: SceneSnapshot; states: [string, SceneState][] };
 type Share = { auth: SceneOwner; proof: string; expiresAt: number|null; proofExpiresAt: number; lifetime?:'until-revoked'; cacheEpoch:number };
@@ -24,6 +26,7 @@ const recovery = (error?: unknown) => error instanceof SceneHttpError && error.d
   ? 'A service or storage limit was reached. Stop retrying and report the connection diagnostic.'
   : 'Disconnect to confirm service revocation; a new share requires fresh manual host authorization.';
 type Sender = (path: string, init: RequestInit) => Promise<Response>;
+type ReauthorizationChannel=Pick<BroadcastChannel,'onmessage'|'postMessage'|'close'>;
 
 // Only instantiated behind the product build gate and explicit user consent.
 // No configurable destination, host credential persistence, Apply or export. Only a
@@ -51,17 +54,65 @@ export class VisualRemixTransport {
   private frames: Frame[] = [];
   private fingerprint = '';
   private state: SceneSharingState;
+  private reauthorizationChannel:ReauthorizationChannel|null=null;
+  private reauthorizationPrompt:SceneReauthorizationPrompt|undefined;
+  private reauthorizationLookup:string|null=null;
   constructor(private readonly controller: VisualRemixController, private readonly available: boolean,
     private readonly changed: (state: SceneSharingState) => void, private readonly renderChanged: () => void,
     private readonly send: Sender = (path, init) => fetch(path, init), private readonly now: () => number = Date.now,
-    private readonly options:{untilRevoked?:boolean;controlStore?:SceneControlStore} = {}) {
+    private readonly options:{untilRevoked?:boolean;controlStore?:SceneControlStore;reauthorization?:boolean;reauthorizationChannel?:()=>ReauthorizationChannel} = {}) {
     this.state = { available, canConnect: available && !options.untilRevoked, canDisconnect: false, phase: options.untilRevoked?'connecting':'disconnected', untilRevokedAvailable:!!options.untilRevoked };
+    if(available&&options.reauthorization){
+      try {
+        this.reauthorizationChannel=options.reauthorizationChannel?.()??(typeof BroadcastChannel!=='undefined'?new BroadcastChannel(SCENE_REAUTH_CHANNEL):null);
+        if(this.reauthorizationChannel)this.reauthorizationChannel.onmessage=event=>{void this.receiveReauthorization(event.data);};
+      }catch{this.reauthorizationChannel=null;}
+    }
   }
   snapshot(): SceneSharingState { return { ...this.state }; }
   private publish(value: Omit<SceneSharingState, 'available'>): void {
-    this.state = { available: this.available, untilRevokedAvailable:!!this.options.untilRevoked, ...value };
+    if(value.phase!=='connected'||this.disposed||!this.bound())this.reauthorizationPrompt=undefined;
+    this.state = { available: this.available, untilRevokedAvailable:!!this.options.untilRevoked, ...value,reauthorizationPrompt:this.reauthorizationPrompt };
     if (!this.disposed) this.changed(this.snapshot());
   }
+  private activeReauthorizationOwner():Share|null {
+    return this.options.reauthorization&&!this.disposed&&!this.stopped&&this.bridge&&this.state.phase==='connected'&&this.bound()?this.owner:null;
+  }
+  private async receiveReauthorization(input:unknown):Promise<void>{
+    const owner=this.activeReauthorizationOwner();if(!owner||!this.reauthorizationChannel)return;
+    let id:string;
+    try {sceneJSON(input,512);const message=sceneObject(input,['type','requestId']);if(message.type!=='scene-reauth-request')return;id=String(message.requestId);if(!/^[a-zA-Z0-9_-]{1,96}$/.test(id))return;}catch{return;}
+    if(this.reauthorizationPrompt&&this.now()>=this.reauthorizationPrompt.expiresAt)this.reauthorizationPrompt=undefined;
+    if(this.reauthorizationPrompt||this.reauthorizationLookup)return;
+    this.reauthorizationLookup=id;const started=this.now();
+    try {
+      const value=sceneObject(await this.call('reauth/describe',{auth:owner.auth,requestId:id}),['requestId','clientId','clientName','redirectHost','resource','scopes','expiresAt','issuedAt','state']);
+      if(this.activeReauthorizationOwner()!==owner)return;
+      const remaining=Number(value.expiresAt)-Number(value.issuedAt),resource=typeof value.resource==='string'?new URL(value.resource):null;
+      if(value.requestId!==id||!Number.isSafeInteger(value.expiresAt)||!Number.isSafeInteger(value.issuedAt)||remaining<=0||remaining>SCENE_LIMITS.proofMs||this.now()>=started+remaining||!resource||resource.pathname!=='/scene/mcp'||resource.search||resource.hash||resource.username||resource.password||typeof location!=='undefined'&&resource.origin!==location.origin||!Array.isArray(value.scopes)||value.scopes.length!==SCENE_SCOPES.length||!SCENE_SCOPES.every(scope=>(value.scopes as unknown[]).includes(scope))||typeof value.clientId!=='string'||!value.clientId||value.clientId.length>2048||typeof value.clientName!=='string'||value.clientName.length>128||typeof value.redirectHost!=='string'||value.redirectHost.length>256||!['pending','issued','consumed','revoked'].includes(String(value.state)))throw new Error('SCENE_REAUTH_RESPONSE');
+      this.reauthorizationPrompt={requestId:id,clientId:value.clientId,clientName:value.clientName,redirectHost:value.redirectHost,resource:resource.href,expiresAt:started+remaining,state:value.state==='pending'?'pending':'error',...(value.state==='pending'?{}:{error:'This authorization request was already prepared or consumed. Check its OAuth window; do not blindly issue another proof.'})};
+      this.publish({...this.state});
+    }catch{
+      if(this.activeReauthorizationOwner()===owner){this.reauthorizationPrompt={requestId:id,clientId:'',clientName:'Authorization unavailable',redirectHost:'',resource:'',expiresAt:started+SCENE_LIMITS.proofMs,state:'error',error:'Could not verify this reconnect request. Keep the original editor active and check the OAuth window; no proof was issued.'};this.publish({...this.state});}
+    }finally{if(this.reauthorizationLookup===id)this.reauthorizationLookup=null;}
+  }
+  async approveReauthorization(requestId:string,confirmed:boolean):Promise<void>{
+    const owner=this.activeReauthorizationOwner(),prompt=this.reauthorizationPrompt;
+    if(!confirmed||!owner||!prompt||prompt.requestId!==requestId||prompt.state!=='pending'||this.now()>=prompt.expiresAt||!this.reauthorizationChannel)return;
+    prompt.state='issuing';this.publish({...this.state});const started=this.now();
+    try {
+      // Never retry proof issuance: a lost response may conceal a committed proof.
+      const value=sceneObject(await this.call('reauth/issue',{auth:owner.auth,requestId,confirmed:true}),['requestId','proof','expiresAt','issuedAt']);
+      if(this.activeReauthorizationOwner()!==owner||this.reauthorizationPrompt!==prompt)return;
+      const remaining=Number(value.expiresAt)-Number(value.issuedAt);
+      if(value.requestId!==requestId||typeof value.proof!=='string'||!/^[a-f0-9]{64}$/.test(value.proof)||!Number.isSafeInteger(value.expiresAt)||!Number.isSafeInteger(value.issuedAt)||remaining<=0||remaining>SCENE_LIMITS.proofMs||this.now()>=started+remaining)throw new Error('SCENE_REAUTH_RESPONSE');
+      this.reauthorizationChannel.postMessage({type:'scene-reauth-proof',requestId,proof:value.proof});
+      prompt.state='sent';this.publish({...this.state});
+    }catch{
+      if(this.activeReauthorizationOwner()===owner&&this.reauthorizationPrompt===prompt){prompt.state='error';prompt.error='Proof preparation or delivery is unconfirmed. Check or cancel this OAuth window; do not blindly reissue or create another share.';this.publish({...this.state});}
+    }
+  }
+  dismissReauthorization():void{this.reauthorizationPrompt=undefined;this.publish({...this.state});}
   restoreControl():Promise<void> {
     if(!this.options.untilRevoked || this.disposed)return Promise.resolve();
     if(!this.restorePromise)this.restorePromise=(async()=>{
@@ -318,6 +369,7 @@ export class VisualRemixTransport {
   }
   dispose(): void {
     this.disposed = true;
+    this.reauthorizationChannel?.close();this.reauthorizationChannel=null;this.reauthorizationPrompt=undefined;
     if(this.owner?.lifetime && !this.creating){
       for(const abort of this.preparing.values())abort.abort();this.preparing.clear();this.stopped=true;
       if(this.timer)clearTimeout(this.timer);this.timer=null;this.frames=[];this.bridge?.revoke();

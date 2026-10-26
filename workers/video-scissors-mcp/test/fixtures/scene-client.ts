@@ -10,14 +10,15 @@ import { SCENE_FIELDS } from '../../../../lib/visual-remix-remote.ts';
 export const origin = 'https://localhost', scene = origin + '/scene/mcp', video = origin + '/mcp';
 export const scopes = ['scene:read','scene:propose'];
 export const snapshot = () => ({ schemaVersion: 1, projectId: 'synthetic-project', generation: 'synthetic-generation', revision: 0, scene: emptyScene() });
-export async function fixture(assetsDirectory?: string, withBridge = false, withReference = false, withRetirement = false) {
+export async function fixture(assetsDirectory?: string, withBridge = false, withReference = false, withRetirement = false,withReauthorization=false) {
   const workerRoot = fileURLToPath(new URL('../../', import.meta.url));
   const bundle = await build({ absWorkingDir: workerRoot, entryPoints: ['test/fixtures/scene-auth.ts'], plugins:withRetirement?[retirementClock]:[], bundle: true, format: 'esm', platform: 'browser', conditions: ['workerd'], external: ['node:*','cloudflare:*'], write: false });
   let egress = 0;
-  const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], d1Databases: ['DB'], kvNamespaces: ['OAUTH_KV'], ...(withBridge ? {durableObjects:{VIDEO_BRIDGE:{className:'VideoScissorsBridgeDO',useSQLite:true}}} : {}), bindings: { EXPERIMENT_ENABLED: 'true', SCENE_REFERENCE_ENABLED:withReference?'true':'false',SCENE_RETIRED_RECLAIM_ENABLED:withRetirement?'true':'false' }, ...(assetsDirectory ? { assets: { directory: assetsDirectory, binding: 'ASSETS', run_worker_first: true, routerConfig: { has_user_worker: true } } } : {}), outboundService: () => { egress++; return new Response('Egress denied', { status: 403 }); } }));
+  const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-10-13', compatibilityFlags: ['nodejs_compat'], d1Databases: ['DB'], kvNamespaces: ['OAUTH_KV'], ...(withBridge ? {durableObjects:{VIDEO_BRIDGE:{className:'VideoScissorsBridgeDO',useSQLite:true}}} : {}), bindings: { EXPERIMENT_ENABLED: 'true', SCENE_REFERENCE_ENABLED:withReference?'true':'false',SCENE_RETIRED_RECLAIM_ENABLED:withRetirement?'true':'false',SCENE_REAUTH_ENABLED:withReauthorization?'true':'false' }, ...(assetsDirectory ? { assets: { directory: assetsDirectory, binding: 'ASSETS', run_worker_first: true, routerConfig: { has_user_worker: true } } } : {}), outboundService: () => { egress++; return new Response('Egress denied', { status: 403 }); } }));
   const db = await mf.getD1Database('DB');
   for (const file of ['migrations/0001.sql','candidate-migrations/scene.sql','candidate-migrations/scene-until-revoked.sql']) await db.exec(readFileSync(new URL('../../' + file, import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' '));
   if(withReference) await db.exec(readFileSync(new URL('../../candidate-migrations/scene-reference.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' '));
+  if(withReauthorization)await db.exec(readFileSync(new URL('../../candidate-migrations/scene-reauthorization.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' '));
   if(withRetirement){
     await db.exec('CREATE TABLE fixture_clock(now INTEGER NOT NULL)');await db.prepare('INSERT INTO fixture_clock VALUES(?)').bind(Date.now()).run();
     const sql=readFileSync(new URL('../../candidate-migrations/scene-retained-slots.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' ');

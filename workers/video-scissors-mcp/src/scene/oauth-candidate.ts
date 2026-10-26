@@ -14,7 +14,8 @@ import { renderSceneConsentView } from './SceneConsentView';
 import { boundedSceneRpc, sceneMcpHandler } from './mcp';
 import { sceneBrowserRoute } from './browser-routes';
 import { sceneDiagnostic, sceneAuthContextReply } from './diagnostics';
-type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string; SCENE_UNTIL_REVOKED_ENABLED?:string; SCENE_RETIRED_RECLAIM_ENABLED?:string };
+import { SceneReauthorizationStore } from './reauthorization';
+type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string; SCENE_UNTIL_REVOKED_ENABLED?:string; SCENE_RETIRED_RECLAIM_ENABLED?:string; SCENE_REAUTH_ENABLED?:string };
 import { SCENE_SCOPES, parseSceneAuth, sceneObject, type SceneAuth } from '../../../../lib/visual-remix-remote';
 const videoScopes = ['video:read','video:edit'];
 const scopesEqual = (value: string[], expected: readonly string[]) => value.length === expected.length && new Set(value).size === expected.length && expected.every(scope => value.includes(scope));
@@ -23,9 +24,9 @@ function sceneProps(input: unknown): SceneAuth {
   if (!Array.isArray(props.scopes) || !scopesEqual(props.scopes, SCENE_SCOPES)) throw new Error('SCENE_TOKEN_SCOPE');
   return parseSceneAuth({ purpose: props.purpose, shareId: props.shareId, projectId: props.projectId, generation: props.generation, epoch: props.epoch });
 }
-const consentHeaders = (headers: Headers) => {
+const consentHeaders = (headers: Headers, scriptNonce?:string) => {
   headers.set('Content-Type','text/html; charset=utf-8'); headers.set('Cache-Control','no-store');
-  headers.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'");
+  headers.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'"+(scriptNonce?`; script-src 'nonce-${scriptNonce}'`:''));
   headers.set('X-Frame-Options','DENY'); // Preserve Origin on same-origin form POST; cross-origin redirects get no referrer.
   headers.set('Referrer-Policy','same-origin');
   return headers;
@@ -34,6 +35,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
   const videoResource = origin + '/mcp', sceneResource = origin + '/scene/mcp';
   const options = videoOAuthOptionsFor(env, origin, bridge);
   const referencesEnabled = env.SCENE_REFERENCE_ENABLED === 'true';
+  const reauthorization = env.SCENE_REAUTH_ENABLED==='true'?new SceneReauthorizationStore(env.DB):undefined;
   const store = new SceneMailbox(env.DB,Date.now,referencesEnabled,env.SCENE_UNTIL_REVOKED_ENABLED==='true',env.SCENE_RETIRED_RECLAIM_ENABLED==='true');
   const authorization = new OAuthAuthorizationServer<Env>({
     issuer: origin, resources: [videoResource,sceneResource], defaultResource: videoResource, legacyGrantResource: videoResource,
@@ -79,12 +81,17 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
       if (isScene) await new Mailbox(env.DB).recordActivity('oauth');
       else await new Mailbox(env.DB).spend('oauth');
       const details = await oauth.describeConsent(auth), transaction = await oauth.beginConsent(auth);
-      const html = isScene ? renderSceneConsentView({ handle: transaction.handle, clientName: details.clientName, clientId: details.clientId, redirectHost: details.redirectHost, isLoopback: details.redirectIsLoopback, referenceEnabled:referencesEnabled,untilRevokedEnabled:env.SCENE_UNTIL_REVOKED_ENABLED==='true' }) : renderConsentView({ details, handle: transaction.handle, errorCode: 'NONE' });
-      return new Response(html, { headers: consentHeaders(transaction.headers) });
+      let reconnect: {requestId:string;expiresAt:number;scriptNonce:string}|undefined,reauthorizationUnavailable=false;
+      if(isScene&&reauthorization){
+        try {reconnect={...await reauthorization.create(transaction.handle,details,sceneResource),scriptNonce:crypto.randomUUID()};}
+        catch(error){if(error instanceof Error&&error.message.includes('SCENE_REAUTH_CAPACITY'))reauthorizationUnavailable=true;else throw error;}
+      }
+      const html = isScene ? renderSceneConsentView({ handle: transaction.handle, clientName: details.clientName, clientId: details.clientId, redirectHost: details.redirectHost, isLoopback: details.redirectIsLoopback, referenceEnabled:referencesEnabled,untilRevokedEnabled:env.SCENE_UNTIL_REVOKED_ENABLED==='true',reauthorization:reconnect,reauthorizationUnavailable }) : renderConsentView({ details, handle: transaction.handle, errorCode: 'NONE' });
+      return new Response(html, { headers: consentHeaders(transaction.headers,reconnect?.scriptNonce) });
     }
     if (request.method !== 'POST' || !sameOrigin(request) || !request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded')) return reply({ error: 'ORIGIN_OR_METHOD' }, 403);
     const form = new URLSearchParams(await boundedBody(request));
-    if ([...form.keys()].some(k => !['handle','decision','scope','browserProof'].includes(k)) || form.getAll('handle').length !== 1 || form.getAll('decision').length !== 1) return reply({ error: 'FORM' }, 400);
+    if ([...form.keys()].some(k => !['handle','decision','scope','browserProof',...(reauthorization?['reauthRequestId']:[])].includes(k)) || form.getAll('handle').length !== 1 || form.getAll('decision').length !== 1 || form.getAll('reauthRequestId').length>1) return reply({ error: 'FORM' }, 400);
     const handle = form.get('handle') ?? '';
     if (form.get('decision') === 'deny') { const denied = await oauth.denyConsent(request,handle); return new Response(null,{status:302,headers:denied.headers}); }
     if (form.get('decision') !== 'approve' || form.getAll('browserProof').length !== 1) return reply({ error: 'FORM' }, 400);
@@ -93,10 +100,13 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
     let props: Record<string,unknown>, userId: string;
     if (resource === sceneResource) {
       if (!scopesEqual(approved.request.scope,SCENE_SCOPES)) return reply({error:'SCENE_SCOPES'},400);
-      const auth = await store.bindFromProof(form.get('browserProof') ?? '',handle);
+      const auth = form.get('reauthRequestId')
+        ? await reauthorization?.consume(form.get('reauthRequestId'),form.get('browserProof')??'',handle,approved.request.clientId,sceneResource)
+        : await store.bindFromProof(form.get('browserProof') ?? '',handle);
       if (!auth) return reply({error:'SCENE_PROOF_REJECTED'},403);
       props = { ...auth, scopes:[...SCENE_SCOPES] }; userId = auth.shareId;
     } else if (resource === videoResource) {
+      if(form.has('reauthRequestId'))return reply({error:'RESOURCE'},400);
       if (!scopesEqual(approved.request.scope,videoScopes)) return reply({error:'VIDEO_SCOPES'},400);
       const auth = await new Mailbox(env.DB).bindFromProof(form.get('browserProof') ?? '',handle);
       if (!auth) return reply({error:'PROOF_REJECTED'},403);
@@ -133,7 +143,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
         request = new Request(request,{body:text});
       }
       if (isScene) { await store.spend(); await store.sweepExpired(); }
-      if (path.startsWith('/scene/browser/')) return finish(await sceneBrowserRoute(request,store,referencesEnabled));
+      if (path.startsWith('/scene/browser/')) return finish(await sceneBrowserRoute(request,store,referencesEnabled,reauthorization));
       if (path.startsWith('/remote/')) return finish(await browserRoute(request,videoStore,bridge));
       if (path === '/authorize') return finish(await consent(request,authorization.getOAuthApi(current)));
       if (path === '/mcp' || path === '/.well-known/oauth-protected-resource/mcp') return finish(await video.fetch(request,current,ctx));
