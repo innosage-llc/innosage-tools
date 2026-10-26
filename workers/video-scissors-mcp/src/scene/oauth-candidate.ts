@@ -13,7 +13,7 @@ import { SCENE_OAUTH_SECONDS } from './lifetime';
 import { renderSceneConsentView } from './SceneConsentView';
 import { boundedSceneRpc, sceneMcpHandler } from './mcp';
 import { sceneBrowserRoute } from './browser-routes';
-import { sceneDiagnostic } from './diagnostics';
+import { sceneDiagnostic, sceneAuthContextReply } from './diagnostics';
 type SceneEnv = Env & { SCENE_BUILD_REVISION?: string; SCENE_REFERENCE_ENABLED?: string; SCENE_UNTIL_REVOKED_ENABLED?:string; SCENE_RETIRED_RECLAIM_ENABLED?:string };
 import { SCENE_SCOPES, parseSceneAuth, sceneObject, type SceneAuth } from '../../../../lib/visual-remix-remote';
 const videoScopes = ['video:read','video:edit'];
@@ -64,9 +64,11 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
   const scene = new OAuthResourceServer<Env>({ resourceMetadata: { resource: sceneResource, authorization_servers: [origin] }, requiredScopes: [...SCENE_SCOPES], validateToken: sceneValidation,
     handler: { async fetch(request, current, ctx) {
       const verified = ctx as ExecutionContext & OAuthResourceContext<Record<string, unknown>>;
-      if (!verified.auth?.clientId) return reply({ error: 'AUTH_CONTEXT' }, 401);
+      if (typeof verified.auth?.clientId!=='string' || !verified.auth.clientId.trim() || !Array.isArray(verified.auth.scope)) return sceneAuthContextReply(sceneResource);
       if (!scopesEqual(verified.auth.scope, SCENE_SCOPES)) return insufficientScope(verified.auth, [...SCENE_SCOPES]);
-      const auth = sceneProps(verified.props), clientId = verified.auth.clientId;
+      let auth:SceneAuth;
+      try {auth=sceneProps(verified.props);}catch{return sceneAuthContextReply(sceneResource);}
+      const clientId = verified.auth.clientId;
       return boundedSceneRpc(request, bounded => sceneMcpHandler(current.DB, auth, sceneResource,referencesEnabled).fetch(bounded, { authInfo: { token: verified.auth.token, clientId, scopes: verified.auth.scope, expiresAt: verified.auth.expiresAt, resource: new URL(sceneResource) } }),referencesEnabled);
     } },
   });
@@ -126,7 +128,7 @@ export function sceneCandidateFor(env: SceneEnv, origin: string, enabled = false
       if (request.body) {
         const text = await boundedBody(request,path === '/scene/browser/reference' && referencesEnabled ? REFERENCE_LIMITS.wireBytes : undefined);
         if (path === '/scene/mcp') {
-          try { const rpc = JSON.parse(text); if (rpc?.method === 'tools/call' && ['get_scene','propose_scene','proposal_status','cancel_proposal','read_shared_reference'].includes(rpc.params?.name)) tool = rpc.params.name; } catch { /* Protocol parser returns the safe rejection. */ }
+          try { const rpc = JSON.parse(text); if (rpc?.method === 'tools/call' && ['get_profile','get_scene','propose_scene','proposal_status','cancel_proposal','read_shared_reference'].includes(rpc.params?.name)) tool = rpc.params.name; } catch { /* Protocol parser returns the safe rejection. */ }
         }
         request = new Request(request,{body:text});
       }

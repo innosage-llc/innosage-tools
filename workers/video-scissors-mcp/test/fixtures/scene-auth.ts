@@ -3,6 +3,7 @@ import { SceneMailbox } from '../../src/scene/mailbox';
 import legacy from '../../src/index';
 import candidate from '../../src/scene/candidate-entry';
 import { sceneMcpHandler } from '../../src/scene/mcp';
+import { sceneAuthContextReply } from '../../src/scene/diagnostics';
 // This isolated Miniflare fixture controls time for the actual provider and
 // mailbox together. No deployed entrypoint accepts this header or clock.
 const realNow = Date.now;
@@ -16,6 +17,7 @@ export default { fetch(request: Request, env: Env, ctx: ExecutionContext) {
   offset = Number(request.headers.get('x-fixture-time-offset') ?? 0);
   if (!Number.isSafeInteger(offset) || offset < 0 || offset > 86_400_000) throw new Error('FIXTURE_TIME');
   const path=new URL(request.url).pathname;
+  if(path==='/__fixture/auth-context')return sceneAuthContextReply(new URL('/scene/mcp',request.url).href);
   if(path==='/__fixture/lease-held')return Response.json({held:leaseHeld});
   if(path==='/__fixture/release-lease'){releaseLease?.();return Response.json({ok:true});}
   if(path==='/__fixture/consent-held')return Response.json({held:consentHeld});
