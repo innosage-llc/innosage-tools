@@ -177,3 +177,31 @@ authorized local supplied PNG and historical editable Scene. Without those
 explicit private fixtures the test is SKIPPED, never a claimed PASS.
 The last check uses the actual supplied PNG and a historical editable fixture;
 it does not claim fresh agent reconstruction or real ChatGPT success.
+
+## Direct canvas editing (#140)
+
+The applied PNG remains the exact committed/exported Konva Blob. A lightweight
+SVG overlay hit-tests Scene nodes in reverse stacking order and displays rotated
+selection/resize bounds. It does not render another typography engine. Drag and
+resize show transient bounds; pointer movement never decodes assets or invokes
+`renderScene`. A changed gesture stages the controller export/remote-candidate
+fence and commits once with its own history ID. Selection alone preserves pending
+remote candidates. Pointer cancellation and Escape discard the transient edit.
+
+Fit preserves the 3:4 canvas ratio; 100% presents a scrollable 1080×1440 surface.
+Resize changes box geometry, keeping text font size and image/crop descriptors
+intact. The existing renderer reflows and validates text after commit. Center X/Y
+uses rotated geometry, subject to existing schema bounds. The Layer selector and
+advanced numeric controls remain available for obscured or tiny nodes.
+
+Double-click text opens a DOM textarea using the existing font stack. Enter adds
+a newline, Ctrl/Command+Enter or Done commits, Escape or Cancel cancels, and blur
+commits after composition completes. IME composition guards cover candidate
+confirmation, cancellation and focus loss. Controller/project/history changes
+invalidate transient UI and its ticket. Remote proposals still require explicit
+version-checked Apply; no sharing or permission boundary changes.
+
+`test:visual-remix-canvas` covers geometry and controller history. The separately
+run `test:visual-remix-canvas-browser` exercises the built route with pointer,
+zoom, synthetic composition, exports and portable data. Synthetic composition
+is not proof of native operating-system IME candidate-window behavior.

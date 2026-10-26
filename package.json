@@ -53,7 +53,9 @@
     "test:byos-ux": "node --test spikes/byos-ux/model.test.mjs",
     "spike:byos-ux": "node spikes/byos-ux/server.mjs",
     "test:byos-ux:browser": "node spikes/byos-ux/browser.mjs",
-    "test:byos-ux:focused": "node spikes/byos-ux/focused-browser.mjs"
+    "test:byos-ux:focused": "node spikes/byos-ux/focused-browser.mjs",
+    "test:visual-remix-canvas": "node --experimental-strip-types --test scripts/visual-remix-canvas.test.ts",
+    "test:visual-remix-canvas-browser": "node --experimental-strip-types --test scripts/visual-remix-canvas-browser.test.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",
