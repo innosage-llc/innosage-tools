@@ -98,6 +98,11 @@ test('connected build retains pairing, consented reference sharing and HTML expo
       await oauth.goto(origin+'/authorize-local');
       const reconnect=page.getByRole('button',{name:'Approve reconnect',exact:true});await reconnect.waitFor();assert.ok(await reconnect.isDisabled());
       assert.equal(calls.filter(c=>c.path.endsWith('/reauth/issue')).length,0);
+      await page.getByRole('checkbox',{name:/Authorize reconnecting active Scene share/}).check();
+      await page.getByRole('button',{name:'Dismiss',exact:true}).click();
+      await oauth.getByRole('button',{name:'Ask active editor again',exact:true}).click();
+      await reconnect.waitFor();assert.ok(await reconnect.isDisabled(),'reannounced request requires fresh consent');
+      assert.equal(await page.getByRole('checkbox',{name:/Authorize reconnecting active Scene share/}).isChecked(),false);
       await page.getByRole('checkbox',{name:/Authorize reconnecting active Scene share/}).check();await reconnect.click();
       await oauth.getByText('Proof received from active editor. Click Approve below to complete authorization.',{exact:true}).waitFor();
       assert.equal(await oauth.locator('#browserProof').inputValue(),'c'.repeat(64));assert.equal(await oauth.locator('#reauthRequestId').inputValue(),requestId);

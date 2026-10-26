@@ -72,3 +72,21 @@ test('short transaction storage is bounded and ages out without changing grant c
   assert.equal(await f.db.prepare('SELECT count(*) AS n FROM scene_consent_bindings').first('n'),1);assert.equal(await f.db.prepare('SELECT revoked FROM scene_shares WHERE id=?').bind(p.auth.shareId).first('revoked'),0);f.noEgress();
  }finally{await f.mf.dispose();}
 });
+
+test('inactive route stays absent; active consent script is nonce-bound and request identity cannot be rewritten',async()=>{
+ const off=await fixture();try{
+  const {p,c}=await off.link(),a=await off.authorize(c);
+  assert.equal((await off.json('/scene/browser/reauth/issue',{auth:p.auth,requestId:'unknown',confirmed:true})).status,404);
+  assert.ok(!a.html.includes('new BroadcastChannel'));assert.ok(!a.r.headers.get('content-security-policy')?.includes('script-src'));off.noEgress();
+ }finally{await off.mf.dispose();}
+ const f=await fixture(undefined,false,false,false,true);try{
+  const {p,c}=await f.link(),a=await f.authorize(c),id=await requestId(f,a.handle);
+  const nonce=a.r.headers.get('content-security-policy')?.match(/script-src 'nonce-([^']+)'/)?.[1];assert.ok(nonce);assert.ok(a.html.includes('<script nonce="'+nonce+'">'));
+  assert.ok(!a.html.includes('<img src=x onerror=alert(1)>'));assert.ok(a.html.includes('&lt;img src=x onerror=alert(1)&gt;'));
+  for(const [field,value]of [['client_id','other-client'],['handle_hash','other-handle'],['resource','https://other/scene/mcp'],['expires',f.now()+400000]]as const){
+   await assert.rejects(f.db.prepare('UPDATE scene_reauthorizations SET '+field+'=? WHERE id=?').bind(value,id).run(),/SCENE_REAUTH_IMMUTABLE/);
+  }
+  const proof=await issue(f,p.auth,id);await approve(f,a,proof.proof,id);
+  await assert.rejects(f.db.prepare("UPDATE scene_reauthorizations SET state='issued',proof_hash=?,proof_expires=expires WHERE id=?").bind('f'.repeat(64),id).run(),/SCENE_REAUTH_IMMUTABLE/);f.noEgress();
+ }finally{await f.mf.dispose();}
+});

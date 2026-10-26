@@ -58,8 +58,8 @@ Revoked/expired authority cannot be recovered. A lost issuance response is an
 uncertain outcome and is never automatically retried.
 
 The additive `candidate-migrations/scene-reauthorization.sql` stores only short
-transaction metadata and proof hashes, at most 20 rows for at most five minutes.
-Expired requests are deleted before new admission and by the existing scheduled
+transaction metadata and proof hashes, at most 20 rows with five-minute
+authorization deadlines. Physical cleanup is lazy; expired rows are deleted before new admission and by the existing scheduled
 maintenance invocation. This does not change the 20 retained-share bound,
 activity counters, active-grant cleanup policy or existing cron frequency. Late
 callbacks cannot recreate collected IDs; terminal requests cannot be reopened,
@@ -70,7 +70,12 @@ and activated on existing staging. This migration is not a new credential store.
 Saved browser-control recovery remains recovery-only: reload does not reconnect,
 sync or upload. No inactive/suspended/closed browser availability is promised.
 The editor must still be active for data reads, and a different share remains a
-different independently revocable profile. Legacy timed grants keep their fixed
+different independently revocable profile. Already-open older editor code does
+not gain this feature in place. Save the portable project before an upgrade or
+reload. The existing recovery-only boundary still applies after reload; an
+explicit replacement share used for upgrade is a new profile, never evidence of
+same-profile reconnect. Qualify reconnect on a share first paired with this exact
+candidate, then keep that editor open for the expired-token test. Legacy timed grants keep their fixed
 deadline. New consent is required for any different sharing boundary.
 
 Local tests cover the actual provider/D1 path after token expiry, stable profile,

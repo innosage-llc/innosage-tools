@@ -28,7 +28,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
 
   const reauthUnavailableNotice = model.reauthorizationUnavailable
     ? `<div class="alert-warning" role="alert">
-        <strong>Notice:</strong> Reconnect request storage is temporarily busy. Keep your original editor active and enter pairing proof manually from that editor to authorize, or try again later.
+        <strong>Notice:</strong> Reconnect request storage is temporarily busy. Keep your original connected editor active and wait for the short request expiry before closing and reopening chat OAuth reconnect.
       </div>`
     : '';
 
@@ -112,7 +112,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
 
   if (!('BroadcastChannel' in window)) {
     if (statusEl) {
-      statusEl.textContent = 'Automatic reconnection is not supported in this browser. Keep your active editor open and enter pairing proof manually.';
+      statusEl.textContent = 'Automatic reconnection is not supported in this browser. Keep your original connected editor active, then close and reopen chat OAuth reconnect.';
     }
     if (retryBtn) {
       retryBtn.disabled = true;
@@ -147,7 +147,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
   var expiryTimer = setTimeout(function() {
     cleanup();
     if (!proofReceived && statusEl) {
-      statusEl.textContent = 'Reconnect request timed out after 5 minutes. Enter pairing proof manually from your active editor.';
+      statusEl.textContent = 'Reconnect request timed out after 5 minutes. Keep your original connected editor active, then close and reopen chat OAuth reconnect.';
     }
   }, TIMEOUT_MS);
   timers.push(expiryTimer);
@@ -156,7 +156,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
     channel = new BroadcastChannel(config.channelName);
   } catch (err) {
     if (statusEl) {
-      statusEl.textContent = 'Unable to connect to editor BroadcastChannel. Enter pairing proof manually.';
+      statusEl.textContent = 'Unable to connect to editor BroadcastChannel. Keep your original connected editor active, then close and reopen chat OAuth reconnect.';
     }
     return;
   }

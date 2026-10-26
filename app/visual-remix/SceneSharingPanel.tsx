@@ -17,11 +17,12 @@ export function SceneSharingPanel({
   const [confirmRetention, setConfirmRetention] = useState<boolean>(false);
   const [authorizeReferencePixels, setAuthorizeReferencePixels] = useState<boolean>(false);
   const [allowReuseCrops, setAllowReuseCrops] = useState<boolean>(false);
-  const [confirmedReauthRequestId, setConfirmedReauthRequestId] = useState<string | null>(null);
+  const [confirmedPrompt, setConfirmedPrompt] =
+    useState<SceneSharingProps['state']['reauthorizationPrompt']>(undefined);
 
   const reauthPrompt = state.reauthorizationPrompt;
   const isReauthConfirmed = Boolean(
-    reauthPrompt && confirmedReauthRequestId === reauthPrompt.requestId,
+    reauthPrompt && confirmedPrompt === reauthPrompt,
   );
 
   const isEditablePhase = state.phase === 'disconnected' || state.phase === 'error';
@@ -152,14 +153,15 @@ export function SceneSharingPanel({
             <div role="status" aria-live="polite" className="font-semibold text-gray-800">
               {reauthPrompt.state === 'pending' && 'Pending editor confirmation'}
               {reauthPrompt.state === 'issuing' && 'Issuing reconnect proof…'}
-              {reauthPrompt.state === 'sent' && 'Proof delivered to OAuth window'}
+              {reauthPrompt.state === 'sent' &&
+                'Proof prepared for OAuth window; receipt unconfirmed'}
               {reauthPrompt.state === 'error' && (reauthPrompt.error || 'Reauthorization error')}
             </div>
           </div>
 
           {reauthPrompt.state === 'sent' && (
             <p className="text-xs text-amber-800 font-medium">
-              Proof delivery is not OAuth or host completion. Finish normal consent in the OAuth window to complete reauthorization.
+              OAuth Approve and host completion remain pending.
             </p>
           )}
 
@@ -176,7 +178,7 @@ export function SceneSharingPanel({
               checked={isReauthConfirmed}
               disabled={reauthPrompt.state !== 'pending'}
               onChange={(e) => {
-                setConfirmedReauthRequestId(e.target.checked ? reauthPrompt.requestId : null);
+                setConfirmedPrompt(e.target.checked ? reauthPrompt : undefined);
               }}
               className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
@@ -201,6 +203,7 @@ export function SceneSharingPanel({
             <button
               type="button"
               onClick={() => {
+                setConfirmedPrompt(undefined);
                 onDismissReauthorization?.();
               }}
               disabled={!onDismissReauthorization}
