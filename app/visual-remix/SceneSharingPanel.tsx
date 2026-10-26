@@ -10,11 +10,20 @@ export function SceneSharingPanel({
   onDisconnect,
   onReauthorize,
   consentRequested,
+  onApproveReauthorization,
+  onDismissReauthorization,
 }: SceneSharingProps) {
   const [confirmFields, setConfirmFields] = useState<boolean>(false);
   const [confirmRetention, setConfirmRetention] = useState<boolean>(false);
   const [authorizeReferencePixels, setAuthorizeReferencePixels] = useState<boolean>(false);
   const [allowReuseCrops, setAllowReuseCrops] = useState<boolean>(false);
+  const [confirmedPrompt, setConfirmedPrompt] =
+    useState<SceneSharingProps['state']['reauthorizationPrompt']>(undefined);
+
+  const reauthPrompt = state.reauthorizationPrompt;
+  const isReauthConfirmed = Boolean(
+    reauthPrompt && confirmedPrompt === reauthPrompt,
+  );
 
   const isEditablePhase = state.phase === 'disconnected' || state.phase === 'error';
 
@@ -103,6 +112,108 @@ export function SceneSharingPanel({
           {phaseLabel[state.phase]}
         </div>
       </div>
+
+      {/* Reauthorization Prompt - Active Editor Same-Share Reconnect */}
+      {reauthPrompt && (
+        <div
+          role="region"
+          aria-label="Scene Reauthorization Prompt"
+          className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs space-y-2.5 text-gray-900"
+        >
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-amber-900">
+              Active Share Reconnect Request
+            </span>
+            <span className="px-2 py-0.5 text-[11px] font-medium rounded bg-amber-100 text-amber-800 border border-amber-200">
+              Same-share OAuth
+            </span>
+          </div>
+
+          <div className="p-2 bg-white/80 border border-amber-200 rounded text-xs space-y-1">
+            <div>
+              <span className="font-medium text-gray-600">Client: </span>
+              <span className="font-semibold text-gray-800">{reauthPrompt.clientName}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-600">Client ID: </span>
+              <code className="text-gray-700 font-mono text-[11px]">{reauthPrompt.clientId}</code>
+            </div>
+            <div>
+              <span className="font-medium text-gray-600">Redirect Host: </span>
+              <code className="text-gray-700 font-mono text-[11px]">{reauthPrompt.redirectHost}</code>
+            </div>
+          </div>
+
+          <p className="text-xs text-amber-900 leading-relaxed">
+            Same-share reauthorization requested from an active editor. Approving issues pairing proof to reconnect this client to the existing share. This does not change lifetime, scopes, image consent, or identity, and does not automatically apply proposals or extend sharing. Finish normal consent in the OAuth window.
+          </p>
+
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-amber-200">
+            <span className="font-medium text-amber-900">Reauthorization Status:</span>
+            <div role="status" aria-live="polite" className="font-semibold text-gray-800">
+              {reauthPrompt.state === 'pending' && 'Pending editor confirmation'}
+              {reauthPrompt.state === 'issuing' && 'Issuing reconnect proof…'}
+              {reauthPrompt.state === 'sent' &&
+                'Proof prepared for OAuth window; receipt unconfirmed'}
+              {reauthPrompt.state === 'error' && (reauthPrompt.error || 'Reauthorization error')}
+            </div>
+          </div>
+
+          {reauthPrompt.state === 'sent' && (
+            <p className="text-xs text-amber-800 font-medium">
+              OAuth Approve and host completion remain pending.
+            </p>
+          )}
+
+          {reauthPrompt.state === 'error' && (
+            <div role="alert" className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+              {reauthPrompt.error || 'Failed to issue reauthorization proof.'}
+            </div>
+          )}
+
+          <label className={`flex items-start gap-2 text-xs text-gray-700 ${reauthPrompt.state !== 'pending' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+            <input
+              type="checkbox"
+              id={`reauth-confirm-${reauthPrompt.requestId}`}
+              checked={isReauthConfirmed}
+              disabled={reauthPrompt.state !== 'pending'}
+              onChange={(e) => {
+                setConfirmedPrompt(e.target.checked ? reauthPrompt : undefined);
+              }}
+              className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span>
+              Authorize reconnecting active Scene share with <strong>{reauthPrompt.clientName}</strong> ({reauthPrompt.redirectHost}). I will finish normal consent in the OAuth window.
+            </span>
+          </label>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (reauthPrompt.state === 'pending' && isReauthConfirmed) {
+                  onApproveReauthorization?.(reauthPrompt.requestId, true);
+                }
+              }}
+              disabled={reauthPrompt.state !== 'pending' || !isReauthConfirmed || !onApproveReauthorization}
+              className="flex-1 px-3 py-1.5 text-xs font-semibold rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            >
+              Approve reconnect
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmedPrompt(undefined);
+                onDismissReauthorization?.();
+              }}
+              disabled={!onDismissReauthorization}
+              className="px-3 py-1.5 text-xs font-semibold rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Actual Reference Storage Status - Never hidden behind details */}
       {state.reference && (

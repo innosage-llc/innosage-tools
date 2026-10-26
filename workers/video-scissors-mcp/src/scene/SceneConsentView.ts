@@ -23,6 +23,213 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
       </div>`
     : '';
 
+  const reauth = model.reauthorization;
+  const safeNonce = reauth ? escapeHtml(reauth.scriptNonce) : '';
+
+  const reauthUnavailableNotice = model.reauthorizationUnavailable
+    ? `<div class="alert-warning" role="alert">
+        <strong>Notice:</strong> Reconnect request storage is temporarily busy. Keep your original connected editor active and wait for the short request expiry before closing and reopening chat OAuth reconnect.
+      </div>`
+    : '';
+
+  const reauthStyles = reauth
+    ? `
+    .reconnect-section {
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+    }
+    .reconnect-section h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #166534;
+      margin-bottom: 6px;
+    }
+    .reconnect-section p {
+      color: #15803d;
+      font-size: 0.8125rem;
+      margin-bottom: 8px;
+    }
+    .reauth-status {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #166534;
+      background-color: #ffffff;
+      border: 1px solid #86efac;
+      border-radius: 4px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+    }
+    .btn-secondary {
+      background-color: #ffffff;
+      color: #166534;
+      border: 1px solid #86efac;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-secondary:hover {
+      background-color: #f0fdf4;
+    }`
+    : '';
+
+  const reauthSection = reauth
+    ? `<section class="reconnect-section" aria-label="Reconnect an active Scene share">
+      <h2>Reconnect an active Scene share</h2>
+      <p>Keep your original Visual Remix editor active in another tab or window. In that editor, approve reconnecting <strong>${safeClientName}</strong>. Once approved, the pairing proof will fill automatically below. Then finish authorization by clicking Approve.</p>
+      <div id="reauth-status" class="reauth-status" role="status" aria-live="polite">Waiting for approval from active editor…</div>
+      <button type="button" id="reauth-retry-btn" class="btn-secondary">Ask active editor again</button>
+    </section>`
+    : '';
+
+  const reauthHiddenInput = reauth
+    ? `\n      <input type="hidden" name="reauthRequestId" id="reauthRequestId" value="">`
+    : '';
+
+  const reauthScript = reauth
+    ? `\n  <script nonce="${safeNonce}">
+(function() {
+  var config = ${JSON.stringify({
+    requestId: reauth.requestId,
+    channelName: 'visual-remix-reauthorization-v1',
+  }).replace(/</g, '\\u003c')};
+
+  var proofInput = document.getElementById('browserProof');
+  var reauthInput = document.getElementById('reauthRequestId');
+  var statusEl = document.getElementById('reauth-status');
+  var retryBtn = document.getElementById('reauth-retry-btn');
+
+  if (proofInput && reauthInput) {
+    proofInput.addEventListener('input', function() {
+      reauthInput.value = '';
+    });
+  }
+
+  if (!('BroadcastChannel' in window)) {
+    if (statusEl) {
+      statusEl.textContent = 'Automatic reconnection is not supported in this browser. Keep your original connected editor active, then close and reopen chat OAuth reconnect.';
+    }
+    if (retryBtn) {
+      retryBtn.disabled = true;
+    }
+    return;
+  }
+
+  var channel = null;
+  var timers = [];
+  var isClosed = false;
+  var proofReceived = false;
+  var startTime = performance.now();
+  var TIMEOUT_MS = 300000;
+
+  function cleanup() {
+    if (isClosed) return;
+    isClosed = true;
+    for (var i = 0; i < timers.length; i++) {
+      clearTimeout(timers[i]);
+    }
+    timers = [];
+    if (channel) {
+      try {
+        channel.close();
+      } catch (e) {}
+      channel = null;
+    }
+  }
+
+  window.addEventListener('pagehide', cleanup);
+
+  var expiryTimer = setTimeout(function() {
+    cleanup();
+    if (!proofReceived && statusEl) {
+      statusEl.textContent = 'Reconnect request timed out after 5 minutes. Keep your original connected editor active, then close and reopen chat OAuth reconnect.';
+    }
+  }, TIMEOUT_MS);
+  timers.push(expiryTimer);
+
+  try {
+    channel = new BroadcastChannel(config.channelName);
+  } catch (err) {
+    if (statusEl) {
+      statusEl.textContent = 'Unable to connect to editor BroadcastChannel. Keep your original connected editor active, then close and reopen chat OAuth reconnect.';
+    }
+    return;
+  }
+
+  function announce() {
+    if (isClosed || !channel || proofReceived) return;
+    if (performance.now() - startTime >= TIMEOUT_MS) {
+      cleanup();
+      return;
+    }
+    try {
+      channel.postMessage({
+        type: 'scene-reauth-request',
+        requestId: config.requestId
+      });
+    } catch (err) {}
+  }
+
+  channel.onmessage = function(event) {
+    if (isClosed || proofReceived) return;
+    if (performance.now() - startTime >= TIMEOUT_MS) {
+      cleanup();
+      return;
+    }
+    var data = event.data;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+
+    var keys = Object.keys(data);
+    if (keys.length !== 3) return;
+    var hasType = false, hasReq = false, hasProof = false;
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i] === 'type') hasType = true;
+      else if (keys[i] === 'requestId') hasReq = true;
+      else if (keys[i] === 'proof') hasProof = true;
+      else return;
+    }
+    if (!hasType || !hasReq || !hasProof) return;
+
+    if (typeof data.type !== 'string' || typeof data.requestId !== 'string' || typeof data.proof !== 'string') return;
+    if (data.type.length > 32 || data.requestId.length > 128 || data.proof.length !== 64) return;
+    if (data.type !== 'scene-reauth-proof') return;
+    if (data.requestId !== config.requestId) return;
+    if (!/^[0-9a-f]{64}$/.test(data.proof)) return;
+
+    proofReceived = true;
+    if (proofInput) {
+      proofInput.value = data.proof;
+    }
+    if (reauthInput) {
+      reauthInput.value = data.requestId;
+    }
+    if (statusEl) {
+      statusEl.textContent = 'Proof received from active editor. Click Approve below to complete authorization.';
+    }
+  };
+
+  announce();
+  timers.push(setTimeout(announce, 1000));
+  timers.push(setTimeout(announce, 3000));
+
+  if (retryBtn) {
+    retryBtn.addEventListener('click', function() {
+      if (isClosed || proofReceived) return;
+      announce();
+      if (statusEl && !proofReceived) {
+        statusEl.textContent = 'Re-sent reconnect request to active editor…';
+      }
+    });
+  }
+})();
+</script>`
+    : '';
+
   const descriptionText = untilRevokedEnabled
     ? referenceEnabled
       ? 'This explicitly authorizes Visual Remix Scene sharing, not video control. Text, layout, style, captions, provenance, limitations, and used raster descriptors are shared; original images and exports stay in your browser unless a normalized reference copy is separately approved in the paired editor. Dual duration policy: newly explicitly consented shares run until you Disconnect or revoke in the browser, while existing timed shares keep their original fixed deadline (up to 30 minutes) with no silent upgrade. No model or social-platform credentials are requested.'
@@ -242,7 +449,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
       font-size: 0.75rem;
       color: #6b7280;
       text-align: center;
-    }
+    }${reauthStyles}
   </style>
 </head>
 <body>
@@ -263,17 +470,17 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
       </dl>
     </section>
 
-    ${loopbackWarning}
+    ${loopbackWarning}${reauthUnavailableNotice ? `\n\n    ${reauthUnavailableNotice}` : ''}
 
     <section class="disclosure-box" aria-label="Permissions and Data Disclosures">
       <h2>Sharing Scope and Data Disclosures</h2>
       <ul>
         ${disclosuresList}
       </ul>
-    </section>
+    </section>${reauthSection ? `\n\n    ${reauthSection}` : ''}
 
     <form method="POST" action="/authorize">
-      <input type="hidden" name="handle" value="${safeHandle}">
+      <input type="hidden" name="handle" value="${safeHandle}">${reauthHiddenInput}
 
       <div class="scope-group">
         <span class="scope-label">Requested Scopes</span>
@@ -302,7 +509,7 @@ export function renderSceneConsentView(model: SceneConsentModel): string {
     <p class="inactive-notice">
       Opening this page does not authorize sharing. Only Approve with a valid pairing proof grants access.
     </p>
-  </main>
+  </main>${reauthScript}
 </body>
 </html>`;
 }

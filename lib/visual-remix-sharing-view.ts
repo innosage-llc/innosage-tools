@@ -1,3 +1,4 @@
+import type { SceneReauthorizationPrompt } from './visual-remix-reauth-contract';
 export type SceneConsentModel = {
   handle: string;
   clientName: string;
@@ -6,6 +7,8 @@ export type SceneConsentModel = {
   isLoopback: boolean;
   referenceEnabled?: boolean;
   untilRevokedEnabled?: boolean;
+  reauthorization?: {requestId:string;expiresAt:number;scriptNonce:string};
+  reauthorizationUnavailable?: boolean;
 };
 export type SceneSharingState = {
   available: boolean;
@@ -22,6 +25,7 @@ export type SceneSharingState = {
   revocationConfirmed?: boolean;
   reference?: 'uploading' | 'ready';
   reauthorizationRequired?: boolean;
+  reauthorizationPrompt?: SceneReauthorizationPrompt;
 };
 export type SceneSharingProps = {
   state: SceneSharingState;
@@ -30,4 +34,6 @@ export type SceneSharingProps = {
   onDisconnect: () => void;
   consentRequested?: boolean;
   onReauthorize?: () => void;
+  onApproveReauthorization?: (requestId:string,confirmed:boolean) => void;
+  onDismissReauthorization?: () => void;
 };

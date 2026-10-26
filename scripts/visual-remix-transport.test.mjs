@@ -15,7 +15,7 @@ const {VisualRemixTransport,VisualRemixController,LocalAssets,emptyScene,UNTIL_R
 const waitFor=async(check)=>{for(let i=0;i<150;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}assert.ok(check(),'condition did not complete');};
 const response=x=>Response.json(x);
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
-async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false,slowUpload=false,until=false,controlStore:providedStore,failSave=false,invalidUntilConfirmation=false,slowRevoke=false,revokeState,revokeStatus=0}={}){
+async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respectCreateAbort=false,clientNow=Date.now,pollStatus=0,paired=false,slowUpload=false,until=false,controlStore:providedStore,failSave=false,invalidUntilConfirmation=false,slowRevoke=false,revokeState,revokeStatus=0,reauthChannel,reauthHandler}={}){
  let savedControl=null,cacheEpoch=0,createCount=0;
  const controlStore=providedStore??{read:async()=>savedControl&&structuredClone(savedControl),save:async control=>{if(failSave)throw new Error('storage unavailable');savedControl=structuredClone(control);},clear:async()=>{savedControl=null;}};
  let renders=0,renderGate=null,command=null,cancel=[],connected=paired,revokeFailures=failRevoke?2:0;
@@ -28,6 +28,7 @@ async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respect
  const share={auth:owner,proof:'b'.repeat(64),expiresAt:until?null:issuedAt+1800000,proofExpiresAt:issuedAt+300000,...(until?{issuedAt,lifetime:'until-revoked'}:{})};if(invalidUntilConfirmation)share.issuedAt=0;
  const transport=new VisualRemixTransport(controller,true,s=>states.push(s),()=>{},async(path,init)=>{
   const body=JSON.parse(init.body);calls.push({path,body});
+  if(path.includes('/reauth/')&&reauthHandler)return reauthHandler(path,body,init);
   if(path.endsWith('/create')){
    if(slowCreate)await (respectCreateAbort?Promise.race([gate.promise,new Promise((_,reject)=>init.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true}))]):gate.promise);
    createCount++;return response(until&&createCount>1?{...share,auth:{...owner,shareId:'synthetic-share-'+createCount}}:share);
@@ -38,7 +39,7 @@ async function fixture({slowCreate=false,failRevoke=false,slowPoll=false,respect
   if(path.endsWith('/reference')){if(slowUpload)await uploadGate.promise;return response({ok:true});}
   if(path.endsWith('/revoke')){if(revokeStatus)return new Response('Unavailable',{status:revokeStatus});if(slowRevoke)await revokeGate.promise;if(revokeFailures-->0)return new Response('Uncertain',{status:503});return response({ok:true,...(revokeState?{state:revokeState}:{})});}
   throw new Error('Unknown path');
- },clientNow,{untilRevoked:until,controlStore});
+ },clientNow,{untilRevoked:until,controlStore,reauthorization:!!reauthChannel,reauthorizationChannel:()=>reauthChannel});
  if(until)await transport.restoreControl();
  return{controller,transport,calls,states,controlStore,get savedControl(){return savedControl;},bumpCache:()=>{cacheEpoch++;},revokeGate,gate,pollGate,uploadGate,share,setPaired:c=>connected=c,setCommand:c=>command=c,setCancel:c=>cancel=c,setRenderGate:g=>renderGate=g,connect:async()=>{await transport.connect(true,undefined,undefined,until?UNTIL_REVOKED_CONSENT:undefined);await waitFor(()=>calls.some(c=>c.path.endsWith('/poll')));},get renders(){return renders;}};
 }
@@ -431,4 +432,47 @@ test('unknown absence states and 401/500 responses never clear a saved owner con
  for(const options of [{revokeState:'unavailable'},{revokeStatus:401},{revokeStatus:500}]){
   const f=await fixture({until:true,paired:true,...options});try{await f.connect();await f.transport.disconnect();assert.ok(f.savedControl);assert.equal(f.transport.snapshot().phase,'error');assert.equal(f.transport.snapshot().revocationConfirmed,undefined);}finally{f.transport.dispose();f.controller.dispose();}
  }
+});
+
+
+const mockReauthChannel=()=>({onmessage:null,messages:[],closed:false,postMessage(value){this.messages.push(value);},close(){this.closed=true;},receive(value){this.onmessage?.({data:value});}});
+const reconnectMetadata=(id='reconnect-request')=>({requestId:id,clientId:'same-client',clientName:'Synthetic ChatGPT',redirectHost:'chatgpt.com',resource:'https://localhost/scene/mcp',scopes:['scene:read','scene:propose'],issuedAt:Date.now(),expiresAt:Date.now()+300000,state:'pending'});
+
+test('same-share reconnect is passive until fresh explicit approval and never recreates, uploads or applies',async()=>{
+ const channel=mockReauthChannel(),f=await fixture({paired:true,until:true,reauthChannel:channel,reauthHandler:async(path,body)=>response(path.endsWith('/describe')?reconnectMetadata(body.requestId):{requestId:body.requestId,proof:'c'.repeat(64),issuedAt:Date.now(),expiresAt:Date.now()+300000})});
+ try{
+  channel.receive({type:'scene-reauth-request',requestId:'reconnect-request'});assert.equal(f.calls.length,0);
+  await f.connect();await waitFor(()=>f.transport.snapshot().phase==='connected');
+  const scene=f.controller.snapshot().scene,control=structuredClone(f.savedControl);
+  channel.receive({type:'scene-reauth-request',requestId:'reconnect-request'});
+  await waitFor(()=>f.transport.snapshot().reauthorizationPrompt?.state==='pending');
+  await f.transport.approveReauthorization('reconnect-request',false);assert.equal(f.calls.filter(c=>c.path.endsWith('/reauth/issue')).length,0);assert.equal(channel.messages.length,0);
+  await Promise.all([f.transport.approveReauthorization('reconnect-request',true),f.transport.approveReauthorization('reconnect-request',true)]);
+  assert.equal(f.calls.filter(c=>c.path.endsWith('/reauth/issue')).length,1);assert.deepEqual(channel.messages,[{type:'scene-reauth-proof',requestId:'reconnect-request',proof:'c'.repeat(64)}]);
+  assert.equal(f.transport.snapshot().reauthorizationPrompt.state,'sent');assert.deepEqual(f.savedControl,control);assert.deepEqual(f.controller.snapshot().scene,scene);
+  assert.equal(f.calls.filter(c=>c.path.endsWith('/create')).length,1);assert.equal(f.calls.filter(c=>c.path.endsWith('/reference')||c.path.endsWith('/report')).length,0);
+ }finally{await f.transport.disconnect();f.transport.dispose();f.controller.dispose();assert.equal(channel.closed,true);}
+});
+
+test('lost reconnect proof response is not retried; late responses after Disconnect are never broadcast',async()=>{
+ for(const late of [false,true]){
+  const channel=mockReauthChannel(),gate=deferred(),f=await fixture({paired:true,reauthChannel:channel,reauthHandler:async(path,body)=>{if(path.endsWith('/describe'))return response(reconnectMetadata(body.requestId));if(!late)throw new Error('unknown delivery');await gate.promise;return response({requestId:body.requestId,proof:'c'.repeat(64),issuedAt:Date.now(),expiresAt:Date.now()+300000});}});
+  try{
+   await f.connect();await waitFor(()=>f.transport.snapshot().phase==='connected');channel.receive({type:'scene-reauth-request',requestId:'reconnect-request'});await waitFor(()=>f.transport.snapshot().reauthorizationPrompt?.state==='pending');
+   const pending=f.transport.approveReauthorization('reconnect-request',true);await waitFor(()=>f.calls.some(c=>c.path.endsWith('/reauth/issue')));
+   if(late){await f.transport.disconnect();gate.resolve();}await pending;
+   assert.equal(channel.messages.length,0);assert.equal(f.calls.filter(c=>c.path.endsWith('/reauth/issue')).length,1);
+   if(!late){assert.equal(f.transport.snapshot().reauthorizationPrompt.state,'error');await f.transport.approveReauthorization('reconnect-request',true);assert.equal(f.calls.filter(c=>c.path.endsWith('/reauth/issue')).length,1);}
+  }finally{gate.resolve();await f.transport.disconnect();f.transport.dispose();f.controller.dispose();}
+ }
+});
+
+test('restored recovery-only control and expired or malformed reconnect prompts cannot issue proof',async()=>{
+ const channel=mockReauthChannel(),saved={version:1,lifetime:'until-revoked',createdAt:Date.now(),auth:{purpose:'visual-remix',shareId:'saved-share',projectId:'saved-project',generation:'saved-generation',epoch:1,credential:'a'.repeat(64)}};
+ const f=await fixture({until:true,reauthChannel:channel,controlStore:{read:async()=>saved,save:async()=>{},clear:async()=>{}}});
+ try{assert.equal(f.transport.snapshot().phase,'recovery');channel.receive({type:'scene-reauth-request',requestId:'reconnect-request'});await new Promise(r=>setTimeout(r,10));assert.equal(f.calls.length,0);assert.equal(channel.messages.length,0);}finally{f.transport.dispose();f.controller.dispose();}
+ let now=Date.now();const active=await fixture({paired:true,clientNow:()=>now,reauthChannel:mockReauthChannel(),reauthHandler:async()=>response(reconnectMetadata())});
+ try{await active.connect();await waitFor(()=>active.transport.snapshot().phase==='connected');active.transport['reauthorizationChannel'].receive({type:'scene-reauth-request',requestId:'reconnect-request',credential:'must-ignore'});await new Promise(r=>setTimeout(r,10));assert.equal(active.calls.filter(c=>c.path.includes('/reauth/')).length,0);
+  active.transport['reauthorizationChannel'].receive({type:'scene-reauth-request',requestId:'reconnect-request'});await waitFor(()=>active.transport.snapshot().reauthorizationPrompt?.state==='pending');now+=300001;await active.transport.approveReauthorization('reconnect-request',true);assert.equal(active.calls.filter(c=>c.path.endsWith('/reauth/issue')).length,0);
+ }finally{await active.transport.disconnect();active.transport.dispose();active.controller.dispose();}
 });

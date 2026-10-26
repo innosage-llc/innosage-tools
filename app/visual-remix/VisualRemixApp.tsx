@@ -39,6 +39,7 @@ import { ReferenceCrop } from "./ReferenceCrop";
 const sceneRemoteEnabled = process.env.NEXT_PUBLIC_SCENE_REMOTE === "true";
 const sceneReferenceEnabled = process.env.NEXT_PUBLIC_SCENE_REFERENCE === "true";
 const sceneUntilRevokedEnabled = process.env.NEXT_PUBLIC_SCENE_UNTIL_REVOKED === "true";
+const sceneReauthorizationEnabled = process.env.NEXT_PUBLIC_SCENE_REAUTH === "true";
 type Snapshot = ReturnType<VisualRemixController["snapshot"]>;
 const button =
   "inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40";
@@ -241,12 +242,15 @@ export default function VisualRemixApp() {
           () => sync(),
           undefined,
           undefined,
-          sceneUntilRevokedEnabled
-            ? {
-                untilRevoked: true,
-                controlStore: createBrowserSceneControlStore(),
-              }
-            : undefined,
+          {
+            ...(sceneUntilRevokedEnabled
+              ? {
+                  untilRevoked: true,
+                  controlStore: createBrowserSceneControlStore(),
+                }
+              : {}),
+            reauthorization: sceneReauthorizationEnabled,
+          },
         )
       : null;
     sharing.current = remote;
@@ -826,6 +830,8 @@ export default function VisualRemixApp() {
             onDisconnect={() => { setConsentEpoch((v) => v + 1); void sharing.current?.disconnect(); }}
             onReauthorize={() => {void reauthorizeScene();}}
             consentRequested={consentEpoch > 0}
+            onApproveReauthorization={(requestId, confirmed) => void sharing.current?.approveReauthorization(requestId, confirmed)}
+            onDismissReauthorization={() => sharing.current?.dismissReauthorization()}
           />
         </div>
       )}

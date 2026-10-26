@@ -28,23 +28,64 @@ requires stable identity for the same independently connectable profile and
 explains that the metadata marker does not grant host eligibility. The service
 must not call replacement shares a reconnect of the original profile.
 
-## Limit of this repair
+## Explicit same-share reauthorization
 
-There is no same-share reauthorization path today: its original five-minute
-proof and initial consent binding are single-use. A fresh Connect creates a new
-share/profile. This patch changes neither rule. No refresh credential, lifetime
-extension, silent replay or saved-control auto-reconnect is added. An active-tab,
-explicit same-share authorization would require a separately designed atomic
-proof/client/handle binding, bounded replay storage and review; simply removing
-`consent_hash IS NULL` bypasses existing consent-handle tombstones.
+The original five-minute proof and its initial consent-handle tombstone remain
+single-use. Reconnect never removes `consent_hash IS NULL` or replaces that
+binding. Behind default-off `SCENE_REAUTH_ENABLED` and
+`NEXT_PUBLIC_SCENE_REAUTH`, each fresh Scene OAuth consent page can create a
+separate short request, bound to the actual provider consent handle, registered
+client, exact resource and unchanged Scene scopes. Opening the page grants no
+access. Its nonce-bound script announces only a random request ID over a
+same-origin BroadcastChannel.
 
-Native local provider/D1 tests cover profile discovery/stability, independent
-same-project shares, callback/token readiness, strict arguments, stale browser,
-revocation, wrong resource and origin-bound HTTP/tool challenges. A harness
-explicitly re-executing a read is not proof that ChatGPT resumed its original
-execution. No proposal is replayed. Existing until-revoked consent, fixed legacy
-deadlines, image authorization, finite1800-second OAuth/no refresh and manual
-remote Apply remain intact. No migration or runtime setting is required.
+Only an already active, connected editor may inspect that request using its
+existing exact share/project/generation/epoch owner credential. A fresh unchecked
+confirmation in that editor authorizes preparing one proof. Atomic issuance
+requires the current live grant, its original consent binding, current snapshot,
+recent browser presence and correct owner credential. The random proof goes only
+to the matching same-origin OAuth page; neither owner credentials nor Scene/image
+bytes cross this channel. The user still clicks normal OAuth Approve. There is no
+automatic submission, proposal execution, account deletion or share creation.
+
+Atomic consumption checks the request ID, hashed proof and original handle,
+registered client, origin-bound resource, fixed deadline, current share epoch and
+revocation. The existing share ID becomes the OAuth user/profile again. Its
+original image consent, authority deadline, project and original consent binding
+remain unchanged. OAuth stays at most 1800 seconds with no refresh credential;
+this is explicit authentication maintenance, not additional persistent access.
+Revoked/expired authority cannot be recovered. A lost issuance response is an
+uncertain outcome and is never automatically retried.
+
+The additive `candidate-migrations/scene-reauthorization.sql` stores only short
+transaction metadata and proof hashes, at most 20 rows with five-minute
+authorization deadlines. Physical cleanup is lazy; expired rows are deleted before new admission and by the existing scheduled
+maintenance invocation. This does not change the 20 retained-share bound,
+activity counters, active-grant cleanup policy or existing cron frequency. Late
+callbacks cannot recreate collected IDs; terminal requests cannot be reopened,
+and request/client/resource/deadline and issued share bindings are immutable.
+The runtime flag must remain off until the exact migration/package is reviewed
+and activated on existing staging. This migration is not a new credential store.
+
+Saved browser-control recovery remains recovery-only: reload does not reconnect,
+sync or upload. No inactive/suspended/closed browser availability is promised.
+The editor must still be active for data reads, and a different share remains a
+different independently revocable profile. Already-open older editor code does
+not gain this feature in place. Save the portable project before an upgrade or
+reload. The existing recovery-only boundary still applies after reload; an
+explicit replacement share used for upgrade is a new profile, never evidence of
+same-profile reconnect. Qualify reconnect on a share first paired with this exact
+candidate, then keep that editor open for the expired-token test. Legacy timed grants keep their fixed
+deadline. New consent is required for any different sharing boundary.
+
+Local tests cover the actual provider/D1 path after token expiry, stable profile,
+unchanged timed/until-revoked grant, strict arguments, stale browser, revocation,
+wrong client/resource/handle/share, concurrent proof issuance, single use,
+collected-request replay and bounded storage. Browser/transport tests separately
+cover explicit confirmation, same-origin handoff, manual final Approve, recovery
+silence, uncertain response, disconnect and local edit/export preservation. A
+harness explicitly issuing the original read again is not proof of ChatGPT host
+continuation. No proposal is replayed.
 
 ## Founder acceptance
 
@@ -57,5 +98,7 @@ record safe tool/status/correlationID/revision and whether a request reached
 Scene; never collect tokens, proofs, private account logs or raw image data.
 The lead does not run live MCP without its separate per-run Founder gate.
 Production, account deletion, cross-share merging and Master closure remain out
-of scope. Rollback reverts compatibility code without changing identities,
-authority rows, owner control, existing flags/cron or consent history.
+of scope. Rollback disables only the new reauthorization runtime/build flags and restores
+the previously verified package, preserving authority rows, original consent
+bindings, owner control and existing flags/cron. Short requests may age out;
+never roll back by reviving a revoked grant or changing profile identity.
