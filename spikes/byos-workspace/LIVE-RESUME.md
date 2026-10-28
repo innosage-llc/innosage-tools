@@ -1,5 +1,10 @@
 # Real Drive qualification boundary
 
+**Current continuation:** Founder authorization was supplied and PR143 was merged
+and deployed. Real full-record A↔Drive↔B validation has now run. See
+[LIVE-REPORT.md](LIVE-REPORT.md) for current evidence, the observed native budget
+failure and recovery. The permission-blocked text below is historical.
+
 Status: pending authority/context, NOT_RUN. No actual Google request in #142.
 The user-authorized read of the historical immutable BYOS demo succeeded; it
 showed the old app, not this candidate, and no active authorization or visible
