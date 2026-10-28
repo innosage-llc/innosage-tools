@@ -1,0 +1,38 @@
+{
+  "requested_model": "gemini-3.8-flash-high",
+  "requested_effort": "high",
+  "catalog_admitted": true,
+  "cli_version": "1.4.7",
+  "mode": "accept-edits",
+  "sandbox": true,
+  "status": "SUCCESS",
+  "duration_seconds": 397.5462,
+  "num_turns": 1,
+  "usage": {
+    "input_tokens": 150964,
+    "output_tokens": 61704,
+    "thinking_tokens": 40288,
+    "cache_read_tokens": 712579,
+    "total_tokens": 212668
+  },
+  "provider_observed_model": "UNKNOWN",
+  "provider_observed_effort": "UNKNOWN",
+  "denied_actions_observed": false,
+  "source_base": "bc4697a87253b1056c872a7aa8272fe2a38aaf25",
+  "generation_artifacts": {
+    "app.mjs": {
+      "sha256": "4859006a5a1fb7b1e3df967ec0110a1e62938b1634c6e4c375a5782dd233d9fb",
+      "bytes": 38580
+    },
+    "index.html": {
+      "sha256": "9e6318bebacce7550db1e34ae3389132880c8d47aa0b4116861c9f35090bbc1d",
+      "bytes": 6651
+    },
+    "style.css": {
+      "sha256": "49f5f9602af7b6cf688fe8eee37054f9374e53afb47113ef8e476b203ed637ab",
+      "bytes": 14402
+    }
+  },
+  "log_publication": "private streams retained only in ignored .private/tools142",
+  "final_delivery": "PENDING_REPAIR_AND_INDEPENDENT_REVIEW"
+}

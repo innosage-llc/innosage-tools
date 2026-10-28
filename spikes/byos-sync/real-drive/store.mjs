@@ -10,7 +10,8 @@ import {preflight,workspace,bindingKey} from './config.mjs';
 export {clientId,setClientId,workspace} from './config.mjs';
 const params=new URLSearchParams(location.search);
 export async function openPageStore(options){
- active=await openNative({...options,hook:async(name,row)=>{if(name==='remote-read')lastRemote=row;},connectionProvider:async()=>({...await preflight(),factory:diagnosticFactory})});
+ const providerPreflight=options.providerPreflight??preflight;
+ active=await openNative({...options,hook:async(name,row)=>{if(name==='remote-read')lastRemote=row;},connectionProvider:async()=>({...await providerPreflight(),factory:diagnosticFactory})});
  active.explicitSync=true;
  const runOperation=active.runOperation.bind(active);
  let halted=false;
@@ -29,7 +30,7 @@ export async function openPageStore(options){
     if(!active.replication){
       active.phase('initializing');
       await active.connect(API,{live:true,autoStart:false});
-    }else await preflight();
+    }else await providerPreflight();
     return fn();
    })(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(failure('SYNC_BUDGET_EXHAUSTED',429)),180000);})]);
   }catch(e){

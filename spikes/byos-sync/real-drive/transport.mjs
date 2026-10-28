@@ -5,6 +5,9 @@ import {metadataSummary} from './diagnostics.mjs';
 export const API='https://www.googleapis.com';
 export const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,expires=0,deadline=0,count=0;
+let folderCreationForbidden=false;
+// Monotonic opt-in for the isolated existing-folder-only workspace build.
+export function forbidFolderCreation(){folderCreationForbidden=true;}
 const observations=[];
 const fileAliases=new Map();
 let requestSequence=0,operationId=null,operationStart=0,progress=()=>{};
@@ -25,6 +28,10 @@ export async function driveFetch(input,init={}){
  return dispatch(url,init);
 }
 async function dispatch(url,init={}){
+ if(folderCreationForbidden&&(init.method??'GET')==='POST'&&/^\/drive\/v[23]\/files$/.test(url.pathname)){
+  let metadata;try{metadata=JSON.parse(init.body);}catch{throw failure('FOLDER_METADATA_NOT_SAFE',403);}
+  if(metadata?.mimeType==='application/vnd.google-apps.folder')throw failure('FOLDER_CREATION_DISABLED',403);
+ }
  if(!isAuthorized())throw failure('REAUTHORIZE_REQUIRED',401);
  if(Date.now()>deadline||count>=1000)throw failure('REQUEST_BUDGET_EXHAUSTED',429);
  count++;

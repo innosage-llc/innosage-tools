@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "provider": "INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE",
+  "checks": [
+    "unbound-zero-provider-requests",
+    "existing-account-folder-reauthorization-wiring",
+    "no-native-debug-store",
+    "full-tree-A-to-B",
+    "full-tree-B-to-A"
+  ],
+  "interceptedRequests": 237,
+  "realGoogleRequests": 0,
+  "errors": []
+}

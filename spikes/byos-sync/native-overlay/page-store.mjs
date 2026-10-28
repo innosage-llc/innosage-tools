@@ -375,8 +375,11 @@ export class PageStore {
         const current=await this.db.localDrafts.findOne(initial.id).exec();
         if(!current||current.seq!==initial.seq||!same(current.draft,initial.draft))
           throw new Error('Draft advanced; discard requires review');
-        await this.hook('before-cloud-discard',copy(initial));
-        await current.remove();
+        await this.hook('before-cloud-discard',copy(initial),{remote:copy(newest)});
+        const afterHook=await this.db.localDrafts.findOne(initial.id).exec();
+        if(!afterHook||afterHook.seq!==initial.seq||!same(afterHook.draft,initial.draft)||!same(await this.page(id),newest))
+          throw new Error('Generation advanced during discard validation; draft retained');
+        await afterHook.remove();
       }));
       this.state='clean';this.notify();return this.view(id);
     }

@@ -1,0 +1,9 @@
+[
+  {
+    "status": "PASS",
+    "scope": "UI_CALLBACK_INTERLEAVING_ONLY",
+    "checks": [
+      "superseded-verify-refresh-with-held-new-native-generation"
+    ]
+  }
+]
