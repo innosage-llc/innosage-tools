@@ -1,0 +1,793 @@
+{
+  "classification": "LOCAL_MOCK_COUNTEREXAMPLE_PASS",
+  "providerCalls": 0,
+  "browserActions": 0,
+  "nativeVersion": "17.6.0",
+  "sourceHashes": {
+    "transaction.js": "abcb3adb53076d077901cafadf1f96bb137c7e47cd042b7b721795122b7ac983",
+    "upstream.js": "1e509bbfb2b3ec0656f1998f7f4abb81dc5bbda6c1012e2761a529597a5026f5",
+    "document-handling.js": "73ab8be7a11962c6437ab64d5a13aa1836bc45a1c69edad1e05a9a1d8275271a"
+  },
+  "walOnly": {
+    "nativePushReturned": true,
+    "pageStillBaseline": true,
+    "walContainsCurrent": true
+  },
+  "events": [
+    {
+      "type": "input",
+      "page": "A",
+      "atMs": 0.036624999999986585,
+      "deadlineMs": 5000.036625
+    },
+    {
+      "type": "input",
+      "page": "B",
+      "atMs": 1001.855083,
+      "deadlineMs": 6001.855083
+    },
+    {
+      "type": "handler-invoked",
+      "page": "A",
+      "atMs": 5001.446666
+    },
+    {
+      "type": "handler-invoked",
+      "page": "B",
+      "atMs": 6003.529291
+    },
+    {
+      "type": "both-deadlines-passed-no-content-or-wal-upload",
+      "atMs": 6500.056833
+    },
+    {
+      "type": "holder-released",
+      "atMs": 7000.367458
+    },
+    {
+      "type": "handler-returned",
+      "page": "A",
+      "atMs": 7145.832458
+    },
+    {
+      "type": "handler-returned",
+      "page": "B",
+      "atMs": 7392.3373329999995
+    }
+  ],
+  "uploads": [
+    {
+      "atMs": 7373.0656659999995,
+      "method": "PUT",
+      "fileName": "A.json",
+      "kind": "page-content",
+      "page": "A",
+      "editId": "deadline-A",
+      "bodyHash": "ed2dc0a1ac1353eab625312995130ad6b16d2273f50afaaa18134942c70c1273",
+      "status": 200,
+      "endMs": 7375.54425
+    },
+    {
+      "atMs": 7402.947125,
+      "method": "PUT",
+      "fileName": "B.json",
+      "kind": "page-content",
+      "page": "B",
+      "editId": "deadline-B",
+      "bodyHash": "bd666cbd2edc8f68ee995ebfb196be5485e949082785b25d4636dde1cf81ca18",
+      "status": 200,
+      "endMs": 7405.230624999999
+    }
+  ],
+  "rows": [
+    {
+      "atMs": 5001.5383329999995,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5006.0521659999995
+    },
+    {
+      "atMs": 5108.783791,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5111.203958
+    },
+    {
+      "atMs": 5111.444874999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5114.418874999999
+    },
+    {
+      "atMs": 5264.970291,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5267.573165999999
+    },
+    {
+      "atMs": 5267.815291,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5270.9959579999995
+    },
+    {
+      "atMs": 5498.498041,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5501.118958
+    },
+    {
+      "atMs": 5501.366499999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5503.716875
+    },
+    {
+      "atMs": 5843.193082999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5845.9635
+    },
+    {
+      "atMs": 5846.233499999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 5848.679708
+    },
+    {
+      "atMs": 6003.635458,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6006.603125
+    },
+    {
+      "atMs": 6109.173166,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6111.844375
+    },
+    {
+      "atMs": 6112.071666,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6114.501875
+    },
+    {
+      "atMs": 6266.435165999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6269.195207999999
+    },
+    {
+      "atMs": 6269.457415999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6272.007333
+    },
+    {
+      "atMs": 6357.443915999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6360.203458
+    },
+    {
+      "atMs": 6360.4377079999995,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6362.65075
+    },
+    {
+      "atMs": 6499.189665999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6502.30175
+    },
+    {
+      "atMs": 6502.587165999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6505.313875
+    },
+    {
+      "atMs": 6844.825,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6847.446833
+    },
+    {
+      "atMs": 6847.885582999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 6850.492249999999
+    },
+    {
+      "atMs": 7000.499916,
+      "method": "PUT",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7005.025957999999
+    },
+    {
+      "atMs": 7005.087041,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7007.452415999999
+    },
+    {
+      "atMs": 7123.792791,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7125.648083
+    },
+    {
+      "atMs": 7125.737625,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7127.349332999999
+    },
+    {
+      "atMs": 7127.399915999999,
+      "method": "PUT",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7129.016791
+    },
+    {
+      "atMs": 7129.033541,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7130.635458
+    },
+    {
+      "atMs": 7130.697208,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7132.309291
+    },
+    {
+      "atMs": 7132.543333,
+      "method": "GET",
+      "fileName": null,
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7134.659957999999
+    },
+    {
+      "atMs": 7134.851957999999,
+      "method": "GET",
+      "fileName": "A.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7137.593040999999
+    },
+    {
+      "atMs": 7137.910333,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7139.9229159999995
+    },
+    {
+      "atMs": 7139.999707999999,
+      "method": "PUT",
+      "fileName": "rxdb-wal.json",
+      "kind": "wal",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7140.904041
+    },
+    {
+      "atMs": 7140.939791,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7142.567
+    },
+    {
+      "atMs": 7142.6387079999995,
+      "method": "PUT",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7144.263958
+    },
+    {
+      "atMs": 7144.277125,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7145.796708
+    },
+    {
+      "atMs": 7357.725415999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7360.108791
+    },
+    {
+      "atMs": 7360.296665999999,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7362.2895
+    },
+    {
+      "atMs": 7362.414041,
+      "method": "PUT",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7364.601291
+    },
+    {
+      "atMs": 7364.6404999999995,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7366.547165999999
+    },
+    {
+      "atMs": 7366.725708,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7368.888083
+    },
+    {
+      "atMs": 7369.398582999999,
+      "method": "GET",
+      "fileName": null,
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7371.991416
+    },
+    {
+      "atMs": 7372.204666,
+      "method": "GET",
+      "fileName": "A.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7372.922833
+    },
+    {
+      "atMs": 7373.0656659999995,
+      "method": "PUT",
+      "fileName": "A.json",
+      "kind": "page-content",
+      "page": "A",
+      "editId": "deadline-A",
+      "bodyHash": "ed2dc0a1ac1353eab625312995130ad6b16d2273f50afaaa18134942c70c1273",
+      "status": 200,
+      "endMs": 7375.54425
+    },
+    {
+      "atMs": 7375.643499999999,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7377.2432499999995
+    },
+    {
+      "atMs": 7377.304249999999,
+      "method": "PUT",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7378.916083
+    },
+    {
+      "atMs": 7378.932666,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7380.465166
+    },
+    {
+      "atMs": 7380.548583,
+      "method": "GET",
+      "fileName": null,
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7382.099958
+    },
+    {
+      "atMs": 7382.167165999999,
+      "method": "GET",
+      "fileName": "B.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7383.7017909999995
+    },
+    {
+      "atMs": 7383.793208,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7385.534541
+    },
+    {
+      "atMs": 7385.614458,
+      "method": "PUT",
+      "fileName": "rxdb-wal.json",
+      "kind": "wal",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7387.3961659999995
+    },
+    {
+      "atMs": 7387.418833,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7388.970291
+    },
+    {
+      "atMs": 7389.0377499999995,
+      "method": "PUT",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7390.786040999999
+    },
+    {
+      "atMs": 7390.79825,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7392.301791
+    },
+    {
+      "atMs": 7392.353791,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7393.845665999999
+    },
+    {
+      "atMs": 7393.895082999999,
+      "method": "PUT",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7395.473290999999
+    },
+    {
+      "atMs": 7395.487791,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7397.103791
+    },
+    {
+      "atMs": 7397.233541,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7398.9619999999995
+    },
+    {
+      "atMs": 7399.115291,
+      "method": "GET",
+      "fileName": null,
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7400.925875
+    },
+    {
+      "atMs": 7401.041416,
+      "method": "GET",
+      "fileName": "B.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7402.801375
+    },
+    {
+      "atMs": 7402.947125,
+      "method": "PUT",
+      "fileName": "B.json",
+      "kind": "page-content",
+      "page": "B",
+      "editId": "deadline-B",
+      "bodyHash": "bd666cbd2edc8f68ee995ebfb196be5485e949082785b25d4636dde1cf81ca18",
+      "status": 200,
+      "endMs": 7405.230624999999
+    },
+    {
+      "atMs": 7405.458957999999,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7407.376332999999
+    },
+    {
+      "atMs": 7407.456249999999,
+      "method": "PUT",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7409.239041
+    },
+    {
+      "atMs": 7409.251915999999,
+      "method": "GET",
+      "fileName": "rxdb-wal.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7410.7709159999995
+    },
+    {
+      "atMs": 7410.8532079999995,
+      "method": "PUT",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7412.43225
+    },
+    {
+      "atMs": 7412.444375,
+      "method": "GET",
+      "fileName": "transaction.json",
+      "kind": "other",
+      "page": null,
+      "editId": null,
+      "bodyHash": null,
+      "status": 200,
+      "endMs": 7413.956541
+    }
+  ],
+  "limitations": [
+    "Public native helpers with controlled shared-lock occupancy, not an A–Z app or real Drive timing result",
+    "Synthetic input markers; this probe does not test local durable ACK",
+    "Proves a legal shared-lock state delays even invoked per-page handlers; not the root cause of the earlier real timeout"
+  ]
+}
