@@ -11,11 +11,12 @@ confirmation. Count always means locally known pages, never provider total.
 Manual merge uses the complete serialized envelope to retain metadata intent.
 Native journal conflict originals remain in their full envelopes.
 
-Auto-sync candidate is deferred/HOLD: existing real-provider controller's timeout
-races do not cancel all in-flight native work and it deliberately halts future
-operations after timeout. A coalescing retry scheduler cannot safely assume an
-old operation is quiescent. Keep explicit operations and the existing single
-native owner; no parallel scheduler or polling has been introduced.
+The default UI remains explicit-only. An isolated foreground policy is now
+qualified against the native loopback fixture: it coalesces durable Save signals,
+allows at most two existing workspace-wide sync dispatches, and permanently
+halts on any error. It never cancels or retries an uncertain native operation.
+The module is not imported by the app or real build. See FOREGROUND.md for the
+bounded evaluation, exact evidence and remaining live qualification HOLD.
 
 A handoff remains incomplete until a separate destination reads matching full
 records/tree. This controller deliberately makes no destination availability claim.

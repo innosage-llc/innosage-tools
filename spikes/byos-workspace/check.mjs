@@ -6,5 +6,6 @@ const require = createRequire(new URL('../byos-sync/package.json',import.meta.ur
 await mkdir('spikes/byos-workspace/.generated',{recursive:true});
 await build({entryPoints:['spikes/byos-workspace/native-test-entry.mjs'],bundle:true,packages:'external',platform:'node',format:'cjs',outfile:'spikes/byos-sync/native-overlay/.generated/workspace-store.cjs'});
 await build({entryPoints:['spikes/byos-workspace/real-store.mjs'],bundle:true,platform:'browser',format:'esm',define:{global:'globalThis'},inject:['spikes/byos-sync/real-drive/transport.mjs'],outfile:'spikes/byos-workspace/.generated/real-store.js'});
-const result=spawnSync(process.execPath,['--test','spikes/byos-workspace/workspace.test.mjs','spikes/byos-workspace/binding.test.mjs'],{stdio:'inherit',env:{...process.env,WORKSPACE_REQUIRE_ROOT:require.resolve('fake-indexeddb/auto')}});
+// Native fixture files share the generated loopback module; serialize test files.
+const result=spawnSync(process.execPath,['--test','--test-concurrency=1','spikes/byos-workspace/workspace.test.mjs','spikes/byos-workspace/binding.test.mjs','spikes/byos-workspace/foreground.test.mjs','spikes/byos-workspace/foreground-native.test.mjs'],{stdio:'inherit',env:{...process.env,WORKSPACE_REQUIRE_ROOT:require.resolve('fake-indexeddb/auto')}});
 process.exitCode=result.status??1;

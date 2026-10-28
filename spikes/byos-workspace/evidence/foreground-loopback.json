@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "scope": "NATIVE_LOOPBACK_POLICY_EVALUATION_ONLY",
+  "realGoogleRequests": 0,
+  "defaultUiChanged": false,
+  "samplesPerMode": 1,
+  "percentiles": "NOT_APPLICABLE",
+  "limits": "Explicit sync after every durable create versus one foreground batch; this is a scheduling-policy comparison, not identical sync timing or measured Google cost/latency.",
+  "observations": [
+    {
+      "mode": "explicit",
+      "pages": 12,
+      "markdownBytesPerPage": 4096,
+      "dispatches": 12,
+      "senderRequests": 982,
+      "bytesUp": 113832,
+      "bytesDown": 648631,
+      "senderDurationMs": 2810.716375,
+      "fullTreeEqual": true,
+      "pendingJournalsRetained": 12,
+      "cloudVerified": false,
+      "destinationHandoffClaim": false
+    },
+    {
+      "mode": "foreground",
+      "pages": 12,
+      "markdownBytesPerPage": 4096,
+      "dispatches": 1,
+      "senderRequests": 133,
+      "bytesUp": 109981,
+      "bytesDown": 176972,
+      "senderDurationMs": 320.5601670000001,
+      "fullTreeEqual": true,
+      "pendingJournalsRetained": 12,
+      "cloudVerified": false,
+      "destinationHandoffClaim": false
+    }
+  ]
+}
