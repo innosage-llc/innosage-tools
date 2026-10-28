@@ -98,6 +98,7 @@ test('real session completion remains stable through repeated wake and audit; la
   f.at(5000);drain.wake();
   for(let i=0;i<100&&!drain.ready&&!drain.halted;i++)await new Promise(r=>setImmediate(r));
   assert.equal(drain.halted,null);assert.equal(drain.ready,true);assert.equal(f.session.finished,true);
+  assert.equal(drain.events.filter(e=>e.type==='page-upload-start').length,26,'physical receipts cannot overwrite the drain event taxonomy');
   const calls=f.calls.length;for(let i=0;i<5;i++){drain.wake();await drain.audit();}
   assert.equal(drain.ready,true);assert.equal(drain.halted,null);assert.equal(f.calls.length,calls);
   drain.input('A');await new Promise(r=>setImmediate(r));assert.equal(drain.ready,false);assert.equal(saves,27);assert.equal(f.calls.length,calls);

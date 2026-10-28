@@ -1,7 +1,7 @@
 import {PreparedOwner} from './prepared-owner.mjs';
 import {createPreparedDriveIO} from './prepared-drive-io.mjs';
 import {getDocumentFiles} from '../byos-sync/real-drive/prepared-primitives.mjs';
-import {API,preparedRequestOnce,evidence,experimentEvidence,isAuthorized} from '../byos-sync/real-drive/transport.mjs';
+import {API,preparedRequestOnce,evidence,experimentEvidence,isAuthorized,withPreparedNativeFence} from '../byos-sync/real-drive/transport.mjs';
 import {protocolError} from './prepared-wal.mjs';
 
 export function preparedRealController(store){
@@ -31,7 +31,7 @@ export function preparedRealController(store){
       if(!isAuthorized())throw Object.assign(protocolError('REAUTHORIZE_REQUIRED'),{status:401});
       if(experimentEvidence()?.halted)throw protocolError('PREPARED_TRANSPORT_HALTED');
     }};
-    owner=new PreparedOwner({store,inventory,clock,budget,event,
+    owner=new PreparedOwner({store,inventory,clock,budget,event,withNativeFence:withPreparedNativeFence,
       assertDrained:async()=>{if(experimentEvidence()?.active)throw protocolError('PREPARED_TRANSPORT_NOT_DRAINED');},
       createIO:({bindings,...guards})=>createPreparedDriveIO({apiEndpoint:API,fetchOnce:preparedRequestOnce,files:bindings.files,...guards,now:clock.now,event,phase:()=>owner.mode}),
     });return owner;

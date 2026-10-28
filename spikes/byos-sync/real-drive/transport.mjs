@@ -5,6 +5,14 @@ import {metadataSummary} from './diagnostics.mjs';
 export const API='https://www.googleapis.com';
 export const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,expires=0,deadline=0,count=0;
+let preparedNativeFence=null,preparedNativePoisoned=false;
+export async function withPreparedNativeFence(guard,action){
+ if(preparedNativePoisoned)throw Error('PREPARED_NATIVE_RELOAD_REQUIRED');
+ if(preparedNativeFence?.active)throw Error('PREPARED_NATIVE_FENCE_ALREADY_OWNED');
+ guard();const scope={active:true,guard};preparedNativeFence=scope;
+ try{return await action();}catch(error){preparedNativePoisoned=true;throw error;}
+ finally{scope.active=false;}
+}
 let folderCreationForbidden=false;
 // Monotonic opt-in for the isolated existing-folder-only workspace build.
 export function forbidFolderCreation(){folderCreationForbidden=true;}
@@ -36,8 +44,13 @@ export function failure(code,status){const e=new Error(code);e.parameters={statu
 export async function driveFetch(input,init={}){
  const url=new URL(typeof input==='string'?input:input.url);
  if(url.origin!==API) return globalThis.fetch(input,init);
- if((init.method??'GET')==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&url.searchParams.get('alt')==='media')return readVersionedMedia(url,init,dispatch);
- return dispatch(url,init);
+ // Capture the capability across metadata -> media awaits. Clearing the outer
+ // callback scope must not un-fence a delayed sibling request.
+ const scope=preparedNativeFence;
+ const fence=scope?()=>{if(!scope.active)throw Error('PREPARED_NATIVE_SCOPE_CLOSED');scope.guard();}:null;
+ const send=(url,options)=>dispatch(url,options,fence);
+ if((init.method??'GET')==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&url.searchParams.get('alt')==='media')return readVersionedMedia(url,init,send);
+ return send(url,init);
 }
 /** Single physical attempt for the prepared workspace IO. The caller owns
  * revision binding, exact CAS and bounded reconciliation/retry. No retry here.
@@ -87,7 +100,8 @@ export async function preparedRequestOnce(input,init={}){
  }catch(error){row.status??='NETWORK_ERROR';trial.status??='NETWORK_ERROR';row.endedMs=performance.now()-clockOrigin;throw error;}
  finally{trial.endedAt=Date.now();experiment.active--;notifyExperiment();}
 }
-async function dispatch(url,init={}){
+async function dispatch(url,init={},fence=null){
+ fence?.();
  if(folderCreationForbidden&&(init.method??'GET')==='POST'&&/^\/drive\/v[23]\/files$/.test(url.pathname)){
   let metadata;try{metadata=JSON.parse(init.body);}catch{throw failure('FOLDER_METADATA_NOT_SAFE',403);}
   if(metadata?.mimeType==='application/vnd.google-apps.folder')throw failure('FOLDER_CREATION_DISABLED',403);
@@ -112,6 +126,9 @@ async function dispatch(url,init={}){
  const trial=experiment?{sequence:experiment.requests,startedAt:Date.now(),method,status:null,bytesUp:typeof init.body==='string'?new TextEncoder().encode(init.body).length:0,bytesDown:null}:null;
  if(trial){experiment.rows.push(trial);experiment.bytesUp+=trial.bytesUp;experiment.active++;notifyExperiment();}
  try{
+  // Observers may reenter, close ownership, or advance the generation. Repeat
+  // the transaction capability check immediately before physical dispatch.
+  try{fence?.();}catch(error){row.status='CANCELLED_BEFORE_DISPATCH';if(trial)trial.status='CANCELLED_BEFORE_DISPATCH';throw error;}
   const r=await globalThis.fetch(url,{...init,headers,redirect:'error',signal:AbortSignal.timeout(20000)});
   if(trial){trial.status=r.status;try{trial.bytesDown=(await r.clone().arrayBuffer()).byteLength;experiment.bytesDown+=trial.bytesDown;}catch(error){haltExperiment('AMBIGUOUS_RESPONSE_BODY');throw error;}if(r.status>=400&&![404,412].includes(r.status))haltExperiment('PROVIDER_'+r.status);}
   row.headersMs=performance.now()-clockOrigin;row.status=r.status;row.etagVisible=r.headers.has('ETag');row.dateVisible=r.headers.has('Date');

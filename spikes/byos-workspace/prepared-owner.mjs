@@ -7,11 +7,12 @@ import {completeRecord,sameRecord,protocolError,WAL_FORMAT,WAL_VERSION,validateW
  * are provided by the existing authorized provider; this is not a second engine.
  */
 export class PreparedOwner {
-  constructor({store,inventory,createIO,clock,budget,event=()=>{},assertDrained,policy}) {
-    Object.assign(this,{store,inventory,createIO,clock,budget,event,assertDrained,policy});
+  constructor({store,inventory,createIO,clock,budget,event=()=>{},assertDrained,withNativeFence,policy}) {
+    if(typeof withNativeFence!=='function')throw protocolError('NATIVE_PHYSICAL_FENCE_REQUIRED');
+    Object.assign(this,{store,inventory,createIO,clock,budget,event,assertDrained,withNativeFence,policy});
     this.mode='idle';this.transactionQueue=Promise.resolve();this.context=null;this.session=null;
   }
-  assertRequest(){this.budget.assertCanRequest();if(this.mode==='halted')throw protocolError('PREPARED_OWNER_HALTED');if(!this.store.writer||this.store.closed||!this.store.db.isLeader())throw protocolError('PREPARED_OWNERSHIP_LOST');}
+  assertRequest(){this.budget.assertCanRequest();if(this.mode==='halted')throw protocolError('PREPARED_OWNER_HALTED');if(!this.store.writer||this.store.closed||!this.store.db.isLeader())throw protocolError('PREPARED_OWNERSHIP_LOST');if(this.currentAuthority?.()===false)throw protocolError('PREPARED_GENERATION_AUTHORITY_CLOSED');}
   async ioForLease(bindings,{acquire=true}={}){
     let acquiring=acquire,lease=null;
     const assertWrite=(binding)=>{
@@ -39,15 +40,16 @@ export class PreparedOwner {
     const task=this.transactionQueue.then(async()=>{
       if(this.mode!=='reconciling'||primaryPath!=='id'||!this.context)throw protocolError('PREPARED_TRANSACTION_ENTRY_CLOSED');
       const owned=await this.ioForLease(this.bindings);
+      const current=()=>{owned.budget.assertCanRequest();if(this.mode!=='reconciling'||this.currentAuthority?.()===false)throw protocolError('NATIVE_TRANSACTION_AUTHORITY_CLOSED');return true;};
       try{
         const snapshot=await owned.io.readFile(this.bindings.walId);
-        await recoverTransactionWal({snapshot,fileId:this.bindings.walId,context:this.context,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:()=>this.mode==='reconciling',onState:this.event});
-        const result=await fn();
+        await recoverTransactionWal({snapshot,fileId:this.bindings.walId,context:this.context,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:this.event});
+        const result=await this.withNativeFence(current,fn);
         // A callback may publish native-array WAL. Read and safely replay that
         // array before releasing; never leave a fresh-ETag native replay path.
         const after=await owned.io.readFile(this.bindings.walId);
-        await recoverTransactionWal({snapshot:after,fileId:this.bindings.walId,context:this.context,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:()=>this.mode==='reconciling',onState:this.event});
-        await this.release(owned,()=>this.mode==='reconciling');if(runAfter)await runAfter();return result;
+        await recoverTransactionWal({snapshot:after,fileId:this.bindings.walId,context:this.context,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:this.event});
+        await this.release(owned,current);if(runAfter)await runAfter();return result;
       }catch(error){this.mode='halted';this.event({type:'transaction-halted',reason:error.code??error.message});throw error;}
     });
     this.transactionQueue=task.catch(()=>{});return task;
@@ -84,7 +86,7 @@ export class PreparedOwner {
       this.session=new PreparedSession({workspace:this.store.workspace,runId:crypto.randomUUID(),baselines,wal:{...wal,fileId:this.bindings.walId},lease:owned.lease,io:owned.io,budget:this.budget,clock:this.clock,policy:this.policy,event:this.event,
         reconcile:async(current,confirmed)=>{
           await this.store.holdPreparedGenerations(confirmed,current);
-          this.mode='reconciling';await this.store._sync({materialize:false});
+          this.currentAuthority=current;this.mode='reconciling';await this.store._sync({materialize:false});
           await this.transactionQueue;await this.assertDrained();
           if(!current())throw protocolError('NEW_INPUT_DURING_NATIVE_RECONCILIATION');
         },retire:async(rows,current)=>{await this.store.retirePreparedGenerations(rows,current);this.mode='complete';}});
@@ -102,7 +104,7 @@ export class PreparedOwner {
       if(journals.length!==26)throw protocolError('RECOVERY_REQUIRES_EXACT_26_PENDING_INTENTS');
       for(const doc of journals){const row=doc.toJSON();if(row.session!==this.store.session||row.state!=='pending'||!ids.includes(row.page)||frozen.has(row.page)||!row.base)throw protocolError('RECOVERY_JOURNAL_NOT_SAFE');frozen.set(row.page,structuredClone(row));}
       this.event({type:'recovery-local-oracle',journals:[...frozen.values()]});
-      const current=()=>this.mode!=='halted'&&this.store.writer&&!this.store.closed&&stillCurrent();
+      const current=()=>this.mode!=='halted'&&this.store.writer&&!this.store.closed&&stillCurrent();this.currentAuthority=current;
       const checkJournals=async()=>{
         if(!current())throw protocolError('RECOVERY_OWNERSHIP_CHANGED');
         for(const [id,old] of frozen){const latest=await this.store.draft(id);if(!latest||latest.seq!==old.seq||latest.state!=='pending'||!sameRecord({...latest.draft,_deleted:false},{...old.draft,_deleted:false}))throw protocolError('RECOVERY_LOCAL_GENERATION_CHANGED');}

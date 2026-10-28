@@ -9,7 +9,7 @@ export class PreparedDrain {
     this.started=now();this.events=[];this.walRows=new Map();this.publishing=false;this.publishAgain=false;this.finalizing=false;this.ready=false;this.halted=null;this.stopped=false;this.strict=true;
     this.deadlineTimer=clock.setTimeout(()=>this.fail('RUN_TIME_BUDGET_EXHAUSTED'),maxMs);
   }
-  event(type,detail={}){this.events.push({type,atMs:this.now(),...detail});this.changed();}
+  event(type,detail={}){this.events.push({atMs:this.now(),...detail,type});this.changed();}
   current(row){const entry=this.entries.get(row.target.id);return !!entry&&entry.generation===row.generation&&entry.saved===row.generation&&entry.record&&sameRecord(entry.record,row.target);}
   input(id){
     const entry=this.entries.get(id);if(!entry){this.fail('INPUT_OUTSIDE_FIXTURE');return;}

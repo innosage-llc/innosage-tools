@@ -142,13 +142,20 @@ can produce a measured missed onset or a safe failure. This is not a general
 background sync guarantee.
 
 Local evidence:51 core/recovery tests and49 existing workspace/native regression
-tests passed before the final full gate. The separate headless browser test
+tests passed. The installed older native transaction also rejects the versioned
+WAL before page mutation/cleanup and leaves its lease stranded, as documented.
+Seven additional native-capability tests cover suspension/cutoff, owner halt,
+leadership/new-generation loss, observer reentrancy, delayed media continuation,
+and actual native multiworker404/held-sibling continuation. The separate headless browser test
 passed26/26 final generations, injected503 recovery, unchanged original12,
 independent B full-tree readback, and actual A close/reopen, using1133 intercepted
-synthetic requests and ZERO real Google requests. The runtime/native-old-client
-test and final full gate remain required on the submitted revision. Independent
-core review passed; full integration review, staging and live Drive qualification
-are still outstanding. No real waiting-time claim follows from these local tests.
+synthetic requests and ZERO real Google requests. Independent integration review
+and two fence repairs passed; the final submitted commit must bind those reviewed
+source hashes and pass the complete gate. Native callback capabilities remain
+closed after completion, and any callback failure forbids another capability
+until reload, so abandoned native workers cannot borrow a later transaction.
+Staging and live Drive qualification are still outstanding. No real waiting-time
+claim follows from these local tests. The candidate release version is0.1.8.
 
 Run `npm run test:byos-workspace` for native/core regression and
 `npm run test:byos-workspace:prepared` for the fully intercepted end-to-end sample.
