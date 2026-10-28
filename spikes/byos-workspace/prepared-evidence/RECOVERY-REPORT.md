@@ -1,0 +1,17 @@
+# v0.1.8 real Drive recovery — HOLD
+
+Source cdc5229d1a07c26026137c10525f14b00c7e71fc (PR147), build 34b28f0132b2a1c428804c911279b28614bdcec513d67b2722f9a6b232a85087. This is a separately bounded recovery attempt, not the formal A–Z sample. Original PR146 failure artifacts remain unchanged.
+
+Chrome ownership was checked on original BYOS113 A/B. Window started 2026-10-28 17:12:23 UTC and was released 17:18:52 UTC. Original account authorization was refreshed with the same drive.file scope. A retained38 full records,26 pending intents and the original12; B was idle with12 pages and no pending edits. Pre-recovery snapshot SHA256 1fa3c295acdc3202ca4d936cb8ecb99cdd2e66222485f220c3be1a868dcdc81c.
+
+The first measured request began17:16:53.291 UTC. Recovery stopped at17:17:48.566 UTC with WRITE_OUTCOME_UNRESOLVED, about55.275s after that first request. All188 responses were HTTP200:182GET,3native setupPOST,1leasePUT and2WALPUT. There were zero page-content PUTs, no observed provider retry,401/403/412/429/5xx, or network timeout. Request bytes237254; decoded response bytes704007. Native setup requests are unannotated in this version; do not claim a precise endpoint/file identity solely from their status or byte length.
+
+The original WAL read was empty. The source independently read all26 remote full records and reached recovery-clear without issuing a page PUT. In the exact reviewed implementation this means the recovery plans found all targets already applied and the final readback matched all targets. This is code-path evidence: v0.1.8 did not export those per-page remote snapshots, so it does not supply standalone per-page Drive receipt records and is not a formal generation result.
+
+The owner nevertheless republished a236857-byte no-op WAL, repeated26 planning reads and26 verification reads, then cleared the WAL. Its lease clock started17:17:08.1555 UTC; unchanged conservative write cutoff17:17:48.1555. Clear PUT dispatched17:17:46.903 and returned200 at17:17:48.567,411.5ms after cutoff (wall trace; monotonic response event is410.3ms after cutoff). The conditional upload coordinator checks the same bounded budget before confirmation. It therefore stopped before issuing that read. This mechanism is supported by source and event ordering, not a provider-latency hypothesis.
+
+Final WAL and lease state are UNKNOWN because post-clear confirmation and release did not complete. No blind retry followed. All38 local full records remain exactly unchanged and26 journals remain pending. Network active0. Formal A–Z, Z-to-safe-close, B full readback and actual safe-close/reopen are NOT RUN; safe-close duration is null.
+
+The follow-up repair skips new WAL publication/replay only when every independent lease-held full-record observation already equals its frozen final intent after prior-WAL reconciliation. It still requires original-CAS lease release, native reconciliation and exact journal retirement. The40s mutation cutoff,60s native lease,180s operation budget and1000request cap are unchanged. It adds full per-page observation evidence and shows recovery as an active operation. This repair requires independent review/native gates and separate live qualification; it does not retroactively change this failure.
+
+Raw evidence: prepared-recovery-live.json, SHA256194588c52224c80dbe1897ca368fefcb4f3f99321d5c5076b7fc078dd78813f4. The original prepared-live-protocol.json remains frozen; any later candidate must record a new source/build and separate preparation/recovery/formal phase.

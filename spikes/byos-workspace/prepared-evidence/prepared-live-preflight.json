@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-28T17:16:43.115Z",
+  "source": "cdc5229d1a07c26026137c10525f14b00c7e71fc",
+  "version": "0.1.8",
+  "bundleSha256": "9826f4acd9128997094321b54730c9dd747dd30080c461f21339100e328c5549",
+  "aCount": 38,
+  "pending": 26,
+  "healthy": true,
+  "prior26ExactMatch": true,
+  "old12ExactMatchObserved": true,
+  "beforeOracleSha256": "1fa3c295acdc3202ca4d936cb8ecb99cdd2e66222485f220c3be1a868dcdc81c",
+  "bPreflight": {
+    "at": "2026-10-28T17:15:07.678Z",
+    "pages": 12,
+    "pending": 0,
+    "healthy": true,
+    "operation": "No operation active",
+    "foreground": "Off"
+  },
+  "auth": "Original weijingliu5 account renewed, same drive.file scope; no new consent",
+  "recovery": "STARTED_SEPARATE_FROM_FORMAL",
+  "formal": "NOT_STARTED"
+}

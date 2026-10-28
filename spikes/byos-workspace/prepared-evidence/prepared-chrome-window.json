@@ -1,0 +1,14 @@
+{
+  "task": "01a180cb-c740-7218-9bce-3f25dd449004",
+  "startedAt": "2026-10-28T17:12:23.525461+00:00",
+  "expiresAt": "2026-10-28T17:32:23.525461+00:00",
+  "scope": [
+    "BYOS 113 A",
+    "BYOS 113 B"
+  ],
+  "authority": "Coordinator confirmed managed engineering exclusive 20 minute window",
+  "ownershipCheck": "No coordination lock found in task/private/tmp/codex candidates; native Chrome foreground remains original BYOS113 A old halted experiment; no observed new user input or competing owner; extension inventory only unrelated waiging, untouched",
+  "status": "RELEASED_AFTER_RECOVERY_SAFETY_STOP",
+  "releasedAt": "2026-10-28T17:18:52.720950+00:00",
+  "reason": "WRITE_OUTCOME_UNRESOLVED; active requests0; raw evidence exported; no formal sample or B/close test"
+}

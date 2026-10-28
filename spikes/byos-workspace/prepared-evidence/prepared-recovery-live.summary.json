@@ -1,0 +1,77 @@
+{
+  "verdict": "HOLD",
+  "phase": "REAL_DRIVE_RECOVERY_ONLY",
+  "source": "cdc5229d1a07c26026137c10525f14b00c7e71fc",
+  "version": "0.1.8",
+  "rawSha256": "194588c52224c80dbe1897ca368fefcb4f3f99321d5c5076b7fc078dd78813f4",
+  "firstRequestAt": "2026-10-28T17:16:53.291000+00:00",
+  "lastResponseAt": "2026-10-28T17:17:48.567000+00:00",
+  "firstRequestToHaltMs": 55275.300048828125,
+  "leaseClockStartedAt": "2026-10-28T17:17:08.155500+00:00",
+  "leaseWriteCutoffAt": "2026-10-28T17:17:48.155500+00:00",
+  "walClearRequestAt": "2026-10-28T17:17:46.903000+00:00",
+  "walClearResponseAt": "2026-10-28T17:17:48.567000+00:00",
+  "walClearResponsePastCutoffMs": 411.5,
+  "halt": {
+    "atMs": 196522.79999995232,
+    "type": "recovery-halted",
+    "reason": "WRITE_OUTCOME_UNRESOLVED"
+  },
+  "requests": 188,
+  "active": 0,
+  "bytesUp": 237254,
+  "decodedBytesDown": 704007,
+  "distribution": [
+    {
+      "method": "GET",
+      "role": "native-unannotated",
+      "status": 200,
+      "count": 18
+    },
+    {
+      "method": "POST",
+      "role": "native-unannotated",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "role": "lease",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "PUT",
+      "role": "lease",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "role": "wal",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "role": "page",
+      "status": 200,
+      "count": 156
+    },
+    {
+      "method": "PUT",
+      "role": "wal",
+      "status": 200,
+      "count": 2
+    }
+  ],
+  "localRecords": 38,
+  "pending": 26,
+  "allLocalRecordsUnchanged": true,
+  "formalSample": "NOT_RUN",
+  "safeCloseWaitMs": null,
+  "bReadback": "NOT_RUN",
+  "aCloseReopen": "NOT_RUN",
+  "observedProviderRetry": false,
+  "explanation": "All26 current journal targets matched remote full records during recovery: recoverTransactionWal plans already-applied and final readback both completed, with zero page PUT. This is code-path evidence from the reviewed build and successful progression to recovery-clear, not a new formal sample. Per-page remote snapshots were not exported by v0.1.8; exact external final-generation receipts are absent. WAL clear PUT returned200 after unchanged40s mutation budget; confirmation read was prevented by budget and final WAL/lease state remains UNKNOWN. All journals retained. No blind retry."
+}
