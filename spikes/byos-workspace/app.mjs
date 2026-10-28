@@ -3,6 +3,7 @@ import { openPageStore, configureProvider } from './provider.mjs';
 import { Workspace } from './workspace.mjs';
 import { ForegroundRun } from './foreground.mjs';
 import { IdleDrain } from './idle-drain.mjs';
+import { PreparedDrain } from './prepared-drain.mjs';
 import {prepareOfflineShell} from '../byos-sync/real-drive/offline-shell.mjs';
 
 // --- Configuration & Safe Parameter Extraction ---
@@ -135,6 +136,7 @@ function renderIdle() {
   const state=idleDrain?.snapshot();
   if(state?.reason||state?.state==="stopped")providerInfo?.haltExperiment?.(state.reason||"STOPPED");
   idleStatus.textContent=state ? `${state.state}: ${state.pages.filter(p=>p.generation&&p.verified===p.generation).length}/26 final generations verified. ${state.reason||""}` : "Off. Create the 26 AZ142 A–Z fixture pages before starting.";
+  if(idleDrain?.strict){const page=state.pages.find(p=>p.id===selectedPageId);if(page)idleStatus.textContent+=` Selected page: ${page.status}, attempt ${page.attempt||0}.${page.nextRetryAt?` Retry in ${Math.max(0,Math.ceil(page.nextRetryAt-performance.now()))} ms.`:''}${page.stopReason?' '+page.stopReason:''}`;}
   idleStatus.dataset.state=state?.state||"off";
   idleStart.disabled=!!localMutationsInFlight||idleAdmitting||!!idleDrain||!!foreground||!store?.writer;
   idleStop.disabled=!idleDrain||idleDrain.stopped;
@@ -887,8 +889,12 @@ async function localMutation(action) {
 }
 async function saveCurrentPageLocally(pageId = selectedPageId) {
   if(idleDrain&&!pageBuffers.get(pageId)?.dirty)return;
-  return localMutation(()=>persistCurrentPageLocally(pageId));
+  const generation=pageBuffers.get(pageId)?.generation,key=pageId+':'+generation;
+  if(localSaveFlights.has(key))return localSaveFlights.get(key);
+  const task=localMutation(()=>persistCurrentPageLocally(pageId));localSaveFlights.set(key,task);
+  try{return await task;}finally{if(localSaveFlights.get(key)===task)localSaveFlights.delete(key);}
 }
+const localSaveFlights=new Map();
 async function persistCurrentPageLocally(pageId = selectedPageId) {
   if (!pageId) return;
   if (!store || !store.writer) {
@@ -930,7 +936,7 @@ async function persistCurrentPageLocally(pageId = selectedPageId) {
     setStatus(`[Page: ${selectedPageId} | Gen: ${buffer.generation}] Saved gen ${savingGen}; newer edits pending`, false);
   }
 
-  if (!buffer.dirty && idleGeneration) idleDrain?.saved(savingPageId,idleGeneration);
+  if (!buffer.dirty && idleGeneration) idleDrain?.saved(savingPageId,idleGeneration,saveResult.view.journal.draft,saveResult.view.journal.seq);
   await scheduleRefresh();
   return saveResult;
 }
@@ -1169,8 +1175,24 @@ idleStart.addEventListener('click',async()=>{
     const journals=await store.db.localDrafts.find().exec();
     if(journals.length)throw Error('Warm fixture required: verify all existing journals before starting');
     if(foreground||idleDrain||!store.writer||cloudActionBusy||store.operation?.pending||localMutationsInFlight||[...pageBuffers.values()].some(p=>p.dirty)||databaseEpoch!==initialDatabaseEpoch||inputEpoch!==initialInputEpoch||localMutationEpoch!==initialSaveEpoch)throw Error('State changed during experiment admission; no run started');
-    providerInfo.beginExperiment?.({maxRequests:6000,maxMs:1500000});
-    idleDrain=new IdleDrain({ids,
+    providerInfo.beginExperiment?.({maxRequests:6000,maxMs:1500000,...(providerInfo.prepared?{policy:'prepared-retry-v1'}:{})});
+    if(providerInfo.prepared){
+      const preparedSession=await providerInfo.prepared.prepare(ids);
+      if(databaseEpoch!==initialDatabaseEpoch||inputEpoch!==initialInputEpoch||localMutationEpoch!==initialSaveEpoch||[...pageBuffers.values()].some(p=>p.dirty)){
+        preparedSession.halt('INPUT_DURING_PREPARATION');throw Error('Input changed during preparation; saved data retained');
+      }
+      idleDrain=new PreparedDrain({ids,session:preparedSession,save:id=>saveCurrentPageLocally(id),
+        available:()=>!!providerInfo.canSync()&&document.visibilityState==='visible'&&navigator.onLine,
+        canAudit:()=>!localMutationsInFlight,
+        check:async()=>{
+          await store.operation?.promise;
+          const epoch=databaseEpoch,saveEpoch=localMutationEpoch;
+          if(localMutationsInFlight||[...pageBuffers.values()].some(p=>p.dirty)||(await store.db.localDrafts.find().exec()).length)return false;
+          if(!(await controller.catalog()).healthy)return false;
+          for(const id of ids)if(!(await controller.read(id)).cloudVerified)return false;
+          return epoch===databaseEpoch&&saveEpoch===localMutationEpoch&&!localMutationsInFlight&&providerInfo.experimentHealthy();
+        },changed:renderIdle});
+    }else idleDrain=new IdleDrain({ids,
       save:id=>saveCurrentPageLocally(id),
       sync:()=>cloudAction('idle-sync',()=>controller.sync(),idleDrain),
       verify:id=>cloudAction('idle-verify',()=>controller.verify(id),idleDrain),
@@ -1186,7 +1208,7 @@ idleStart.addEventListener('click',async()=>{
         return epoch===databaseEpoch&&saveEpoch===localMutationEpoch&&!localMutationsInFlight&&providerInfo.experimentHealthy?.()!==false;
       },changed:renderIdle});
     providerInfo.onExperimentChange?.(state=>{if(state.halted)idleDrain.fail('TRANSPORT_UNCERTAIN: '+state.halted);else if(idleDrain.ready&&(state.starting||state.active))idleDrain.fail('UNEXPECTED_CLOUD_WORK_AFTER_READY');});
-    window.workspaceIdleSnapshot=()=>({timeOriginMs:performance.timeOrigin,run:idleDrain.snapshot(),events:idleDrain.events.slice(),transport:providerInfo.experimentEvidence?.()??null});
+    window.workspaceIdleSnapshot=()=>({timeOriginMs:performance.timeOrigin,run:idleDrain.snapshot(),events:idleDrain.events.slice(),ownerEvents:providerInfo.prepared?.events??null,transport:providerInfo.experimentEvidence?.()??null});
     renderIdle();
   }catch(error){setStatus('Idle experiment refused: '+error.message,true);}
   finally{idleAdmitting=false;renderIdle();}
@@ -1217,6 +1239,25 @@ async function init() {
 
     const provider = await configureProvider(store, {changed:wakeForeground});
     providerInfo = provider;
+    if(provider.prepared){
+      idleStart.textContent='Prepare bounded A–Z page uploads';
+      const recover=document.createElement('button');recover.className='btn';recover.textContent='Recover prior A–Z pending intents';
+      idleStart.parentElement.append(recover);
+      recover.addEventListener('click',async()=>{
+        if(idleDrain||idleAdmitting||foreground||store.operation?.pending||localMutationsInFlight)return;
+        const epoch=inputEpoch,saveEpoch=localMutationEpoch;idleAdmitting=true;renderIdle();recover.disabled=true;
+        try{
+          const catalog=await controller.catalog(),fixture=catalog.pages.filter(p=>/^AZ142 [A-Z]$/.test(p.title));
+          if(fixture.length!==26||new Set(fixture.map(p=>p.title)).size!==26||!catalog.healthy||[...pageBuffers.values()].some(p=>p.dirty))throw Error('Recovery requires exactly 26 healthy saved A–Z pages');
+          provider.beginExperiment({maxRequests:6000,maxMs:180000,policy:'prepared-retry-v1'});
+          window.workspacePreparedRecoverySnapshot=()=>({timeOriginMs:performance.timeOrigin,events:provider.prepared.events.slice(),transport:provider.experimentEvidence()});
+          await provider.prepared.recover(fixture.map(p=>p.id),()=>inputEpoch===epoch&&localMutationEpoch===saveEpoch);
+          setStatus('Prior A–Z intents recovered and independently verified. Export recovery evidence, then reload for a separately measured formal run.',false);
+          await scheduleRefresh();
+        }catch(error){setStatus('Recovery stopped; local intents retained: '+error.message,true);}
+        finally{idleAdmitting=false;renderIdle();}
+      });
+    }
     controller = new Workspace(store);
 
     // Permitted only loopback offline prototype without credentials

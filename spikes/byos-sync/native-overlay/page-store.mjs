@@ -134,8 +134,14 @@ export class PageStore {
         (!same(p,old.draft)&&!same(p,old.base))) : !same(p,expected);
       const seq=(old?.seq ?? 0)+1;
       const draft={id,body,editId:`${this.session}/${seq}/${crypto.randomUUID()}`};
+      // During prepared final reconciliation, newer edits remain journal-only.
+      // Rebase only onto our independently confirmed exact predecessor, never
+      // onto a newly received external record. The original journal is retained
+      // until this new full draft has durably replaced it.
+      const held=this.preparedHoldBases?.get(id);
+      const heldBase=held&&same(p,held)&&old&&(same(old.draft,held)||same(old.base,held));
       const row={id:key(id,this.session),page:id,session:this.session,seq,
-        state:conflict?'needs-resolution':'pending',draft,base:old?old.base:expected,
+        state:conflict?'needs-resolution':'pending',draft,base:heldBase?copy(held):old?old.base:expected,
         remote:old?.remote??null,sourceLocal:old?.sourceLocal??(conflict?(old?.draft??draft):null),
         sourceCloud:old?.sourceCloud??null,
         sourceExternal:old?.sourceExternal??(conflict?copy(p):null)};
@@ -150,7 +156,7 @@ export class PageStore {
       const saved=committed.toJSON();
       await this.hook('journal-committed',copy(saved));
       // Never write an unresolved branch back into the replicated collection.
-      if(saved.state!=='needs-resolution') {
+      if(saved.state!=='needs-resolution'&&!this.preparedHoldBases) {
         const pageDoc=await this.db.pages.findOne(id).exec();
         let advanced=false,capturedExternal=null;
         if(pageDoc) await pageDoc.incrementalModify(current=>{
@@ -183,6 +189,37 @@ export class PageStore {
       if(same(master,d.draft)||(d.state==='pending'&&same(master,d.base)&&same(page,master))) return d;
       return {...d,state:'needs-resolution',remote:copy(master),
         sourceLocal:d.sourceLocal??copy(d.draft),sourceCloud:d.sourceCloud??copy(master)};
+    });
+  }
+  async holdPreparedGenerations(confirmed,current) {
+    return this.serial(async()=>{
+      if(!this.writer||this.preparedHoldBases||!current())throw new Error('Prepared reconciliation admission changed');
+      const held=new Map();
+      for(const [id,observed] of confirmed){
+        const page=await this.page(id),draft=await this.draft(id);
+        if(!current()||!same(page,observed.record)||!draft||draft.state!=='pending'||!same(draft.draft,observed.record))
+          throw new Error('Prepared generation does not match local page and journal');
+        held.set(id,content(observed.record));
+      }
+      if(!current())throw new Error('Prepared generation advanced during admission');
+      this.preparedHoldBases=held;
+    });
+  }
+  async retirePreparedGenerations(rows,current) {
+    return this.serial(async()=>{
+      if(!this.writer||!this.preparedHoldBases||!current())throw new Error('Prepared retirement is not authorized by current generation');
+      for(const [id,row] of rows){
+        const doc=await this.db.localDrafts.findOne(key(id,this.session)).exec();
+        if(!current()||!doc||doc.state!=='pending'||!same(doc.draft,row.target)||!same(await this.page(id),row.target))
+          throw new Error('Prepared page advanced; journal retained');
+        const initial=doc.toJSON();await this.hook('before-prepared-cleanup',copy(initial));
+        const latest=await this.db.localDrafts.findOne(initial.id).exec();
+        if(!current()||!latest||latest.seq!==initial.seq||!same(latest.draft,row.target)||!same(await this.page(id),row.target))
+          throw new Error('Prepared generation advanced during cleanup');
+        await latest.remove();this.verified.set(id,content(row.target));
+      }
+      if(!current())throw new Error('Prepared completion changed');
+      this.preparedHoldBases=null;this.state='clean';this.notify();
     });
   }
   async connect(endpoint,options={}) {
@@ -308,7 +345,7 @@ export class PageStore {
     // Published native transaction first drains WAL. This is verification only:
     // no custom replication, direct document writes, or assumed-master mutation.
     let callbackFailed=false,callbackError;
-    const result=await runInTransaction(r.googleDrive,r.driveStructure,'id',async()=>{
+    const result=await (r.runInTransaction??runInTransaction)(r.googleDrive,r.driveStructure,'id',async()=>{
       // Published runInTransaction has no finally-release for callback errors.
       // Our callback performs reads/local checks only. Let the native transaction
       // release its own CAS lease before surfacing an app/body/guard failure.

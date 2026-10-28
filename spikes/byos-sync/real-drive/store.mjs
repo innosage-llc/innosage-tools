@@ -11,7 +11,7 @@ export {clientId,setClientId,workspace} from './config.mjs';
 const params=new URLSearchParams(location.search);
 export async function openPageStore(options){
  const providerPreflight=options.providerPreflight??preflight;
- active=await openNative({...options,hook:async(name,row)=>{if(name==='remote-read')lastRemote=row;},connectionProvider:async()=>({...await providerPreflight(),factory:diagnosticFactory})});
+ active=await openNative({...options,hook:async(name,row)=>{if(name==='remote-read')lastRemote=row;},connectionProvider:async()=>({...await providerPreflight(),factory:options.replicationFactory??diagnosticFactory})});
  active.explicitSync=true;
  const runOperation=active.runOperation.bind(active);
  let halted=false;
