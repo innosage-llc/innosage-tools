@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hierarchical Workspace Prototype (#142)</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-main">
+      <h1 class="app-title">Hierarchical Workspace</h1>
+      <span class="badge-mock" id="offline-badge">OFFLINE / NATIVE MOCK ONLY (NO REAL PROVIDER AUTH)</span>
+    </div>
+    <div class="session-bar" id="session-info">
+      <span class="session-item">Workspace: <strong id="ws-label">-</strong></span>
+      <span class="session-divider">|</span>
+      <span class="session-item">Session: <strong id="session-label">-</strong></span>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <aside class="sidebar" aria-label="Workspace Pages Navigation">
+      <div class="sidebar-header">
+        <div class="page-count-badge" id="page-count" data-testid="page-count">0 locally known pages; remote total unknown</div>
+        <div class="discovery-status" id="discovery-status">-</div>
+        <div class="sidebar-actions">
+          <button type="button" id="new-root-btn" class="btn" data-testid="new-root-btn">New root</button>
+          <button type="button" id="new-child-btn" class="btn" data-testid="new-child-btn">New child</button>
+        </div>
+      </div>
+
+      <nav class="tree-nav" aria-label="Hierarchy tree">
+        <div id="tree" role="tree" data-testid="tree" aria-label="Pages Tree"></div>
+      </nav>
+
+      <section class="recovery-tree-group" id="recovery-tree-group" style="display: none;" aria-label="Quarantined Pages">
+        <h3 class="recovery-group-title">Quarantine / Recovery Items</h3>
+        <p class="recovery-group-desc">Unresolved orphan, cyclic, or invalid envelope pages (displayed once, sorted deterministically):</p>
+        <div id="recovery-tree-list" class="recovery-tree-list"></div>
+      </section>
+    </aside>
+
+    <main class="main-panel" aria-label="Workspace Editor">
+      <div id="writer-notice" class="notice-box danger" role="alert" style="display: none;"></div>
+      <div id="status" class="status-region" role="status" aria-live="polite" data-testid="status">Ready</div>
+      <p id="offline-status" role="status">Preparing static offline shell…</p>
+      <div id="operation-status" class="operation-region" aria-live="polite" data-testid="operation-status">No operation active</div>
+
+      <section class="editor-section" id="editor-section">
+        <div class="form-row">
+          <label for="page-title">Page Title</label>
+          <input type="text" id="page-title" data-testid="page-title" placeholder="Untitled" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="form-row split-row">
+          <div class="form-col">
+            <label for="page-parent">Parent (Reparent hierarchy)</label>
+            <select id="page-parent" data-testid="page-parent">
+              <option value="">(None - Root)</option>
+            </select>
+          </div>
+          <div class="form-col small-col">
+            <label for="page-order">Order</label>
+            <input type="number" id="page-order" min="0" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="page-meta-tags" id="page-meta">
+          <span class="meta-tag" id="meta-page-id">ID: -</span>
+          <span class="meta-tag" id="meta-edit-id">Edit ID: -</span>
+          <span class="meta-tag" id="meta-generation">Input Gen: 0</span>
+          <span class="meta-tag" id="meta-durability">Durability: -</span>
+          <span class="meta-tag" id="meta-verified" data-testid="meta-verified">Cloud Verified: -</span>
+        </div>
+
+        <div class="form-row">
+          <label for="editor">Markdown Content</label>
+          <textarea id="editor" data-testid="editor" rows="14" placeholder="# Markdown content..." spellcheck="false"></textarea>
+        </div>
+
+        <div class="action-toolbar">
+          <button type="button" id="save-btn" class="btn primary" data-testid="save-btn">Save locally</button>
+          <button type="button" id="sync-btn" class="btn" data-testid="sync-btn">Sync</button>
+          <button type="button" id="verify-btn" class="btn" data-testid="verify-btn">Verify current</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Bounded foreground sync">
+        <h2>Foreground sync trial</h2>
+        <p>Off by default. Start a run to coalesce locally saved changes into at most two syncs while this tab is visible. Verify each page separately; destination handoff remains unconfirmed.</p>
+        <button type="button" id="foreground-start-btn" class="btn" disabled>Start foreground run</button>
+        <button type="button" id="foreground-stop-btn" class="btn" disabled>Stop future syncs</button>
+        <p id="foreground-status" role="status" aria-live="polite">Off — use explicit Sync and Verify.</p>
+      </section>
+
+      <section class="conflict-panel" id="conflict-section" style="display: none;" aria-label="Conflict Resolution">
+        <div class="conflict-header">
+          <h2>Conflict Resolution Required</h2>
+          <span class="badge-alert">diverged</span>
+        </div>
+        <div class="warning-box" id="conflict-warning">This page has diverged from remote master or competing local draft. Choose an explicit resolution.</div>
+
+        <div class="diff-grid">
+          <div class="diff-pane">
+            <h3>Local Draft Body</h3>
+            <pre id="conflict-local-preview" class="code-preview"></pre>
+          </div>
+          <div class="diff-pane">
+            <h3>Cloud Remote Body</h3>
+            <pre id="conflict-cloud-preview" class="code-preview"></pre>
+          </div>
+        </div>
+
+        <div class="conflict-actions">
+          <button type="button" id="use-cloud-btn" class="btn">Use cloud</button>
+          <button type="button" id="keep-local-btn" class="btn">Keep local</button>
+          <button type="button" id="toggle-merge-btn" class="btn">Merge full envelope JSON</button>
+        </div>
+
+        <div class="merge-editor-panel" id="merge-panel" style="display: none;">
+          <label for="merge-editor">Full Serialized Envelope JSON (including format, version, workspaceId, id, title, parentId, order, markdown):</label>
+          <textarea id="merge-editor" rows="12" spellcheck="false" class="code-textarea"></textarea>
+          <div class="merge-actions">
+            <button type="button" id="commit-merge-btn" class="btn primary">Commit Merged Envelope</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel handoff-panel" aria-label="Destination Handoff">
+        <div class="panel-header">
+          <h2>Destination Handoff & Durability</h2>
+          <button type="button" id="refresh-handoff-btn" class="btn small">Refresh handoff</button>
+        </div>
+        <div id="handoff-details" class="handoff-details"></div>
+      </section>
+
+      <section class="panel recovery-panel" aria-label="Raw Recovery Journals">
+        <details id="recovery-details">
+          <summary>Raw Journals & Envelopes Recovery</summary>
+          <div id="recovery-content" class="recovery-content"></div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "verdict": "PASS",
+  "scope": "isolated offline foreground policy evaluation; full issue HOLD",
+  "reviewer_route_requested": "gpt-6.1-sol HIGH independent native context",
+  "provider_observation": "UNKNOWN",
+  "manifest": "foreground-source-hashes.json",
+  "manifest_sha256": "5be27828a01d38903175f7e5142e7c125369c206a2884335ac08053c70105ef6",
+  "artifact_count": 40,
+  "foreground_module_sha256": "f9ba82d8ce0ead8e0b5fe96669c584f20b09f929518200749fa57866ff4ab0e1",
+  "loopback_receipt_sha256": "6bca2eba3f7133b330e0140129cc0cc41d964bc1efb00052be4a322441cc68e9",
+  "remaining_material_findings": [],
+  "native_gate": "Required by autonomous-ops submit; final gate and commit binding recorded in Hub session",
+  "runtime_integration": "NOT_ENABLED",
+  "live_provider": "NOT_RUN",
+  "human_usability": "NOT_RUN",
+  "satisfaction": "UNKNOWN"
+}

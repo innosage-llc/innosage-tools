@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "infisical run -- next dev",
-    "prebuild": "node scripts/prepare-video-scissors.mjs && node scripts/prepare-byos.mjs",
+    "prebuild": "node scripts/prepare-video-scissors.mjs && node scripts/prepare-byos.mjs && node scripts/prepare-workspace.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint && eslint",
@@ -55,7 +55,12 @@
     "test:byos-ux:browser": "node spikes/byos-ux/browser.mjs",
     "test:byos-ux:focused": "node spikes/byos-ux/focused-browser.mjs",
     "test:visual-remix-canvas": "node --experimental-strip-types --test scripts/visual-remix-canvas.test.ts",
-    "test:visual-remix-canvas-browser": "node --experimental-strip-types --test scripts/visual-remix-canvas-browser.test.mjs"
+    "test:visual-remix-canvas-browser": "node --experimental-strip-types --test scripts/visual-remix-canvas-browser.test.mjs",
+    "test:byos-workspace": "node spikes/byos-workspace/check.mjs",
+    "spike:byos-workspace": "node spikes/byos-workspace/server.mjs",
+    "test:byos-workspace:browser": "node spikes/byos-workspace/browser.mjs && node spikes/byos-workspace/ui-races.mjs && node spikes/byos-workspace/real-binding-browser.mjs && node spikes/byos-workspace/verify-refresh-race.mjs && node spikes/byos-workspace/foreground-browser.mjs && node scripts/prepare-workspace.mjs && node spikes/byos-workspace/static-browser.mjs",
+    "test:byos-workspace:measure": "node spikes/byos-workspace/measure-browser.mjs",
+    "test:byos-workspace:slow": "node spikes/byos-workspace/slow-browser.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",

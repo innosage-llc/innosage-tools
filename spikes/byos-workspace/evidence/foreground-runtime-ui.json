@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "scope": "CHROME_NATIVE_LOOPBACK_WITH_EXPLICIT_CALLBACK_HOLD_AND_FAILURE",
+  "realGoogleRequests": 0,
+  "checks": [
+    "default-save-no-sync",
+    "explicit-opt-in",
+    "manual-cloud-actions-disabled-during-flight",
+    "local-save-during-flight",
+    "dirty-input-preserved",
+    "two-dispatch-limit-no-rearm",
+    "dirty-verify-refusal",
+    "explicit-verify-after-budget",
+    "error-halt-local-save-retained",
+    "manual-failure-halts-queued-foreground"
+  ],
+  "errors": []
+}

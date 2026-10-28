@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "scope": "UI_CALLBACK_INJECTION_REAL_CLOCK_NOT_PROVIDER",
+  "results": [
+    {
+      "injectedDelayMs": 10000,
+      "neverCompletes": false,
+      "elapsedMs": 10000.800000190735,
+      "finished": true,
+      "operationText": "Operation: sync | Phase: complete | Elapsed: 10s | Requests: 0",
+      "localEditSaveAvailable": true,
+      "handoffComplete": false
+    },
+    {
+      "injectedDelayMs": 45000,
+      "neverCompletes": false,
+      "elapsedMs": 45002.5,
+      "finished": true,
+      "operationText": "Operation: sync | Phase: complete | Elapsed: 45s | Requests: 0",
+      "localEditSaveAvailable": true,
+      "handoffComplete": false
+    },
+    {
+      "injectedDelayMs": null,
+      "neverCompletes": true,
+      "elapsedMs": 1270.3999998569489,
+      "finished": false,
+      "operationText": "Operation: sync | Phase: running | Elapsed: 1s | Requests: 0",
+      "localEditSaveAvailable": true,
+      "handoffComplete": false
+    }
+  ]
+}

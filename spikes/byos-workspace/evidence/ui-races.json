@@ -1,0 +1,22 @@
+[
+  {
+    "status": "PASS",
+    "scope": "UI_CALLBACK_INJECTION_ONLY",
+    "checks": [
+      "late-verify-selection-generation",
+      "late-cloud-resolution-newer-typing",
+      "newer-input-during-navigation-commit",
+      "raw-malformed-recovery",
+      "empty-markdown-merge",
+      "typing-during-target-read",
+      "native-editId-advanced-without-input-generation"
+    ]
+  },
+  {
+    "status": "PASS",
+    "scope": "UI_CALLBACK_INTERLEAVING_ONLY",
+    "checks": [
+      "superseded-verify-refresh-with-held-new-native-generation"
+    ]
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "verdict": "PASS",
+  "scope": "bounded draft increment only; HOLD for full issue",
+  "reviewer_route_requested": "gpt-6.1-sol HIGH native independent context",
+  "provider_observation": "UNKNOWN",
+  "manifest_sha256": "0fa06c53dc492aa357fffe78f86271e54739cfd06be3cba0917843e1664a8f21",
+  "artifact_count": 36,
+  "remaining_material_findings": [],
+  "native_gate": "Required by autonomous-ops submit before commit; observe final PR/session receipt",
+  "commit_binding": "Compare committed files to source-hashes.json; final binding recorded in session",
+  "live_provider": "NOT_RUN",
+  "human_usability": "NOT_RUN",
+  "satisfaction": "UNKNOWN",
+  "generated_artifact_lint_scope_review": "PASS; authored source remains linted; prior35hashes unchanged"
+}
