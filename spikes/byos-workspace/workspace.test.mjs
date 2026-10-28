@@ -12,6 +12,27 @@ const root='w142_project',child='w142_notes',grand='w142_agenda';
 const markdown='# Meeting Notes\n\n- exact  \n\n```js\n42\n```\n[Agenda](https://example.invalid)\n';
 async function fixture(t) {const store=await newStore();const workspace=new Workspace(store);t.after(async()=>{workspace.close();await store.close();});return {store,workspace};}
 
+test('prepared native reconciliation holds new input durably without exposing it to replication',async t=>{
+ const {store,workspace}=await fixture(t);await workspace.create({id:root,title:'A',markdown:'confirmed'});
+ const confirmed=await store.page(root);await store.holdPreparedGenerations(new Map([[root,{record:confirmed}]]),()=>true);
+ await workspace.save(root,{markdown:'new input'},confirmed);
+ const first=await store.draft(root);assert.equal(first.state,'pending');assert.deepEqual(first.base,confirmed);
+ assert.deepEqual(await store.page(root),confirmed);assert.equal((await workspace.read(root)).page.markdown,'new input');
+ await workspace.save(root,{markdown:'newer input'},first.draft);
+ const second=await store.draft(root);assert.equal(second.state,'pending');assert.deepEqual(second.base,confirmed);assert.deepEqual(await store.page(root),confirmed);
+ await assert.rejects(store.retirePreparedGenerations(new Map([[root,{target:confirmed}]]),()=>true),/advanced/);
+ assert.equal((await store.draft(root)).seq,second.seq);assert.equal((await workspace.read(root)).cloudVerified,false);
+});
+test('prepared retirement requires exact matching page and journal and respects generation invalidation',async t=>{
+ const {store,workspace}=await fixture(t);await workspace.create({id:root,title:'A'});const record=await store.page(root);
+ await store.holdPreparedGenerations(new Map([[root,{record}]]),()=>true);let current=true;
+ store.hook=async name=>{if(name==='before-prepared-cleanup')current=false;};
+ await assert.rejects(store.retirePreparedGenerations(new Map([[root,{target:record}]]),()=>current),/advanced/);
+ assert(await store.draft(root));assert.equal(store.verified.has(root),false);
+ current=true;store.hook=async()=>{};await store.retirePreparedGenerations(new Map([[root,{target:record}]]),()=>current);
+ assert.equal(await store.draft(root),null);assert.equal((await workspace.read(root)).cloudVerified,true);
+});
+
 test('full envelope strict validation, version/identity/workspace/size; deterministic encoding',()=>{
  const page=makePage({workspaceId:'test',id:root,title:'Project',markdown});
  assert.deepEqual(decode({id:root,body:encode(page),editId:'gen'},'test'),{...page,editId:'gen'});

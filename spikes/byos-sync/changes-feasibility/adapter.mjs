@@ -2,13 +2,13 @@
 import {replicateRxCollection,startReplicationOnLeaderShip} from 'rxdb/plugins/replication';
 import {initDriveStructure,runInTransaction,handleUpstreamBatch,fetchDocumentContents} from 'rxdb/plugins/replication-google-drive';
 export const TAG='tools109-changes-v1';
-export async function createChangesReplication(options,{event=()=>{},batchSize=options.pull.batchSize,onCreated=()=>{}}={}){
+export async function createChangesReplication(options,{event=()=>{},batchSize=options.pull.batchSize,onCreated=()=>{},transactionRunner=runInTransaction}={}){
  const googleDrive={apiEndpoint:'https://www.googleapis.com',transactionTimeout:60000,space:'drive',folderPath:'',...options.googleDrive};
  const driveStructure=await initDriveStructure(googleDrive);
  const headers={Authorization:`Bearer ${googleDrive.authToken}`};
  async function get(path,params){const url=googleDrive.apiEndpoint+path+'?'+new URLSearchParams(params);const r=await fetch(url,{headers});if(!r.ok){const error=new Error(`CHANGES_HTTP_${r.status}`);error.parameters={status:r.status};throw error;}return r.json();}
  async function pullHandler(checkpoint,capacity){
-  return runInTransaction(googleDrive,driveStructure,'id',async()=>{
+  return transactionRunner(googleDrive,driveStructure,'id',async()=>{
    let cursor=checkpoint?.changes109?.tag===TAG?structuredClone(checkpoint.changes109):null;
    if(!cursor){const start=await get('/drive/v3/changes/startPageToken',{spaces:googleDrive.space,supportsAllDrives:'true'});cursor={tag:TAG,phase:'inventory',startToken:start.startPageToken,inventoryPageToken:null};event({type:'bootstrap-start-token',token:cursor.startToken,legacyCheckpoint:checkpoint??null});}
    const documents=new Map();
@@ -51,9 +51,9 @@ export async function createChangesReplication(options,{event=()=>{},batchSize=o
    event({type:'pull-return',result:structuredClone(result),durable:false});return result;
   });
  }
- const state=replicateRxCollection({replicationIdentifier:options.replicationIdentifier,collection:options.collection,deletedField:'_deleted',pull:{batchSize,handler:pullHandler},push:{batchSize:options.push.batchSize,handler:rows=>runInTransaction(googleDrive,driveStructure,'id',()=>handleUpstreamBatch(googleDrive,driveStructure,'id',rows))},live:options.live,retryTime:options.retryTime,waitForLeadership:options.waitForLeadership,autoStart:false,toggleOnDocumentVisible:options.toggleOnDocumentVisible??true});
+ const state=replicateRxCollection({replicationIdentifier:options.replicationIdentifier,collection:options.collection,deletedField:'_deleted',pull:{batchSize,handler:pullHandler},push:{batchSize:options.push.batchSize,handler:rows=>transactionRunner(googleDrive,driveStructure,'id',()=>handleUpstreamBatch(googleDrive,driveStructure,'id',rows))},live:options.live,retryTime:options.retryTime,waitForLeadership:options.waitForLeadership,autoStart:false,toggleOnDocumentVisible:options.toggleOnDocumentVisible??true});
  // Fixture facade exposes unchanged published verification helpers' inputs only.
- state.googleDrive=googleDrive;state.driveStructure=driveStructure;
+ state.googleDrive=googleDrive;state.driveStructure=driveStructure;state.runInTransaction=transactionRunner;
  event({type:'adapter-created',replicationIdentifier:state.replicationIdentifier,deletedField:state.deletedField,metaInfo:await state.metaInfoPromise,autoStart:state.autoStart,config:{googleDrive,pullBatchSize:batchSize,pushBatchSize:options.push.batchSize,live:options.live,retryTime:options.retryTime,waitForLeadership:options.waitForLeadership}});
  state.error$.subscribe(error=>event({type:'native-adapter-error',error:String(error),parameters:error.parameters??null}));
  await onCreated(state);

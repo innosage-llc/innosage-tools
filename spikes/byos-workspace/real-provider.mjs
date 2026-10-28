@@ -41,5 +41,5 @@ export async function configureProvider(store, {changed=()=>{}} = {}) {
   };
   disconnect.onclick=()=>{authorizationEpoch++;forget();store.state='reauth-required';store.notify();message.textContent='Disconnected; local drafts retained. Reload to reauthorize original account.';changed();void store.disconnect().catch(()=>{});};
   document.getElementById('offline-badge').textContent='REAL DRIVE CANDIDATE — EXISTING APPROVED DISPOSABLE WORKSPACE ONLY';
-  return {real:true,workspace,canSync:isAuthorized,beginExperiment,haltExperiment,experimentHealthy,experimentEvidence,onExperimentChange};
+  return {real:true,workspace,prepared:store.preparedController??null,canSync:isAuthorized,beginExperiment,haltExperiment,experimentHealthy,experimentEvidence,onExperimentChange};
 }
