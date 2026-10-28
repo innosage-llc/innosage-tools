@@ -1147,7 +1147,9 @@ async function init() {
     // Permitted only loopback offline prototype without credentials
     if (!provider.real) window.workspaceDemo = {workspace:controller,store,ready:true};
     else {window.workspaceRealReady = true;window.workspaceRealSnapshot = async()=>({catalog:await controller.catalog(),current:selectedPageId?await controller.read(selectedPageId):null});}
-    void prepareOfflineShell({base:'/',bundlePath:'/app.mjs'}).then(result=>{if(window.workspaceDemo)window.workspaceDemo.offlineShell=result;});
+    const shellScript = [...document.scripts].find(script => new URL(script.src || location.href).pathname.endsWith('/app.mjs'));
+    const shellBase = new URL('.', shellScript.src).pathname;
+    void prepareOfflineShell({base:shellBase,bundlePath:shellBase+'app.mjs'}).then(result=>{if(window.workspaceDemo)window.workspaceDemo.offlineShell=result;});
 
     updateWriterControls();
 

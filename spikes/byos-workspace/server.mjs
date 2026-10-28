@@ -4,22 +4,27 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {build} from '../byos-sync/node_modules/esbuild/lib/main.js';
 import {mock} from '../byos-sync/src/mock.mjs';
-export async function serve(port=0,{real=false}={}) {
+export async function buildAssets({real=false,base='/'}={}) {
+  if(!/^\/(?:[a-z0-9-]+\/)*$/.test(base))throw new Error('Invalid static base');
   const bundle=await build({entryPoints:[fileURLToPath(new URL('app.mjs',import.meta.url))],bundle:true,write:false,format:'esm',platform:'browser',define:{global:'globalThis'},target:'es2022',...(real?{inject:[fileURLToPath(new URL('../byos-sync/real-drive/transport.mjs',import.meta.url))],plugins:[{name:'strict-existing-real-provider',setup(build){build.onResolve({filter:/^\.\/provider\.mjs$/},()=>({path:fileURLToPath(new URL('real-provider.mjs',import.meta.url))}));}}]}:{})});
   const bytes=bundle.outputFiles[0].contents;
   const digest=value=>createHash('sha256').update(value).digest();
-  const bundleUrl='/app.mjs?revision='+digest(bytes).toString('hex');
+  const bundleUrl=base+'app.mjs?revision='+digest(bytes).toString('hex');
   const css=await readFile(new URL('style.css',import.meta.url),'utf8');
   let html=(await readFile(new URL('index.html',import.meta.url),'utf8'))
     .replace('<link rel="stylesheet" href="./style.css">','<style>'+css+'</style>')
     .replace('src="./app.mjs"',`src="${bundleUrl}" integrity="sha256-${digest(bytes).toString('base64')}"`);
   if(real)html=html.replace('OFFLINE / NATIVE MOCK ONLY (NO REAL PROVIDER AUTH)','REAL DRIVE CANDIDATE — ORIGINAL ACCOUNT/FOLDER REQUIRED');
-  const assets=[{url:'/',integrity:'sha256-'+digest(html).toString('base64'),type:'text/html'},
+  const assets=[{url:base,integrity:'sha256-'+digest(html).toString('base64'),type:'text/html'},
     {url:bundleUrl,integrity:'sha256-'+digest(bytes).toString('base64'),type:'javascript'}];
   const worker=(await readFile(new URL('../byos-sync/real-drive/shell-worker.js',import.meta.url),'utf8'))
     .replace('__BYOS_SHELL_ASSETS__',JSON.stringify(assets))
     .replace('__BYOS_SHELL_CACHE__',JSON.stringify('workspace142-shell-'+digest(JSON.stringify(assets)).toString('hex')))
-    .replace("['/byos-demo/', '/byos-demo/index.html']","['/', '/index.html']");
+    .replace("['/byos-demo/', '/byos-demo/index.html']",JSON.stringify([base,base+'index.html']));
+  return {html,bytes,css,worker};
+}
+export async function serve(port=0,{real=false}={}) {
+  const {html,bytes,css,worker}=await buildAssets({real});
   const server=http.createServer(async(req,res)=>{
     const path=new URL(req.url,'http://localhost').pathname;
     if(!['/','/index.html','/app.mjs','/style.css','/sw.js'].includes(path)){res.writeHead(404);res.end();return;}

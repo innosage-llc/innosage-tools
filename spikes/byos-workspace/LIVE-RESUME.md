@@ -31,3 +31,12 @@ Offline evidence cannot resolve these authorization prerequisites. Once they
 are supplied, revalidate changed candidate evidence and execute the bounded
 provider plan; then submit up to three Founder journeys with #142 open. No
 production, cleanup, closure or Draft adoption follows automatically.
+
+## Subsequent Founder authorization
+
+Founder authorized normal PR143 integration, existing Tools staging deployment,
+original-session renewal and bounded12-page synthetic A/B run. Approved profiles
+are BYOS113 A/B; both existing stable-origin demo contexts were located. This
+supersedes the draft-only/renewal/staging permission blockers above. Preserve
+original bindings/data; exact runtime account/folder checks remain mandatory.
+The normal static build now includes /byos-workspace/; no production authority.

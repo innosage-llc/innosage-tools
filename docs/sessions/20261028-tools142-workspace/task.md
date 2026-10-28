@@ -22,3 +22,7 @@ Final partial verdict: HOLD pending actual Drive readback/cost/latency and found
 ## Runtime continuation under restored V1
 
 Lead directly inspected preserved changes and ran focused34/34 and full Chrome suite successfully on native loopback after sandbox EPERM. Independent review found stale OAuth authorization after Disconnect; repaired with attempt epoch and intercepted held-callback regression. Foreground opt-in now wired into app/real build, off by default. Fresh docs/evidence retain full Verify accounting separately from historical policy-only sample. Actual Google requests zero; AC4/AC8 and human acceptance remain pending. No deployment/merge/closure authority inferred.
+
+## Authorized staging preparation
+
+Founder explicitly authorized normal integration of PR143, existing Tools staging deployment, original disposable-session renewal and bounded12-page synthetic Drive A/B validation. Final acceptance remains Founder-owned. Existing A/B profiles and same stable staging workspace were located by native browser UI; identifiers stay private. Original tabs/data remain preserved. Static build now adds isolated /byos-workspace/ assets, using shared integrity-pinned build logic and path-specific offline shell; existing demo unchanged. No new OAuth scope/account/folder or production authority.

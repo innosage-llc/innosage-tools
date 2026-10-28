@@ -51,3 +51,14 @@ its default #113 behavior and current demo routes are preserved and regression t
 See ACCEPTANCE.md for partial criterion coverage and the HOLD decision. Human
 usability NOT_RUN; satisfaction UNKNOWN. This is a draft research increment,
 not a completed #142 or a recommendation to migrate Draft.
+
+## Existing staging route
+
+The normal static prebuild now emits the strict existing-binding real candidate
+at `/byos-workspace/`. It reuses buildAssets with a scoped worker and integrity
+manifest. The old `/byos-demo/` remains untouched. Use the original approved
+workspace query in the two existing profiles, preserving old tabs and data.
+A fresh origin/profile without the original binding fails closed. Static
+packaging and offline reload are tested with an isolated synthetic binding;
+that evidence does not prove live OAuth or Drive. Founder authorized staging
+and the bounded original-context run; final acceptance remains pending.

@@ -53,3 +53,5 @@ next-env.d.ts
 
 # Private task-owned CLI streams (never publish provider logs)
 /.private/
+
+/public/byos-workspace/
