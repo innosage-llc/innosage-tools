@@ -86,6 +86,13 @@
         </div>
       </section>
 
+      <section class="panel" aria-label="Five-second idle experiment">
+        <h2>A–Z idle experiment</h2>
+        <p>Save each page automatically after five seconds without input. Whole-workspace sync and independent verification run in the foreground. Keep this tab open until all final generations are verified.</p>
+        <button type="button" id="idle-start" class="btn">Start A–Z experiment</button>
+        <button type="button" id="idle-stop" class="btn">Stop experiment</button>
+        <p id="idle-status" role="status">Off. Requires the 26 AZ142 A–Z fixture pages.</p>
+      </section>
       <section class="panel" aria-label="Bounded foreground sync">
         <h2>Foreground sync trial</h2>
         <p>Off by default. Start a run to coalesce locally saved changes into at most two syncs while this tab is visible. Verify each page separately; destination handoff remains unconfirmed.</p>
