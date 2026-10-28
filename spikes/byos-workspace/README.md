@@ -11,11 +11,11 @@ confirmation. Count always means locally known pages, never provider total.
 Manual merge uses the complete serialized envelope to retain metadata intent.
 Native journal conflict originals remain in their full envelopes.
 
-The default UI remains explicit-only. An isolated foreground policy is now
+The default remains explicit Sync/Verify; an optional bounded foreground run is now
 qualified against the native loopback fixture: it coalesces durable Save signals,
 allows at most two existing workspace-wide sync dispatches, and permanently
 halts on any error. It never cancels or retries an uncertain native operation.
-The module is not imported by the app or real build. See FOREGROUND.md for the
+The app and separate real build import it; Start foreground run explicitly opts in. See FOREGROUND.md for the
 bounded evaluation, exact evidence and remaining live qualification HOLD.
 
 A handoff remains incomplete until a separate destination reads matching full

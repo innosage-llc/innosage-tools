@@ -1,6 +1,7 @@
 import '../byos-sync/native-overlay/browser-runtime.mjs';
 import { openPageStore, configureProvider } from './provider.mjs';
 import { Workspace } from './workspace.mjs';
+import { ForegroundRun } from './foreground.mjs';
 import {prepareOfflineShell} from '../byos-sync/real-drive/offline-shell.mjs';
 
 // --- Configuration & Safe Parameter Extraction ---
@@ -71,6 +72,9 @@ const metaVerifiedEl = document.getElementById('meta-verified');
 const saveBtn = document.getElementById('save-btn');
 const syncBtn = document.getElementById('sync-btn');
 const verifyBtn = document.getElementById('verify-btn');
+const foregroundStartBtn = document.getElementById('foreground-start-btn');
+const foregroundStopBtn = document.getElementById('foreground-stop-btn');
+const foregroundStatusEl = document.getElementById('foreground-status');
 
 const conflictSection = document.getElementById('conflict-section');
 const conflictWarningEl = document.getElementById('conflict-warning');
@@ -119,6 +123,33 @@ let activeOperation = null;
 let opTimer = null;
 let cloudActionBusy = false;
 let renderedPageId = null;
+let foreground = null;
+let providerInfo = null;
+
+function renderForeground() {
+  if (!foreground) foregroundStatusEl.textContent = 'Off — use explicit Sync and Verify.';
+  else {
+    const snapshot = foreground.snapshot();
+    const labels = {
+      idle:'Waiting for the next local save. Sync completion is not verification.',
+      queued:'Saved changes queued for foreground sync.',
+      'in-flight':'Sync running; local editing and saving remain available.',
+      hidden:'Paused while this tab is hidden; saved changes retained.',
+      offline:'Offline; saved changes retained.',
+      'authorization-needed':'Authorization needed; saved changes retained.',
+      'read-only':'Writer unavailable; saved changes retained.',
+      'cloud-action-active':'Waiting for the current cloud action.',
+      'budget-exhausted':'Two-sync limit reached. Use explicit Sync and Verify for further work.',
+      halted:'Stopped after an error; cloud outcome uncertain. No automatic retry.',
+      stopped:'Future syncs stopped. Already-started work may still finish.'
+    };
+    foregroundStatusEl.textContent = `${labels[snapshot.state]} Runs: ${snapshot.dispatches}/2. Verification and destination observation remain separate.`;
+    foregroundStatusEl.dataset.state = snapshot.state;
+    foregroundStatusEl.dataset.dispatches = String(snapshot.dispatches);
+  }
+  updateWriterControls();
+}
+function wakeForeground() { foreground?.wake(); renderForeground(); }
 
 // --- Operation Progress & Timer ---
 function renderOperationStatus() {
@@ -244,6 +275,7 @@ function getOrCreateBuffer(id, pageData, nativeBaseline) {
 // --- Writer Controls ---
 function updateWriterControls() {
   const hasWriter = !!(store && store.writer);
+  const cloudBusy = cloudActionBusy || !!store?.operation?.pending || !!foreground?.flight;
   if (!hasWriter) {
     writerNoticeEl.textContent = 'Writer disabled: session already owned or safe ownership unavailable. This tab is in read-only mode.';
     writerNoticeEl.style.display = 'block';
@@ -259,11 +291,13 @@ function updateWriterControls() {
   saveBtn.disabled = !hasWriter;
   newRootBtn.disabled = !hasWriter;
   newChildBtn.disabled = !hasWriter;
-  syncBtn.disabled = cloudActionBusy;
-  verifyBtn.disabled = !hasWriter || cloudActionBusy;
-  useCloudBtn.disabled = !hasWriter || cloudActionBusy;
-  keepLocalBtn.disabled = !hasWriter || cloudActionBusy;
-  commitMergeBtn.disabled = !hasWriter || cloudActionBusy;
+  syncBtn.disabled = cloudBusy;
+  verifyBtn.disabled = !hasWriter || cloudBusy;
+  useCloudBtn.disabled = !hasWriter || cloudBusy;
+  keepLocalBtn.disabled = !hasWriter || cloudBusy;
+  commitMergeBtn.disabled = !hasWriter || cloudBusy;
+  foregroundStartBtn.disabled = !hasWriter || !controller || !!foreground || cloudBusy;
+  foregroundStopBtn.disabled = !foreground || foreground.stopped || foreground.halted;
 }
 
 // --- Deterministic Sorting ---
@@ -855,6 +889,7 @@ async function saveCurrentPageLocally() {
 
   // Local commit only; no cloud operation awaits in save/navigation
   const saveResult = await controller.save(savingPageId, patch, buffer.nativeBaseline);
+  foreground?.saved();
 
   // Pending save completion only clears matching generation
   if (buffer.generation === savingGen) {
@@ -967,6 +1002,7 @@ newRootBtn.addEventListener('click', async () => {
       order: 0,
       markdown: '# New Project\n\n- Scope\n'
     });
+    foreground?.saved();
     await selectPage(result.page.id);
     setStatus(`[Page: ${result.page.id} | Gen: 0] Created new root page`, false);
   } catch (err) {
@@ -985,6 +1021,7 @@ newChildBtn.addEventListener('click', async () => {
       order: 0,
       markdown: '# New Child Page\n\nNotes...\n'
     });
+    foreground?.saved();
     if (parentId) collapsedNodes.delete(parentId);
     await selectPage(result.page.id);
     setStatus(`[Page: ${result.page.id} | Gen: 0] Created child under ${parentId || 'root'}`, false);
@@ -994,17 +1031,22 @@ newChildBtn.addEventListener('click', async () => {
 });
 
 // Bind all late completions to the page/buffer generation captured at click.
-async function cloudAction(kind, action) {
-  if (cloudActionBusy) return;
+async function cloudAction(kind, action, foregroundOwner = null) {
+  if (cloudActionBusy || (foreground?.flight && foregroundOwner !== foreground) || store?.operation?.pending) {
+    if (foregroundOwner) throw new Error('Another cloud action is running');
+    return;
+  }
   cloudActionBusy = true;
   const actionStartedAt = performance.now();
   activeOperation = {kind, pending:true, startedAt:performance.now()};
   updateWriterControls(); startOperationTimer(); renderOperationStatus();
   try { return await action(); }
+  catch (error) { foreground?.halt(); throw error; }
   finally {
     cloudActionBusy = false;
     activeOperation = store?.operation ?? {...activeOperation, pending:false, elapsedMs:performance.now()-actionStartedAt};
     stopOperationTimer(); renderOperationStatus(); updateWriterControls();
+    wakeForeground();
   }
 }
 function captureInput() {
@@ -1016,7 +1058,7 @@ function unchanged(input) {
 }
 syncBtn.addEventListener('click', () => cloudAction('sync', async () => {
   try { setStatus('Sync started; local editing remains available.', false); await controller.sync(); await scheduleRefresh(); setStatus('Sync finished; verification and destination observation remain separate.', false); }
-  catch (error) { setStatus(`Sync failed: ${error.message}`, true); }
+  catch (error) { foreground?.halt(); setStatus(`Sync failed: ${error.message}`, true); }
 }));
 verifyBtn.addEventListener('click', () => cloudAction('verify', async () => {
   const input = captureInput();
@@ -1030,17 +1072,18 @@ verifyBtn.addEventListener('click', () => cloudAction('verify', async () => {
         latest.baseline?.id === result.baseline?.id && latest.baseline?.editId === result.baseline?.editId && latest.baseline?.body === result.baseline?.body && latest.page?.editId === result.page?.editId)
       setStatus(`[Page: ${input.id} | Gen: ${input.generation}] Exact saved generation cloud verified. Destination observation remains incomplete.`, false);
     else setStatus(`[Page: ${input.id}] Older saved-generation verification finished; current input is not confirmed by this completion.`, false);
-  } catch (error) { setStatus(`[Page: ${input.id}] Verify failed: ${error.message}`, true); }
+  } catch (error) { foreground?.halt(); setStatus(`[Page: ${input.id}] Verify failed: ${error.message}`, true); }
 }));
 async function resolveInput(action, merged) {
   const input = captureInput(); if (!input.id || !store?.writer) return;
   try {
     if (action === 'local' && input.buffer?.dirty) await saveCurrentPageLocally();
     await controller.resolve(input.id, action, merged);
+    if (action !== 'cloud') foreground?.saved();
     if (action !== 'local' && unchanged(input)) pageBuffers.delete(input.id);
     await scheduleRefresh();
     setStatus(`[Page: ${input.id}] Resolution finished; newer input, if present, remains unsaved and preserved.`, false);
-  } catch (error) { setStatus(`[Page: ${input.id}] Resolution failed: ${error.message}`, true); }
+  } catch (error) { foreground?.halt(); setStatus(`[Page: ${input.id}] Resolution failed: ${error.message}`, true); }
 }
 useCloudBtn.addEventListener('click', () => cloudAction('resolve-cloud', () => resolveInput('cloud')));
 keepLocalBtn.addEventListener('click', () => cloudAction('resolve-local', () => resolveInput('local')));
@@ -1056,6 +1099,27 @@ commitMergeBtn.addEventListener('click', () => cloudAction('resolve-merge', asyn
 refreshHandoffBtn.addEventListener('click', async () => {
   await renderHandoff();
 });
+
+foregroundStartBtn.addEventListener('click', async () => {
+  if (foreground || !controller || !store?.writer || cloudActionBusy || store.operation?.pending) return;
+  foreground = new ForegroundRun({store, sync:()=>cloudAction('foreground-sync', async () => {
+    await controller.sync(); await scheduleRefresh();
+  }, foreground)}, {
+    authorized:()=>!!providerInfo?.canSync(), visible:()=>document.visibilityState === 'visible',
+    online:()=>navigator.onLine, busy:()=>cloudActionBusy, changed:renderForeground
+  });
+  renderForeground();
+  try {
+    // Existing journal entries are already durable. Starting never saves typing.
+    const catalog = await controller.catalog();
+    if (catalog.pendingCount) foreground.saved();
+  } catch (error) { foreground.stop(); setStatus(`Foreground run stopped: ${error.message}`, true); }
+});
+foregroundStopBtn.addEventListener('click', () => foreground?.stop());
+document.addEventListener('visibilitychange', wakeForeground);
+window.addEventListener('online', wakeForeground);
+window.addEventListener('offline', wakeForeground);
+window.addEventListener('pagehide', () => foreground?.stop());
 
 // --- Initialization ---
 async function init() {
@@ -1076,7 +1140,8 @@ async function init() {
       }
     }
 
-    const provider = await configureProvider(store);
+    const provider = await configureProvider(store, {changed:wakeForeground});
+    providerInfo = provider;
     controller = new Workspace(store);
 
     // Permitted only loopback offline prototype without credentials

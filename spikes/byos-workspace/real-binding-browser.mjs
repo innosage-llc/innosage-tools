@@ -17,7 +17,7 @@ const revisions=new Map();let intercepted=0;const errors=[];
 const remember=()=>{for(const file of remote.files.values())revisions.set(`${file.id}:r${file.version}`,Buffer.from(file.body));};
 try {
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
- async function open(label,bound=true){
+ async function open(label,bound=true,autoAuthorize=true){
   const context=await browser.newContext();
   await context.addInitScript(({workspace,account,folderId,bound})=>{
    if(bound){localStorage.setItem('byos113-client-id','123-example.apps.googleusercontent.com');localStorage.setItem('byos113-binding:'+workspace,JSON.stringify({account,clientId:'123-example.apps.googleusercontent.com',folderId}));}
@@ -42,11 +42,28 @@ try {
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));await page.goto(server.url+'/?workspace='+workspace);
   if(!bound){await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('binding required'));return {context,page};}
   await page.waitForFunction(()=>window.workspaceRealReady);assert.equal(await page.evaluate(()=>!!window.workspaceDemo),false,'no native debug store in real build');
+  if(!autoAuthorize)return {context,page};
   await page.locator('main section.panel').first().locator('input[type=checkbox]').check();await page.getByRole('button',{name:'Reauthorize existing test account'}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('main section.panel p')].some(node=>node.textContent.includes('Authorized in memory')));
   return {context,page};
  }
  const negative=await open('unbound',false);assert.equal(intercepted,0);await negative.context.close();
+ const unauthorized=await open('bound-unauthorized',true,false);
+ await unauthorized.page.locator('#new-root-btn').click();await unauthorized.page.waitForFunction(()=>document.querySelector('#page-title').value==='New Project');
+ await unauthorized.page.locator('#foreground-start-btn').click();
+ await unauthorized.page.waitForFunction(()=>document.querySelector('#foreground-status').dataset.state==='authorization-needed');
+ assert.equal(intercepted,0,'foreground opt-in cannot grant provider authorization');
+ await unauthorized.page.evaluate(()=>{window.google.accounts.oauth2.initTokenClient=options=>({requestAccessToken:()=>{window.delayedAuthorization=()=>options.callback({access_token:'synthetic-delayed',expires_in:3600});}});});
+ await unauthorized.page.locator('main section.panel').first().locator('input[type=checkbox]').check();
+ await unauthorized.page.getByRole('button',{name:'Reauthorize existing test account'}).click();
+ await unauthorized.page.waitForFunction(()=>!!window.delayedAuthorization);
+ await unauthorized.page.getByRole('button',{name:'Disconnect',exact:true}).click();
+ await unauthorized.page.evaluate(()=>window.delayedAuthorization());
+ await unauthorized.page.waitForTimeout(1000);
+ assert.equal(intercepted,0,'late OAuth callback after Disconnect must not activate foreground');
+ assert.match(await unauthorized.page.locator('main section.panel').first().textContent(),/Disconnected/);
+ assert.equal(await unauthorized.page.locator('#foreground-status').getAttribute('data-state'),'authorization-needed');
+ await unauthorized.context.close();
  const a=await open('a'),b=await open('b');
  async function save(page,title,text){await page.locator('#page-title').fill(title);await page.locator('#editor').fill(text);await page.locator('#save-btn').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Locally saved'));}
  await a.page.locator('#new-root-btn').click();await a.page.waitForFunction(()=>document.querySelector('#page-title').value==='New Project');await save(a.page,'Project','# Project\n\n- exact\n');
@@ -62,7 +79,7 @@ try {
  await save(b.page,'Agenda B reply','# B exact reverse reply\n');await b.page.locator('#verify-btn').click();await b.page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Exact saved generation cloud verified'),null,{timeout:60000});
  await a.page.locator('#sync-btn').click();await a.page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Sync finished'),null,{timeout:60000});
  assert.deepEqual((await a.page.evaluate(()=>window.workspaceRealSnapshot())).catalog.pages,(await b.page.evaluate(()=>window.workspaceRealSnapshot())).catalog.pages);
- assert.deepEqual(errors,[]);const evidence={status:'PASS',provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',checks:['unbound-zero-provider-requests','existing-account-folder-reauthorization-wiring','no-native-debug-store','full-tree-A-to-B','full-tree-B-to-A'],interceptedRequests:intercepted,realGoogleRequests:0,errors};
+ assert.deepEqual(errors,[]);const evidence={status:'PASS',provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',checks:['unbound-zero-provider-requests','unauthorized-foreground-zero-provider-requests','disconnect-invalidates-held-oauth-callback','existing-account-folder-reauthorization-wiring','no-native-debug-store','full-tree-A-to-B','full-tree-B-to-A'],interceptedRequests:intercepted,realGoogleRequests:0,errors};
  const out=new URL('.generated/real-binding/',import.meta.url);await mkdir(out,{recursive:true});await writeFile(new URL('evidence.json',out),JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify(evidence));
  await a.context.close();await b.context.close();
 }finally{if(browser)await browser.close();await server.close();await remote.close();}

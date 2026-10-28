@@ -38,19 +38,29 @@ test('explicit versus coalesced 12-page native sync preserves exact full tree wi
       const senderDurationMs=performance.now()-started;
       const before=await a.catalog();assert.equal(before.pages.length,12);assert.equal(before.pendingCount,12);
       for(const page of before.pages)assert.equal((await a.read(page.id)).cloudVerified,false,'sync is not independent verification');
+      const verifyStart=remote.requests.length,verifyStarted=performance.now();
+      for(const page of before.pages)await a.verify(page.id);
+      const verificationRequests=remote.requests.slice(verifyStart),verificationDurationMs=performance.now()-verifyStarted;
+      for(const page of before.pages)assert.equal((await a.read(page.id)).cloudVerified,true);
+      assert.equal((await a.catalog()).pendingCount,0,'only independent verification retires journals');
+      const receiveStart=remote.requests.length,receiveStarted=performance.now();
       await b.sync();const after=await b.catalog();assert.deepEqual(after.pages,before.pages);assert.equal(after.healthy,true);
+      const receiveRequests=remote.requests.slice(receiveStart),receiveDurationMs=performance.now()-receiveStarted;
       assert.equal((await a.handoff()).complete,false);
       observations.push({mode,pages:12,markdownBytesPerPage:4096,dispatches:run?run.snapshot().dispatches:explicitDispatches,
         senderRequests:senderRequests.length,bytesUp:senderRequests.reduce((n,r)=>n+r.bytes_up,0),bytesDown:senderRequests.reduce((n,r)=>n+r.bytes_down,0),
-        senderDurationMs,fullTreeEqual:true,pendingJournalsRetained:12,cloudVerified:false,destinationHandoffClaim:false});
+        senderDurationMs,fullTreeEqual:true,pendingJournalsBeforeVerify:12,pendingJournalsAfterVerify:0,
+        verificationRequests:verificationRequests.length,verificationBytesUp:verificationRequests.reduce((n,r)=>n+r.bytes_up,0),verificationBytesDown:verificationRequests.reduce((n,r)=>n+r.bytes_down,0),verificationDurationMs,
+        receiveRequests:receiveRequests.length,receiveBytesUp:receiveRequests.reduce((n,r)=>n+r.bytes_up,0),receiveBytesDown:receiveRequests.reduce((n,r)=>n+r.bytes_down,0),receiveDurationMs,
+        totalRequests:remote.requests.length-requestStart,cloudVerifiedAfterIndependentVerify:true,destinationHandoffClaim:false});
     } finally {
       run?.stop();for(const workspace of clients){workspace.close();await workspace.store.close();}await remote.close();
     }
   }
   assert.equal(observations[0].dispatches,12);assert.equal(observations[1].dispatches,1);
   const evidence={status:'PASS',scope:'NATIVE_LOOPBACK_POLICY_EVALUATION_ONLY',realGoogleRequests:0,
-    defaultUiChanged:false,samplesPerMode:1,percentiles:'NOT_APPLICABLE',
-    limits:'Explicit sync after every durable create versus one foreground batch; this is a scheduling-policy comparison, not identical sync timing or measured Google cost/latency.',observations};
+    samplesPerMode:1,percentiles:'NOT_APPLICABLE',
+    limits:'Identical 12-page content workload; explicit sync after every durable create versus one foreground batch, then identical per-page Verify and destination sync. Separate phase counts include Verify work; timings are loopback single samples, not Google performance.',observations};
   const output=new URL('.generated/foreground/',import.meta.url);await mkdir(output,{recursive:true});
   await writeFile(new URL('evidence.json',output),JSON.stringify(evidence,null,2)+'\n');
   console.log(JSON.stringify(evidence));

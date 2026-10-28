@@ -32,3 +32,7 @@ The held-old-refresh/newer-native-save reproduction failed before the fix and
 passes afterward. Tests remain offline/intercepted; no real Drive inference.
 Final independent exact-artifact verdict/commit binding and native gate receipts
 are recorded with the final evidence manifest. Advice is not self-approval.
+
+Runtime continuation review found a delayed OAuth callback could reactivate authority after Disconnect. Lead added an attempt epoch invalidated by Disconnect and a held-callback Chrome regression; all endpoints remain intercepted. Fresh independent review and native gate are required for this increment.
+
+Second runtime finding: a caught manual cloud failure could wake queued foreground work. Lead added permanent halt on manual Sync/Verify/resolution failure and outer cloud-action rejection, plus Chrome queued-run/manual-failure/later-Save regression. Both targeted browser repairs PASS; no rearm or real provider access.

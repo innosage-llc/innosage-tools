@@ -18,3 +18,7 @@ and native full gate are required before updating the draft head.
 Real provider calls, staging and production NOT_RUN. Exact existing disposable A/B context/fixture authority is pending; no account/folder/scope changes, cleanup or remote CI authorized. Master remains OPEN; no auto-close linkage. Existing historical #102/#113/#136 evidence is not new #142 provider proof. #125 remains separately deferred.
 
 Final partial verdict: HOLD pending actual Drive readback/cost/latency and founder outcome review. Native/full browser evidence and exact-head review are required before draft PR handoff. Use Related to #142. No merge, production, cleanup, session archival or closure in this increment.
+
+## Runtime continuation under restored V1
+
+Lead directly inspected preserved changes and ran focused34/34 and full Chrome suite successfully on native loopback after sandbox EPERM. Independent review found stale OAuth authorization after Disconnect; repaired with attempt epoch and intercepted held-callback regression. Foreground opt-in now wired into app/real build, off by default. Fresh docs/evidence retain full Verify accounting separately from historical policy-only sample. Actual Google requests zero; AC4/AC8 and human acceptance remain pending. No deployment/merge/closure authority inferred.

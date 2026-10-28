@@ -1,13 +1,12 @@
 # Bounded foreground policy evaluation
 
-Decision: CONDITIONAL for further bounded qualification; actual-provider/runtime
-integration remains HOLD. This evaluation improves the earlier timeout-only HOLD
-with executable evidence. It does not enable automatic sync in the UI or real build.
+Decision: CONDITIONAL for further bounded qualification; actual-provider qualification remains HOLD. This evaluation improves the earlier timeout-only HOLD
+with executable evidence. The UI and separate real build now import this policy, off by default. A user must explicitly start each bounded store-lifetime run.
 
 `foreground.mjs` invokes the existing `Workspace.sync()` only. It owns no page
 data, journal, verification receipt, native checkpoint, lease or replication
 instance. One policy instance is allowed per PageStore lifetime; replacement and
-rearming are rejected. Construction is the explicit opt-in for this evaluation.
+rearming are rejected. The visible Start foreground run control is the explicit opt-in.
 The caller signals `saved()` only after an actual durable create/save ACK and
 calls `wake()` on foreground/online or manual-operation completion events.
 
@@ -59,15 +58,13 @@ timing. The explicit baseline is sync-after-each-save, not an optimized manual
 batch. There is one sample per mode; durations include local creation and native
 orchestration. No percentile, browser responsiveness, real Drive cost/latency,
 or generic speedup claim follows. The existing app performance/UI receipts remain
-applicable because the app does not import this evaluation module.
+applicable for unchanged local storage/controller paths; the changed app has fresh Chrome runtime coverage.
 Independent Verify work is excluded from these counts; the complete manual
 Save→Sync→Verify versus foreground acceptance comparison remains pending.
 
 ## Remaining work and rollback
 
-Before runtime integration, bind events and visible status through the existing
-UI route, define the bounded user opt-in and qualify the exact original approved
-provider context. Real A/B workload/count/byte/latency comparison remains NOT_RUN.
+Runtime events and visible status are wired through the existing UI. Qualify the exact original approved provider context before live use. Real A/B workload/count/byte/latency comparison remains NOT_RUN.
 An online hint does not establish connectivity or authority; provider preflight
 remains authoritative. No new OAuth grant, account, folder, origin deployment or
 permission is authorized by this module. Do not clear the halt through a wrapper
@@ -76,3 +73,38 @@ replacement or use a new PageStore to bypass uncertain native work.
 Rollback is removal of this isolated evaluation and its test registration, back
 to reviewed candidate acd29fe. It requires no data/schema migration, journal
 rewrite, provider cleanup or default-UI change. Master #142 remains HOLD/open.
+
+## Runtime continuation
+
+The visible controls start one run and stop future dispatches; neither resets the
+budget. Durable create/save/conflict-resolution acknowledgments signal it.
+Visibility, connectivity, authorization and manual-completion events wake it;
+manual and foreground cloud operations exclude one another. Local Save remains
+available during a held foreground operation. Error halt and pagehide prohibit
+future dispatches. Already-started native work can continue. Real authorization
+is checked separately; opt-in does not grant access. Disconnect invalidates held
+OAuth callbacks so a late success cannot restore authority or wake a run.
+
+Fresh Chrome UI coverage records default Save with no sync, opt-in, held-flight
+local Save/typing preservation, manual exclusion, two-dispatch exhaustion, dirty
+Verify refusal, explicit later Verify and permanent error halt. The separate
+real-build test uses synthetic OAuth/intercepted endpoints only, including a
+held OAuth callback after Disconnect with zero provider requests.
+
+`evidence/foreground-runtime-loopback.json` records one new sample per mode with
+identical twelve 4KiB pages, per-page independent Verify, then destination sync.
+
+| Phase requests | Explicit after every create | Coalesced batch |
+|---|---:|---:|
+| Sender sync | 980 | 135 |
+| Independent Verify | 204 | 225 |
+| Destination sync/readback | 32 | 32 |
+| Total | 1216 | 392 |
+
+Both preserve all twelve journals before Verify, retire them only after exact
+independent verification and read identical complete trees at B. Sync timing
+differs by design; these are single loopback observations, not live cost, p95,
+matched timing experiments or a production speedup. Original policy-only evidence
+is retained unchanged. Runtime UI receipts/screenshot are adjacent in evidence/.
+
+A failed manual Sync/Verify/resolution permanently halts an armed foreground run too; completion events cannot retry the failed cloud work. Chrome regression covers queued foreground plus manual failure and later local Save.
