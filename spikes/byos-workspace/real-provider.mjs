@@ -1,7 +1,7 @@
 // Explicit build-only route. Never selected by a query parameter.
 export {openBoundRealStore as openPageStore} from './real-store.mjs';
 import {clientId,workspace,bindingKey} from '../byos-sync/real-drive/config.mjs';
-import {authorize,forget,SCOPE,isAuthorized} from '../byos-sync/real-drive/transport.mjs';
+import {authorize,forget,SCOPE,isAuthorized,beginExperiment,haltExperiment,experimentHealthy,experimentEvidence,onExperimentChange} from '../byos-sync/real-drive/transport.mjs';
 
 /** Same existing #113 OAuth flow/scope; a pre-existing binding is mandatory. */
 export async function configureProvider(store, {changed=()=>{}} = {}) {
@@ -41,5 +41,5 @@ export async function configureProvider(store, {changed=()=>{}} = {}) {
   };
   disconnect.onclick=()=>{authorizationEpoch++;forget();store.state='reauth-required';store.notify();message.textContent='Disconnected; local drafts retained. Reload to reauthorize original account.';changed();void store.disconnect().catch(()=>{});};
   document.getElementById('offline-badge').textContent='REAL DRIVE CANDIDATE — EXISTING APPROVED DISPOSABLE WORKSPACE ONLY';
-  return {real:true,workspace,canSync:isAuthorized};
+  return {real:true,workspace,canSync:isAuthorized,beginExperiment,haltExperiment,experimentHealthy,experimentEvidence,onExperimentChange};
 }

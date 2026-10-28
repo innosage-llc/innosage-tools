@@ -1,6 +1,6 @@
 {
   "name": "innosage-tools",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "private": true,
   "scripts": {
@@ -58,7 +58,7 @@
     "test:visual-remix-canvas-browser": "node --experimental-strip-types --test scripts/visual-remix-canvas-browser.test.mjs",
     "test:byos-workspace": "node spikes/byos-workspace/check.mjs",
     "spike:byos-workspace": "node spikes/byos-workspace/server.mjs",
-    "test:byos-workspace:browser": "node spikes/byos-workspace/browser.mjs && node spikes/byos-workspace/ui-races.mjs && node spikes/byos-workspace/real-binding-browser.mjs && node spikes/byos-workspace/verify-refresh-race.mjs && node spikes/byos-workspace/foreground-browser.mjs && node scripts/prepare-workspace.mjs && node spikes/byos-workspace/static-browser.mjs",
+    "test:byos-workspace:browser": "node spikes/byos-workspace/browser.mjs && node spikes/byos-workspace/ui-races.mjs && node spikes/byos-workspace/real-binding-browser.mjs && node spikes/byos-workspace/verify-refresh-race.mjs && node spikes/byos-workspace/foreground-browser.mjs && node spikes/byos-workspace/idle-browser.mjs && node scripts/prepare-workspace.mjs && node spikes/byos-workspace/static-browser.mjs",
     "test:byos-workspace:measure": "node spikes/byos-workspace/measure-browser.mjs",
     "test:byos-workspace:slow": "node spikes/byos-workspace/slow-browser.mjs"
   },

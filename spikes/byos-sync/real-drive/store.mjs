@@ -1,10 +1,10 @@
 import {openPageStore as openNative} from '../native-overlay/page-store.mjs';
 import {createChangesReplication} from '../changes-feasibility/adapter.mjs';
-import {API,begin,isAuthorized,failure,evidence,onProgress} from './transport.mjs';
+import {API,begin,isAuthorized,failure,evidence,onProgress,haltExperiment} from './transport.mjs';
 import {errorSummary} from './diagnostics.mjs';
 let active,lastRemote=null;
 const errors=[];let errorSequence=0;
-function recordError(error){const requests=evidence().requests;errors.push({sequence:++errorSequence,afterRequest:requests.at(-1)?.sequence??null,...errorSummary(error)});if(errors.length>32)errors.shift();}
+function recordError(error){haltExperiment("NATIVE_ERROR");const requests=evidence().requests;errors.push({sequence:++errorSequence,afterRequest:requests.at(-1)?.sequence??null,...errorSummary(error)});if(errors.length>32)errors.shift();}
 const diagnosticFactory=options=>createChangesReplication(options,{onCreated:state=>{state.error$.subscribe(recordError);}});
 import {preflight,workspace,bindingKey} from './config.mjs';
 export {clientId,setClientId,workspace} from './config.mjs';
@@ -34,6 +34,7 @@ export async function openPageStore(options){
     return fn();
    })(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(failure('SYNC_BUDGET_EXHAUSTED',429)),180000);})]);
   }catch(e){
+   haltExperiment(e.message||"NATIVE_OPERATION_FAILED");
    recordError(e);if(e.message==='SYNC_BUDGET_EXHAUSTED')halted=true;
    if(active.replication)await active.replication.pause();
    active.state=e.parameters?.status===401?'reauth-required':'blocked';active.notify();throw e;

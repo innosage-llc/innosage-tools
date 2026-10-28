@@ -2,6 +2,7 @@ import '../byos-sync/native-overlay/browser-runtime.mjs';
 import { openPageStore, configureProvider } from './provider.mjs';
 import { Workspace } from './workspace.mjs';
 import { ForegroundRun } from './foreground.mjs';
+import { IdleDrain } from './idle-drain.mjs';
 import {prepareOfflineShell} from '../byos-sync/real-drive/offline-shell.mjs';
 
 // --- Configuration & Safe Parameter Extraction ---
@@ -124,6 +125,21 @@ let opTimer = null;
 let cloudActionBusy = false;
 let renderedPageId = null;
 let foreground = null;
+let idleDrain = null;
+let databaseEpoch = 0, inputEpoch = 0, idleAdmitting = false;
+let localMutationEpoch = 0, localMutationsInFlight = 0;
+const idleStart = document.getElementById("idle-start");
+const idleStop = document.getElementById("idle-stop");
+const idleStatus = document.getElementById("idle-status");
+function renderIdle() {
+  const state=idleDrain?.snapshot();
+  if(state?.reason||state?.state==="stopped")providerInfo?.haltExperiment?.(state.reason||"STOPPED");
+  idleStatus.textContent=state ? `${state.state}: ${state.pages.filter(p=>p.generation&&p.verified===p.generation).length}/26 final generations verified. ${state.reason||""}` : "Off. Create the 26 AZ142 A–Z fixture pages before starting.";
+  idleStatus.dataset.state=state?.state||"off";
+  idleStart.disabled=!!localMutationsInFlight||idleAdmitting||!!idleDrain||!!foreground||!store?.writer;
+  idleStop.disabled=!idleDrain||idleDrain.stopped;
+  updateWriterControls();
+}
 let providerInfo = null;
 
 function renderForeground() {
@@ -149,7 +165,7 @@ function renderForeground() {
   }
   updateWriterControls();
 }
-function wakeForeground() { foreground?.wake(); renderForeground(); }
+function wakeForeground() { foreground?.wake(); idleDrain?.wake(); renderForeground(); }
 
 // --- Operation Progress & Timer ---
 function renderOperationStatus() {
@@ -275,7 +291,7 @@ function getOrCreateBuffer(id, pageData, nativeBaseline) {
 // --- Writer Controls ---
 function updateWriterControls() {
   const hasWriter = !!(store && store.writer);
-  const cloudBusy = cloudActionBusy || !!store?.operation?.pending || !!foreground?.flight;
+  const cloudBusy = cloudActionBusy || !!store?.operation?.pending || !!foreground?.flight || !!idleDrain || idleAdmitting;
   if (!hasWriter) {
     writerNoticeEl.textContent = 'Writer disabled: session already owned or safe ownership unavailable. This tab is in read-only mode.';
     writerNoticeEl.style.display = 'block';
@@ -289,14 +305,14 @@ function updateWriterControls() {
   orderInput.disabled = !hasWriter;
   editorTextarea.disabled = !hasWriter;
   saveBtn.disabled = !hasWriter;
-  newRootBtn.disabled = !hasWriter;
-  newChildBtn.disabled = !hasWriter;
+  newRootBtn.disabled = !hasWriter || !!idleDrain || idleAdmitting;
+  newChildBtn.disabled = !hasWriter || !!idleDrain || idleAdmitting;
   syncBtn.disabled = cloudBusy;
   verifyBtn.disabled = !hasWriter || cloudBusy;
   useCloudBtn.disabled = !hasWriter || cloudBusy;
   keepLocalBtn.disabled = !hasWriter || cloudBusy;
   commitMergeBtn.disabled = !hasWriter || cloudBusy;
-  foregroundStartBtn.disabled = !hasWriter || !controller || !!foreground || cloudBusy;
+  foregroundStartBtn.disabled = !hasWriter || !controller || !!foreground || !!idleDrain || cloudBusy;
   foregroundStopBtn.disabled = !foreground || foreground.stopped || foreground.halted;
 }
 
@@ -862,13 +878,25 @@ async function scheduleRefresh(pageIdToSelect) {
 }
 
 // --- Local Save Action ---
-async function saveCurrentPageLocally() {
-  if (!selectedPageId) return;
+async function localMutation(action) {
+  localMutationEpoch++;localMutationsInFlight++;
+  if(idleDrain)idleDrain.ready=false;
+  renderIdle();
+  try{return await action();}
+  finally{localMutationsInFlight--;localMutationEpoch++;idleDrain?.wake();void idleDrain?.audit();renderIdle();}
+}
+async function saveCurrentPageLocally(pageId = selectedPageId) {
+  if(idleDrain&&!pageBuffers.get(pageId)?.dirty)return;
+  return localMutation(()=>persistCurrentPageLocally(pageId));
+}
+async function persistCurrentPageLocally(pageId = selectedPageId) {
+  if (!pageId) return;
   if (!store || !store.writer) {
     throw new Error('Writer disabled: session already owned or safe ownership unavailable');
   }
 
-  const savingPageId = selectedPageId;
+  const savingPageId = pageId;
+  const idleGeneration = idleDrain?.entries.get(pageId)?.generation;
   const buffer = pageBuffers.get(savingPageId);
   if (!buffer) return;
 
@@ -902,6 +930,7 @@ async function saveCurrentPageLocally() {
     setStatus(`[Page: ${selectedPageId} | Gen: ${buffer.generation}] Saved gen ${savingGen}; newer edits pending`, false);
   }
 
+  if (!buffer.dirty && idleGeneration) idleDrain?.saved(savingPageId,idleGeneration);
   await scheduleRefresh();
   return saveResult;
 }
@@ -993,15 +1022,15 @@ saveBtn.addEventListener('click', async () => {
 });
 
 newRootBtn.addEventListener('click', async () => {
-  if (!store || !store.writer) return;
+  if (idleDrain || idleAdmitting || !store || !store.writer) return;
   try {
     setStatus('Creating new root page...', false);
-    const result = await controller.create({
+    const result = await localMutation(()=>controller.create({
       title: 'New Project',
       parentId: null,
       order: 0,
       markdown: '# New Project\n\n- Scope\n'
-    });
+    }));
     foreground?.saved();
     await selectPage(result.page.id);
     setStatus(`[Page: ${result.page.id} | Gen: 0] Created new root page`, false);
@@ -1011,16 +1040,17 @@ newRootBtn.addEventListener('click', async () => {
 });
 
 newChildBtn.addEventListener('click', async () => {
+  if(idleDrain||idleAdmitting)return;
   if (!store || !store.writer) return;
   try {
     const parentId = selectedPageId || null;
     setStatus(`Creating new child under ${parentId || 'root'}...`, false);
-    const result = await controller.create({
+    const result = await localMutation(()=>controller.create({
       title: 'New Child Page',
       parentId: parentId,
       order: 0,
       markdown: '# New Child Page\n\nNotes...\n'
-    });
+    }));
     foreground?.saved();
     if (parentId) collapsedNodes.delete(parentId);
     await selectPage(result.page.id);
@@ -1032,7 +1062,7 @@ newChildBtn.addEventListener('click', async () => {
 
 // Bind all late completions to the page/buffer generation captured at click.
 async function cloudAction(kind, action, foregroundOwner = null) {
-  if (cloudActionBusy || (foreground?.flight && foregroundOwner !== foreground) || store?.operation?.pending) {
+  if (cloudActionBusy || (idleDrain?.flight && foregroundOwner !== idleDrain) || (foreground?.flight && foregroundOwner !== foreground) || store?.operation?.pending) {
     if (foregroundOwner) throw new Error('Another cloud action is running');
     return;
   }
@@ -1075,10 +1105,11 @@ verifyBtn.addEventListener('click', () => cloudAction('verify', async () => {
   } catch (error) { foreground?.halt(); setStatus(`[Page: ${input.id}] Verify failed: ${error.message}`, true); }
 }));
 async function resolveInput(action, merged) {
+  if(idleDrain||idleAdmitting)return;
   const input = captureInput(); if (!input.id || !store?.writer) return;
   try {
     if (action === 'local' && input.buffer?.dirty) await saveCurrentPageLocally();
-    await controller.resolve(input.id, action, merged);
+    await localMutation(()=>controller.resolve(input.id, action, merged));
     if (action !== 'cloud') foreground?.saved();
     if (action !== 'local' && unchanged(input)) pageBuffers.delete(input.id);
     await scheduleRefresh();
@@ -1101,7 +1132,7 @@ refreshHandoffBtn.addEventListener('click', async () => {
 });
 
 foregroundStartBtn.addEventListener('click', async () => {
-  if (foreground || !controller || !store?.writer || cloudActionBusy || store.operation?.pending) return;
+  if (foreground || idleDrain || idleAdmitting || !controller || !store?.writer || cloudActionBusy || store.operation?.pending) return;
   foreground = new ForegroundRun({store, sync:()=>cloudAction('foreground-sync', async () => {
     await controller.sync(); await scheduleRefresh();
   }, foreground)}, {
@@ -1119,7 +1150,51 @@ foregroundStopBtn.addEventListener('click', () => foreground?.stop());
 document.addEventListener('visibilitychange', wakeForeground);
 window.addEventListener('online', wakeForeground);
 window.addEventListener('offline', wakeForeground);
-window.addEventListener('pagehide', () => foreground?.stop());
+window.addEventListener('pagehide', () => {foreground?.stop();idleDrain?.stop();});
+
+
+for (const input of [titleInput,parentSelect,orderInput,editorTextarea]) {
+  input.addEventListener(input===parentSelect?'change':'input',()=>{inputEpoch++;if(idleDrain&&!idleDrain.entries.has(selectedPageId))idleDrain.fail('INPUT_OUTSIDE_FIXTURE');else idleDrain?.input(selectedPageId);});
+}
+idleStart.addEventListener('click',async()=>{
+  if(localMutationsInFlight||idleAdmitting||idleDrain||foreground||!store?.writer||cloudActionBusy||store.operation?.pending)return;
+  idleAdmitting=true;renderIdle();
+  const initialDatabaseEpoch=databaseEpoch,initialInputEpoch=inputEpoch,initialSaveEpoch=localMutationEpoch;
+  try {
+    const catalog=await controller.catalog();
+    const fixture=catalog.pages.filter(p=>/^AZ142 [A-Z]$/.test(p.title));
+    if(fixture.length!==26||new Set(fixture.map(p=>p.title)).size!==26||!catalog.healthy)throw Error('Exactly 26 unique AZ142 A–Z pages and a healthy tree required');
+    if([...pageBuffers.values()].some(p=>p.dirty))throw Error('Save pending input before starting');
+    const ids=fixture.sort((a,b)=>a.title.localeCompare(b.title)).map(p=>p.id);
+    const journals=await store.db.localDrafts.find().exec();
+    if(journals.length)throw Error('Warm fixture required: verify all existing journals before starting');
+    if(foreground||idleDrain||!store.writer||cloudActionBusy||store.operation?.pending||localMutationsInFlight||[...pageBuffers.values()].some(p=>p.dirty)||databaseEpoch!==initialDatabaseEpoch||inputEpoch!==initialInputEpoch||localMutationEpoch!==initialSaveEpoch)throw Error('State changed during experiment admission; no run started');
+    providerInfo.beginExperiment?.({maxRequests:6000,maxMs:1500000});
+    idleDrain=new IdleDrain({ids,
+      save:id=>saveCurrentPageLocally(id),
+      sync:()=>cloudAction('idle-sync',()=>controller.sync(),idleDrain),
+      verify:id=>cloudAction('idle-verify',()=>controller.verify(id),idleDrain),
+      available:()=>!!providerInfo?.canSync()&&document.visibilityState==='visible'&&navigator.onLine&&!cloudActionBusy&&!store.operation?.pending,
+      canAudit:()=>!localMutationsInFlight&&!cloudActionBusy&&!store.operation?.pending,
+      check:async()=>{
+        const epoch=databaseEpoch, saveEpoch=localMutationEpoch;
+        if(localMutationsInFlight)return false;
+        if([...pageBuffers.values()].some(p=>p.dirty)||cloudActionBusy||store.operation?.pending||['blocked','reauth-required'].includes(store.state))return false;
+        if((await store.db.localDrafts.find().exec()).length)return false;
+        if(!(await controller.catalog()).healthy)return false;
+        for(const id of ids)if(!(await controller.read(id)).cloudVerified)return false;
+        return epoch===databaseEpoch&&saveEpoch===localMutationEpoch&&!localMutationsInFlight&&providerInfo.experimentHealthy?.()!==false;
+      },changed:renderIdle});
+    providerInfo.onExperimentChange?.(state=>{if(state.halted)idleDrain.fail('TRANSPORT_UNCERTAIN: '+state.halted);else if(idleDrain.ready&&(state.starting||state.active))idleDrain.fail('UNEXPECTED_CLOUD_WORK_AFTER_READY');});
+    window.workspaceIdleSnapshot=()=>({timeOriginMs:performance.timeOrigin,run:idleDrain.snapshot(),events:idleDrain.events.slice(),transport:providerInfo.experimentEvidence?.()??null});
+    renderIdle();
+  }catch(error){setStatus('Idle experiment refused: '+error.message,true);}
+  finally{idleAdmitting=false;renderIdle();}
+});
+idleStop.addEventListener('click',()=>idleDrain?.stop());
+window.addEventListener('beforeunload',event=>{
+  if(idleDrain&&!idleDrain.ready){event.preventDefault();event.returnValue='';}
+});
 
 // --- Initialization ---
 async function init() {
@@ -1155,6 +1230,8 @@ async function init() {
 
     // Controller invalidation subscription with monotonic refresh ticket
     controller.subscribe(() => {
+      databaseEpoch++;
+      if(idleDrain?.ready)idleDrain.fail("DATABASE_CHANGED_AFTER_VERIFICATION");
       scheduleRefresh();
     });
 

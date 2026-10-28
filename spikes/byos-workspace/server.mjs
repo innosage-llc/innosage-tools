@@ -4,9 +4,10 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {build} from '../byos-sync/node_modules/esbuild/lib/main.js';
 import {mock} from '../byos-sync/src/mock.mjs';
-export async function buildAssets({real=false,base='/'}={}) {
+export async function buildAssets({real=false,base='/',idleTest=false}={}) {
+  if(real&&idleTest)throw new Error('Test provider cannot replace real binding');
   if(!/^\/(?:[a-z0-9-]+\/)*$/.test(base))throw new Error('Invalid static base');
-  const bundle=await build({entryPoints:[fileURLToPath(new URL('app.mjs',import.meta.url))],bundle:true,write:false,format:'esm',platform:'browser',define:{global:'globalThis'},target:'es2022',...(real?{inject:[fileURLToPath(new URL('../byos-sync/real-drive/transport.mjs',import.meta.url))],plugins:[{name:'strict-existing-real-provider',setup(build){build.onResolve({filter:/^\.\/provider\.mjs$/},()=>({path:fileURLToPath(new URL('real-provider.mjs',import.meta.url))}));}}]}:{})});
+  const bundle=await build({entryPoints:[fileURLToPath(new URL('app.mjs',import.meta.url))],bundle:true,write:false,format:'esm',platform:'browser',define:{global:'globalThis'},target:'es2022',...(real?{inject:[fileURLToPath(new URL('../byos-sync/real-drive/transport.mjs',import.meta.url))],plugins:[{name:'strict-existing-real-provider',setup(build){build.onResolve({filter:/^\.\/provider\.mjs$/},()=>({path:fileURLToPath(new URL('real-provider.mjs',import.meta.url))}));}}]}:idleTest?{plugins:[{name:'idle-loopback-fixture',setup(build){build.onResolve({filter:/^\.\/provider\.mjs$/},()=>({path:fileURLToPath(new URL('idle-test-provider.mjs',import.meta.url))}));}}]}:{})});
   const bytes=bundle.outputFiles[0].contents;
   const digest=value=>createHash('sha256').update(value).digest();
   const bundleUrl=base+'app.mjs?revision='+digest(bytes).toString('hex');
@@ -23,8 +24,8 @@ export async function buildAssets({real=false,base='/'}={}) {
     .replace("['/byos-demo/', '/byos-demo/index.html']",JSON.stringify([base,base+'index.html']));
   return {html,bytes,css,worker};
 }
-export async function serve(port=0,{real=false}={}) {
-  const {html,bytes,css,worker}=await buildAssets({real});
+export async function serve(port=0,{real=false,idleTest=false}={}) {
+  const {html,bytes,css,worker}=await buildAssets({real,idleTest});
   const server=http.createServer(async(req,res)=>{
     const path=new URL(req.url,'http://localhost').pathname;
     if(!['/','/index.html','/app.mjs','/style.css','/sw.js'].includes(path)){res.writeHead(404);res.end();return;}
