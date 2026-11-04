@@ -7,7 +7,7 @@ const server=await serve();let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  const page=await browser.newPage();await page.route('**/*',route=>{assert.equal(new URL(route.request().url()).origin,server.url);return route.continue();});
- await page.goto(server.url+'/?workspace=refresh'+crypto.randomUUID().replaceAll('-',''));await page.waitForFunction(()=>window.workspaceDemo?.ready);
+ await page.goto(server.url+'/?workspace=refresh'+crypto.randomUUID().replaceAll('-',''));await page.waitForFunction(()=>window.workspaceDemo?.ready);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
  await page.locator('#new-root-btn').click();await page.waitForFunction(()=>document.querySelector('#meta-page-id').textContent.includes('w142_'));
  await page.evaluate(async()=>{
   const {workspace:controller,store}=window.workspaceDemo;const id=(await controller.catalog()).pages[0].id;

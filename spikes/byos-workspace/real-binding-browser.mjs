@@ -41,7 +41,7 @@ try {
   });
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));await page.goto(server.url+'/?workspace='+workspace);
   if(!bound){await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('binding required'));return {context,page};}
-  await page.waitForFunction(()=>window.workspaceRealReady);assert.equal(await page.evaluate(()=>!!window.workspaceDemo),false,'no native debug store in real build');
+  await page.waitForFunction(()=>window.workspaceRealReady);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));assert.equal(await page.evaluate(()=>!!window.workspaceDemo),false,'no native debug store in real build');
   if(!autoAuthorize)return {context,page};
   await page.locator('main section.panel').first().locator('input[type=checkbox]').check();await page.getByRole('button',{name:'Reauthorize existing test account'}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('main section.panel p')].some(node=>node.textContent.includes('Authorized in memory')));

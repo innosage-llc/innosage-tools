@@ -12,7 +12,7 @@ try{
  const context=await browser.newContext();await context.route('**/*',route=>{assert([server.url,remote.url].includes(new URL(route.request().url()).origin));return route.continue();});
  const page=await context.newPage(),errors=[],failedRequests=[];let phase='setup';page.on('pageerror',e=>errors.push({message:e.message,stack:e.stack,phase,at:Date.now()}));page.on('requestfailed',r=>failedRequests.push({path:new URL(r.url()).pathname,method:r.method(),failure:r.failure(),phase}));
  const url=server.url+'/?workspace=az'+crypto.randomUUID().replaceAll('-','')+'&endpoint='+encodeURIComponent(remote.url);
- await page.goto(url);await page.waitForFunction(()=>window.workspaceDemo?.ready);
+ await page.goto(url);await page.waitForFunction(()=>window.workspaceDemo?.ready);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
  const ids=await page.evaluate(async()=>{const ids=[];for(let i=0;i<26;i++){const result=await window.workspaceDemo.workspace.create({title:'AZ142 '+String.fromCharCode(65+i),markdown:'initial '+i,order:i});ids.push(result.page.id);}return ids;});
  await page.evaluate(async()=>{const w=window.workspaceDemo.workspace;await w.sync();for(const p of (await w.catalog()).pages)await w.verify(p.id);});
  await page.waitForFunction(()=>document.querySelectorAll('.tree-row').length>=26);
@@ -36,6 +36,7 @@ try{
  await page.locator('#save-btn').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Locally saved'));
  await page.locator('#verify-btn').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Exact saved generation cloud verified'));
  await page.locator('#idle-start').click();await page.waitForFunction(()=>!!window.workspaceIdleSnapshot);
+ await page.evaluate(()=>{const c=window.workspaceDemo.workspace,original=c.sync.bind(c);c.sync=async()=>{c.sync=original;await new Promise(resolve=>window.releasePendingUiSync=resolve);return original();};});
  phase='timed-edit';const started=Date.now();
  for(let i=0;i<26;i++){
   await page.getByText('AZ142 '+String.fromCharCode(65+i),{exact:true}).click();
@@ -43,6 +44,11 @@ try{
   await page.locator('#editor').fill('Final '+String.fromCharCode(65+i)+'\n'+'x'.repeat(4096));
  }
  const lastInputAt=Date.now();
+ await page.waitForFunction(()=>{const run=window.workspaceIdleSnapshot().run,p=run.pages.at(-1);return !!window.releasePendingUiSync&&p.saved===p.generation&&p.generation>0;});
+ assert.equal(await page.locator('#cloud-save-status').getAttribute('data-state'),'pending');
+ assert.match(await page.locator('#cloud-save-status').textContent(),/^Cloud: pending/);
+ assert.doesNotMatch(await page.locator('#close-status').textContent(),/^Safe to close/);
+ await page.evaluate(()=>window.releasePendingUiSync());
  await page.waitForFunction(()=>['safe-to-close','halted'].includes(window.workspaceIdleSnapshot().run.state),null,{timeout:120000});
  const evidence=await page.evaluate(()=>window.workspaceIdleSnapshot());assert.equal(evidence.run.state,'safe-to-close',JSON.stringify(evidence.run));
  phase='ready-regressions';
@@ -66,7 +72,7 @@ try{
  const z=evidence.events.filter(e=>e.id===ids[25]);assert.ok(z.find(e=>e.type==='durable').atMs-z.find(e=>e.type==='input').atMs>=5000);
  const finalEvidence=await page.evaluate(()=>window.workspaceIdleSnapshot());
  // Actual tab close/reopen retains exact records. Safe-close does not persist a stale green flag.
- phase='closing-verified-tab';await page.close();const reopened=await context.newPage();await reopened.goto(url);await reopened.waitForFunction(()=>window.workspaceDemo?.ready);
+ phase='closing-verified-tab';await page.close();const reopened=await context.newPage();await reopened.goto(url);await reopened.waitForFunction(()=>window.workspaceDemo?.ready);await reopened.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
  const actual=await reopened.evaluate(async()=> (await window.workspaceDemo.workspace.catalog()).pages);assert.deepEqual(actual,expected);
  assert.equal(await reopened.locator('#idle-status').getAttribute('data-state'),null);
  if(errors.length||failedRequests.length)console.log(JSON.stringify({diagnosticErrors:errors,failedRequests:failedRequests.slice(0,20)}));

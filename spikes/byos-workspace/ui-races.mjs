@@ -7,7 +7,7 @@ const {chromium}=require('playwright');const server=await serve();let browser;
 try {
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  const page=await browser.newPage();await page.route('**/*',route=>{assert.equal(new URL(route.request().url()).origin,server.url);return route.continue();});
- await page.goto(server.url+'/?workspace=races'+crypto.randomUUID().replaceAll('-',''));await page.waitForFunction(()=>window.workspaceDemo?.ready);
+ await page.goto(server.url+'/?workspace=races'+crypto.randomUUID().replaceAll('-',''));await page.waitForFunction(()=>window.workspaceDemo?.ready);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
  await page.locator('#new-root-btn').click();await page.waitForFunction(()=>document.querySelector('#meta-page-id').textContent.includes('w142_'));
  await page.locator('#page-title').fill('Page A');await page.locator('#save-btn').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Locally saved'));
  await page.locator('#new-root-btn').click();await page.waitForFunction(()=>document.querySelector('#page-title').value==='New Project');
@@ -18,6 +18,7 @@ try {
  await page.locator('#verify-btn').click();await page.waitForFunction(()=>!!window.finishVerify);
  await select('Page B');await page.locator('#editor').fill('B newer typing');await page.evaluate(()=>window.finishVerify());
  await page.waitForTimeout(80);assert.equal(await page.locator('#page-title').inputValue(),'Page B','late verify must not navigate back');
+ assert.match(await page.locator('#local-save-status').textContent(),/unsaved|saving/);assert.match(await page.locator('#cloud-save-status').textContent(),/latest input not verified/);assert.doesNotMatch(await page.locator('#close-status').textContent(),/^Safe to close/);
  assert.equal(await page.locator('#editor').inputValue(),'B newer typing');assert.doesNotMatch(await page.locator('#status').textContent(),/Cloud verified successfully/,'cannot claim current dirty input verified');
  // Make resolution controls visible: lifecycle stub does not emulate native CAS.
  await page.evaluate(()=>{document.querySelector('#conflict-section').style.display='block';window.workspaceDemo.workspace.resolve=()=>new Promise(resolve=>{window.finishResolve=resolve;});});
@@ -61,7 +62,7 @@ try {
    controller.read=async id=>{const result=await window.originalRead(id);if(result.page?.title==='Page B'&&!window.targetReadEntered){window.targetReadEntered=true;await new Promise(resolve=>{window.releaseTargetRead=resolve;});}return result;};
  });
  await page.locator('.tree-row').filter({has:page.locator('.tree-title-text',{hasText:'Page B'})}).click();await page.waitForFunction(()=>window.targetReadEntered);
- await page.locator('#editor').fill('A typed while B loading');await page.evaluate(()=>window.releaseTargetRead());await page.waitForTimeout(100);
+ await page.locator('#editor').fill('A typed while B loading');assert.match(await page.locator('#local-save-status').textContent(),/unsaved|saving/);assert.doesNotMatch(await page.locator('#close-status').textContent(),/^Safe to close/);await page.evaluate(()=>window.releaseTargetRead());await page.waitForTimeout(100);
  assert.equal(await page.locator('#page-title').inputValue(),'Page A');assert.equal(await page.locator('#editor').inputValue(),'A typed while B loading');
  await page.evaluate(()=>{window.workspaceDemo.workspace.read=window.originalRead;});
  await page.locator('#save-btn').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Locally saved'));
