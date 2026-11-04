@@ -132,12 +132,38 @@ let localMutationEpoch = 0, localMutationsInFlight = 0;
 const idleStart = document.getElementById("idle-start");
 const idleStop = document.getElementById("idle-stop");
 const idleStatus = document.getElementById("idle-status");
+// Presentation only: derive labels from existing durable/replication state.
+// No timers, save calls, cloud requests or completion authority live here.
+function renderSaveOverview() {
+  const local=document.getElementById('local-save-status');
+  const cloud=document.getElementById('cloud-save-status');
+  const close=document.getElementById('close-status');
+  const buffer=pageBuffers.get(selectedPageId),state=idleDrain?.snapshot();
+  const page=state?.pages.find(p=>p.id===selectedPageId);
+  const dirty=!!buffer?.dirty, anyDirty=[...pageBuffers.values()].some(p=>p.dirty);
+  local.textContent=(!selectedPageId||!buffer)?'Local: no readable page selected':dirty?(localMutationsInFlight?'Local: saving — latest input not yet acknowledged':'Local: unsaved changes'):'Local: saved on this device';
+  local.dataset.state=dirty?'pending':'saved';
+  let cloudState='pending', label='Cloud: not independently verified';
+  if(store?.state==='reauth-required'){cloudState='error';label='Cloud: authorization required — local drafts retained';}
+  else if(store?.state==='blocked'){cloudState='error';label='Cloud: blocked or uncertain — local drafts retained';}
+  else if(dirty){label='Cloud: latest input not verified';}
+  else if(page?.generation){
+    cloudState=page.verified===page.generation?'verified':page.status||'pending';
+    label=page.verified===page.generation?'Cloud: latest generation independently verified':`Cloud: ${cloudState}${!page.status&&state.flight?' · workspace cloud work active':''}${page.attempt?` · attempt ${page.attempt}`:''}${page.nextRetryAt?` · retry in ${Math.max(0,Math.ceil(page.nextRetryAt-performance.now()))} ms`:''}${page.stopReason?` · ${page.stopReason}`:''}`;
+  }else if(metaVerifiedEl.textContent==='Cloud Verified: YES'){cloudState='verified';label='Cloud: current saved record independently verified';}
+  if(currentView?.status==='needs-resolution'||currentView?.journal?.state==='needs-resolution'){cloudState='conflict';label='Cloud: conflict — resolve below; local version retained';}
+  cloud.textContent=label;cloud.dataset.state=cloudState;
+  const ready=!!state?.ready&&!anyDirty&&!localMutationsInFlight&&!cloudActionBusy&&!store?.operation?.pending;
+  close.textContent=ready?'Safe to close this device — all final generations verified and required work complete.':anyDirty?'Keep open — input has not yet been durably saved.':state?.reason?`Keep open — ${state.reason}`:'Keep open until all final generations are verified and sync cleanup completes.';
+  close.dataset.state=ready?'verified':'pending';
+}
 function renderIdle() {
   const state=idleDrain?.snapshot();
   if(state?.reason||state?.state==="stopped")providerInfo?.haltExperiment?.(state.reason||"STOPPED");
-  idleStatus.textContent=state ? `${state.state}: ${state.pages.filter(p=>p.generation&&p.verified===p.generation).length}/26 final generations verified. ${state.reason||""}` : "Off. Create the 26 AZ142 A–Z fixture pages before starting.";
+  idleStatus.textContent=state ? `${state.state}: ${state.pages.filter(p=>p.generation&&p.verified===p.generation).length}/26 final generations verified. ${state.reason||""}` : foreground ? "Page-idle experiment not started; foreground trial status is shown separately." : "Automatic sync is off. Open Sync setup to start the approved 26-page experiment.";
   if(idleDrain?.strict){const page=state.pages.find(p=>p.id===selectedPageId);if(page)idleStatus.textContent+=` Selected page: ${page.status}, attempt ${page.attempt||0}.${page.nextRetryAt?` Retry in ${Math.max(0,Math.ceil(page.nextRetryAt-performance.now()))} ms.`:''}${page.stopReason?' '+page.stopReason:''}`;}
   idleStatus.dataset.state=state?.state||"off";
+  renderSaveOverview();
   idleStart.disabled=!!localMutationsInFlight||idleAdmitting||!!idleDrain||!!foreground||!store?.writer;
   idleStop.disabled=!idleDrain||idleDrain.stopped;
   updateWriterControls();
@@ -145,6 +171,7 @@ function renderIdle() {
 let providerInfo = null;
 
 function renderForeground() {
+  if(foreground&&!idleDrain)idleStatus.textContent="Page-idle experiment not started; foreground trial status is shown separately.";
   if (!foreground) foregroundStatusEl.textContent = 'Off — use explicit Sync and Verify.';
   else {
     const snapshot = foreground.snapshot();
@@ -226,6 +253,7 @@ function updateButtonsAriaBusy(busy) {
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.setAttribute('data-error', isError ? 'true' : 'false');
+  renderSaveOverview();
   if (isError) {
     statusEl.classList.add('error');
   } else {
@@ -456,10 +484,14 @@ function renderTree(catalog) {
       const rowEl = document.createElement('div');
       rowEl.className = 'tree-row' + (child.id === selectedPageId ? ' selected' : '');
       rowEl.setAttribute('role', 'treeitem');
+      rowEl.tabIndex=0;
+      rowEl.setAttribute('aria-label',child.title||'(Untitled)');
+      rowEl.onkeydown=event=>{if(event.target===rowEl&&(event.key==='Enter'||event.key===' ')){event.preventDefault();void selectPage(child.id);}};
       rowEl.setAttribute('aria-selected', child.id === selectedPageId ? 'true' : 'false');
 
       const grandChildren = childrenMap.get(child.id) || [];
       const hasChildren = grandChildren.length > 0;
+      if(hasChildren)rowEl.setAttribute('aria-expanded',String(!collapsedNodes.has(child.id)));
 
       if (hasChildren) {
         const isCollapsed = collapsedNodes.has(child.id);
@@ -487,6 +519,7 @@ function renderTree(catalog) {
       const titleSpan = document.createElement('span');
       titleSpan.className = 'tree-title-text';
       titleSpan.textContent = child.title || '(Untitled)';
+      titleSpan.title=child.title||'(Untitled)';
       rowEl.appendChild(titleSpan);
 
       const idBadge = document.createElement('span');
@@ -614,6 +647,8 @@ function renderEditorArea(readResult, catalog) {
     metaVerifiedEl.style.color = 'var(--text-muted)';
   }
 
+  renderSaveOverview();
+
   // Conflict / Resolution Section
   const view = readResult.view;
   const needsResolution = view && (view.status === 'needs-resolution' || (view.journal && view.journal.state === 'needs-resolution') || view.warning);
@@ -661,6 +696,7 @@ function renderEmptyEditor() {
   metaGenerationEl.textContent = 'Input Gen: 0';
   metaDurabilityEl.textContent = 'Durability: -';
   metaVerifiedEl.textContent = 'Cloud Verified: -';
+  renderSaveOverview();
 
   conflictSection.style.display = 'none';
   mergePanel.style.display = 'none';
@@ -1215,7 +1251,8 @@ idleStart.addEventListener('click',async()=>{
 });
 idleStop.addEventListener('click',()=>idleDrain?.stop());
 window.addEventListener('beforeunload',event=>{
-  if(idleDrain&&!idleDrain.ready){event.preventDefault();event.returnValue='';}
+  const dirty=[...pageBuffers.values()].some(buffer=>buffer.dirty);
+  if(dirty||localMutationsInFlight||(idleDrain&&!idleDrain.ready)){event.preventDefault();event.returnValue='';}
 });
 
 // --- Initialization ---

@@ -55,7 +55,7 @@ try{
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));return {page,context};
  }
  async function load(page,prepared=false){
-  await page.goto(server.url+'/?workspace='+workspace+(prepared?'&prepared=1':''));await page.waitForFunction(()=>window.workspaceRealReady);
+  await page.goto(server.url+'/?workspace='+workspace+(prepared?'&prepared=1':''));await page.waitForFunction(()=>window.workspaceRealReady);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
   await page.locator('main section.panel').first().locator('input[type=checkbox]').check();await page.getByRole('button',{name:'Reauthorize existing test account'}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('main section.panel p')].some(n=>n.textContent.includes('Authorized in memory')));
  }
@@ -87,13 +87,16 @@ try{
  injectTransient=true;const starts=[];
  for(let i=0;i<26;i++){await select(a.page,i);starts.push(Date.now());await a.page.locator('#editor').fill(('formal '+i+' ').padEnd(4096,'x'));if(i<25)await a.page.waitForTimeout(Math.max(0,cadenceMs-(Date.now()-starts.at(-1))));}
  await a.page.waitForFunction(()=>['safe-to-close','failed'].includes(document.querySelector('#idle-status').dataset.state),null,{timeout:180000});
+ await a.page.waitForFunction(()=>document.querySelector('#close-status').textContent.startsWith('Safe to close'));
+ assert.match(await a.page.locator('#cloud-save-status').textContent(),/latest generation independently verified/);
+ assert.match(await a.page.locator('#local-save-status').textContent(),/saved on this device/);
  const formal=await a.page.evaluate(()=>window.workspaceIdleSnapshot());
  const out=new URL('.generated/prepared/renewable-'+cadenceMs+(alreadyApplied?'-already-applied':'')+'/',import.meta.url);await mkdir(out,{recursive:true});
  await writeFile(new URL('intercepted-evidence.json',out),JSON.stringify({provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',realGoogleRequests:0,recovery,formal,errors},null,2)+'\n');
  assert.equal(formal.run.ready,true,JSON.stringify(formal.run));assert(injected);assert(formal.run.pages.some(p=>p.attempt===2));assert.equal(formal.run.pages.filter(p=>p.verified===p.generation).length,26);
  if(cadenceMs===3000)assert(formal.ownerEvents.filter(e=>e.type==='lease-renew-confirmed').length>=3,'long editing must cross multiple confirmed renewals');
  const before=await a.page.evaluate(()=>window.workspaceRealSnapshot());await sync(b.page);const after=await b.page.evaluate(()=>window.workspaceRealSnapshot());assert.deepEqual(after.catalog.pages,before.catalog.pages);
- const aUrl=a.page.url();await a.page.close();const reopened=await a.context.newPage();await reopened.goto(aUrl);await reopened.waitForFunction(()=>window.workspaceRealReady);assert.deepEqual((await reopened.evaluate(()=>window.workspaceRealSnapshot())).catalog.pages,before.catalog.pages);
+ const aUrl=a.page.url();await a.page.close();const reopened=await a.context.newPage();await reopened.goto(aUrl);await reopened.waitForFunction(()=>window.workspaceRealReady);await reopened.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));assert.deepEqual((await reopened.evaluate(()=>window.workspaceRealSnapshot())).catalog.pages,before.catalog.pages);assert.doesNotMatch(await reopened.locator('#close-status').textContent(),/^Safe to close/);
  for(const [id,bytes] of originals)assert.deepEqual(remote.files.get(id).body,bytes);
  assert.deepEqual(errors,[]);console.log(JSON.stringify({status:'PASS',provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',realGoogleRequests:0,interceptedRequests:intercepted,verified:26,original12Unchanged:true,destinationFullTree:true,actualCloseReopen:true,injected503Recovered:true}));
  await a.context.close();await b.context.close();

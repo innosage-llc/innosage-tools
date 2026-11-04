@@ -15,7 +15,7 @@ try {
   async function open() {
     const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
     await page.goto(server.url+'/?workspace=fg'+crypto.randomUUID().replaceAll('-','')+'&endpoint='+encodeURIComponent(remote.url));
-    await page.waitForFunction(()=>window.workspaceDemo?.ready);
+    await page.waitForFunction(()=>window.workspaceDemo?.ready);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
     await page.locator('#new-root-btn').click();await page.waitForFunction(()=>document.querySelector('#page-title').value==='New Project');
     return page;
   }
@@ -28,7 +28,7 @@ try {
     const controller=window.workspaceDemo.workspace,original=controller.sync.bind(controller);window.foregroundCalls=0;
     controller.sync=async()=>{window.foregroundCalls++;if(window.foregroundCalls===1)await new Promise(resolve=>{window.releaseForeground=resolve;});return original();};
   });
-  await page.locator('#foreground-start-btn').click();await page.waitForFunction(()=>!!window.releaseForeground);
+  await page.locator('#foreground-start-btn').click();await page.locator('#sync-setup').evaluate(n=>n.open=false);assert.equal(await page.locator('#foreground-status').isVisible(),true);assert.doesNotMatch(await page.locator('#idle-status').textContent(),/Automatic sync is off/);await page.waitForFunction(()=>!!window.releaseForeground);
   assert.match(await page.locator('#operation-status').textContent(),/foreground-sync/);
   assert.equal(await page.locator('#sync-btn').isDisabled(),true);assert.equal(await page.locator('#verify-btn').isDisabled(),true);
   assert.equal(await page.locator('#save-btn').isEnabled(),true);

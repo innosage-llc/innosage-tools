@@ -20,10 +20,10 @@ try{
  await context.route('**/*',route=>{assert.equal(new URL(route.request().url()).origin,origin);return route.continue();});
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
  await page.goto(origin+'/byos-workspace/?workspace='+workspace);
- await page.waitForFunction(()=>window.workspaceRealReady);
+ await page.waitForFunction(()=>window.workspaceRealReady);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
  await page.waitForFunction(()=>document.querySelector('#offline-status').textContent.startsWith('Offline editor ready'));
  await page.locator('#new-root-btn').click();await page.waitForFunction(()=>document.querySelector('#page-title').value==='New Project');
- await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.workspaceRealReady);
+ await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.workspaceRealReady);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
  assert.match(await page.locator('#tree').textContent(),/New Project/);
  assert.deepEqual(errors,[]);console.log(JSON.stringify({status:'PASS',checks:['static-subpath-ready','integrity-shell-ready','offline-reload-local-page-retained'],realGoogleRequests:0}));
  await context.close();
