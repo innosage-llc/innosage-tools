@@ -123,15 +123,24 @@ export class PreparedOwner {
           const base=completeRecord({...journal.base,_deleted:false}),target=completeRecord({...journal.draft,_deleted:false});
           const previous=(prior.rows??[]).find(row=>row.target.id===id)?.target;
           if(!sameRecord(observed.record,base)&&!sameRecord(observed.record,target)&&!(previous&&sameRecord(observed.record,previous)))throw protocolError('RECOVERY_LOCAL_REMOTE_CONFLICT',{id,base,target,observed});
+          this.event({type:'recovery-page-observed',page:id,generation:journal.seq,observed:structuredClone(observed),matchesFinal:sameRecord(observed.record,target)});
           return {fileId,expectedEtag:observed.etag,base:observed.record,target,generation:journal.seq};
         }));
         const failed=settled.find(item=>item.status==='rejected');if(failed)throw failed.reason;
         rows.push(...settled.map(item=>item.value));
       }
       await checkJournals();
-      const wal=validateWal({format:WAL_FORMAT,version:WAL_VERSION,workspace:this.store.workspace,runId:crypto.randomUUID(),rows},this.context);
-      const protectedWal=await conditionalFileMutation({fileId:this.bindings.walId,snapshot:prior.snapshot,target:wal,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:this.event});
-      await recoverTransactionWal({snapshot:protectedWal,fileId:this.bindings.walId,context:this.context,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:this.event});
+      if(rows.every(row=>sameRecord(row.base,row.target))){
+        // Every final intent was independently read under this lease and the
+        // prior WAL was already reconciled. No page write remains to protect:
+        // publishing/replaying a no-op WAL only consumes the fixed lease window.
+        // Journals still wait for release, native reconciliation and exact retirement.
+        this.event({type:'recovery-already-applied',pages:rows.length,formalSample:false});
+      }else{
+        const wal=validateWal({format:WAL_FORMAT,version:WAL_VERSION,workspace:this.store.workspace,runId:crypto.randomUUID(),rows},this.context);
+        const protectedWal=await conditionalFileMutation({fileId:this.bindings.walId,snapshot:prior.snapshot,target:wal,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:this.event});
+        await recoverTransactionWal({snapshot:protectedWal,fileId:this.bindings.walId,context:this.context,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:this.event});
+      }
       await this.release(owned,current);await checkJournals();
       const confirmed=new Map(rows.map(row=>[row.target.id,{record:row.target}]));
       await this.store.holdPreparedGenerations(confirmed,current);

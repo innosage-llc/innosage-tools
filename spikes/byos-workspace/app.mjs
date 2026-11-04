@@ -1244,14 +1244,15 @@ async function init() {
       const recover=document.createElement('button');recover.className='btn';recover.textContent='Recover prior A–Z pending intents';
       idleStart.parentElement.append(recover);
       recover.addEventListener('click',async()=>{
-        if(idleDrain||idleAdmitting||foreground||store.operation?.pending||localMutationsInFlight)return;
+        if(idleDrain||idleAdmitting||foreground||cloudActionBusy||store.operation?.pending||localMutationsInFlight)return;
         const epoch=inputEpoch,saveEpoch=localMutationEpoch;idleAdmitting=true;renderIdle();recover.disabled=true;
         try{
           const catalog=await controller.catalog(),fixture=catalog.pages.filter(p=>/^AZ142 [A-Z]$/.test(p.title));
           if(fixture.length!==26||new Set(fixture.map(p=>p.title)).size!==26||!catalog.healthy||[...pageBuffers.values()].some(p=>p.dirty))throw Error('Recovery requires exactly 26 healthy saved A–Z pages');
           provider.beginExperiment({maxRequests:6000,maxMs:180000,policy:'prepared-retry-v1'});
           window.workspacePreparedRecoverySnapshot=()=>({timeOriginMs:performance.timeOrigin,events:provider.prepared.events.slice(),transport:provider.experimentEvidence()});
-          await provider.prepared.recover(fixture.map(p=>p.id),()=>inputEpoch===epoch&&localMutationEpoch===saveEpoch);
+          const recovered=await cloudAction('prepared-recovery',()=>provider.prepared.recover(fixture.map(p=>p.id),()=>inputEpoch===epoch&&localMutationEpoch===saveEpoch));
+          if(recovered?.recovered!==26||recovered.formalSample!==false)throw Error('Recovery was not completed by the provider');
           setStatus('Prior A–Z intents recovered and independently verified. Export recovery evidence, then reload for a separately measured formal run.',false);
           await scheduleRefresh();
         }catch(error){setStatus('Recovery stopped; local intents retained: '+error.message,true);}

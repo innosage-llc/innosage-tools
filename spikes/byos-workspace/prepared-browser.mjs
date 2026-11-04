@@ -22,7 +22,8 @@ for(const [index,id] of [...ids,...Array.from({length:12},(_,i)=>'w142_original_
  const file=remote.create({name:id+'.json',mimeType:'application/json',parents:[docs.id]},Buffer.from(JSON.stringify(record)));
  if(index>=26)originals.set(file.id,Buffer.from(file.body));
 }
-const revisions=new Map(),errors=[],wire=[];let injected=false,injectTransient=false,intercepted=0;
+const alreadyApplied=process.env.PREPARED_ALREADY_APPLIED==='1';
+const revisions=new Map(),errors=[],wire=[];let injected=false,injectTransient=false,intercepted=0,recoveryDelay=false;
 const remember=()=>{for(const file of remote.files.values())revisions.set(`${file.id}:r${file.version}`,Buffer.from(file.body));};
 try{
  // No channel/executable override: use the dedicated installed Playwright
@@ -38,6 +39,7 @@ try{
    const request=route.request(),url=new URL(request.url());if(url.origin===server.url)return route.continue();
    assert.equal(url.origin,'https://www.googleapis.com');assert(++intercepted<=6000,'bounded mock RPC');
    wire.push({method:request.method(),path:url.pathname,at:Date.now()});
+   if(recoveryDelay)await new Promise(resolve=>setTimeout(resolve,500));
    if(url.pathname==='/drive/v3/about')return route.fulfill({json:{user:{permissionId:'prepared-synthetic-account'}}});
    if(url.pathname==='/drive/v3/files'&&url.searchParams.get('corpora')==='user')return route.fulfill({json:{files:[{id:folder.id,mimeType:folder.mimeType,ownedByMe:true,appProperties:{byos113:workspace}}]}});
    assert(!(request.method()==='POST'&&request.postDataJSON()?.mimeType==='application/vnd.google-apps.folder'),'no folder creation');
@@ -61,10 +63,22 @@ try{
  // Create the bounded historical-pending shape locally; no cloud operation.
  for(let i=0;i<26;i++){await select(a.page,i);await a.page.locator('#editor').fill('recovery '+i);await a.page.locator('#save-btn').click();await a.page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Locally saved'));}
  assert.equal((await a.page.evaluate(()=>window.workspaceRealSnapshot())).catalog.pendingCount,26);
+ if(alreadyApplied){
+  // Simulate the real failure shape: final cloud bytes exist, but the source
+  // journals have not retired. This mutates only the in-process mock provider.
+  const local=await a.page.evaluate(()=>window.workspaceRealSnapshot());
+  for(const page of local.catalog.pages.filter(p=>ids.includes(p.id))){
+   const {editId,...envelope}=page,file=[...remote.files.values()].find(f=>f.name===page.id+'.json');
+   file.body=Buffer.from(JSON.stringify({id:page.id,body:encode(envelope),editId,_deleted:false}));file.version++;
+  }
+  recoveryDelay=true;
+ }
  await load(a.page,true);await a.page.getByRole('button',{name:'Recover prior A–Z pending intents'}).click();
  await a.page.waitForFunction(()=>/recovered and independently verified|Recovery stopped/.test(document.querySelector('#status').textContent),null,{timeout:180000});
  const recoveryStatus=await a.page.locator('#status').textContent();assert.match(recoveryStatus,/recovered and independently verified/);
  const recovery=await a.page.evaluate(()=>window.workspacePreparedRecoverySnapshot());
+ if(alreadyApplied){assert(recovery.events.some(e=>e.type==='recovery-already-applied'));assert.equal(recovery.events.filter(e=>e.type==='recovery-page-observed'&&e.matchesFinal).length,26);assert(!recovery.events.some(e=>e.type==='page-put-start'));}
+ recoveryDelay=false;
  await load(a.page,true);await a.page.locator('#idle-start').click();
  await a.page.waitForFunction(()=>window.workspaceIdleSnapshot||document.querySelector('#status').textContent.includes('experiment refused'),null,{timeout:60000});
  assert(await a.page.evaluate(()=>!!window.workspaceIdleSnapshot),await a.page.locator('#status').textContent());
@@ -72,7 +86,7 @@ try{
  for(let i=0;i<26;i++){await select(a.page,i);starts.push(Date.now());await a.page.locator('#editor').fill('formal '+i+' '+ 'x'.repeat(1024));if(i<25)await a.page.waitForTimeout(Math.max(0,1000-(Date.now()-starts.at(-1))));}
  await a.page.waitForFunction(()=>['safe-to-close','failed'].includes(document.querySelector('#idle-status').dataset.state),null,{timeout:180000});
  const formal=await a.page.evaluate(()=>window.workspaceIdleSnapshot());
- const out=new URL('.generated/prepared/',import.meta.url);await mkdir(out,{recursive:true});
+ const out=new URL(alreadyApplied?'.generated/prepared/already-applied/':'.generated/prepared/',import.meta.url);await mkdir(out,{recursive:true});
  await writeFile(new URL('intercepted-evidence.json',out),JSON.stringify({provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',realGoogleRequests:0,recovery,formal,errors},null,2)+'\n');
  assert.equal(formal.run.ready,true,JSON.stringify(formal.run));assert(injected);assert(formal.run.pages.some(p=>p.attempt===2));assert.equal(formal.run.pages.filter(p=>p.verified===p.generation).length,26);
  const before=await a.page.evaluate(()=>window.workspaceRealSnapshot());await sync(b.page);const after=await b.page.evaluate(()=>window.workspaceRealSnapshot());assert.deepEqual(after.catalog.pages,before.catalog.pages);

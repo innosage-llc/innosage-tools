@@ -26,3 +26,7 @@ Lead directly inspected preserved changes and ran focused34/34 and full Chrome s
 ## Authorized staging preparation
 
 Founder explicitly authorized normal integration of PR143, existing Tools staging deployment, original disposable-session renewal and bounded12-page synthetic Drive A/B validation. Final acceptance remains Founder-owned. Existing A/B profiles and same stable staging workspace were located by native browser UI; identifiers stay private. Original tabs/data remain preserved. Static build now adds isolated /byos-workspace/ assets, using shared integrity-pinned build logic and path-specific offline shell; existing demo unchanged. No new OAuth scope/account/folder or production authority.
+
+## v0.1.9 recovery follow-up
+
+Real v0.1.8 recovery stopped safely after188HTTP200 requests: no pagePUT, all26pending retained, no formal run. Raw/report in spikes/byos-workspace/prepared-evidence. Chrome released17:18:52 UTC. Repair skips no-op WAL only after26 exact lease-held cloud observations, preserves release/native reconciliation/exact retirement and all deadlines; adds per-page evidence and active operation UI.8 targeted owner tests PASS;108 workspace/native tests passed before the eighth addition, with109 included in the native submit gate. Final-source500ms-delayed intercepted browser PASS:946requests,26verified,old12/Bfulltree/Aclose-reopen/injected503 allPASS,zeroGoogle. Independent review PASS after repairing busy-admission false success; exact committed-head binding follows native submit.
