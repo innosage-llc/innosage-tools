@@ -23,6 +23,8 @@ for(const [index,id] of [...ids,...Array.from({length:12},(_,i)=>'w142_original_
  if(index>=26)originals.set(file.id,Buffer.from(file.body));
 }
 const alreadyApplied=process.env.PREPARED_ALREADY_APPLIED==='1';
+const cadenceMs=Number(process.env.PREPARED_CADENCE_MS??1000);
+assert([1000,3000].includes(cadenceMs),'bounded test cadence');
 const revisions=new Map(),errors=[],wire=[];let injected=false,injectTransient=false,intercepted=0,recoveryDelay=false;
 const remember=()=>{for(const file of remote.files.values())revisions.set(`${file.id}:r${file.version}`,Buffer.from(file.body));};
 try{
@@ -83,12 +85,13 @@ try{
  await a.page.waitForFunction(()=>window.workspaceIdleSnapshot||document.querySelector('#status').textContent.includes('experiment refused'),null,{timeout:60000});
  assert(await a.page.evaluate(()=>!!window.workspaceIdleSnapshot),await a.page.locator('#status').textContent());
  injectTransient=true;const starts=[];
- for(let i=0;i<26;i++){await select(a.page,i);starts.push(Date.now());await a.page.locator('#editor').fill('formal '+i+' '+ 'x'.repeat(1024));if(i<25)await a.page.waitForTimeout(Math.max(0,1000-(Date.now()-starts.at(-1))));}
+ for(let i=0;i<26;i++){await select(a.page,i);starts.push(Date.now());await a.page.locator('#editor').fill(('formal '+i+' ').padEnd(4096,'x'));if(i<25)await a.page.waitForTimeout(Math.max(0,cadenceMs-(Date.now()-starts.at(-1))));}
  await a.page.waitForFunction(()=>['safe-to-close','failed'].includes(document.querySelector('#idle-status').dataset.state),null,{timeout:180000});
  const formal=await a.page.evaluate(()=>window.workspaceIdleSnapshot());
- const out=new URL(alreadyApplied?'.generated/prepared/already-applied/':'.generated/prepared/',import.meta.url);await mkdir(out,{recursive:true});
+ const out=new URL('.generated/prepared/renewable-'+cadenceMs+(alreadyApplied?'-already-applied':'')+'/',import.meta.url);await mkdir(out,{recursive:true});
  await writeFile(new URL('intercepted-evidence.json',out),JSON.stringify({provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',realGoogleRequests:0,recovery,formal,errors},null,2)+'\n');
  assert.equal(formal.run.ready,true,JSON.stringify(formal.run));assert(injected);assert(formal.run.pages.some(p=>p.attempt===2));assert.equal(formal.run.pages.filter(p=>p.verified===p.generation).length,26);
+ if(cadenceMs===3000)assert(formal.ownerEvents.filter(e=>e.type==='lease-renew-confirmed').length>=3,'long editing must cross multiple confirmed renewals');
  const before=await a.page.evaluate(()=>window.workspaceRealSnapshot());await sync(b.page);const after=await b.page.evaluate(()=>window.workspaceRealSnapshot());assert.deepEqual(after.catalog.pages,before.catalog.pages);
  const aUrl=a.page.url();await a.page.close();const reopened=await a.context.newPage();await reopened.goto(aUrl);await reopened.waitForFunction(()=>window.workspaceRealReady);assert.deepEqual((await reopened.evaluate(()=>window.workspaceRealSnapshot())).catalog.pages,before.catalog.pages);
  for(const [id,bytes] of originals)assert.deepEqual(remote.files.get(id).body,bytes);

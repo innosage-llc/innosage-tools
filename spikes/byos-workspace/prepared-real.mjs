@@ -6,7 +6,7 @@ import {protocolError} from './prepared-wal.mjs';
 
 export function preparedRealController(store){
   let owner=null;const events=[];
-  const clock={now:()=>performance.now(),wallNow:()=>Date.now(),sleep:ms=>new Promise(resolve=>setTimeout(resolve,ms)),random:()=>Math.random()};
+  const clock={now:()=>performance.now(),wallNow:()=>Date.now(),sleep:ms=>new Promise(resolve=>setTimeout(resolve,ms)),random:()=>Math.random(),setTimeout:(fn,ms)=>setTimeout(fn,ms),clearTimeout:id=>clearTimeout(id)};
   const event=row=>events.push({atMs:clock.now(),...row});
   const transactionRunner=(...args)=>{if(!owner)throw protocolError('PREPARED_ACTION_REQUIRED');return owner.runTransaction(...args);};
   async function inventory(ids,googleDrive,structure){
@@ -31,7 +31,7 @@ export function preparedRealController(store){
       if(!isAuthorized())throw Object.assign(protocolError('REAUTHORIZE_REQUIRED'),{status:401});
       if(experimentEvidence()?.halted)throw protocolError('PREPARED_TRANSPORT_HALTED');
     }};
-    owner=new PreparedOwner({store,inventory,clock,budget,event,withNativeFence:withPreparedNativeFence,
+    owner=new PreparedOwner({store,inventory,clock,budget,event,renewable:true,withNativeFence:withPreparedNativeFence,
       assertDrained:async()=>{if(experimentEvidence()?.active)throw protocolError('PREPARED_TRANSPORT_NOT_DRAINED');},
       createIO:({bindings,...guards})=>createPreparedDriveIO({apiEndpoint:API,fetchOnce:preparedRequestOnce,files:bindings.files,...guards,now:clock.now,event,phase:()=>owner.mode}),
     });return owner;

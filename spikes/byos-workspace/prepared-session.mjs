@@ -8,7 +8,7 @@ import {WAL_FORMAT,WAL_VERSION,validateWal,validateIntent,completeRecord,sameRec
  * This module neither creates a native owner nor modifies native checkpoints.
  */
 export class PreparedSession {
-  constructor({workspace,runId,baselines,wal,lease,io,budget,clock,reconcile,retire,event=()=>{},policy,leaseMs=60000,requestMs=20000}) {
+  constructor({workspace,runId,baselines,wal,lease,leaseAuthority,releaseLease,io,budget,clock,reconcile,retire,event=()=>{},policy,leaseMs=60000,requestMs=20000}) {
     if(!(baselines instanceof Map)||baselines.size!==26)throw protocolError('INVALID_PREPARED_FIXTURE');
     this.baselines=new Map([...baselines].map(([id,value])=>[id,structuredClone(value)]));
     this.context={workspace,allowedIds:new Set(baselines.keys()),fileIds:new Map([...baselines].map(([id,b])=>[id,b.fileId]))};
@@ -19,14 +19,14 @@ export class PreparedSession {
     if(wal.value!==null&&(!Array.isArray(wal.value)||wal.value.length))throw protocolError('WAL_RECOVERY_REQUIRED');
     if(!Number.isFinite(lease.acquiredAt)||lease.acquiredAt>clock.now()||!lease.value||Array.isArray(lease.value))throw protocolError('INVALID_PREPARED_LEASE');
     Object.assign(this,{workspace,runId,io,budget,clock,reconcile,retire,event,policy,leaseMs,requestMs});
-    this.wal=structuredClone(wal);this.lease=structuredClone(lease);this.rows=new Map();this.confirmed=new Map();this.attempted=new Map();this.inflight=new Set();this.protecting=false;this.finishing=false;this.finished=false;this.halted=null;
+    this.wal=structuredClone(wal);this.lease=leaseAuthority?lease:structuredClone(lease);this.leaseAuthority=leaseAuthority;this.releaseLease=releaseLease;this.rows=new Map();this.confirmed=new Map();this.attempted=new Map();this.inflight=new Set();this.protecting=false;this.finishing=false;this.finished=false;this.halted=null;
     // Start the conservative lease clock BEFORE its acquisition request, not at
     // its response. In-flight aborts are not proof of server-side cancellation.
-    this.writeUntil=lease.acquiredAt+leaseMs-requestMs;
     validateWal({format:WAL_FORMAT,version:WAL_VERSION,workspace,runId,rows:[]},this.context);
   }
   baseline(id){const baseline=this.baselines.get(id);if(!baseline)throw protocolError('UNAPPROVED_PAGE');return structuredClone(baseline);}
-  assertWrite(){this.budget.assertCanRequest();if(this.halted||this.finished||this.clock.now()>=this.writeUntil)throw protocolError(this.halted?'PREPARED_SESSION_HALTED':'LEASE_WRITE_WINDOW_EXHAUSTED');}
+  get writeUntil(){return this.lease.acquiredAt+this.leaseMs-this.requestMs;}
+  assertWrite(){this.budget.assertCanRequest();this.leaseAuthority?.assertWrite({role:'page'});if(this.halted||this.finished||this.clock.now()>=this.writeUntil)throw protocolError(this.halted?'PREPARED_SESSION_HALTED':'LEASE_WRITE_WINDOW_EXHAUSTED');}
   remainingMs(){return Math.min(this.budget.remainingMs(),this.writeUntil-this.clock.now());}
   mutationBudget(){return {assertCanRequest:()=>this.assertWrite(),remainingMs:()=>this.remainingMs()};}
   async protect(rows,current=()=>true){
@@ -66,8 +66,12 @@ export class PreparedSession {
     try{
       const clear=await conditionalFileMutation({fileId:this.wal.fileId,snapshot:this.wal,target:null,io:this.io,canDispatch:stillCurrent,budget:this.mutationBudget(),clock:this.clock,policy:this.policy,onState:state=>this.event({type:'wal-clear-state',...state})});
       this.wal={...clear,fileId:this.wal.fileId};
-      const release=await conditionalFileMutation({fileId:this.lease.fileId,snapshot:this.lease,target:null,io:this.io,canDispatch:stillCurrent,budget:this.mutationBudget(),clock:this.clock,policy:this.policy,onState:state=>this.event({type:'lease-release-state',...state})});
-      this.lease={...release,fileId:this.lease.fileId};this.released=true;
+      if(this.releaseLease)await this.releaseLease(current);
+      else{
+        const release=await conditionalFileMutation({fileId:this.lease.fileId,snapshot:this.lease,target:null,io:this.io,canDispatch:stillCurrent,budget:this.mutationBudget(),clock:this.clock,policy:this.policy,onState:state=>this.event({type:'lease-release-state',...state})});
+        this.lease={...release,fileId:this.lease.fileId};
+      }
+      this.released=true;
       if(!current())throw protocolError('GENERATION_CHANGED_AFTER_RELEASE');
       // Native metadata must converge through its own protocol. Caller must keep
       // newer journal generations out of replication during this bounded step.
@@ -79,5 +83,5 @@ export class PreparedSession {
     }catch(error){this.halt(error.code??error.message);throw error;}
     finally{this.finishing=false;}
   }
-  halt(reason){this.halted??=reason;this.event({type:'session-halted',reason:this.halted,walRetained:this.wal.value!==null,leaseReleased:!!this.released});}
+  halt(reason){this.halted??=reason;this.leaseAuthority?.close();this.event({type:'session-halted',reason:this.halted,walRetained:this.wal.value!==null,leaseReleased:!!this.released});}
 }

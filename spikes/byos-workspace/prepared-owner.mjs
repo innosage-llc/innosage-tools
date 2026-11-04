@@ -1,4 +1,5 @@
 import {PreparedSession} from './prepared-session.mjs';
+import {RenewableLease} from './renewable-lease.mjs';
 import {conditionalFileMutation} from './prepared-mutation.mjs';
 import {recoverTransactionWal} from './prepared-recovery.mjs';
 import {completeRecord,sameRecord,protocolError,WAL_FORMAT,WAL_VERSION,validateWal} from './prepared-wal.mjs';
@@ -7,17 +8,18 @@ import {completeRecord,sameRecord,protocolError,WAL_FORMAT,WAL_VERSION,validateW
  * are provided by the existing authorized provider; this is not a second engine.
  */
 export class PreparedOwner {
-  constructor({store,inventory,createIO,clock,budget,event=()=>{},assertDrained,withNativeFence,policy}) {
+  constructor({store,inventory,createIO,clock,budget,event=()=>{},assertDrained,withNativeFence,policy,renewable=false}) {
     if(typeof withNativeFence!=='function')throw protocolError('NATIVE_PHYSICAL_FENCE_REQUIRED');
-    Object.assign(this,{store,inventory,createIO,clock,budget,event,assertDrained,withNativeFence,policy});
+    Object.assign(this,{store,inventory,createIO,clock,budget,event,assertDrained,withNativeFence,policy,renewable});
     this.mode='idle';this.transactionQueue=Promise.resolve();this.context=null;this.session=null;
   }
   assertRequest(){this.budget.assertCanRequest();if(this.mode==='halted')throw protocolError('PREPARED_OWNER_HALTED');if(!this.store.writer||this.store.closed||!this.store.db.isLeader())throw protocolError('PREPARED_OWNERSHIP_LOST');if(this.currentAuthority?.()===false)throw protocolError('PREPARED_GENERATION_AUTHORITY_CLOSED');}
   async ioForLease(bindings,{acquire=true}={}){
-    let acquiring=acquire,lease=null;
+    let acquiring=acquire,lease=null,authority=null;
     const assertWrite=(binding)=>{
       this.assertRequest();
       if(acquiring){if(binding?.role!=='lease')throw protocolError('LEASE_ACQUISITION_ONLY');return;}
+      if(authority){authority.assertWrite(binding);return;}
       if(!lease||this.clock.now()>=lease.acquiredAt+40000)throw protocolError('LEASE_WRITE_WINDOW_EXHAUSTED');
     };
     const io=this.createIO({bindings,assertCanRequest:()=>this.assertRequest(),assertCanWrite:assertWrite});
@@ -30,21 +32,27 @@ export class PreparedOwner {
     const target={createdAtClientTime:this.clock.wallNow(),preparedRunId:crypto.randomUUID()};
     const observed=await conditionalFileMutation({fileId:bindings.leaseId,snapshot:previous,target,io,budget:this.budget,clock:this.clock,policy:this.policy,canDispatch:()=>{this.assertRequest();return acquiring;},onState:state=>this.event({type:'lease-acquire-state',...state})});
     lease={...observed,fileId:bindings.leaseId,acquiredAt};acquiring=false;
+    if(this.renewable)authority=new RenewableLease({lease,io,clock:this.clock,budget:this.budget,event:this.event,onFailure:reason=>this.halt(reason)});
     this.event({type:'lease-acquired',atMs:this.clock.now(),leaseClockStartedAtMs:acquiredAt,writeCutoffMs:acquiredAt+40000,reclaimed:previous.value!==null});
-    return {io,lease,budget:{assertCanRequest:()=>{this.assertRequest();if(this.clock.now()>=acquiredAt+40000)throw protocolError('LEASE_WRITE_WINDOW_EXHAUSTED');},remainingMs:()=>Math.min(this.budget.remainingMs(),acquiredAt+40000-this.clock.now())}};
+    return {io,lease,authority,budget:{assertCanRequest:()=>{this.assertRequest();if(authority)authority.assertWrite({role:'lease'});else if(this.clock.now()>=acquiredAt+40000)throw protocolError('LEASE_WRITE_WINDOW_EXHAUSTED');},remainingMs:()=>Math.min(this.budget.remainingMs(),lease.acquiredAt+40000-this.clock.now())}};
   }
   async release(owned,current=()=>true){
-    await conditionalFileMutation({fileId:owned.lease.fileId,snapshot:owned.lease,target:null,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:state=>this.event({type:'lease-release-state',...state})});
+    try{
+      await owned.authority?.beginRelease();
+      const released=await conditionalFileMutation({fileId:owned.lease.fileId,snapshot:owned.lease,target:null,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:state=>this.event({type:'lease-release-state',...state})});
+      Object.assign(owned.lease,released);
+    }finally{owned.authority?.close();}
   }
   runTransaction(googleDrive,structure,primaryPath,fn,runAfter){
     const task=this.transactionQueue.then(async()=>{
       if(this.mode!=='reconciling'||primaryPath!=='id'||!this.context)throw protocolError('PREPARED_TRANSACTION_ENTRY_CLOSED');
       const owned=await this.ioForLease(this.bindings);
       const current=()=>{owned.budget.assertCanRequest();if(this.mode!=='reconciling'||this.currentAuthority?.()===false)throw protocolError('NATIVE_TRANSACTION_AUTHORITY_CLOSED');return true;};
+      const nativeCurrent=()=>{current();owned.authority?.assertWrite({role:'native'});return true;};
       try{
         const snapshot=await owned.io.readFile(this.bindings.walId);
         await recoverTransactionWal({snapshot,fileId:this.bindings.walId,context:this.context,io:owned.io,budget:owned.budget,clock:this.clock,policy:this.policy,canDispatch:current,onState:this.event});
-        const result=await this.withNativeFence(current,fn);
+        const result=await this.withNativeFence(nativeCurrent,fn);
         // A callback may publish native-array WAL. Read and safely replay that
         // array before releasing; never leave a fresh-ETag native replay path.
         const after=await owned.io.readFile(this.bindings.walId);
@@ -83,7 +91,7 @@ export class PreparedOwner {
       const wal=await owned.io.readFile(this.bindings.walId);
       if(wal.value!==null&&(!Array.isArray(wal.value)||wal.value.length))throw protocolError('PREPARATION_RECOVERY_REQUIRED');
       this.mode='prepared';
-      this.session=new PreparedSession({workspace:this.store.workspace,runId:crypto.randomUUID(),baselines,wal:{...wal,fileId:this.bindings.walId},lease:owned.lease,io:owned.io,budget:this.budget,clock:this.clock,policy:this.policy,event:this.event,
+      this.session=new PreparedSession({workspace:this.store.workspace,runId:crypto.randomUUID(),baselines,wal:{...wal,fileId:this.bindings.walId},lease:owned.lease,leaseAuthority:owned.authority,releaseLease:current=>this.release(owned,current),io:owned.io,budget:this.budget,clock:this.clock,policy:this.policy,event:this.event,
         reconcile:async(current,confirmed)=>{
           await this.store.holdPreparedGenerations(confirmed,current);
           this.currentAuthority=current;this.mode='reconciling';await this.store._sync({materialize:false});
