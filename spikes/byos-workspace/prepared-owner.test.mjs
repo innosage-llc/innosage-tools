@@ -3,18 +3,18 @@ import assert from 'node:assert/strict';
 import {PreparedOwner} from './prepared-owner.mjs';
 
 const record=(id,g)=>({id,body:JSON.stringify({title:id,parentId:null,order:0,markdown:'complete '+g}),editId:id+'-'+g,_deleted:false});
-function fixture({applied=true,readMs=500,releaseReadFailure=false}={}){
+function fixture({applied=true,readMs=500,releaseReadFailure=false,renewable=false}={}){
   const ids=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],events=[],writes=[],files=new Map(),journals=new Map();
-  let time=0,version=1,retired=0,reconciled=0,current=true;
+  let time=0,version=1,retired=0,reconciled=0,current=true,nativeGuard;
   for(const id of ids){const base=record(id,0),draft=record(id,1);journals.set(id,{page:id,session:'session',seq:1,state:'pending',base,draft});files.set('file'+id,{value:applied?draft:base,etag:'"v0"'});}
   files.set('lease',{value:null,etag:'"lease0"'});files.set('wal',{value:null,etag:'"wal0"'});
   const bindings={fileIds:new Map(ids.map(id=>[id,'file'+id])),walId:'wal',leaseId:'lease'};
-  const clock={now:()=>time,wallNow:()=>1793200000000+time,sleep:async ms=>{time+=ms;},random:()=>0.5};
+  const clock={now:()=>time,wallNow:()=>1793200000000+time,sleep:async ms=>{time+=ms;},random:()=>0.5,setTimeout:()=>1,clearTimeout(){}};
   const store={workspace:'workspace',session:'session',writer:true,closed:false,operation:{pending:true},db:{isLeader:()=>true,localDrafts:{find:()=>({exec:async()=>[...journals.values()].map(row=>({toJSON:()=>structuredClone(row)}))})}},
     replication:{pause:async()=>{},googleDrive:{},driveStructure:{}},draft:async id=>structuredClone(journals.get(id)),
     holdPreparedGenerations:async(confirmed,check)=>{assert(check());assert.equal(confirmed.size,26);},
     _sync:async()=>{reconciled++;},retirePreparedGenerations:async(rows,check)=>{assert(check());assert.equal(rows.size,26);retired++;}};
-  const owner=new PreparedOwner({store,inventory:async()=>bindings,clock,event:e=>events.push(e),assertDrained:async()=>{},withNativeFence:async(guard,fn)=>{guard();return fn();},
+  const owner=new PreparedOwner({store,inventory:async()=>bindings,clock,renewable,event:e=>events.push(e),assertDrained:async()=>{},withNativeFence:async(guard,fn)=>{nativeGuard=guard;guard();return fn();},
     budget:{assertCanRequest(){assert(time<180000);},remainingMs:()=>180000-time},
     createIO:({assertCanRequest,assertCanWrite})=>{
       const io={readFile:async id=>{assertCanRequest();time+=readMs;if(releaseReadFailure&&id==='lease'&&writes.length===2)throw Object.assign(Error('AUTH_REQUIRED'),{status:401});return structuredClone(files.get(id));},
@@ -22,7 +22,7 @@ function fixture({applied=true,readMs=500,releaseReadFailure=false}={}){
           writes.push({id,etag,value:structuredClone(value)});assert.equal(files.get(id).etag,etag,'original CAS validator');time+=1000;files.set(id,{value:structuredClone(value),etag:'"v'+version+++'"'});},
         readPage:async id=>{const value=await io.readFile(id);return {...value,record:value.value};},writePage:(...args)=>io.putFile(...args)};return io;
     }});
-  return {owner,store,ids,files,journals,writes,events,recover:()=>owner.recover(ids,()=>current),invalidate:()=>{current=false;},advance:ms=>{time+=ms;},get time(){return time;},get retired(){return retired;},get reconciled(){return reconciled;}};
+  return {owner,store,ids,files,journals,writes,events,bindings,nativeGuard:()=>nativeGuard(),recover:()=>owner.recover(ids,()=>current),invalidate:()=>{current=false;},advance:ms=>{time+=ms;},get time(){return time;},get retired(){return retired;},get reconciled(){return reconciled;}};
 }
 
 test('slow already-applied recovery reads all 26 full records without republishing no-op WAL',async()=>{
@@ -61,4 +61,11 @@ test('lost release verification preserves every journal and never reports recove
   const f=fixture({releaseReadFailure:true});await assert.rejects(f.recover(),/WRITE_OUTCOME_UNRESOLVED/);
   assert.equal(f.retired,0);assert.equal(f.reconciled,0);assert.equal(f.journals.size,26);assert.equal(f.owner.mode,'halted');
   assert(!f.events.some(e=>e.type==='recovery-complete'));assert.deepEqual(f.writes.map(w=>w.id),['lease','lease']);
+});
+test('native physical callback fence blocks page/WAL work if heartbeat becomes uncertain after callback admission',async()=>{
+  const f=fixture({renewable:true});let owned,physicalWrites=0;const acquire=f.owner.ioForLease.bind(f.owner);
+  f.owner.ioForLease=async(...args)=>{owned=await acquire(...args);return owned;};
+  f.owner.mode='reconciling';f.owner.context={workspace:'workspace',allowedIds:new Set(f.ids),fileIds:f.bindings.fileIds};f.owner.bindings=f.bindings;
+  await assert.rejects(f.owner.runTransaction({}, {}, 'id',async()=>{owned.authority.uncertain=true;f.nativeGuard();physicalWrites++;}),/LEASE_RENEWAL_UNCERTAIN/);
+  assert.equal(physicalWrites,0);assert.equal(f.journals.size,26);assert.equal(f.owner.mode,'halted');owned.authority.close();
 });

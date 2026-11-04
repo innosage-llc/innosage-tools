@@ -1181,7 +1181,7 @@ idleStart.addEventListener('click',async()=>{
       if(databaseEpoch!==initialDatabaseEpoch||inputEpoch!==initialInputEpoch||localMutationEpoch!==initialSaveEpoch||[...pageBuffers.values()].some(p=>p.dirty)){
         preparedSession.halt('INPUT_DURING_PREPARATION');throw Error('Input changed during preparation; saved data retained');
       }
-      idleDrain=new PreparedDrain({ids,session:preparedSession,save:id=>saveCurrentPageLocally(id),
+      idleDrain=new PreparedDrain({ids,session:preparedSession,onsetToleranceMs:1000,save:id=>saveCurrentPageLocally(id),
         available:()=>!!providerInfo.canSync()&&document.visibilityState==='visible'&&navigator.onLine,
         canAudit:()=>!localMutationsInFlight,
         check:async()=>{
