@@ -51,12 +51,26 @@ assert.ok(
 );
 assert.equal(collectionPage.url, canonicalUrl);
 assert.equal(collectionPage.mainEntity?.["@type"], "ItemList");
-assert.equal(collectionPage.mainEntity?.numberOfItems, 9);
-assert.equal(collectionPage.mainEntity?.itemListElement?.length, 9);
+assert.equal(collectionPage.mainEntity?.numberOfItems, 10);
+assert.equal(collectionPage.mainEntity?.itemListElement?.length, 10);
 assert.ok(
   collectionPage.mainEntity.itemListElement.some(
     (entry) => entry.item.url === `${canonicalUrl}/visual-remix`,
   ),
+);
+
+assert.ok(
+  collectionPage.mainEntity.itemListElement.some(
+    (entry) =>
+      entry.item.name === "Video Scissors" &&
+      entry.item.url === `${canonicalUrl}/video-scissors`,
+  ),
+  "Video Scissors must be discoverable as a real tool in the structured collection.",
+);
+assert.match(
+  html,
+  /href="\/tools\/video-scissors"/,
+  "The public tools directory must link to Video Scissors.",
 );
 
 assert.ok(faqPage, "The /tools page must publish FAQPage JSON-LD.");
@@ -75,7 +89,7 @@ assert.equal(
 );
 assert.equal(
   html.match(/<h3(?:\s|>)/g)?.length,
-  9,
+  10,
   "Each listed tool must use an H3 heading under the collection section.",
 );
 
@@ -100,3 +114,12 @@ assert.match(remix, /<title>Visual Remix/);
 assert.equal(remix.match(/<h1(?:\s|>)/g)?.length, 1);
 assert.match(html, /href="\/tools\/visual-remix"/);
 console.log("Visual Remix discovery and canonical verified.");
+
+const videoScissors = await readFile(resolve("out/video-scissors.html"), "utf8");
+assert.match(videoScissors, /<title>Video Scissors/);
+assert.match(
+  videoScissors,
+  /<link rel="canonical" href="https:\/\/innosage.co\/tools\/video-scissors"/,
+);
+assert.match(videoScissors, /Export PNG Frame/);
+console.log("Video Scissors discovery, frame export and canonical verified.");

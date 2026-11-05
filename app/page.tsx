@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   FileText,
+  Film,
   Maximize2,
   QrCode,
   Scissors,
@@ -14,7 +15,7 @@ const canonicalUrl = "https://innosage.co/tools";
 const pageTitle = "Free Browser Developer Tools | InnoSage";
 const pageDescription =
   "Use free, open-source browser tools for QR codes, Markdown to PDF, audio, images, recordings, and video. Fast, private utilities from InnoSage.";
-const lastReviewed = "October 23, 2026";
+const lastReviewed = "November 5, 2026";
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -98,6 +99,12 @@ const tools = [
       "Add an amendment to an incomplete meeting recording and combine the files.",
   },
   {
+    name: "Video Scissors",
+    path: "/video-scissors",
+    description:
+      "Cut H.264 video locally or export original-resolution PNG frames from browser-playable MP4 files, including HEVC when supported.",
+  },
+  {
     name: "Video to GIF",
     path: "/video-to-gif",
     description:
@@ -124,7 +131,7 @@ const faqs = [
   {
     question: "Which tasks can InnoSage DevTools handle?",
     answer:
-      "The collection covers editable image remakes with Visual Remix, QR codes, Markdown-to-PDF conversion, audio splitting, image joining, SVG conversion, recording, meeting repair, and video-to-GIF conversion.",
+      "The collection covers editable image remakes, QR codes, Markdown-to-PDF conversion, audio splitting, image joining, SVG conversion, recording, meeting repair, video trimming, PNG frame extraction, and video-to-GIF conversion.",
   },
 ] as const;
 
@@ -411,6 +418,30 @@ export default function ToolsIndexPage() {
               <p className="text-zinc-500 mb-6 flex-1">
                 Upload an incomplete meeting recording, record an amendment, and
                 stitch them together instantly in your browser.
+              </p>
+              <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
+                Launch Tool{" "}
+                <ArrowRight
+                  size={16}
+                  className="ml-2 group-hover:translate-x-1 transition-transform"
+                />
+              </div>
+            </div>
+          </Link>
+
+          {/* Tool Card: Video Scissors */}
+          <Link href="/video-scissors" className="group">
+            <div className="bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-md hover:border-zinc-300 transition-all h-full flex flex-col">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Film className="text-orange-600" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 mb-2">
+                Video Scissors
+              </h3>
+              <p className="text-zinc-500 mb-6 flex-1">
+                Cut H.264 videos or extract full-resolution PNG frames from
+                browser-playable MP4 files, including HEVC when supported.
+                No media upload required.
               </p>
               <div className="flex items-center text-sm font-medium text-zinc-900 group-hover:text-orange-600 transition-colors">
                 Launch Tool{" "}
