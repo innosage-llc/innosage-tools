@@ -40,14 +40,27 @@ try {
    return route.fulfill({response});
   });
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));await page.goto(server.url+'/?workspace='+workspace);
-  if(!bound){await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('binding required'));return {context,page};}
+  if(!bound){await page.waitForFunction(()=>window.workspaceRealReady);return {context,page};}
   await page.waitForFunction(()=>window.workspaceRealReady);await page.locator('details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));assert.equal(await page.evaluate(()=>!!window.workspaceDemo),false,'no native debug store in real build');
   if(!autoAuthorize)return {context,page};
   await page.locator('main section.panel').first().locator('input[type=checkbox]').check();await page.getByRole('button',{name:'Reauthorize existing test account'}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('main section.panel p')].some(node=>node.textContent.includes('Authorized in memory')));
   return {context,page};
  }
- const negative=await open('unbound',false);assert.equal(intercepted,0);await negative.context.close();
+ const negative=await open('unbound',false);assert.equal(intercepted,0);
+ assert.equal(await negative.page.locator('#new-root-btn').isEnabled(),true);
+ assert.match(await negative.page.locator('#drive-connection-status').textContent(),/not connected/);
+ assert.equal(await negative.page.locator('#sync-btn').isDisabled(),true);
+ await negative.page.locator('#new-root-btn').click();await negative.page.waitForFunction(()=>document.querySelector('#page-title').value==='New Project');
+ await negative.page.locator('#page-title').fill('Local without Google');await negative.page.locator('#editor').fill('# Durable local note\nNo account required.');
+ await negative.page.waitForFunction(async()=>{const s=await workspaceRealSnapshot();return s.catalog.pages.some(p=>p.title==='Local without Google'&&p.markdown==='# Durable local note\nNo account required.');});
+ await negative.page.waitForFunction(()=>document.querySelector('#local-save-status').textContent==='Local: saved on this device'&&window.dispatchEvent(new Event('beforeunload',{cancelable:true})));
+ const localBefore=(await negative.page.evaluate(()=>workspaceRealSnapshot())).catalog.pages;
+ await negative.page.reload();await negative.page.waitForFunction(()=>window.workspaceRealReady);assert.deepEqual((await negative.page.evaluate(()=>workspaceRealSnapshot())).catalog.pages,localBefore);assert.equal(intercepted,0);
+ await negative.page.evaluate(()=>{window.google.accounts.oauth2.initTokenClient=options=>({requestAccessToken:()=>{window.lateConnect=()=>options.callback({access_token:'synthetic-late',expires_in:3600});}});});
+ await negative.page.locator('#connect-drive').click();await negative.page.waitForFunction(()=>!!window.lateConnect);
+ await negative.page.getByRole('button',{name:'Disconnect',exact:true}).click();await negative.page.evaluate(()=>window.lateConnect());assert.equal(intercepted,0);assert.equal(await negative.page.locator('#new-root-btn').isEnabled(),true);
+ await negative.context.close();
  const unauthorized=await open('bound-unauthorized',true,false);
  await unauthorized.page.locator('#new-root-btn').click();await unauthorized.page.waitForFunction(()=>document.querySelector('#page-title').value==='New Project');
  await unauthorized.page.locator('#foreground-start-btn').click();
@@ -79,7 +92,7 @@ try {
  await save(b.page,'Agenda B reply','# B exact reverse reply\n');await b.page.locator('#verify-btn').click();await b.page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Exact saved generation cloud verified'),null,{timeout:60000});
  await a.page.locator('#sync-btn').click();await a.page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Sync finished'),null,{timeout:60000});
  assert.deepEqual((await a.page.evaluate(()=>window.workspaceRealSnapshot())).catalog.pages,(await b.page.evaluate(()=>window.workspaceRealSnapshot())).catalog.pages);
- assert.deepEqual(errors,[]);const evidence={status:'PASS',provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',checks:['unbound-zero-provider-requests','unauthorized-foreground-zero-provider-requests','disconnect-invalidates-held-oauth-callback','existing-account-folder-reauthorization-wiring','no-native-debug-store','full-tree-A-to-B','full-tree-B-to-A'],interceptedRequests:intercepted,realGoogleRequests:0,errors};
+ assert.deepEqual(errors,[]);const evidence={status:'PASS',provider:'INTERCEPTED_SYNTHETIC_NOT_REAL_DRIVE',checks:['unbound-local-create-autosave-reload-zero-provider','unbound-late-consent-cancelled-zero-provider','unauthorized-foreground-zero-provider-requests','disconnect-invalidates-held-oauth-callback','existing-account-folder-reauthorization-wiring','no-native-debug-store','full-tree-A-to-B','full-tree-B-to-A'],interceptedRequests:intercepted,realGoogleRequests:0,errors};
  const out=new URL('.generated/real-binding/',import.meta.url);await mkdir(out,{recursive:true});await writeFile(new URL('evidence.json',out),JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify(evidence));
  await a.context.close();await b.context.close();
 }finally{if(browser)await browser.close();await server.close();await remote.close();}

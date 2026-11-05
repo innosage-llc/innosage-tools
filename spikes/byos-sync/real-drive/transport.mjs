@@ -4,7 +4,7 @@ import {metadataSummary} from './diagnostics.mjs';
 // and its transaction/CAS code are unchanged. No bearer enters native options.
 export const API='https://www.googleapis.com';
 export const SCOPE='https://www.googleapis.com/auth/drive.file';
-let token=null,expires=0,deadline=0,count=0;
+let token=null,expires=0,deadline=0,count=0,tokenEpoch=0;
 let preparedNativeFence=null,preparedNativePoisoned=false;
 export async function withPreparedNativeFence(guard,action){
  if(preparedNativePoisoned)throw Error('PREPARED_NATIVE_RELOAD_REQUIRED');
@@ -16,6 +16,65 @@ export async function withPreparedNativeFence(guard,action){
 let folderCreationForbidden=false;
 // Monotonic opt-in for the isolated existing-folder-only workspace build.
 export function forbidFolderCreation(){folderCreationForbidden=true;}
+let approvedFolderSetup=null,managedPolicy=null,pinnedWorkspaceScope=null,managedPoisoned=false;
+export function requirePinnedWorkspaceActions(policy){if(managedPolicy)throw Error('MANAGED_POLICY_ALREADY_SET');managedPolicy=policy;}
+export async function withPinnedWorkspaceAction(action){
+ if(pinnedWorkspaceScope||approvedFolderSetup||managedPoisoned||!managedPolicy)throw Error('MANAGED_ACTION_RELOAD_OR_BUSY');
+ const authorization=tokenEpoch,scope={active:true,files:new Map(),current:()=>{if(!scope.active)throw Error('MANAGED_ACTION_CLOSED');if(authorization!==tokenEpoch||!isAuthorized())throw Error('MANAGED_AUTHORIZATION_CHANGED');const layout=managedPolicy();if(scope.layout&&['workspaceId','rootId','docsId','signalingId'].some(k=>layout?.[k]!==scope.layout[k]))throw Error('MANAGED_LAYOUT_CHANGED_DURING_ACTION');if(layout&&!scope.layout)scope.layout=Object.freeze({...layout});return scope.layout??null;}};pinnedWorkspaceScope=scope;
+ try{return await action();}catch(error){managedPoisoned=true;throw error;}finally{scope.active=false;pinnedWorkspaceScope=null;}
+}
+function nativeMultipart(init,type){
+ const header=new Headers(init.headers).get('Content-Type')??'',match=header.match(/boundary=(?:"([^"]+)"|([^;\s]+))/i),boundary=match?.[1]??match?.[2];
+ if(!header.toLowerCase().startsWith(type)||!boundary||!/^[a-zA-Z0-9_-]{1,100}$/.test(boundary)||typeof init.body!=='string'||init.body.length>2*1024*1024)throw Error('MANAGED_MULTIPART_INVALID');
+ const chunks=init.body.split('--'+boundary);if(!['','\r\n'].includes(chunks[0])||!/^--(?:\r\n)?$/.test(chunks.at(-1)))throw Error('MANAGED_MULTIPART_FRAMING');
+ return chunks.slice(1,-1).map(chunk=>{if(!chunk.startsWith('\r\n'))throw Error('MANAGED_MULTIPART_FRAMING');const text=chunk.slice(2),split=text.indexOf('\r\n\r\n');if(split<0)throw Error('MANAGED_MULTIPART_HEADERS');return {headers:text.slice(0,split),body:text.slice(split+4).replace(/\r\n$/,'')};});
+}
+function assertPinnedPage(layout,name,text){let record,page;try{record=JSON.parse(text);page=JSON.parse(record.body);}catch{throw Error('MANAGED_PAGE_CONTENT_INVALID');}
+ if(record.id+'.json'!==name||typeof record.editId!=='string'||page.id!==record.id||page.workspaceId!==layout.workspaceId||page.format!=='innosage-workspace-page'||page.version!==1)throw Error('MANAGED_PAGE_WORKSPACE_MISMATCH');}
+function assertPinnedMutation(scope,url,init){
+ const layout=scope.current();if(!layout?.rootId||!layout.docsId||!layout.signalingId)throw Error('MANAGED_DESTINATION_NOT_READY');
+ const method=init.method??'GET';if(method==='GET')return;
+ if(method==='POST'&&url.pathname==='/batch/drive/v3'){
+  const parts=nativeMultipart(init,'multipart/mixed');if(!parts.length||parts.length>1000)throw Error('MANAGED_BATCH_INVALID');
+  for(const part of parts){if(!/^Content-Type: application\/http\r\nContent-ID: <item-[0-9]+>$/.test(part.headers)||!/^GET \/drive\/v3\/files\/[a-zA-Z0-9_-]+\?[^\r\n]+ HTTP\/1\.1\r\n?$/.test(part.body))throw Error('MANAGED_BATCH_READ_ONLY');}return;
+ }
+ if(method==='POST'&&url.pathname==='/upload/drive/v3/files'&&url.searchParams.get('uploadType')==='multipart'){
+  const parts=nativeMultipart(init,'multipart/related');if(parts.length!==2||parts.some(part=>part.headers!=='Content-Type: application/json'))throw Error('MANAGED_MULTIPART_SHAPE');
+  let meta;try{meta=JSON.parse(parts[0].body);}catch{throw Error('MANAGED_METADATA_INVALID');}
+  if(meta.mimeType!=='application/json'||meta.parents?.length!==1||meta.parents[0]!==layout.docsId||!/^w142_[a-zA-Z0-9_-]+\.json$/.test(meta.name))throw Error('MANAGED_CREATE_DESTINATION_MISMATCH');assertPinnedPage(layout,meta.name,parts[1].body);return;
+ }
+ if(method==='POST'&&url.pathname==='/drive/v3/files'){
+  let meta;try{meta=JSON.parse(init.body);}catch{throw Error('MANAGED_METADATA_INVALID');}
+  const parent=meta.parents?.length===1&&meta.parents[0];
+  const allowed=meta.mimeType==='application/json'&&((parent===layout.rootId&&['rxdb.json','transaction.json','rxdb-wal.json'].includes(meta.name))||(parent===layout.docsId&&/^w142_[a-zA-Z0-9_-]+\.json$/.test(meta.name))||(parent===layout.signalingId&&typeof meta.name==='string'&&meta.name.length<=200));
+  if(!allowed)throw Error('MANAGED_CREATE_DESTINATION_MISMATCH');return;
+ }
+ const id=decodeURIComponent(url.pathname.split('/').at(-1)),file=scope.files.get(id);
+ if(method!=='PUT'||!/^\/upload\/drive\/v2\/files\/[^/]+$/.test(url.pathname)||url.searchParams.get('uploadType')!=='media'||!file||!new Headers(init.headers).get('If-Match'))throw Error('MANAGED_WRITE_DESTINATION_MISMATCH');
+ if(file.parent===layout.docsId)assertPinnedPage(layout,file.name,init.body);
+}
+function registerPinnedMetadata(scope,metadata,id){
+ const layout=scope.current();const parent=metadata.parents?.length===1&&metadata.parents[0].id;
+ const allowed=metadata.id===id&&metadata.mimeType==='application/json'&&((parent===layout?.rootId&&['rxdb.json','transaction.json','rxdb-wal.json'].includes(metadata.title))||(parent===layout?.docsId&&/^w142_[a-zA-Z0-9_-]+\.json$/.test(metadata.title))||(parent===layout?.signalingId&&typeof metadata.title==='string'));
+ if(!allowed)throw Error('MANAGED_FILE_IDENTITY_MISMATCH');scope.files.set(id,{parent,name:metadata.title});
+}
+
+// Explicit user-owned workspace bootstrap only; the default deny is never reset.
+export async function withApprovedWorkspaceFolders({workspace,current},action){
+ if(approvedFolderSetup||pinnedWorkspaceScope||!/^[a-f0-9-]{36}$/.test(workspace)||typeof current!=='function')throw Error('WORKSPACE_SETUP_NOT_ADMITTED');
+ const authorization=tokenEpoch,check=()=>{if(!scope.active)throw Error('WORKSPACE_SETUP_SCOPE_CLOSED');if(authorization!==tokenEpoch||!isAuthorized())throw Error('SETUP_AUTHORIZATION_CHANGED');current();};
+ const scope={workspace,rootId:null,current:check,active:true,attempted:new Set(),controlAttempts:new Set(),createdControls:new Map(),controls:new Map()};approvedFolderSetup=scope;
+ try{scope.current();return await action({setRoot:id=>{scope.current();if(scope.rootId||typeof id!=='string'||!id)throw Error('SETUP_ROOT_NOT_SAFE');scope.rootId=id;}});}
+ finally{scope.active=false;approvedFolderSetup=null;}
+}
+function folderSetupAllows(metadata){
+ const scope=approvedFolderSetup;if(!scope)return false;scope.current();
+ const parents=metadata.parents;
+ if(!Array.isArray(parents)||parents.length!==1)return false;
+ const allowed=!scope.rootId?metadata.name==='InnoSage_BYOS_'+scope.workspace&&parents[0]==='root'&&metadata.appProperties?.byos113===scope.workspace:['docs','signaling'].includes(metadata.name)&&parents[0]===scope.rootId;
+ if(!allowed)return false;if(scope.attempted.has(metadata.name))throw Error('SETUP_FOLDER_ALREADY_ATTEMPTED');scope.attempted.add(metadata.name);return true;
+}
+
 let experiment=null,experimentListener=()=>{};
 export function onExperimentChange(listener){experimentListener=listener;notifyExperiment();}
 function notifyExperiment(extra={}){if(experiment)experimentListener({active:experiment.active,halted:experiment.halted,...extra});}
@@ -34,9 +93,9 @@ let requestSequence=0,operationId=null,operationStart=0,progress=()=>{};
 export function onProgress(callback){progress=callback;}
 export function authorize(value,seconds){
  if(typeof value!=='string'||!value||!Number.isFinite(seconds)||seconds<=0)throw new Error('AUTH_INVALID');
- token=value;expires=Date.now()+seconds*1000;
+ tokenEpoch++;token=value;expires=Date.now()+seconds*1000;
 }
-export function forget(){token=null;expires=0;}
+export function forget(){tokenEpoch++;token=null;expires=0;}
 export function isAuthorized(){return !!token&&Date.now()<expires;}
 export function begin(id=null){deadline=Date.now()+180000;count=0;operationId=id;operationStart=performance.now();}
 export function evidence(){return {authorized:isAuthorized(),requests:observations.slice(),operationRequests:count};}
@@ -46,9 +105,10 @@ export async function driveFetch(input,init={}){
  if(url.origin!==API) return globalThis.fetch(input,init);
  // Capture the capability across metadata -> media awaits. Clearing the outer
  // callback scope must not un-fence a delayed sibling request.
- const scope=preparedNativeFence;
- const fence=scope?()=>{if(!scope.active)throw Error('PREPARED_NATIVE_SCOPE_CLOSED');scope.guard();}:null;
- const send=(url,options)=>dispatch(url,options,fence);
+ const scope=preparedNativeFence,setup=approvedFolderSetup,pinned=pinnedWorkspaceScope;
+ const fence=(scope||setup||pinned)?()=>{if(pinned)pinned.current();if(scope){if(!scope.active)throw Error('PREPARED_NATIVE_SCOPE_CLOSED');scope.guard();}if(setup){if(!setup.active)throw Error('WORKSPACE_SETUP_SCOPE_CLOSED');setup.current();}}:null;
+ if((setup||pinned)&&(init.method??'GET')==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&!url.searchParams.has('alt')&&url.searchParams.has('fields'))url.searchParams.set('fields',[...new Set((url.searchParams.get('fields')+',id,title,mimeType,parents').split(','))].join(','));
+ const send=(url,options)=>dispatch(url,options,fence,setup,pinned);
  if((init.method??'GET')==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&url.searchParams.get('alt')==='media')return readVersionedMedia(url,init,send);
  return send(url,init);
 }
@@ -58,6 +118,7 @@ export async function driveFetch(input,init={}){
  */
 export async function preparedRequestOnce(input,init={}){
  if(experiment?.policy!=='prepared-retry-v1')throw Error('PREPARED_POLICY_REQUIRED');
+ const managed=pinnedWorkspaceScope;
  const url=new URL(typeof input==='string'?input:input.url),method=init.method??'GET';
  const read=method==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname);
  const write=method==='PUT'&&/^\/upload\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&url.searchParams.get('uploadType')==='media';
@@ -72,6 +133,7 @@ export async function preparedRequestOnce(input,init={}){
   if(actualHash!==trace.bodyHash)throw Error('PREPARED_PAGE_HASH_MISMATCH');
  }
  const checkBudget=()=>{
+  if(managedPolicy){if(!managed)throw Error('MANAGED_CLOUD_ACTION_REQUIRED');managed.current();}
   if(Date.now()>deadline||count>=1000){haltExperiment('REQUEST_BUDGET_EXHAUSTED');throw failure('REQUEST_BUDGET_EXHAUSTED',429);}
   if(Date.now()>=experiment.deadline||experiment.requests>=experiment.maxRequests)haltExperiment('EXPERIMENT_BUDGET_EXHAUSTED');
   if(experiment.halted)throw failure(experiment.halted,429);
@@ -100,11 +162,26 @@ export async function preparedRequestOnce(input,init={}){
  }catch(error){row.status??='NETWORK_ERROR';trial.status??='NETWORK_ERROR';row.endedMs=performance.now()-clockOrigin;throw error;}
  finally{trial.endedAt=Date.now();experiment.active--;notifyExperiment();}
 }
-async function dispatch(url,init={},fence=null){
+async function dispatch(url,init={},fence=null,setup=null,pinned=null){
  fence?.();
+ if(managedPolicy&&(init.method??'GET')!=='GET'&&!setup&&!pinned)throw Error('MANAGED_CLOUD_ACTION_REQUIRED');
+ if(pinned&&(init.method??'GET')!=='GET')assertPinnedMutation(pinned,url,init);
+ if(setup&&(init.method??'GET')!=='GET'){
+  const method=init.method,controls=['rxdb.json','transaction.json','rxdb-wal.json'];
+  if(method==='POST'&&url.pathname==='/drive/v3/files'){
+   let metadata;try{metadata=JSON.parse(init.body);}catch{throw Error('SETUP_METADATA_INVALID');}
+   if(metadata.mimeType!=='application/vnd.google-apps.folder'){
+    if(!setup.rootId||metadata.mimeType!=='application/json'||!controls.includes(metadata.name)||metadata.parents?.length!==1||metadata.parents[0]!==setup.rootId||setup.controlAttempts.has(metadata.name))throw Error('SETUP_CONTROL_CREATE_NOT_ALLOWED');
+    setup.controlAttempts.add(metadata.name);
+   }
+  }else if(method==='PUT'&&/^\/upload\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&url.searchParams.get('uploadType')==='media'){
+   const id=decodeURIComponent(url.pathname.split('/').at(-1));let value;try{value=JSON.parse(init.body);}catch{throw Error('SETUP_CONTENT_INVALID');}
+   if(setup.controls.get(id)!=='rxdb.json'||typeof value.replicationIdentifier!=='string'||!value.replicationIdentifier||value.replicationIdentifier.length>100||Object.keys(value).join()!=='replicationIdentifier'||!new Headers(init.headers).get('If-Match'))throw Error('SETUP_CONTROL_WRITE_NOT_ALLOWED');
+  }else throw Error('SETUP_MUTATION_NOT_ALLOWED');
+ }
  if(folderCreationForbidden&&(init.method??'GET')==='POST'&&/^\/drive\/v[23]\/files$/.test(url.pathname)){
   let metadata;try{metadata=JSON.parse(init.body);}catch{throw failure('FOLDER_METADATA_NOT_SAFE',403);}
-  if(metadata?.mimeType==='application/vnd.google-apps.folder')throw failure('FOLDER_CREATION_DISABLED',403);
+  if(metadata?.mimeType==='application/vnd.google-apps.folder'&&!folderSetupAllows(metadata))throw failure('FOLDER_CREATION_DISABLED',403);
  }
  if(!isAuthorized()){haltExperiment('REAUTHORIZE_REQUIRED');throw failure('REAUTHORIZE_REQUIRED',401);}
  if(Date.now()>deadline||count>=1000){haltExperiment('REQUEST_BUDGET_EXHAUSTED');throw failure('REQUEST_BUDGET_EXHAUSTED',429);}
@@ -136,6 +213,16 @@ async function dispatch(url,init={},fence=null){
    try{row.metadataValidators=metadataSummary(r.headers.get('ETag'),await r.clone().json());}catch{row.metadataValidators={unavailable:true};}
   }
   if(r.ok&&['/drive/v3/files','/drive/v3/changes'].includes(url.pathname)&&method==='GET'){const data=await r.clone().json();row.page={files:data.files?.length,changes:data.changes?.length,nextPageToken:!!data.nextPageToken,newStartPageToken:!!data.newStartPageToken,incompleteSearch:data.incompleteSearch===true};}
+  if(pinned&&r.ok&&method==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&!url.searchParams.has('alt')){registerPinnedMetadata(pinned,await r.clone().json(),fileId);fence?.();}
+  if(setup&&r.ok&&method==='POST'&&url.pathname==='/drive/v3/files'){
+   const metadata=JSON.parse(init.body);if(metadata.mimeType==='application/json'){
+    const created=await r.clone().json();fence?.();if(typeof created.id!=='string'||!/^[a-zA-Z0-9_-]{1,200}$/.test(created.id))throw Error('SETUP_CONTROL_ID_UNAVAILABLE');setup.createdControls.set(metadata.name,created.id);
+   }
+  }
+  if(setup&&r.ok&&method==='GET'&&/^\/drive\/v2\/files\/[^/]+$/.test(url.pathname)&&!url.searchParams.has('alt')){
+   const metadata=await r.clone().json();fence?.();
+   if(metadata.id!==fileId||metadata.mimeType!=='application/json'||!['rxdb.json','transaction.json','rxdb-wal.json'].includes(metadata.title)||metadata.parents?.length!==1||metadata.parents[0].id!==setup.rootId||setup.createdControls.get(metadata.title)!==fileId)throw Error('SETUP_CONTROL_IDENTITY_CHANGED');setup.controls.set(fileId,metadata.title);
+  }
   if(r.status===401){forget();throw failure('REAUTHORIZE_REQUIRED',401);}
   return timedBody(r,row,clockOrigin);
  }catch(e){haltExperiment('AMBIGUOUS_REQUEST_FAILURE');row.endedMs=performance.now()-clockOrigin;row.status??='NETWORK_ERROR';throw e;}

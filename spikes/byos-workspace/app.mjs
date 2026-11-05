@@ -4,6 +4,7 @@ import { Workspace } from './workspace.mjs';
 import { ForegroundRun } from './foreground.mjs';
 import { IdleDrain } from './idle-drain.mjs';
 import { PreparedDrain } from './prepared-drain.mjs';
+import { LocalAutosave } from './local-autosave.mjs';
 import {prepareOfflineShell} from '../byos-sync/real-drive/offline-shell.mjs';
 
 // --- Configuration & Safe Parameter Extraction ---
@@ -164,7 +165,7 @@ function renderIdle() {
   if(idleDrain?.strict){const page=state.pages.find(p=>p.id===selectedPageId);if(page)idleStatus.textContent+=` Selected page: ${page.status}, attempt ${page.attempt||0}.${page.nextRetryAt?` Retry in ${Math.max(0,Math.ceil(page.nextRetryAt-performance.now()))} ms.`:''}${page.stopReason?' '+page.stopReason:''}`;}
   idleStatus.dataset.state=state?.state||"off";
   renderSaveOverview();
-  idleStart.disabled=!!localMutationsInFlight||idleAdmitting||!!idleDrain||!!foreground||!store?.writer;
+  idleStart.disabled=providerInfo?.bindingReady===false||!!localMutationsInFlight||idleAdmitting||!!idleDrain||!!foreground||!store?.writer;
   idleStop.disabled=!idleDrain||idleDrain.stopped;
   updateWriterControls();
 }
@@ -321,7 +322,8 @@ function getOrCreateBuffer(id, pageData, nativeBaseline) {
 // --- Writer Controls ---
 function updateWriterControls() {
   const hasWriter = !!(store && store.writer);
-  const cloudBusy = cloudActionBusy || !!store?.operation?.pending || !!foreground?.flight || !!idleDrain || idleAdmitting;
+  const connectionBlocked=providerInfo?.bindingReady===false;
+  const cloudBusy = connectionBlocked || cloudActionBusy || !!store?.operation?.pending || !!foreground?.flight || !!idleDrain || idleAdmitting;
   if (!hasWriter) {
     writerNoticeEl.textContent = 'Writer disabled: session already owned or safe ownership unavailable. This tab is in read-only mode.';
     writerNoticeEl.style.display = 'block';
@@ -330,11 +332,13 @@ function updateWriterControls() {
     writerNoticeEl.style.display = 'none';
   }
 
-  titleInput.disabled = !hasWriter;
-  parentSelect.disabled = !hasWriter;
-  orderInput.disabled = !hasWriter;
-  editorTextarea.disabled = !hasWriter;
-  saveBtn.disabled = !hasWriter;
+  const editable=hasWriter&&!!selectedPageId&&renderedPageId===selectedPageId;
+  document.getElementById('local-empty-state').hidden=!!selectedPageId;
+  titleInput.disabled = !editable;
+  parentSelect.disabled = !editable;
+  orderInput.disabled = !editable;
+  editorTextarea.disabled = !editable;
+  saveBtn.disabled = !editable;
   newRootBtn.disabled = !hasWriter || !!idleDrain || idleAdmitting;
   newChildBtn.disabled = !hasWriter || !!idleDrain || idleAdmitting;
   syncBtn.disabled = cloudBusy;
@@ -682,6 +686,7 @@ function renderEditorArea(readResult, catalog) {
 }
 
 function renderEmptyEditor() {
+  renderedPageId=null;
   titleInput.value = '';
   parentSelect.textContent = '';
   const opt = document.createElement('option');
@@ -923,7 +928,11 @@ async function localMutation(action) {
   try{return await action();}
   finally{localMutationsInFlight--;localMutationEpoch++;idleDrain?.wake();void idleDrain?.audit();renderIdle();}
 }
-async function saveCurrentPageLocally(pageId = selectedPageId) {
+const localAutosave=new LocalAutosave({dirty:id=>!!pageBuffers.get(id)?.dirty,
+  save:id=>saveCurrentPageLocally(id,true),
+  error:(error,id)=>setStatus(`Local save failed for ${id}: ${error.message}. Input retained; retry Save locally.`,true)});
+async function saveCurrentPageLocally(pageId = selectedPageId,fromAutosave=false) {
+  if(providerInfo?.localAutosave&&!idleDrain&&!fromAutosave&&pageId)return localAutosave.flush(pageId);
   if(idleDrain&&!pageBuffers.get(pageId)?.dirty)return;
   const generation=pageBuffers.get(pageId)?.generation,key=pageId+':'+generation;
   if(localSaveFlights.has(key))return localSaveFlights.get(key);
@@ -1196,7 +1205,7 @@ window.addEventListener('pagehide', () => {foreground?.stop();idleDrain?.stop();
 
 
 for (const input of [titleInput,parentSelect,orderInput,editorTextarea]) {
-  input.addEventListener(input===parentSelect?'change':'input',()=>{inputEpoch++;if(idleDrain&&!idleDrain.entries.has(selectedPageId))idleDrain.fail('INPUT_OUTSIDE_FIXTURE');else idleDrain?.input(selectedPageId);});
+  input.addEventListener(input===parentSelect?'change':'input',()=>{inputEpoch++;if(idleDrain&&!idleDrain.entries.has(selectedPageId))idleDrain.fail('INPUT_OUTSIDE_FIXTURE');else idleDrain?.input(selectedPageId);if(providerInfo?.localAutosave&&!idleDrain&&selectedPageId)localAutosave.input(selectedPageId);});
 }
 idleStart.addEventListener('click',async()=>{
   if(localMutationsInFlight||idleAdmitting||idleDrain||foreground||!store?.writer||cloudActionBusy||store.operation?.pending)return;
@@ -1274,7 +1283,7 @@ async function init() {
       }
     }
 
-    const provider = await configureProvider(store, {changed:wakeForeground});
+    const provider = await configureProvider(store, {changed:wakeForeground,snapshotLocal:()=>({inputEpoch,databaseEpoch,localMutationEpoch,pending:localMutationsInFlight,dirty:[...pageBuffers.values()].some(p=>p.dirty)})});
     providerInfo = provider;
     if(provider.prepared){
       idleStart.textContent='Prepare bounded A–Z page uploads';
@@ -1297,6 +1306,50 @@ async function init() {
       });
     }
     controller = new Workspace(store);
+    if(provider.canInitializeDemo&&!provider.prepared){
+      const setup=document.createElement('section');setup.className='panel';
+      const copy=document.createElement('p');copy.textContent='Optional bounded demo: in your new empty dedicated workspace, create 26 synthetic A–Z pages, sync and independently verify their native baseline. One-time setup may take several minutes; progress and failures stay visible. This is setup, separate from timed five-second uploads. Existing pages are never replaced.';
+      const approve=document.createElement('input');approve.type='checkbox';approve.id='confirm-demo-baseline';
+      const label=document.createElement('label');label.append(approve,document.createTextNode(' Create and upload 26 synthetic demo pages in this new workspace.'));
+      const button=document.createElement('button');button.className='btn';button.textContent='Initialize 26-page demo';button.id='initialize-demo';
+      const enter=document.createElement('button');enter.className='btn';enter.textContent='Open five-second demo';enter.hidden=true;
+      setup.append(copy,label,button,enter);document.getElementById('sync-setup').append(setup);
+      enter.onclick=()=>{if([...pageBuffers.values()].some(p=>p.dirty)||localMutationsInFlight||store.operation?.pending)return;const url=new URL(location.href);url.searchParams.set('prepared','1');location.assign(url);};
+      button.onclick=async()=>{
+        if(idleAdmitting||idleDrain||cloudActionBusy||store.operation?.pending||localMutationsInFlight)return;
+        if(!approve.checked||!provider.canInitializeDemo()||!provider.canSync()){setStatus('Connect your new dedicated Drive workspace and confirm the synthetic baseline first.',true);return;}
+        const epoch=inputEpoch;idleAdmitting=true;button.disabled=true;renderIdle();
+        try{
+          const result=await cloudAction('demo-baseline',async()=>{
+            const catalog=await controller.catalog(),manifestKey='byos142-demo:'+store.workspace;
+            let manifest;try{manifest=JSON.parse(localStorage.getItem(manifestKey)??'null');}catch{throw Error('Demo setup manifest unreadable; notes retained');}
+            if(catalog.invalid.length||!catalog.healthy)throw Error('Resolve local data before demo setup');
+            provider.beginExperiment({maxRequests:6000,maxMs:900000});
+            let ids=manifest?.ids;
+            if(ids){if(ids.length!==26||new Set(ids).size!==26||catalog.pages.length!==26||ids.some((id,index)=>!catalog.pages.some(p=>p.id===id&&p.title==='AZ142 '+String.fromCharCode(65+index))))throw Error('Existing demo changed; no reseeding or overwrite');}
+            else{
+              if(catalog.pages.length||(await store.db.localDrafts.find().exec()).length)throw Error('Demo setup requires an empty local workspace; existing notes retained');
+              await provider.assertEmptyDrive();ids=[];manifest={ids,phase:'seeding'};localStorage.setItem(manifestKey,JSON.stringify(manifest));
+              for(const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){
+                if(inputEpoch!==epoch)throw Error('Input changed during setup; partial synthetic pages retained');
+                const created=await localMutation(()=>controller.create({title:'AZ142 '+letter,parentId:null,order:0,markdown:'# '+letter+'\n\nDemo page — edit after preparation.'}));ids.push(created.page.id);localStorage.setItem(manifestKey,JSON.stringify(manifest));
+              }
+            }
+            await controller.sync();
+            for(const [index,id] of ids.entries()){
+              if(inputEpoch!==epoch)throw Error('Input changed during baseline; latest notes retained');
+              setStatus(`Demo baseline: independently verifying ${index+1}/26. Keep this tab open.`,false);
+              if(await store.draft(id))await controller.verify(id);
+              else await store.runOperation('baseline-read',id,async()=>{const remote=await store.remote(id);await store.serial(async()=>{const page=await store.page(id);if(inputEpoch!==epoch||await store.draft(id)||!page||['id','body','editId'].some(k=>page[k]!==remote?.[k]))throw Error('BASELINE_GENERATION_CHANGED');});});
+            }
+            if(inputEpoch!==epoch||[...pageBuffers.values()].some(p=>p.dirty)||(await store.db.localDrafts.find().exec()).length||!provider.experimentHealthy())throw Error('Baseline remains incomplete; keep local notes');
+            manifest.phase='verified';localStorage.setItem(manifestKey,JSON.stringify(manifest));return {verified:ids.length};
+          });
+          if(result?.verified!==26)throw Error('Baseline did not complete');enter.hidden=false;setStatus('26 synthetic pages independently verified; baseline setup complete. Open five-second demo, reconnect this same account and prepare its bounded run.',false);await scheduleRefresh();
+        }catch(error){setStatus('Demo setup stopped: '+error.message+'. Existing and partial local pages retained; no automatic restart.',true);}
+        finally{idleAdmitting=false;renderIdle();}
+      };
+    }
 
     // Permitted only loopback offline prototype without credentials
     if (!provider.real) window.workspaceDemo = {workspace:controller,store,ready:true};
@@ -1315,7 +1368,7 @@ async function init() {
     });
 
     await scheduleRefresh();
-    setStatus(provider.real?'Real Drive candidate ready; local editing works before existing-account reauthorization.':'Workspace prototype ready (offline/native mock)', false);
+    setStatus(provider.real?(provider.bindingReady===false?'Local editor ready — Drive is not connected. Create a local page or connect your Google account.':'Workspace ready; authorize its pinned Google account before cloud actions.'):'Workspace prototype ready (offline/native mock)', false);
   } catch (err) {
     console.error('Initialization error:', err);
     setStatus(`Fatal initialization error: ${err.message}`, true);

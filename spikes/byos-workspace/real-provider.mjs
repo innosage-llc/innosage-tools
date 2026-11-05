@@ -1,10 +1,12 @@
 // Explicit build-only route. Never selected by a query parameter.
 export {openBoundRealStore as openPageStore} from './real-store.mjs';
+import {configureConnection} from './connection-ui.mjs';
 import {clientId,workspace,bindingKey} from '../byos-sync/real-drive/config.mjs';
 import {authorize,forget,SCOPE,isAuthorized,beginExperiment,haltExperiment,experimentHealthy,experimentEvidence,onExperimentChange} from '../byos-sync/real-drive/transport.mjs';
 
 /** Same existing #113 OAuth flow/scope; a pre-existing binding is mandatory. */
-export async function configureProvider(store, {changed=()=>{}} = {}) {
+export async function configureProvider(store, {changed=()=>{},snapshotLocal=()=>({})} = {}) {
+  if(store.workspaceConnection?.kind!=='legacy')return configureConnection(store,{changed,snapshotLocal});
   const binding=JSON.parse(localStorage.getItem(bindingKey)??'null');
   if(!binding?.folderId||binding.clientId!==clientId()) throw new Error('Original approved account/folder binding unavailable');
   const section=document.createElement('section');section.className='panel';
