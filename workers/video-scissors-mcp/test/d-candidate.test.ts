@@ -89,6 +89,7 @@ const detached = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 test('D is disabled by default and its config template has no D1 or live identifiers', async () => {
   const config = readFileSync('wrangler.d-local.template.jsonc', 'utf8');
   const stagingConfig = readFileSync('wrangler.d-staging.template.jsonc', 'utf8');
+  const prodConfig = readFileSync('wrangler.d-production.template.jsonc', 'utf8');
   assert.match(config, /"EXPERIMENT_ENABLED":\s*"false"/);
   assert.match(config, /"PROJECT_STATE"/);
   assert.match(config, /"OAUTH_KV"/);
@@ -102,6 +103,15 @@ test('D is disabled by default and its config template has no D1 or live identif
   assert.doesNotMatch(stagingConfig, /"(?:d1_databases|database_id|routes|custom_domain)"\s*:/i);
   assert.match(stagingConfig, /D_ROUTING_HMAC_KEY/);
   assert.match(stagingConfig, /00000000000000000000000000000000/);
+  assert.match(prodConfig, /"name":\s*"video-scissors-mcp-d"/);
+  assert.match(prodConfig, /"main":\s*"src\/index-d\.ts"/);
+  assert.match(prodConfig, /"EXPERIMENT_ENABLED":\s*"false"/);
+  assert.match(prodConfig, /"PROJECT_STATE"/);
+  assert.match(prodConfig, /"OAUTH_KV"/);
+  assert.match(prodConfig, /00000000000000000000000000000000/);
+  assert.doesNotMatch(prodConfig, /"(?:d1_databases|database_id|routes|custom_domain)"\s*:/i);
+  assert.notEqual(prodConfig, stagingConfig, 'production Worker must have its own identity');
+
   const f = await world('false');
   try {
     const asset = await f.request('/tools/video-scissors');

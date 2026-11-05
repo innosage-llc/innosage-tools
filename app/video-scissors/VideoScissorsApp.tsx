@@ -55,6 +55,7 @@ export default function VideoScissorsApp() {
   return (
     <>
     <VideoScissorsView
+      remoteAvailable={remoteAvailable}
       frameOnly={snapshot.frameOnly}
       canCut={snapshot.canCut}
       fileName={snapshot.fileName}
