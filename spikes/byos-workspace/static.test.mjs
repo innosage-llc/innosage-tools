@@ -12,6 +12,8 @@ test('staging static shell pins its own complete assets and worker scope',async(
  assert.equal(assets[1].integrity,integrity(bytes));
  assert(worker.includes('["/byos-workspace/","/byos-workspace/index.html"]'));
  assert(!worker.includes("['/byos-demo/'"));
- assert(Buffer.from(bytes).toString().includes('Existing approved #113 account/folder binding required'));
+ assert(Buffer.from(bytes).toString().includes('WORKSPACE_BINDING_MISSING_OR_CHANGED'));
+ assert(Buffer.from(bytes).toString().includes('FOLDER_CREATION_DISABLED'));
+ assert(Buffer.from(bytes).toString().includes('Google Drive is not connected'));
  await assert.rejects(buildAssets({base:'/../'}),/Invalid static base/);
 });

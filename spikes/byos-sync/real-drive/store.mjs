@@ -5,7 +5,7 @@ import {errorSummary} from './diagnostics.mjs';
 let active,lastRemote=null;
 const errors=[];let errorSequence=0;
 function recordError(error){haltExperiment("NATIVE_ERROR");const requests=evidence().requests;errors.push({sequence:++errorSequence,afterRequest:requests.at(-1)?.sequence??null,...errorSummary(error)});if(errors.length>32)errors.shift();}
-const diagnosticFactory=options=>createChangesReplication(options,{onCreated:state=>{state.error$.subscribe(recordError);}});
+export const diagnosticFactory=options=>createChangesReplication(options,{onCreated:state=>{state.error$.subscribe(recordError);}});
 import {preflight,workspace,bindingKey} from './config.mjs';
 export {clientId,setClientId,workspace} from './config.mjs';
 const params=new URLSearchParams(location.search);

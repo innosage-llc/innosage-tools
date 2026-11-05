@@ -62,3 +62,7 @@ A fresh origin/profile without the original binding fails closed. Static
 packaging and offline reload are tested with an isolated synthetic binding;
 that evidence does not prove live OAuth or Drive. Founder authorized staging
 and the bounded original-context run; final acceptance remains pending.
+
+## v0.1.12 connection update
+
+The original-binding-only startup description above is historical. The current real candidate opens a local editor without a binding and makes no provider request on open. Its Google Drive panel provides explicit account connection and compatible app-workspace selection or explicit dedicated-workspace creation. Legacy #113 workspaces preserve their existing restrictions. See SIMPLE-UI.md for the current connection contract, synthetic versus real verification, and the confirmed default OAuth External/Testing restriction. No arbitrary-account provider eligibility or new real Drive performance is claimed.
