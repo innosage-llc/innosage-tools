@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 
 export interface VideoScissorsViewProps {
+  frameOnly: boolean;
+  canCut: boolean;
   frameUrl: string | null;
   frameTimeSeconds: number | null;
   onCapture: (timeSeconds: number) => void;
@@ -58,7 +60,7 @@ function formatSeconds(sec: number): string {
 }
 
 export default function VideoScissorsView({
-  frameUrl, frameTimeSeconds, onCapture, onDownloadFrame,
+  frameOnly, canCut, frameUrl, frameTimeSeconds, onCapture, onDownloadFrame,
   fileName,
   duration,
   originalUrl,
@@ -88,7 +90,7 @@ export default function VideoScissorsView({
   }, 0);
 
   const handleSegmentChange = (index: number, field: 'start' | 'end', valStr: string) => {
-    if (busy) return;
+    if (busy || !canCut) return;
     const parsed = parseFloat(valStr);
     const safeVal = Number.isFinite(parsed) ? parsed : 0;
     const updated = segments.map((seg, i) =>
@@ -98,7 +100,7 @@ export default function VideoScissorsView({
   };
 
   const handleAddSegment = () => {
-    if (busy) return;
+    if (busy || !canCut) return;
     const lastEnd = segments.length > 0 ? segments[segments.length - 1].end : 0;
     const newStart = duration > 0 ? Math.min(lastEnd, duration) : lastEnd;
     const defaultStep = 5;
@@ -110,7 +112,7 @@ export default function VideoScissorsView({
   };
 
   const handleRemoveSegment = (index: number) => {
-    if (busy) return;
+    if (busy || !canCut) return;
     onSegmentsChange(segments.filter((_, i) => i !== index));
   };
 
@@ -149,7 +151,7 @@ export default function VideoScissorsView({
               </h2>
               {fileName && (
                 <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  Source loaded
+                  {duration ? (frameOnly ? 'Frame-only' : 'Source loaded') : 'Source not ready'}
                 </span>
               )}
             </div>
@@ -201,7 +203,7 @@ export default function VideoScissorsView({
                   <div className="space-y-1">
                     <p className="font-semibold text-zinc-900">Choose MP4 video</p>
                     <p className="text-xs text-zinc-500">
-                      Click to select an MP4 file (.mp4, H.264 / AAC)
+                      Click to select an MP4 file for local PNG capture or Cut
                     </p>
                   </div>
                 </>
@@ -224,6 +226,8 @@ export default function VideoScissorsView({
               </a>
             </div>
           </div>
+
+          {frameOnly && <p className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">Frame-only: PNG extraction works locally. MP4 Cut requires H.264/AAC, ≤1080p and ≤30 fps.</p>}
 
           {/* Step 2: Video Preview */}
           <div className="space-y-4 pt-4 border-t border-zinc-200">
@@ -345,7 +349,7 @@ export default function VideoScissorsView({
               <button
                 type="button"
                 onClick={handleAddSegment}
-                disabled={busy}
+                disabled={busy || !canCut}
                 aria-label="Add clip segment"
                 className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
@@ -401,7 +405,7 @@ export default function VideoScissorsView({
                               min="0"
                               max={duration > 0 ? duration : undefined}
                               value={seg.start}
-                              disabled={busy}
+                              disabled={busy || !canCut}
                               onChange={(e) => handleSegmentChange(index, 'start', e.target.value)}
                               aria-label={`Clip ${index + 1} start time in seconds`}
                               className="w-24 px-2 py-1.5 text-sm font-mono rounded-lg border border-zinc-300 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-zinc-100 disabled:text-zinc-400"
@@ -429,7 +433,7 @@ export default function VideoScissorsView({
                               min="0"
                               max={duration > 0 ? duration : undefined}
                               value={seg.end}
-                              disabled={busy}
+                              disabled={busy || !canCut}
                               onChange={(e) => handleSegmentChange(index, 'end', e.target.value)}
                               aria-label={`Clip ${index + 1} end time in seconds`}
                               className="w-24 px-2 py-1.5 text-sm font-mono rounded-lg border border-zinc-300 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-zinc-100 disabled:text-zinc-400"
@@ -449,7 +453,7 @@ export default function VideoScissorsView({
                         <button
                           type="button"
                           onClick={() => handleRemoveSegment(index)}
-                          disabled={busy}
+                          disabled={busy || !canCut}
                           aria-label={`Remove clip ${index + 1}`}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
@@ -517,7 +521,7 @@ export default function VideoScissorsView({
               <button
                 type="button"
                 onClick={onCut}
-                disabled={busy || !fileName || segments.length === 0}
+                disabled={busy || !canCut || segments.length === 0}
                 aria-label="Cut video segments"
                 className="flex-1 min-w-[200px] py-3.5 px-6 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -594,7 +598,7 @@ export default function VideoScissorsView({
                 <Film className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-zinc-900">Supported Input:</strong>{' '}
-                  MP4 format (H.264 video codec, AAC audio codec).
+                  PNG: browser-playable MP4, including HEVC when supported by your browser. Cut: H.264 video and AAC audio.
                 </div>
               </div>
 
@@ -602,7 +606,7 @@ export default function VideoScissorsView({
                 <Info className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-zinc-900">Provisional Limits:</strong>{' '}
-                  Up to 100 MB, 5 minutes, 1080p, 30 fps. Desktop Chrome.
+                  Up to 100 MB and 5 minutes. PNG: up to 4096 × 4096 pixels. Cut: up to 1080p pixels and 30 fps.
                 </div>
               </div>
             </div>

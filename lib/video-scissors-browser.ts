@@ -1,3 +1,4 @@
+import { inspectBrowserVideo, extractBrowserFrame } from './video-scissors-native-browser';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { parseFfmpegMetadata, videoScissorsFilter, videoScissorsCoverFilter, type VideoScissorsRenderer } from './video-scissors';
 import { createTitleCard } from './video-scissors-cover-canvas';
@@ -15,6 +16,8 @@ async function writeSource(ffmpeg: FFmpeg, file: File, signal: AbortSignal): Pro
 }
 
 export const videoScissorsRenderer: VideoScissorsRenderer = {
+  inspectBrowser: inspectBrowserVideo,
+  extractBrowserFrame,
   extractFrame(file, timeSeconds, metadata, signal) {
     return withFfmpeg(signal, async (ffmpeg) => {
       await writeSource(ffmpeg, file, signal);

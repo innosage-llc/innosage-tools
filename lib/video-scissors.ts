@@ -4,6 +4,8 @@ export const VIDEO_SCISSORS_LIMITS = {
   maxSourceBytes: 100_000_000,
   maxDurationSeconds: 300,
   maxPixels: 1920 * 1080,
+  maxFramePixels: 4096 * 4096,
+  maxFrameDimension: 4096,
   maxFramesPerSecond: 30,
   maxClips: 20,
   maxOutputSeconds: 300,
@@ -44,9 +46,9 @@ export interface VideoMetadata {
   duration: number;
   width: number;
   height: number;
-  framesPerSecond: number;
-  videoCodec: string;
-  audioCodec: string;
+  framesPerSecond: number | null;
+  videoCodec: string | null;
+  audioCodec: string | null;
 }
 
 function parseClock(value: string): number | null {
@@ -55,13 +57,17 @@ function parseClock(value: string): number | null {
   return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
 }
 
+// Only media inspection/validation failures may use the native fallback.
+// Processor loading or infrastructure failures keep their actionable error.
+export class VideoInspectionError extends Error {}
+
 export function parseFfmpegMetadata(log: string): VideoMetadata {
   // The zero-frame inspection also reports its null output codecs. Only the
   // input section describes the selected media.
   log = log.split(/\n\s*(?:Stream mapping:|Output #)/, 1)[0];
   const inputLine = log.split('\n').find((line) => /^\s*Input #0,/.test(line));
   if (!inputLine || !/^\s*Input #0,\s*(?:mov,mp4|mp4|mov)(?:,|\s)/i.test(inputLine)) {
-    throw new Error('The selected file is not a supported MP4 video or is corrupt.');
+    throw new VideoInspectionError('The selected file is not a supported MP4 video or is corrupt.');
   }
   const durationMatch = /Duration:\s*(\d+:\d{2}:\d{2}(?:\.\d+)?)/.exec(log);
   // Match actual input stream headers, not metadata tags containing codec words.
@@ -73,13 +79,13 @@ export function parseFfmpegMetadata(log: string): VideoMetadata {
   const videoLine = videoLines[0];
   const audioLine = audioLines[0];
   if (!videoLine || videoLines.some((line) => !/Video:\s*h264\b/i.test(line)) || !audioLine || audioLines.some((line) => !/Audio:\s*aac\b/i.test(line))) {
-    throw new Error('The selected file is not a supported MP4 video or is corrupt.');
+    throw new VideoInspectionError('The selected file is not a supported MP4 video or is corrupt.');
   }
   const dimensions = videoLine && /(?:^|\s)(\d{2,5})x(\d{2,5})(?:\s|,|$)/.exec(videoLine);
   const frameRate = videoLine && /(?:^|\s)(\d+(?:\.\d+)?)\s+fps\b/.exec(videoLine);
   const duration = durationMatch ? parseClock(durationMatch[1]) : null;
   if (!duration || !dimensions || !frameRate) {
-    throw new Error('The selected file is not a supported MP4 video or is corrupt.');
+    throw new VideoInspectionError('The selected file is not a supported MP4 video or is corrupt.');
   }
   return {
     duration,
@@ -91,7 +97,11 @@ export function parseFfmpegMetadata(log: string): VideoMetadata {
   };
 }
 
+export const FRAME_ONLY_MESSAGE = 'Frame-only: PNG extraction works locally. MP4 Cut requires H.264/AAC, ≤1080p and ≤30 fps.';
+
 export interface VideoScissorsSnapshot {
+  frameOnly: boolean;
+  canCut: boolean;
   frameUrl: string | null;
   frameTimeSeconds: number | null;
   sourceGeneration: number;
@@ -116,7 +126,11 @@ export interface VideoScissorsCommand {
   version: number;
 }
 
+export type BrowserVideoMetadata = Pick<VideoMetadata, 'duration' | 'width' | 'height'>;
+
 export interface VideoScissorsRenderer {
+  inspectBrowser?(file: File, signal: AbortSignal): Promise<BrowserVideoMetadata>;
+  extractBrowserFrame?(file: File, timeSeconds: number, signal: AbortSignal): Promise<Blob>;
   extractFrame?(file: File, timeSeconds: number, metadata: VideoMetadata, signal: AbortSignal): Promise<Blob>;
   inspect(file: File, signal: AbortSignal): Promise<VideoMetadata>;
   render(
@@ -154,11 +168,22 @@ export function validateMetadata(metadata: VideoMetadata): void {
   if (metadata.width * metadata.height > VIDEO_SCISSORS_LIMITS.maxPixels) {
     throw new Error('Choose a video with no more than 1080p pixels.');
   }
-  if (!Number.isFinite(metadata.framesPerSecond) || metadata.framesPerSecond <= 0 || metadata.framesPerSecond > VIDEO_SCISSORS_LIMITS.maxFramesPerSecond) {
+  if (metadata.framesPerSecond === null || !Number.isFinite(metadata.framesPerSecond) || metadata.framesPerSecond <= 0 || metadata.framesPerSecond > VIDEO_SCISSORS_LIMITS.maxFramesPerSecond) {
     throw new Error('Choose a video recorded at no more than 30 frames per second.');
   }
   if (metadata.videoCodec !== 'h264' || metadata.audioCodec !== 'aac') {
     throw new Error('Only MP4 files with H.264 video and AAC audio are supported.');
+  }
+}
+
+export function validateBrowserMetadata(metadata: BrowserVideoMetadata): void {
+  if (!Number.isFinite(metadata.duration) || metadata.duration <= 0 || metadata.duration > VIDEO_SCISSORS_LIMITS.maxDurationSeconds) {
+    throw new Error('Choose a browser-playable MP4 with a finite duration of up to 300 seconds.');
+  }
+  if (!Number.isInteger(metadata.width) || !Number.isInteger(metadata.height) || metadata.width <= 0 || metadata.height <= 0 ||
+    metadata.width > VIDEO_SCISSORS_LIMITS.maxFrameDimension || metadata.height > VIDEO_SCISSORS_LIMITS.maxFrameDimension ||
+    metadata.width * metadata.height > VIDEO_SCISSORS_LIMITS.maxFramePixels) {
+    throw new Error('PNG extraction requires video dimensions within 4096 × 4096 pixels.');
   }
 }
 
@@ -210,6 +235,8 @@ export class VideoScissorsController {
   private readonly operationStatuses = new Map<string, OperationStatus>();
   private completed: StableView | null = null;
   private snapshot: VideoScissorsSnapshot = {
+    frameOnly: false,
+    canCut: false,
     frameUrl: null,
     frameTimeSeconds: null,
     sourceGeneration: 0,
@@ -268,6 +295,8 @@ export class VideoScissorsController {
     this.outputBlob = null;
     this.latestCompletedPlan = [];
     this.snapshot = {
+      frameOnly: false,
+      canCut: false,
       frameUrl: null,
       frameTimeSeconds: null,
       sourceGeneration: generation,
@@ -295,7 +324,7 @@ export class VideoScissorsController {
   }
 
   setSegments(segments: VideoClip[], sourceGeneration = this.snapshot.sourceGeneration): boolean {
-    if (this.disposed || this.snapshot.busy || !this.source || sourceGeneration !== this.snapshot.sourceGeneration) return false;
+    if (this.disposed || this.snapshot.busy || !this.snapshot.canCut || !this.source || sourceGeneration !== this.snapshot.sourceGeneration) return false;
     // Keep temporary editor values visible; the Cut operation validates the complete plan.
     this.snapshot = { ...this.snapshot, version: this.snapshot.version + 1, segments: segments.map((clip) => ({ ...clip })), error: null, status: '' };
     this.publish();
@@ -323,8 +352,9 @@ export class VideoScissorsController {
     this.publish();
     const task = (async () => {
       try {
-        if (!this.renderer.extractFrame) throw new Error('Frame extraction is unavailable.');
-        const blob = await this.renderer.extractFrame(source, timeSeconds, metadata, abort.signal);
+        const blob = this.snapshot.frameOnly
+          ? await this.renderer.extractBrowserFrame!(source, timeSeconds, abort.signal)
+          : await this.renderer.extractFrame!(source, timeSeconds, metadata, abort.signal);
         if (!this.isActive(command.operationId, generation) || abort.signal.aborted) return;
         // Recheck a remote lease at commit time: background timers may be delayed.
         if (!canComplete()) { this.cancel(); return; }
@@ -334,10 +364,10 @@ export class VideoScissorsController {
         this.frameBlob = blob;
         this.operationStatuses.set(command.operationId, 'completed');
         this.snapshot = { ...this.snapshot, frameUrl: url, frameTimeSeconds: timeSeconds, status: 'Frame complete. Download PNG below.', error: null, progress: 100 };
-      } catch {
+      } catch (error) {
         if (!this.isActive(command.operationId, generation)) return;
         this.operationStatuses.set(command.operationId, abort.signal.aborted ? 'cancelled' : 'failed');
-        this.snapshot = { ...this.snapshot, error: 'Frame extraction failed. Your previous PNG was kept.', status: '', progress: 0 };
+        this.snapshot = { ...this.snapshot, error: this.snapshot.frameOnly ? `${this.message(error, 'Browser frame extraction failed.')} Your previous PNG was kept.` : 'Frame extraction failed. Your previous PNG was kept.', status: '', progress: 0 };
       } finally {
         if (this.isActive(command.operationId, generation)) {
           this.active = null;
@@ -385,6 +415,7 @@ export class VideoScissorsController {
 
   validateCutPlan(clips: VideoClip[], presetId = this.snapshot.coverPresetId): boolean {
     try {
+      if (!this.snapshot.canCut) throw new Error(FRAME_ONLY_MESSAGE);
       validateVideoClips(clips, this.snapshot.duration);
       if (presetId && clips.reduce((total, clip) => total + clip.end - clip.start, TITLE_CARD_SECONDS) > VIDEO_SCISSORS_LIMITS.maxOutputSeconds) {
         throw new Error('The title card and clips together cannot exceed 300 seconds. Shorten the clip plan.');
@@ -456,8 +487,22 @@ export class VideoScissorsController {
   private async inspectSource(file: File, id: string, generation: number, abort: AbortController): Promise<void> {
     try {
       validateSourceSize(file.size);
-      const metadata = await this.renderer.inspect(file, abort.signal);
-      validateMetadata(metadata);
+      let metadata: VideoMetadata;
+      let frameOnly = false;
+      let inspected = false;
+      try {
+        metadata = await this.renderer.inspect(file, abort.signal);
+        inspected = true;
+        validateMetadata(metadata);
+      } catch (error) {
+        abort.signal.throwIfAborted();
+        if ((!inspected && !(error instanceof VideoInspectionError)) || !this.renderer.inspectBrowser || !this.renderer.extractBrowserFrame) throw error;
+        const native = await this.renderer.inspectBrowser(file, abort.signal);
+        validateBrowserMetadata(native);
+        // Browser APIs cannot establish codec or frame rate. Never infer Cut eligibility.
+        metadata = { ...native, framesPerSecond: null, videoCodec: null, audioCodec: null };
+        frameOnly = true;
+      }
       if (!this.isActive(id, generation) || abort.signal.aborted) {
         if (this.operationStatuses.get(id) === 'running') this.operationStatuses.set(id, 'stale');
         return;
@@ -466,7 +511,7 @@ export class VideoScissorsController {
       this.metadata = metadata;
       this.active = null;
       this.operationStatuses.set(id, 'completed');
-      this.snapshot = { ...this.snapshot, version: this.snapshot.version + 1, duration: metadata.duration, busy: false, status: 'Video ready. Clip times use the original video.', error: null };
+      this.snapshot = { ...this.snapshot, version: this.snapshot.version + 1, duration: metadata.duration, frameOnly, canCut: !frameOnly, busy: false, status: frameOnly ? FRAME_ONLY_MESSAGE : 'Video ready. Clip times use the original video.', error: null };
       this.publish();
     } catch (error) {
       if (!this.isActive(id, generation)) {

@@ -5,6 +5,7 @@ import { COVER_PRESETS, localCoverTitle } from '../lib/video-scissors-covers.ts'
 import {
   VIDEO_SCISSORS_LIMITS,
   VideoScissorsController,
+  VideoInspectionError,
   parseFfmpegMetadata,
   validateMetadata,
   validateSourceSize,
@@ -434,4 +435,122 @@ test('successful PNG replacement releases its prior URL; busy and empty outputs 
   assert.equal(c.getOperationStatus('empty-png'), 'failed');
   assert.equal(c.createFrameDownload()?.blob, stable); assert.equal(c.getSnapshot().frameUrl, current);
   c.dispose(); assert.ok(h.revoked.includes(current)); assert.equal(c.createFrameDownload(), null);
+});
+
+test('browser-decoded portrait 2160×3842 is Frame-only; Cut/cover/segments remain blocked', async () => {
+  const png = new Blob(['png'], { type: 'image/png' });
+  let frameCalls = 0;
+  const h = harness({
+    inspect: async () => { throw new VideoInspectionError('unsupported codec'); },
+    inspectBrowser: async () => ({ duration: 40.101, width: 2160, height: 3842 }),
+    extractBrowserFrame: async () => { frameCalls++; return png; },
+    extractFrame: async () => { throw new Error('must not use WASM for Frame-only'); },
+  });
+  await h.controller.selectSource(file());
+  assert.equal(h.controller.getSnapshot().frameOnly, true);
+  assert.equal(h.controller.getSnapshot().canCut, false);
+  assert.match(h.controller.getSnapshot().status, /Frame-only.*PNG.*H.264\/AAC/);
+  assert.equal(h.controller.setSegments([{ start: 0, end: 1 }]), false);
+  await h.controller.cut(command(h.controller, 'blocked-cut'));
+  await h.controller.applyCoverPreset(command(h.controller, 'blocked-cover'), 'sage-mist');
+  assert.equal(h.controller.getOperationStatus('blocked-cut'), undefined);
+  assert.equal(h.rendered.length, 0);
+  assert.equal(h.controller.createDownload(), null);
+  await h.controller.extractFrame(command(h.controller, 'native-png'), 0);
+  assert.equal(h.controller.createFrameDownload()!.blob, png);
+  assert.equal(frameCalls, 1);
+  assert.equal(h.controller.getSnapshot().canUndo, false);
+  h.controller.dispose();
+});
+
+test('high-res strict metadata falls back; normal H264 keeps original inspector and PNG renderer', async () => {
+  let native = 0;
+  const h = harness({ inspect: async () => ({ ...metadata, width: 2160, height: 3842 }),
+    inspectBrowser: async () => { native++; return { duration: 40, width: 2160, height: 3842 }; }, extractBrowserFrame: async () => new Blob() });
+  await h.controller.selectSource(file()); assert.equal(native, 1); assert.equal(h.controller.getSnapshot().frameOnly, true);
+  const normal = harness({ inspectBrowser: async () => { throw new Error('unexpected fallback'); }, extractBrowserFrame: async () => new Blob() });
+  await normal.controller.selectSource(file()); assert.equal(normal.controller.getSnapshot().canCut, true);
+  assert.equal(normal.controller.getSnapshot().frameOnly, false);
+  h.controller.dispose(); normal.controller.dispose();
+});
+
+test('corrupt/browser-unplayable and oversized native metadata are rejected; file cap precedes fallback', async () => {
+  for (const native of [
+    async () => { throw new Error('This browser could not decode the MP4 video.'); },
+    async () => ({ duration: Infinity, width: 2160, height: 3842 }),
+    async () => ({ duration: 301, width: 2160, height: 3842 }),
+    async () => ({ duration: 40, width: 0, height: 3842 }),
+    async () => ({ duration: 40, width: 4097, height: 3842 }),
+  ]) {
+    const h = harness({ inspect: async () => { throw new VideoInspectionError('codec'); }, inspectBrowser: native, extractBrowserFrame: async () => new Blob() });
+    await h.controller.selectSource(file());
+    assert.equal(h.controller.getSnapshot().duration, 0); assert.equal(h.controller.getSnapshot().canCut, false);
+    assert.equal(h.controller.getSnapshot().frameOnly, false); assert.ok(h.controller.getSnapshot().error);
+    h.controller.dispose();
+  }
+  const h = harness({ inspectBrowser: async () => { throw new Error('must not probe large file'); }, extractBrowserFrame: async () => new Blob() });
+  const oversized = Object.defineProperty(file(), 'size', { value: 100_000_001 });
+  await h.controller.selectSource(oversized); assert.match(h.controller.getSnapshot().error!, /100,000,000/); h.controller.dispose();
+});
+
+test('native fallback cancellation/source switch cannot resurrect source; late capture keeps previous PNG', async () => {
+  const probe = deferred<{ duration: number; width: number; height: number }>();
+  const capture = deferred<Blob>();
+  let signal: AbortSignal | undefined;
+  const h = harness({ inspect: async () => { throw new VideoInspectionError('codec'); },
+    inspectBrowser: async (_f, s) => { signal = s; return probe.promise; }, extractBrowserFrame: () => capture.promise });
+  const pending = h.controller.selectSource(file());
+  await new Promise(resolve => setImmediate(resolve));
+  h.controller.cancel(); assert.equal(signal?.aborted, true);
+  probe.resolve({ duration: 40, width: 2160, height: 3842 }); await pending;
+  assert.equal(h.controller.getSnapshot().duration, 0);
+  await h.controller.selectSource(file('new.mp4'));
+  const task = h.controller.extractFrame(command(h.controller, 'late-png'), 1);
+  await h.controller.selectSource(file('third.mp4'));
+  capture.resolve(new Blob(['late'], { type: 'image/png' })); await task;
+  assert.equal(h.controller.createFrameDownload(), null); assert.equal(h.controller.getOperationStatus('late-png'), 'stale');
+  h.controller.dispose();
+});
+
+test('failed/cancelled native capture preserves previous PNG and meaningful browser error', async () => {
+  let fail = false;
+  const pending = deferred<Blob>();
+  const h = harness({ inspect: async () => { throw new VideoInspectionError('codec'); },
+    inspectBrowser: async () => ({ duration: 40, width: 2160, height: 3842 }),
+    extractBrowserFrame: async () => { if (fail) throw new Error('Local video decoding timed out.'); return pending.promise; } });
+  await h.controller.selectSource(file()); pending.resolve(new Blob(['good'], { type: 'image/png' }));
+  await h.controller.extractFrame(command(h.controller, 'good'), 0);
+  const good = h.controller.createFrameDownload()!.blob; fail = true;
+  await h.controller.extractFrame(command(h.controller, 'failed'), 39.999);
+  assert.equal(h.controller.createFrameDownload()!.blob, good); assert.match(h.controller.getSnapshot().error!, /timed out.*previous PNG/);
+  h.controller.dispose();
+});
+
+test('processor infrastructure failure cannot silently downgrade a supported source to Frame-only', async () => {
+  let probes = 0;
+  const h = harness({ inspect: async () => { throw new Error('The local video processor could not be loaded.'); },
+    inspectBrowser: async () => { probes++; return metadata; }, extractBrowserFrame: async () => new Blob() });
+  await h.controller.selectSource(file());
+  assert.equal(probes, 0); assert.equal(h.controller.getSnapshot().canCut, false);
+  assert.match(h.controller.getSnapshot().error!, /processor could not be loaded/); h.controller.dispose();
+});
+
+test('late native probe after source replacement is stale; cancelled native frame retains previous PNG', async () => {
+  const late = deferred<{ duration: number; width: number; height: number }>();
+  const pending = deferred<Blob>();
+  let probes = 0, captures = 0;
+  const h = harness({ inspect: async () => { throw new VideoInspectionError('codec'); },
+    inspectBrowser: async () => ++probes === 1 ? late.promise : { duration: 40, width: 2160, height: 3842 },
+    extractBrowserFrame: async () => ++captures === 1 ? new Blob(['good'], { type: 'image/png' }) : pending.promise });
+  const first = h.controller.selectSource(file('first.mp4'), 'old-probe');
+  await new Promise(resolve => setImmediate(resolve));
+  await h.controller.selectSource(file('second.mp4'), 'new-probe');
+  late.resolve({ duration: 1, width: 640, height: 360 }); await first;
+  assert.equal(h.controller.getSnapshot().duration, 40); assert.equal(h.controller.getOperationStatus('old-probe'), 'stale');
+  await h.controller.extractFrame(command(h.controller, 'first-png'), 0);
+  const good = h.controller.createFrameDownload()!.blob;
+  const task = h.controller.extractFrame(command(h.controller, 'cancel-native'), 1);
+  h.controller.cancel(); pending.resolve(new Blob(['late'], { type: 'image/png' })); await task;
+  assert.equal(h.controller.getOperationStatus('cancel-native'), 'cancelled'); assert.equal(h.controller.createFrameDownload()!.blob, good);
+  h.controller.dispose();
 });

@@ -134,6 +134,7 @@ export class VideoScissorsRemoteAdapter {
       this.latest = c.operationId;
       return Promise.resolve(result('completed'));
     }
+    if ((c.kind === 'cut' || c.kind === 'cover') && !before.canCut) return Promise.resolve(result('failed'));
     if (c.kind === 'cut') {
       try { validateVideoClips(c.clips, before.duration); } catch { return Promise.resolve(result('failed')); }
       if (!this.controller.setSegments(c.clips, c.generation)) return Promise.resolve(result('stale'));
