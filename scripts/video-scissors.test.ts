@@ -387,3 +387,51 @@ test('audio normalization preserves delayed onset and pads each sliced interval'
     assert.equal(rms(4.1 - start, 5.9 - start), 0, 'trailing gap must be padded through the clip end');
   }
 });
+
+test('PNG lifetime is independent of MP4 history and fenced on failure, cancellation and source replacement', async () => {
+  let pending: ReturnType<typeof deferred<Blob>> | null = null, calls = 0;
+  const h = harness({ extractFrame: async () => { calls++; return pending ? pending.promise : new Blob(['png'], { type: 'image/png' }); } });
+  const c = h.controller; await select(c);
+  c.setSegments([{ start: 1, end: 2 }]); await c.cut(command(c, 'cut-before-png'));
+  const mp4 = c.createDownload(), before = c.getSnapshot();
+  const request = command(c, 'png'); const first = c.extractFrame(request, 1.25);
+  assert.equal(c.extractFrame(request, 1.25), first); await first;
+  const stable = c.createFrameDownload(), frameUrl = c.getSnapshot().frameUrl;
+  assert.equal(calls, 1); assert.equal(stable?.blob.type, 'image/png');
+  assert.equal(c.getSnapshot().previewUrl, before.previewUrl);
+  assert.deepEqual(c.getSnapshot().segments, before.segments);
+  assert.deepEqual(c.createDownload(), mp4); assert.equal(c.getSnapshot().canUndo, true);
+  for (const time of [-1, NaN, Infinity, 300]) await c.extractFrame(command(c, `invalid-${time}`), time);
+  assert.deepEqual(c.createFrameDownload(), stable);
+  await c.extractFrame({ ...command(c, 'stale'), version: 0 }, 1); assert.equal(calls, 1);
+  pending = deferred<Blob>(); const failed = c.extractFrame(command(c, 'failed'), 1);
+  pending.reject(Error('private error')); await failed; assert.deepEqual(c.createFrameDownload(), stable);
+  pending = deferred<Blob>(); const cancelled = c.extractFrame(command(c, 'cancel-png'), 2);
+  c.cancel(); pending.resolve(new Blob(['late'], { type: 'image/png' })); await cancelled;
+  assert.equal(c.getOperationStatus('cancel-png'), 'cancelled'); assert.deepEqual(c.createFrameDownload(), stable);
+  assert.equal(c.undo(command(c, 'undo-after-png')), true);
+  assert.equal(c.createDownload(), null); assert.deepEqual(c.createFrameDownload(), stable);
+  pending = deferred<Blob>(); const stale = c.extractFrame(command(c, 'replace'), 3);
+  await c.selectSource(file('second.mp4')); pending.resolve(new Blob(['late'], { type: 'image/png' })); await stale;
+  assert.equal(c.createFrameDownload(), null); assert.equal(c.getSnapshot().frameUrl, null);
+  assert.ok(h.revoked.includes(frameUrl!)); c.dispose();
+});
+
+test('successful PNG replacement releases its prior URL; busy and empty outputs keep stable media', async () => {
+  let output = new Blob(['png'], { type: 'image/png' });
+  const h = harness({ extractFrame: async () => output });
+  const c = h.controller; await select(c);
+  await c.extractFrame(command(c, 'png-one'), 1);
+  const previous = c.getSnapshot().frameUrl!;
+  const nextCommand = command(c, 'png-two');
+  const task = c.extractFrame(nextCommand, 2);
+  await c.extractFrame(command(c, 'busy-frame'), 3);
+  assert.equal(c.getOperationStatus('busy-frame'), undefined);
+  await task; assert.ok(h.revoked.includes(previous));
+  const current = c.getSnapshot().frameUrl!, stable = c.createFrameDownload()?.blob;
+  output = new Blob([], { type: 'image/png' });
+  await c.extractFrame(command(c, 'empty-png'), 3);
+  assert.equal(c.getOperationStatus('empty-png'), 'failed');
+  assert.equal(c.createFrameDownload()?.blob, stable); assert.equal(c.getSnapshot().frameUrl, current);
+  c.dispose(); assert.ok(h.revoked.includes(current)); assert.equal(c.createFrameDownload(), null);
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from 'react';
 import { ToolsLayout } from '@/components/ToolsLayout';
 import {
   Scissors,
@@ -21,6 +22,10 @@ import {
 } from 'lucide-react';
 
 export interface VideoScissorsViewProps {
+  frameUrl: string | null;
+  frameTimeSeconds: number | null;
+  onCapture: (timeSeconds: number) => void;
+  onDownloadFrame: () => void;
   fileName: string | null;
   duration: number;
   originalUrl: string | null;
@@ -53,6 +58,7 @@ function formatSeconds(sec: number): string {
 }
 
 export default function VideoScissorsView({
+  frameUrl, frameTimeSeconds, onCapture, onDownloadFrame,
   fileName,
   duration,
   originalUrl,
@@ -71,6 +77,8 @@ export default function VideoScissorsView({
   onUndo,
   onDownload,
 }: VideoScissorsViewProps) {
+  const [frameTime, setFrameTime] = useState('0');
+  const previewRef = useRef<HTMLVideoElement>(null);
   const activePreviewSrc = previewUrl || originalUrl;
   const isEditedPreview = Boolean(previewUrl);
 
@@ -242,6 +250,7 @@ export default function VideoScissorsView({
             <div className="rounded-2xl overflow-hidden bg-black border border-zinc-800">
               {activePreviewSrc ? (
                 <video
+                  ref={previewRef}
                   key={activePreviewSrc}
                   src={activePreviewSrc}
                   controls
@@ -290,6 +299,33 @@ export default function VideoScissorsView({
               </div>
             </div>
           </div>
+
+          <section className="space-y-4 pt-4 border-t border-zinc-200" aria-label="Original source frame export">
+            <h2 className="text-lg font-bold text-zinc-900">Export PNG Frame</h2>
+            <p className="text-sm text-zinc-600">Capture from the original source, even after cutting. Enter seconds or scrub the original preview. PNG stays in this browser; no ChatGPT connection needed.</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <label htmlFor="frame-time">Original-source time (seconds)</label>
+              <input id="frame-time" type="number" min="0" max={duration || undefined} step="0.001"
+                value={frameTime} onChange={e => setFrameTime(e.target.value)} disabled={busy}
+                className="w-28 p-2 border rounded-lg" />
+              <button type="button" disabled={busy || !duration || isEditedPreview} className="p-2 border rounded-lg disabled:opacity-40"
+                onClick={() => {
+                  const video = previewRef.current;
+                  if (video) setFrameTime(String(video.currentTime));
+                }}>Use Original Preview Time</button>
+              <button type="button" onClick={() => onCapture(frameTime.trim() ? Number(frameTime) : NaN)} disabled={busy || !duration}
+                className="p-2 rounded-lg bg-orange-600 text-white disabled:opacity-40">Capture Current Frame</button>
+              <button type="button" onClick={onDownloadFrame} disabled={!frameUrl}
+                className="p-2 rounded-lg bg-emerald-600 text-white disabled:opacity-40">Download PNG</button>
+            </div>
+            <p className="text-xs text-zinc-500">Uses the first source frame at or after the requested time, within one frame period for constant frame rate sources. At EOF the last decoded frame is used. Variable frame rate gaps or audio-only tails may differ.</p>
+            {frameUrl && <figure>
+              {/* Local object URL only; Next image optimization would send media to a server. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={frameUrl} alt={`Extracted original-source frame at ${frameTimeSeconds?.toFixed(3)} seconds`} className="max-h-[440px] max-w-full rounded-xl" />
+              <figcaption className="text-sm text-zinc-600">Requested original-source time: {frameTimeSeconds?.toFixed(3)}s. Original resolution PNG.</figcaption>
+            </figure>}
+          </section>
 
           {/* Step 3: Planned Clip Segments */}
           <div className="space-y-4 pt-4 border-t border-zinc-200">
@@ -488,7 +524,7 @@ export default function VideoScissorsView({
                 {busy ? (
                   <>
                     <Loader2 className="animate-spin" size={20} />
-                    <span>Processing Cut...</span>
+                    <span>Processing…</span>
                   </>
                 ) : (
                   <>
@@ -592,7 +628,7 @@ export default function VideoScissorsView({
                 <Download className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-zinc-900">Explicit Downloads:</strong>{' '}
-                  No automatic downloads except upon your explicit &ldquo;Download MP4&rdquo; click.
+                  Downloads start only when you click Download MP4 or Download PNG.
                 </div>
               </div>
             </div>

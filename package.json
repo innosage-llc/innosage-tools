@@ -1,6 +1,6 @@
 {
   "name": "innosage-tools",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "type": "module",
   "private": true,
   "scripts": {
@@ -22,6 +22,7 @@
     "test:visual-remix-motion-browser": "node --test scripts/visual-remix-motion-browser.test.mjs",
     "test:visual-remix-editor": "node --test scripts/visual-remix-editor.test.mjs",
     "test:meeting-fixer": "node --experimental-strip-types --test scripts/meeting-fixer-progress.test.ts",
+    "test:video-scissors-frames:browser": "node scripts/video-scissors-frames.e2e.mjs",
     "test:video-scissors": "node --experimental-strip-types --test scripts/video-scissors.test.ts",
     "test:video-scissors-remote": "node --experimental-strip-types --test scripts/video-scissors-remote.test.ts",
     "test:video-scissors-mcp": "npm --prefix workers/video-scissors-mcp test",

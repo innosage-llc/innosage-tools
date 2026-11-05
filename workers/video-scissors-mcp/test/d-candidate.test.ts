@@ -241,7 +241,7 @@ test('D official OAuth/MCP uses one project SQLite DO, and command is claimed on
     const listText = await listed.text();
     assert.equal(listed.status, 200, listText);
     const listedData = JSON.parse(listText);
-    assert.deepEqual(listedData.result.tools.map((tool: { name: string }) => tool.name).sort(), ['cancel', 'cut', 'getproject', 'status', 'undo']);
+    assert.deepEqual(listedData.result.tools.map((tool: { name: string }) => tool.name).sort(), ['cancel', 'cut', 'extractframe', 'getproject', 'status', 'undo']);
     for (const tool of listedData.result.tools) assert.deepEqual(tool.securitySchemes, tool._meta?.securitySchemes, JSON.stringify(tool));
 
     const cut = await f.rpc(tokens.access_token, 'tools/call', { name: 'cut', arguments: {
@@ -587,5 +587,52 @@ test('routing rejects forged, expired, and wrong-project wake tickets; browser b
     const forged = { ...auth, project: 'f'.repeat(64) };
     assert.deepEqual(await (await f.json('/remote/sync', { auth: forged, metadata })).json(), { ok: false, consented: false },
       'browser-supplied project does not select or authorize a DO');
+  } finally { await f.mf.dispose(); }
+});
+
+
+test('D extractframe uses strict control fields and owned queued/claimed/completed receipts', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const { p, auth, tokens } = await f.link(), state = await stateFor(f, p.project);
+    const input = { operationId: 'png', generation: 1, version: 1, timeSeconds: 12.5 };
+    const call = async (args: unknown) => rpcData(await f.rpc(tokens.access_token, 'tools/call', { name: 'extractframe', arguments: args })) as Promise<{ result: { isError?: boolean; content: Array<{ text: string }> } }>;
+    for (const key of ['fileName', 'path', 'blob', 'frame', 'url', 'media']) {
+      assert.equal((await call({ ...input, [key]: 'PRIVATE' })).result.isError, true);
+    }
+    for (const timeSeconds of [-1, 300]) assert.equal((await call({ ...input, timeSeconds })).result.isError, true);
+    assert.deepEqual(JSON.parse((await call({ ...input, timeSeconds: 30 })).result.content[0].text), { error: 'STALE_OR_REJECTED' });
+    assert.equal(JSON.parse((await call(input)).result.content[0].text).state, 'queued');
+    assert.equal(JSON.parse((await call(input)).result.content[0].text).state, 'queued');
+    assert.deepEqual(await state.claim({ ...auth, credential: '00'.repeat(32) }, metadata), null);
+    assert.equal((await state.claim(auth, metadata))?.kind, 'extractframe');
+    assert.equal((await state.status(auth, 'png'))?.state, 'claimed');
+    assert.equal(await state.claim(auth, metadata), null);
+    const done = { ...metadata, version: 3 };
+    assert.equal(await state.report(auth, 'png', 'completed', done), true);
+    assert.equal((await state.status(auth, 'png'))?.state, 'completed');
+    await state.sync(auth, done);
+    assert.equal(await state.admit(auth, { ...input, operationId: 'stale', kind: 'extractframe' }), null);
+    const next = { ...input, operationId: 'cancel-png', version: 3, kind: 'extractframe' };
+    assert.equal((await state.admit(auth, next))?.state, 'queued');
+    assert.equal(await state.cancel(auth, 'cancel-png'), true);
+    assert.equal(await state.claim(auth, done), null);
+    assert.equal(await state.revoke(auth), true);
+    assert.equal(await state.admit(auth, { ...next, operationId: 'revoked' }), null);
+  } finally { await f.mf.dispose(); }
+});
+
+
+test('D extractframe denies missing authorization and cannot outlive project lease', { timeout: 30_000 }, async () => {
+  const f = await world();
+  try {
+    const { p, auth } = await f.link(), state = await stateFor(f, p.project);
+    const input = { operationId: 'unauth-png', generation: 1, version: 1, timeSeconds: 1 };
+    const denied = await f.rpc('', 'tools/call', { name: 'extractframe', arguments: input });
+    assert.equal(denied.status, 401);
+    assert.equal(await state.status(auth, input.operationId), null);
+    await state.expireLeaseForTest(p.project, p.epoch);
+    assert.equal(await state.admit(auth, { ...input, kind: 'extractframe' }), null);
+    assert.equal(await state.cancellation(auth, input.operationId), true);
   } finally { await f.mf.dispose(); }
 });

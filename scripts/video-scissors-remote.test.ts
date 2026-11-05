@@ -4,10 +4,10 @@ import { VideoScissorsController, type VideoScissorsRenderer } from '../lib/vide
 import { VideoScissorsRemoteAdapter, parseRemoteCommand, type RemoteCommand, type RemoteTransport } from '../lib/video-scissors-remote.ts';
 import { VideoScissorsRemoteBrowser } from '../lib/video-scissors-remote-browser.ts';
 
-async function fixture(render?: VideoScissorsRenderer['render']) {
+async function fixture(render?: VideoScissorsRenderer['render'], extractFrame?: VideoScissorsRenderer['extractFrame']) {
   let count = 0;
   const controller = new VideoScissorsController({
-    renderer: { inspect: async () => ({ duration: 30, width: 64, height: 64, framesPerSecond: 10, videoCodec: 'h264', audioCodec: 'aac' }),
+    renderer: { extractFrame, inspect: async () => ({ duration: 30, width: 64, height: 64, framesPerSecond: 10, videoCodec: 'h264', audioCodec: 'aac' }),
       render: render ?? (async () => { count++; return new Blob(['synthetic']); }) },
     createObjectURL: () => 'blob:synthetic', revokeObjectURL: () => {},
   });
@@ -401,4 +401,86 @@ test('DO wake committed between claim and response is checked when remote execut
     f.controller.dispose();
     restoreBrowserGlobals();
   }
+});
+
+test('extractframe parser rejects media and nonfinite timestamps; frame completion retains MP4 Undo target', async () => {
+  const f = await fixture();
+  await f.adapter.execute(f.cmd('edit'));
+  const m = f.adapter.metadata();
+  const input = { operationId: 'frame', generation: m.generation, version: m.version, kind: 'extractframe', timeSeconds: 1.25 };
+  assert.deepEqual(parseRemoteCommand(input), input);
+  for (const timeSeconds of [-1, NaN, Infinity, 300, '1']) assert.throws(() => parseRemoteCommand({ ...input, timeSeconds }));
+  for (const key of ['filename', 'fileName', 'path', 'blob', 'frame', 'url', 'media']) assert.throws(() => parseRemoteCommand({ ...input, [key]: 'PRIVATE' }));
+  // Fixture intentionally lacks extraction: a failed frame cannot move the Undo target.
+  assert.equal((await f.adapter.execute(input)).status, 'failed');
+  assert.equal(f.adapter.metadata().latestOperationId, 'edit');
+  assert.equal((await f.adapter.localUndo('undo')).status, 'completed');
+  await f.adapter.dispose(); f.controller.dispose();
+});
+
+
+test('successful remote PNG is idempotent, version-fenced and leaves MP4 Undo target intact', async () => {
+  let frames = 0;
+  const f = await fixture(undefined, async () => { frames++; return new Blob(['png'], { type: 'image/png' }); });
+  await f.adapter.execute(f.cmd('edit-png'));
+  const m = f.adapter.metadata();
+  const input = { operationId: 'png-ok', generation: m.generation, version: m.version, kind: 'extractframe', timeSeconds: 1 };
+  const task = f.adapter.execute(input);
+  assert.equal(f.adapter.execute(input), task); assert.equal((await task).status, 'completed');
+  assert.equal(frames, 1); assert.equal(f.adapter.metadata().latestOperationId, 'edit-png');
+  await assert.rejects(f.adapter.execute({ ...input, timeSeconds: 2 }), /ID_CONFLICT/);
+  for (const change of [{ generation: 0 }, { version: 0 }]) {
+    assert.equal((await f.adapter.execute({ ...input, ...change, operationId: 'stale-'+Object.keys(change)[0] })).status, 'stale');
+  }
+  assert.equal(frames, 1);
+  const stable = f.controller.createFrameDownload()?.blob;
+  f.transport.canComplete = () => false; // Model expired authority before a delayed timer fires.
+  const current = f.adapter.metadata();
+  assert.equal((await f.adapter.execute({ ...input, operationId: 'expired-at-commit', version: current.version })).status, 'cancelled');
+  assert.equal(f.controller.createFrameDownload()?.blob, stable);
+  assert.equal((await f.adapter.localUndo('undo-png')).status, 'completed');
+  assert.ok(f.controller.createFrameDownload()); await f.adapter.dispose(); f.controller.dispose();
+});
+
+test('disconnect and lease expiry cancel an owned frame before late PNG completion', async () => {
+  const restore = installFakeBrowserGlobals();
+  try {
+    for (const scenario of ['disconnect', 'expiry']) {
+      TestWebSocket.instances.length = 0;
+      let resolve!: (blob: Blob) => void;
+      const pending = new Promise<Blob>(yes => { resolve = yes; });
+      let calls = 0;
+      const f = await fixture(undefined, async () => ++calls === 1 ? new Blob(['good'], { type: 'image/png' }) : pending);
+      let s = f.controller.getSnapshot();
+      await f.controller.extractFrame({ operationId: 'good-frame', sourceGeneration: s.sourceGeneration, version: s.version }, 0);
+      const stable = f.controller.createFrameDownload()?.blob;
+      const expiresAt = Date.now() + (scenario === 'expiry' ? 250 : 60_000);
+      let claimed = false;
+      const remote = new VideoScissorsRemoteBrowser(f.controller, async input => {
+        const path = String(input);
+        if (path === '/remote/capabilities') return Response.json({ enabled: true, wakeup: 'websocket' });
+        if (path === '/remote/projects') return Response.json({ project: 'synthetic', epoch: 1, credential: 'synthetic', proof: 'synthetic', proofExpiresAt: expiresAt, expiresAt });
+        if (path === '/remote/bridge/join') return Response.json({ proof: 'a'.repeat(64), expiresAt });
+        if (path === '/remote/sync' || path === '/remote/report' || path === '/remote/revoke') return Response.json({ ok: true });
+        if (path === '/remote/cancellation') return Response.json({ stop: false });
+        if (path === '/remote/claim') {
+          if (claimed) return Response.json({ command: null });
+          claimed = true; s = f.controller.getSnapshot();
+          return Response.json({ command: { operationId: 'owned-frame', generation: s.sourceGeneration, version: s.version, kind: 'extractframe', timeSeconds: 1 } });
+        }
+        throw Error(path);
+      });
+      try {
+        await remote.connect();
+        await waitFor(() => TestWebSocket.instances[0]?.readyState === TestWebSocket.OPEN, 'socket');
+        TestWebSocket.instances[0].wake();
+        await waitFor(() => remote.adapter.activeOperationId() === 'owned-frame', 'frame starts');
+        if (scenario === 'disconnect') await remote.disconnect();
+        else await waitFor(() => !f.controller.getSnapshot().busy, 'lease cancels frame');
+        assert.equal(f.controller.getOperationStatus('owned-frame'), 'cancelled');
+        resolve(new Blob(['late'], { type: 'image/png' })); await pause(5);
+        assert.equal(f.controller.createFrameDownload()?.blob, stable);
+      } finally { resolve(new Blob(['late'], { type: 'image/png' })); await remote.dispose(); await f.adapter.dispose(); f.controller.dispose(); }
+    }
+  } finally { restore(); }
 });

@@ -181,7 +181,7 @@ export class ProjectStateDO extends DurableObject<DEnv> {
       if (!project) return null;
       let currentMetadata: RemoteMetadata;
       try { currentMetadata = parseRemoteMetadata(JSON.parse(project.metadata)); } catch { return null; }
-      if (command.generation !== currentMetadata.generation || command.version !== currentMetadata.version ||
+      if ((command.kind === 'extractframe' && command.timeSeconds >= currentMetadata.duration) || command.generation !== currentMetadata.generation || command.version !== currentMetadata.version ||
         (command.kind === 'undo' && (!currentMetadata.canUndo || command.targetOperationId !== currentMetadata.latestOperationId))) return null;
       const existing = this.row<CommandRow>('SELECT operation_id,payload_hash,payload,state,deadline,cancel_requested,result_metadata FROM commands WHERE operation_id=?', command.operationId);
       if (existing) return existing.payload_hash === payloadHash ? { operationId: existing.operation_id, state: existing.state } : null;

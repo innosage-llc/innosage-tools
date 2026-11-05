@@ -15,6 +15,23 @@ async function writeSource(ffmpeg: FFmpeg, file: File, signal: AbortSignal): Pro
 }
 
 export const videoScissorsRenderer: VideoScissorsRenderer = {
+  extractFrame(file, timeSeconds, metadata, signal) {
+    return withFfmpeg(signal, async (ffmpeg) => {
+      await writeSource(ffmpeg, file, signal);
+      // Decode from the source origin (not a keyframe seek or edited output).
+      // Extend the last decoded frame through EOF, including variable-rate tails
+      // or audio longer than video. Only one output frame is encoded.
+      const time = Math.min(timeSeconds, metadata.duration);
+      const code = await ffmpeg.exec(['-hide_banner', '-i', PROBE_INPUT,
+        '-ss', time.toFixed(6), '-map', '0:V:0', '-vf', 'tpad=stop_mode=clone:stop_duration=300', '-frames:v', '1',
+        '-fps_mode', 'passthrough', '-c:v', 'png', 'frame.png'], -1, { signal });
+      signal.throwIfAborted();
+      if (code !== 0) throw new Error('Frame extraction failed.');
+      const data = await ffmpeg.readFile('frame.png', undefined, { signal });
+      if (typeof data === 'string' || !data.byteLength) throw new Error('Empty PNG');
+      return new Blob([data.slice()], { type: 'image/png' });
+    });
+  },
   inspect(file, signal) {
     return withFfmpeg(signal, async (ffmpeg, logs) => {
       await writeSource(ffmpeg, file, signal);
