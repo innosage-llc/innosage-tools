@@ -1,0 +1,33 @@
+// Optional diagnostic, entered through native Chrome DevTools in each approved
+// candidate tab. No credentials, headers, URLs or response contents are retained.
+// No requests are created here. The original response and all arguments remain
+// unchanged. Decoded body sizes are not transport/wire or billing bytes.
+window.measure142 = { requests: [], started: performance.now() };
+window.originalFetch142 = window.fetch;
+window.fetch = async function (input, init) {
+  if (new URL(input instanceof Request ? input.url : input, location.href).origin !== 'https://www.googleapis.com') {
+    return originalFetch142(input, init);
+  }
+  const row = {
+    method: init?.method || 'GET',
+    sent: typeof init?.body === 'string' ? new TextEncoder().encode(init.body).length : (init?.body?.size || 0),
+    received: null,
+    status: null,
+    ms: null
+  };
+  measure142.requests.push(row);
+  const started = performance.now();
+  try {
+    const response = await originalFetch142(input, init);
+    row.status = response.status;
+    response.clone().arrayBuffer().then(bytes => {
+      row.received = bytes.byteLength;
+      row.ms = performance.now() - started;
+    });
+    return response;
+  } catch (error) {
+    row.status = 'NETWORK_ERROR';
+    row.ms = performance.now() - started;
+    throw error;
+  }
+};

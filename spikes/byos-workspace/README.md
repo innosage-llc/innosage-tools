@@ -28,9 +28,10 @@ entry gate: an existing account/client/folder binding is mandatory. It does not
 authorize, create an identity/folder, export tokens or perform a request on open.
 Use only the original approved browser context and the existing transport build
 injection. The default loopback UI remains mock-only. The separate --real candidate build
-uses this binding and the existing OAuth/transport flow; its two-profile wiring
-is qualified only with intercepted Google endpoints. Actual provider AC4/AC8
-remains blocked on the original approved context/fixture, not a live PASS.
+uses this binding and the existing OAuth/transport flow. Subsequent Founder
+authorization enabled actual two-profile Drive validation on staging. See
+[LIVE-REPORT.md](LIVE-REPORT.md) for exact full-record bidirectional evidence,
+measured costs, the real native-budget failure and all remaining limitations.
 
 ## Run and evidence
 
