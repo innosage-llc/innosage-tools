@@ -122,4 +122,10 @@ assert.match(
   /<link rel="canonical" href="https:\/\/innosage.co\/tools\/video-scissors"/,
 );
 assert.match(videoScissors, /Export PNG Frame/);
+assert.match(
+  videoScissors,
+  /href="https:\/\/video-scissors-mcp-d\.innosage-draft\.workers\.dev\/tools\/video-scissors"/,
+  "Public Video Scissors must link to the separate MCP-enabled production editor.",
+);
+
 console.log("Video Scissors discovery, frame export and canonical verified.");

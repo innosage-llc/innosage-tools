@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 
 export interface VideoScissorsViewProps {
+  remoteAvailable: boolean;
   frameOnly: boolean;
   canCut: boolean;
   frameUrl: string | null;
@@ -60,6 +61,7 @@ function formatSeconds(sec: number): string {
 }
 
 export default function VideoScissorsView({
+  remoteAvailable,
   frameOnly, canCut, frameUrl, frameTimeSeconds, onCapture, onDownloadFrame,
   fileName,
   duration,
@@ -137,6 +139,25 @@ export default function VideoScissorsView({
             Cut and splice MP4 video clips locally with sub-second precision. Source and output never leave your browser.
           </p>
         </div>
+
+        {/* On static Pages this links to the distinct same-origin MCP-controlled
+            editor. Users reselect local media there; files are never transferred. */}
+        {!remoteAvailable && (
+          <aside className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 flex flex-col sm:flex-row sm:items-center gap-4" aria-label="ChatGPT remote-control option">
+            <div className="flex-1 space-y-1">
+              <p className="font-semibold text-zinc-900">Want to control Video Scissors from ChatGPT?</p>
+              <p className="text-sm text-zinc-600">
+                Open the MCP-enabled editor in a separate tab and select your video there again.
+                Your video stays local; the two tabs do not share media.
+              </p>
+            </div>
+            <a href="https://video-scissors-mcp-d.innosage-draft.workers.dev/tools/video-scissors"
+              target="_blank" rel="noopener noreferrer"
+              className="shrink-0 rounded-xl bg-orange-600 hover:bg-orange-700 px-4 py-2 text-sm font-semibold text-white text-center">
+              Open ChatGPT-enabled editor
+            </a>
+          </aside>
+        )}
 
         {/* Main Card Container */}
         <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-8">
