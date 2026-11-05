@@ -1,0 +1,40 @@
+{
+  "state": "halted",
+  "reason": "TRANSPORT_UNCERTAIN: SYNC_BUDGET_EXHAUSTED",
+  "pagesWithInput": 26,
+  "pagesVerified": 0,
+  "zLastInputEpochMs": 1793194188476.9001,
+  "safeToCloseEpochMs": null,
+  "zToSafeCloseMs": null,
+  "syncs": 1,
+  "verifies": 0,
+  "requests": 302,
+  "bytesUp": 352347,
+  "bytesDown": 1194966,
+  "transportHalted": "SYNC_BUDGET_EXHAUSTED",
+  "transportActive": 0,
+  "singleSampleOnly": true,
+  "firstInputEpochMs": 1793194163476.4001,
+  "zInputToDurableMs": 5035.799999952316,
+  "haltEpochMs": 1793194348488.2,
+  "zToHaltMs": 160011.2998046875,
+  "inputCadenceRangeMs": [
+    998.89990234375,
+    1001.199951171875
+  ],
+  "aToYLocalACKRangeMs": [
+    11.599999904632568,
+    29.799999952316284
+  ],
+  "requestStatuses": {
+    "200": 300,
+    "412": 2
+  },
+  "requestMethods": {
+    "GET": 246,
+    "POST": 3,
+    "PUT": 53
+  },
+  "lastRequestEndedEpochMs": 1793194348818,
+  "requestsStartedAfterHalt": 0
+}
