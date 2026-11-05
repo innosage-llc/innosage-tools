@@ -10,22 +10,37 @@ it. Old object URLs are revoked on replacement/source change/disposal.
 
 ## Decode decision
 
-Use the existing FFmpeg WASM runtime and original File, not a second production
-Canvas/video decoder. Canvas would avoid PNG encoding in WASM but needs separate
-media-element load/seek/frame-ready synchronization and codec/rotation semantics.
-The editor already depends on FFmpeg inspection and decoding, with isolated worker
-termination on abort. Extraction uses the same busy/cancel fence, no new package,
-no service and no persistent filesystem. Decode from source origin with output
+H.264/AAC sources within the existing Cut limits use the existing FFmpeg WASM
+inspector and PNG renderer unchanged. Decode from source origin with output
 seeking, select first real video (`0:V:0`, excluding attached pictures), encode one
 PNG without scaling. Extend the final decoded frame across EOF with `tpad` so a
 valid source-duration timestamp also works in a variable-rate or long-audio tail.
+The WASM convention remains the first frame at/after source time, or the final
+frame at EOF. Do not claim one-frame precision across variable-rate gaps or
+audio-only tails.
 
-The convention is the first frame at/after the requested source time, or the last
-frame at EOF. Where constant-rate video spans the requested time, error is at
-most one source frame period. Do not claim that bound across audio-only tails
-or variable-rate gaps; the next decoded presentation timestamp can
-be farther away. Timestamps must be finite, nonnegative and strictly before source
-duration. Source constraints remain H.264/AAC MP4, 100 MB, 300 s, 1080p/30 fps.
+If media inspection or strict edit validation fails (processor loading failures
+retain their actionable errors), a separate local browser probe
+loads the original File through a temporary object URL and waits for decoded
+video data. It accepts browser-playable MP4s only, with finite positive duration
+up to 300 seconds, positive dimensions within 4096 × 4096 (16,777,216 pixels),
+and the same 100,000,000-byte file cap. These are **Frame-only** sources: Cut,
+segments, MP4 output and cover rendering stay blocked in the UI and controller,
+including remote commands. Browser APIs do not identify codec, frame rate or
+audio support; those fields remain unknown and never grant Cut eligibility.
+HEVC support depends on the browser/OS. An unsupported or damaged source gets
+an actionable browser-decode error, not a blanket corruption diagnosis.
+
+Frame-only PNG capture uses a muted hidden video, waits for seek completion and
+HAVE_CURRENT_DATA, then draws at original videoWidth/videoHeight and encodes
+Canvas PNG. It uses the browser's presentation at the requested time; it does
+not claim the WASM first-frame-at/after convention. No playback, audio decoding
+requirement, transcoding, remote assets or new service is introduced. All video
+object URLs are released after success/error/abort; loading, seeking and PNG
+encoding share a 20-second bound. Cancellation/source replacement prevents late
+publication. Previous PNG and MP4 history retain the existing protections.
+Timestamps must be finite, nonnegative and strictly before source duration.
+Cut remains H.264/AAC MP4, 100 MB, 300 s, 1080p/30 fps.
 
 Run `npm run prepare:video-scissors`, `npm run build`, then
 `node scripts/video-scissors-frames.e2e.mjs` (desktop Chrome, or set
@@ -33,7 +48,15 @@ Run `npm run prepare:video-scissors`, `npm run build`, then
 saved. Per-frame grayscale identifies original frame numbers; keyframes are one
 second apart. Evidence contains dimensions, frame identity, source hash, browser
 version and bounded request counts under ignored `.deploy/video-scissors-frames/`.
-No media payload or credential is retained there. Unit tests cover late completion,
+The macOS fixture generator (`node scripts/video-scissors-hevc-fixture.mjs`)
+uses `/usr/bin/avconvert` on the public demo for a 640×360 HEVC/AAC fixture, and
+AVAssetWriter for an actual 2160×3842 silent HEVC fixture with changing frames.
+The browser test generates these synthetic files under ignored
+`.deploy/video-scissors-hevc/`; no user media or credentials are used. It verifies
+actual editor upload → Frame-only → PNG preview/download with PNG signature and
+original dimensions, disabled Cut, corrupt rejection, and native seek at zero,
+one second and near EOF. Audio behavior is separate: AAC and no-audio sources
+both support PNG, neither native probe establishes Cut eligibility. Unit tests cover late completion,
 source switch, cancellation/failure, URL lifecycle, stale version and MP4 history.
 
 ## D control and release qualification

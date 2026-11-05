@@ -55,6 +55,8 @@ export default function VideoScissorsApp() {
   return (
     <>
     <VideoScissorsView
+      frameOnly={snapshot.frameOnly}
+      canCut={snapshot.canCut}
       fileName={snapshot.fileName}
       duration={snapshot.duration}
       originalUrl={snapshot.originalUrl}

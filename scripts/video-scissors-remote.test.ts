@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { VideoScissorsController, type VideoScissorsRenderer } from '../lib/video-scissors.ts';
+import { VideoInspectionError, VideoScissorsController, type VideoScissorsRenderer } from '../lib/video-scissors.ts';
 import { VideoScissorsRemoteAdapter, parseRemoteCommand, type RemoteCommand, type RemoteTransport } from '../lib/video-scissors-remote.ts';
 import { VideoScissorsRemoteBrowser } from '../lib/video-scissors-remote-browser.ts';
 
@@ -483,4 +483,33 @@ test('disconnect and lease expiry cancel an owned frame before late PNG completi
       } finally { resolve(new Blob(['late'], { type: 'image/png' })); await remote.dispose(); await f.adapter.dispose(); f.controller.dispose(); }
     }
   } finally { restore(); }
+});
+
+test('Frame-only remote Cut/cover fail without render; extractframe retains ID, status and metadata privacy', async () => {
+  let captures = 0;
+  const controller = new VideoScissorsController({
+    renderer: { inspect: async () => { throw new VideoInspectionError('codec'); },
+      inspectBrowser: async () => ({ duration: 40.101, width: 2160, height: 3842 }),
+      extractBrowserFrame: async () => { captures++; return new Blob(['PNG'], { type: 'image/png' }); },
+      render: async () => { throw new Error('must not render'); } },
+    createObjectURL: () => 'blob:private', revokeObjectURL: () => {},
+  });
+  await controller.selectSource(new File(['synthetic'], 'private.mp4'));
+  const adapter = new VideoScissorsRemoteAdapter(controller, { publish: async () => {}, claim: async () => null, report: async () => {}, cancellation: async () => false, revoke: async () => {} });
+  const cmd = (operationId: string) => ({ operationId, generation: adapter.metadata().generation, version: adapter.metadata().version });
+  for (const operation of [{ kind: 'cut', clips: [{ start: 0, end: 1 }] }, { kind: 'cover', presetId: 'sage-mist' }]) {
+    const result = await adapter.execute({ ...cmd('blocked-' + operation.kind), ...operation });
+    assert.equal(result.status, 'failed'); assert.equal(result.metadata.hasOutput, false);
+  }
+  const c = { ...cmd('native-frame'), kind: 'extractframe', timeSeconds: 40.1 };
+  const pending = adapter.execute(c); assert.equal(adapter.execute(c), pending);
+  assert.equal((await pending).status, 'completed'); assert.equal(captures, 1);
+  assert.equal(controller.getOperationStatus('native-frame'), 'completed');
+  assert.equal(adapter.metadata().latestOperationId, null);
+  assert.deepEqual(Object.keys(adapter.metadata()).sort(), ['duration', 'generation', 'version', 'hasOutput', 'canUndo', 'latestOperationId', 'errorCode'].sort());
+  assert.doesNotMatch(JSON.stringify(adapter.metadata()), /private|2160|3842|HEVC|frameOnly|blob:/);
+  await controller.selectSource(new File(['new'], 'replacement.mp4'));
+  assert.equal((await adapter.execute({ ...c, operationId: 'old-generation' })).status, 'stale');
+  assert.equal(controller.createFrameDownload(), null);
+  await adapter.dispose(); controller.dispose();
 });

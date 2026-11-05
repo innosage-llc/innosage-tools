@@ -26,8 +26,12 @@ CPU/capacity qualification, production permission or Founder B acceptance.
 
 ## Limits and validation
 
-The source must be at most 100,000,000 bytes, no longer than 300 seconds, and
-contain H.264 video and AAC audio. Video must have at most 1,920 × 1,080 pixels
+All sources must be at most 100,000,000 bytes and no longer than 300 seconds.
+Browser-playable MP4s within 4096 × 4096 may be used for **Frame-only** PNG
+extraction; see the frame export runbook above. They never qualify for Cut on
+browser metadata alone.
+
+For MP4 Cut, sources must contain H.264 video and AAC audio. Video must have at most 1,920 × 1,080 pixels
 and 30 frames per second. Each plan contains 1–20 ordered clips, every range is
 finite, positive, and within the original duration, and the combined output is
 at most 300 seconds. Metadata is read from FFmpeg's input log; the file suffix
@@ -36,7 +40,7 @@ and browser MIME type are not treated as proof of its container or codecs.
 Explicit `(attached pic)` input stream entries are cover art and are excluded
 from video codec/size/fps validation. Every remaining real video stream must
 still be H.264 and every audio stream AAC; unsupported primary or secondary real
-codecs are rejected. Metadata uses the first real video and first audio. Both
+codecs are rejected for Cut. Metadata uses the first real video and first audio. Both
 inspection and rendering select those streams explicitly with `0:V:0` and
 `0:a:0`; [FFmpeg's uppercase V selector](https://ffmpeg.org/ffmpeg.html#Stream-specifiers-1)
 excludes attached pictures, thumbnails and cover art. A supported secondary
