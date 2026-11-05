@@ -41,8 +41,8 @@ export default function VideoScissorsApp() {
   const onUndo = () => {
     void remote.adapter.localUndo(nextCommand());
   };
-  const onDownload = () => {
-    const download = controller.createDownload();
+  const onDownload = (frame = false) => {
+    const download = frame ? controller.createFrameDownload() : controller.createDownload();
     if (!download) return;
     const url = URL.createObjectURL(download.blob);
     const anchor = document.createElement('a');
@@ -71,7 +71,11 @@ export default function VideoScissorsApp() {
       onCut={onCut}
       onCancel={() => controller.cancel()}
       onUndo={onUndo}
-      onDownload={onDownload}
+      onDownload={() => onDownload()}
+      frameUrl={snapshot.frameUrl}
+      frameTimeSeconds={snapshot.frameTimeSeconds}
+      onCapture={(timeSeconds) => { void controller.extractFrame({ operationId: nextCommand(), sourceGeneration: snapshot.sourceGeneration, version: snapshot.version }, timeSeconds); }}
+      onDownloadFrame={() => onDownload(true)}
     />
     {remoteAvailable && <RemoteConnectionView model={remoteModel} onConnect={() => { void remote.connect(); }} onRevoke={() => { void remote.disconnect(); }} />}
     </>

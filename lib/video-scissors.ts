@@ -92,6 +92,8 @@ export function parseFfmpegMetadata(log: string): VideoMetadata {
 }
 
 export interface VideoScissorsSnapshot {
+  frameUrl: string | null;
+  frameTimeSeconds: number | null;
   sourceGeneration: number;
   version: number;
   fileName: string | null;
@@ -115,6 +117,7 @@ export interface VideoScissorsCommand {
 }
 
 export interface VideoScissorsRenderer {
+  extractFrame?(file: File, timeSeconds: number, metadata: VideoMetadata, signal: AbortSignal): Promise<Blob>;
   inspect(file: File, signal: AbortSignal): Promise<VideoMetadata>;
   render(
     file: File,
@@ -189,7 +192,7 @@ interface StableView {
 
 interface ActiveOperation {
   id: string;
-  kind: 'inspect' | 'cut';
+  kind: 'inspect' | 'cut' | 'extractframe';
   sourceGeneration: number;
   abort: AbortController;
 }
@@ -207,6 +210,8 @@ export class VideoScissorsController {
   private readonly operationStatuses = new Map<string, OperationStatus>();
   private completed: StableView | null = null;
   private snapshot: VideoScissorsSnapshot = {
+    frameUrl: null,
+    frameTimeSeconds: null,
     sourceGeneration: 0,
     version: 0,
     fileName: null,
@@ -226,6 +231,7 @@ export class VideoScissorsController {
   private metadata: VideoMetadata | null = null;
   private active: ActiveOperation | null = null;
   private outputBlob: Blob | null = null;
+  private frameBlob: Blob | null = null;
   private latestCompletedPlan: VideoClip[] = [];
   private disposed = false;
 
@@ -254,12 +260,16 @@ export class VideoScissorsController {
     const generation = this.snapshot.sourceGeneration + 1;
     this.invalidateActive();
     this.clearOutputHistory();
+    if (this.snapshot.frameUrl) this.revokeUrl(this.snapshot.frameUrl);
+    this.frameBlob = null;
     if (this.snapshot.originalUrl) this.revokeUrl(this.snapshot.originalUrl);
     this.source = null;
     this.metadata = null;
     this.outputBlob = null;
     this.latestCompletedPlan = [];
     this.snapshot = {
+      frameUrl: null,
+      frameTimeSeconds: null,
       sourceGeneration: generation,
       version: this.snapshot.version + 1,
       fileName: file.name,
@@ -294,6 +304,55 @@ export class VideoScissorsController {
 
   cut(command: VideoScissorsCommand): Promise<void> {
     return this.renderPlan(command, this.snapshot.segments, this.snapshot.coverPresetId);
+  }
+
+  extractFrame(command: VideoScissorsCommand, timeSeconds: number, canComplete = () => true): Promise<void> {
+    const existing = this.commandResults.get(command.operationId) as Promise<void> | undefined;
+    if (existing) return existing;
+    if (this.acceptedIds.has(command.operationId) || !this.isCurrent(command) || !this.source || !this.metadata || this.snapshot.busy) return Promise.resolve();
+    if (!Number.isFinite(timeSeconds) || timeSeconds < 0 || timeSeconds >= this.snapshot.duration) {
+      this.setError('Frame time must be within the original video, before its end.');
+      return Promise.resolve();
+    }
+    const source = this.source, metadata = this.metadata;
+    const abort = new AbortController(), generation = this.snapshot.sourceGeneration;
+    this.acceptedIds.add(command.operationId);
+    this.active = { id: command.operationId, kind: 'extractframe', sourceGeneration: generation, abort };
+    this.operationStatuses.set(command.operationId, 'running');
+    this.snapshot = { ...this.snapshot, version: this.snapshot.version + 1, busy: true, progress: 0, error: null, status: 'Extracting original-source PNG locally…' };
+    this.publish();
+    const task = (async () => {
+      try {
+        if (!this.renderer.extractFrame) throw new Error('Frame extraction is unavailable.');
+        const blob = await this.renderer.extractFrame(source, timeSeconds, metadata, abort.signal);
+        if (!this.isActive(command.operationId, generation) || abort.signal.aborted) return;
+        // Recheck a remote lease at commit time: background timers may be delayed.
+        if (!canComplete()) { this.cancel(); return; }
+        if (!blob.size || blob.type !== 'image/png') throw new Error('Empty PNG');
+        const url = this.makeUrl(blob);
+        if (this.snapshot.frameUrl) this.revokeUrl(this.snapshot.frameUrl);
+        this.frameBlob = blob;
+        this.operationStatuses.set(command.operationId, 'completed');
+        this.snapshot = { ...this.snapshot, frameUrl: url, frameTimeSeconds: timeSeconds, status: 'Frame complete. Download PNG below.', error: null, progress: 100 };
+      } catch {
+        if (!this.isActive(command.operationId, generation)) return;
+        this.operationStatuses.set(command.operationId, abort.signal.aborted ? 'cancelled' : 'failed');
+        this.snapshot = { ...this.snapshot, error: 'Frame extraction failed. Your previous PNG was kept.', status: '', progress: 0 };
+      } finally {
+        if (this.isActive(command.operationId, generation)) {
+          this.active = null;
+          this.snapshot = { ...this.snapshot, busy: false, version: this.snapshot.version + 1 };
+          this.publish();
+        }
+      }
+    })();
+    this.rememberCommand(command.operationId, task);
+    return task;
+  }
+
+  createFrameDownload(): { blob: Blob; fileName: string } | null {
+    if (!this.frameBlob) return null;
+    return { blob: this.frameBlob, fileName: `frame-${this.snapshot.frameTimeSeconds?.toFixed(3)}.png` };
   }
 
   applyCoverPreset(command: VideoScissorsCommand, presetId: unknown): Promise<void> {
@@ -382,6 +441,8 @@ export class VideoScissorsController {
     this.disposed = true;
     this.invalidateActive();
     const urls = new Set<string>();
+    if (this.snapshot.frameUrl) urls.add(this.snapshot.frameUrl);
+    this.frameBlob = null;
     if (this.snapshot.originalUrl) urls.add(this.snapshot.originalUrl);
     if (this.snapshot.previewUrl) urls.add(this.snapshot.previewUrl);
     if (this.completed?.previewUrl) urls.add(this.completed.previewUrl);

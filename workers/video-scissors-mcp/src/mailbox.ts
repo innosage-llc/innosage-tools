@@ -81,6 +81,7 @@ export class Mailbox {
   }
   async admit(auth: ProjectAuth, input: unknown, deadline = Date.now() + 60_000): Promise<CommandRow | null> {
     const c = parseRemoteCommand(input), payload = JSON.stringify(c), hash = await digest(payload), now = Date.now();
+    if (c.kind === 'extractframe') throw new Error('D_ONLY_COMMAND');
     if (deadline <= now || deadline > now + 60_000) throw new Error('DEADLINE');
     // Every authorization/version/deadline predicate is in admission itself.
     // A partial unique index forbids a second queued OR claimed operation.

@@ -44,6 +44,13 @@ export function dMcpHandler(env: DEnv, props: Record<string, unknown>, origin: s
       if (result?.state === 'queued') await notifyBestEffort(state, auth.project, auth.epoch);
       return result ?? { error: 'STALE_OR_REJECTED' };
     }));
+    server.registerTool('extractframe', { description: 'Queue a browser-local original-resolution PNG at original-source seconds. Queued is not completed: check status for browser completion, then use Download PNG in Video Scissors. No image is returned to chat.',
+      inputSchema: z.object({ operationId: id, ...version, timeSeconds: z.number().min(0).lt(300) }).strict(), _meta: security },
+    async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {
+      const state = stateFor(auth), result = await state.admit(auth, { ...input, kind: 'extractframe' });
+      if (result?.state === 'queued') await notifyBestEffort(state, auth.project, auth.epoch);
+      return result ?? { error: 'STALE_OR_REJECTED' };
+    }));
     server.registerTool('undo', { description: 'Queue Undo of the current latest operation; no media is uploaded.',
       inputSchema: z.object({ operationId: id, ...version, targetOperationId: id }).strict(), _meta: security },
     async (input, context) => invoke('video:edit', context.http?.authInfo?.scopes, async auth => {

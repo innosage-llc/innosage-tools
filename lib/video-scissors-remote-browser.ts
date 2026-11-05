@@ -68,9 +68,22 @@ export class VideoScissorsRemoteBrowser {
         const r = await this.call(s, 'cancellation', { operationId: id }, signal);
         return this.session === s && r.stop === true;
       },
+      canComplete: id => {
+        const s = this.reportOwners.get(id);
+        return !!s && this.session === s && !s.abort.signal.aborted && Date.now() < s.expiresAt;
+      },
       onRemoteExecution: id => {
         const s = this.reportOwners.get(id);
         if (!s) return;
+        if (this.adapter.activeOperationId() === id && this.controller.getSnapshot().busy) {
+          const finish = () => { clearTimeout(expiry); unsubscribe(); s.abort.signal.removeEventListener('abort', finish); };
+          const expiry = setTimeout(() => {
+            if (this.reportOwners.get(id) === s && this.adapter.activeOperationId() === id) this.adapter.cancelLocal();
+            finish();
+          }, Math.max(0, s.expiresAt - Date.now()));
+          const unsubscribe = this.controller.subscribe(() => { if (!this.controller.getSnapshot().busy) finish(); });
+          s.abort.signal.addEventListener('abort', finish, { once: true });
+        }
         if (s.wakeup === 'websocket') this.checkCancellation(s);
         else void this.cancellationLoop(id);
       },
@@ -253,6 +266,8 @@ export class VideoScissorsRemoteBrowser {
     this.bindingGeneration++;
     const s = this.session;
     if (!s) { this.consentPending = false; this.state = 'disconnected'; this.emit(); return; }
+    const activeId = this.adapter.activeOperationId();
+    if (activeId && this.reportOwners.get(activeId) === s) this.adapter.cancelLocal();
     try {
       // Confirm the D1 fence before dropping an uncertain ACK or its owner.
       const r = await this.call(s, 'revoke');

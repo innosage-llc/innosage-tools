@@ -2,11 +2,14 @@
 
 Video Scissors inspects and processes a user-selected MP4 entirely in the
 browser. The source is never modified. Clip intervals remain relative to the
-original source and are concatenated in the listed order. Every output is
+original source and are concatenated in the listed order. Every MP4 output is
 re-encoded as H.264/AAC; it is not lossless. The page does not send media to an
 API, account, storage service, analytics endpoint, or third-party CDN. The only
 runtime fetches are same-origin requests for the local FFmpeg JavaScript and
 compressed WebAssembly assets.
+
+PNG frame capture is also browser-local and independent of MP4 editing history.
+See [frame export, timing and MCP-D qualification](video-scissors-frames.md).
 
 ## Experimental #346 control boundary (local candidate only)
 

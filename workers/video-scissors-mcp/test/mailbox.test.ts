@@ -187,3 +187,15 @@ test('real local Workers/D1: empty long-poll is finite, metered and below Free q
     console.log('local-empty-poll-metrics', JSON.stringify(r));
   } finally { await f.mf.dispose(); }
 });
+
+test('A/B mailbox does not admit the D-only extractframe command', async () => {
+  const f = await fixture();
+  try {
+    const auth = await f.project();
+    const result = await f.call('admit', { auth, command: {
+      operationId: 'png-d-only', generation: 1, version: 1, kind: 'extractframe', timeSeconds: 1,
+    } });
+    assert.notEqual(result.status, 200);
+    assert.equal((await f.call('claim', { auth, metadata })).value, null);
+  } finally { await f.mf.dispose(); }
+});
